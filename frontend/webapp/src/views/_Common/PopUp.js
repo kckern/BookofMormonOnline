@@ -760,9 +760,20 @@ function History() {
   const metaParts = [...new Set([doc.source, doc.principal, doc.author, dateText].filter(Boolean))];
   const hasQuote = !!(doc.money_quote || doc.mini_quote);
   const teaserText = typeof doc.teaser === "string" ? doc.teaser : "";
-  const teaserDupesTitle =
-    teaserText && doc.document &&
-    teaserText.replace(/<[^>]+>/g, "").trim() === String(doc.document).trim();
+  const strip = (s) => String(s || "").replace(/<[^>]+>/g, "").replace(/[^a-z0-9]+/gi, " ").trim().toLowerCase();
+  const titleStripped = strip(doc.document);
+  const teaserStripped = strip(teaserText);
+  const quoteStripped = strip(doc.money_quote || doc.mini_quote);
+  const transcriptStripped = strip(doc.transcript);
+  const teaserDupesTitle = !!teaserStripped && teaserStripped === titleStripped;
+  // Short statements (e.g. witnesses) store the same text as BOTH money_quote and
+  // transcript — don't render it twice. Keep the transcript only when it adds
+  // materially more than the quote (reception clippings: short quote, long text).
+  const transcriptDupesQuote =
+    !!quoteStripped && !!transcriptStripped &&
+    (transcriptStripped === quoteStripped ||
+      (transcriptStripped.includes(quoteStripped) &&
+        transcriptStripped.length < quoteStripped.length * 1.15));
   const pageCount = Number(doc.pages) || 0;
 
   return (
@@ -807,7 +818,11 @@ function History() {
               <div className="teaser">{Parser(teaserText)}</div>
             ) : null}
 
-            {doc.transcript ? (
+            {doc.citation ? (
+              <div className="historyPopupCitation">{Parser(String(doc.citation))}</div>
+            ) : null}
+
+            {doc.transcript && !transcriptDupesQuote ? (
               <div className="transcript">{Parser(doc.transcript)}</div>
             ) : null}
 

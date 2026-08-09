@@ -627,6 +627,13 @@ ul.source_tabs li:hover
     display: inline;
     margin: 0 0.25rem 0 0;
 }
+#popUp.historycard .historyPopupCitation {
+    margin: 0.4rem 0 0.8rem;
+    font-size: 0.82rem;
+    font-style: italic;
+    color: #777;
+    text-align: center;
+}
 
 .popupwindow.historycard .card-body
 {
