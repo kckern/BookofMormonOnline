@@ -33,7 +33,7 @@
 .historyHub-lede {
   color: var(--ink-soft);
   font-size: 0.9rem;
-  max-width: 46ch;
+  white-space: nowrap;
   margin: 0 auto;
 }
 .historyHub-rule {
