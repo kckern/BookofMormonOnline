@@ -13,7 +13,6 @@ import { clampWords, flatten } from "./textUtils";
  */
 export default function MattersConceptTile({ data = [], seed = 0, payload }) {
   const cards = data.slice(0, 5);
-  const mosaic = data.slice(5, 17);
   const total = payload?.mattersConceptCount || 0;
   return (
     <div className="samplerTileInner mattersTile mattersConceptTile">
