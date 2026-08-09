@@ -26,6 +26,9 @@ const schema = z.object({
   SUPPORTED_LANGUAGES: z
     .string()
     .default('en,fr,de,nl,pt,ko,jpn,zh,ru,hi,eo,es,vn,tgl,th,ukr,tam,swe'),
+  // Authentication provider. 'opaque' (default) delegates to the SessionStore
+  // token table. 'jwt' and 'cognito' are reserved for future providers.
+  AUTH_PROVIDER: z.enum(['opaque', 'jwt', 'cognito']).default('opaque'),
 });
 
 export type Env = z.infer<typeof schema>;
