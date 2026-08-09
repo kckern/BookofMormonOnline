@@ -4,64 +4,91 @@ import { Link } from "react-router-dom";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "../../models/Utils";
 import { HISTORY_SECTIONS, pickRandom } from "./sections";
-import { WITNESSES } from "./Witnesses";
+import { deriveSignal, formatSignal } from "./historySignal";
 import "./HistoryHub.css";
 
-// One featured preview per live section: { img, caption }.
-function useFeatured() {
-  const [receptionDoc, setReceptionDoc] = useState(null);
-  const [translationDoc, setTranslationDoc] = useState(null);
+// Section key -> archive name to fetch a live list for (count + date range).
+// josephSmith's archive name differs from its key (see JosephSmith.js).
+const ARCHIVE_BY_KEY = {
+  josephSmith: "joseph-smith-statements",
+  translation: "translation",
+  reception: "reception",
+};
+
+const thumbUrl = (id) => `${assetUrl}/history/thumbs/${String(id).padStart(4, "0")}`;
+
+// Fetch each document archive once; expose { list } per section key.
+function useArchiveLists() {
+  const [lists, setLists] = useState({});
   useEffect(() => {
     let alive = true;
-    BoMOnlineAPI({ history: { archive: "reception" } }).then((r) => {
-      if (alive) setReceptionDoc(pickRandom(r && r.history));
-    });
-    BoMOnlineAPI({ history: { archive: "translation" } }).then((r) => {
-      if (alive) setTranslationDoc(pickRandom(r && r.history));
+    Object.entries(ARCHIVE_BY_KEY).forEach(([key, archive]) => {
+      BoMOnlineAPI({ history: { archive } }).then((r) => {
+        if (alive) setLists((prev) => ({ ...prev, [key]: (r && r.history) || [] }));
+      });
     });
     return () => { alive = false; };
   }, []);
-  const witness = useMemo(() => pickRandom(WITNESSES), []);
-  return {
-    reception: receptionDoc && {
-      img: `${assetUrl}/history/thumbs/${String(receptionDoc.id).padStart(4, "0")}`,
-      caption: receptionDoc.source,
-    },
-    witnesses: witness && {
-      img: `${assetUrl}/history/witnesses/people/${witness.slug}.jpg`,
-      caption: witness.name,
-    },
-    translation: translationDoc && {
-      img: `${assetUrl}/history/thumbs/${String(translationDoc.id).padStart(4, "0")}`,
-      caption: translationDoc.principal || translationDoc.document,
-    },
-    josephSmith: {
-      img: `${assetUrl}/history/witnesses/people/joseph-smith.jpg`,
-      caption: "Joseph Smith",
-    },
-  };
+  return lists;
 }
 
-function Tile({ section, featured }) {
+function HeroImage({ src }) {
   return (
-    <Link className="historyTile" to={section.path}>
-      <img className="historyTile-icon" src={section.icon} alt="" />
-      <div className="historyTile-title">{section.title}</div>
-      <div className="historyTile-blurb">{section.blurb}</div>
-      {section.status === "live" && featured ? (
-        <div className="historyTile-featured">
-          <img
-            src={featured.img}
-            alt=""
-            onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
-          />
-          <span>{featured.caption}</span>
-        </div>
-      ) : (
-        <div className="historyTile-soon">
-          {section.status === "placeholder" ? "Coming soon" : ""}
-        </div>
-      )}
+    <div className="historyHero">
+      <img src={src} alt="" onError={(e) => { e.currentTarget.style.visibility = "hidden"; }} />
+    </div>
+  );
+}
+
+function HeroPie({ srcs }) {
+  // radial 3-wedge pie; wedge geometry + object-position live in CSS classes w0/w1/w2
+  return (
+    <div className="historyHero historyHero--pie">
+      {srcs.map((src, i) => (
+        <img key={i} className={`w${i}`} src={src} alt="" />
+      ))}
+    </div>
+  );
+}
+
+function HeroPlaceholder({ icon }) {
+  return (
+    <div className="historyHero historyHero--placeholder">
+      <img src={icon} alt="" />
+    </div>
+  );
+}
+
+function Hero({ section, list }) {
+  const { hero } = section;
+  if (hero.type === "image") return <HeroImage src={hero.src} />;
+  if (hero.type === "pie") return <HeroPie srcs={hero.srcs} />;
+  if (hero.type === "placeholder") return <HeroPlaceholder icon={hero.icon} />;
+  if (hero.type === "randomThumb") {
+    const pick = pickRandom(list);
+    return pick && pick.id != null
+      ? <HeroImage src={thumbUrl(pick.id)} />
+      : <HeroPlaceholder icon={section.icon} />;
+  }
+  return <HeroPlaceholder icon={section.icon} />;
+}
+
+function Card({ section, list }) {
+  const signal = useMemo(() => {
+    if (section.signal) return section.signal; // static (Witnesses)
+    if (!list) return null; // still loading — omit line, never gape
+    const { count, minYear, maxYear } = deriveSignal(list);
+    return formatSignal(count, section.unit, minYear, maxYear);
+  }, [section, list]);
+
+  return (
+    <Link className="historyCard" to={section.path}>
+      <Hero section={section} list={list} />
+      <div className="historyCard-body">
+        <div className="historyCard-name">{section.title}</div>
+        {signal ? <div className="historyCard-sig">{signal}</div> : null}
+        <div className="historyCard-blurb">{section.blurb}</div>
+      </div>
     </Link>
   );
 }
@@ -70,15 +97,24 @@ export default function HistoryHub() {
   useEffect(() => {
     document.title = label("menu_history") + " | " + label("home_title");
   }, []);
-  const featured = useFeatured();
+  const lists = useArchiveLists();
   return (
     <div className="container" style={{ display: "block" }}>
       <div id="page">
-        <h3 className="title lg-4 text-center">{label("title_history")}</h3>
         <div className="historyHub">
-          {HISTORY_SECTIONS.map((s) => (
-            <Tile key={s.key} section={s} featured={featured[s.key]} />
-          ))}
+          <div className="historyHub-masthead">
+            <div className="historyHub-kicker">The Book of Mormon in History</div>
+            <h1 className="historyHub-title">Historical Sources</h1>
+            <p className="historyHub-lede">
+              Four collections tracing the record from its coming forth to its reception in the world.
+            </p>
+            <div className="historyHub-rule" />
+          </div>
+          <div className="historyHub-grid">
+            {HISTORY_SECTIONS.map((s) => (
+              <Card key={s.key} section={s} list={lists[s.key]} />
+            ))}
+          </div>
         </div>
       </div>
     </div>
