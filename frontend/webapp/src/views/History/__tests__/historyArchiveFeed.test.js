@@ -54,7 +54,7 @@ describe("HistoryArchiveFeed view", () => {
     BoMOnlineAPI.mockResolvedValue({ history: MULTI });
     setup("translation", "translation");
     await waitFor(() => expect(screen.getByRole("heading", { name: "1829" })).toBeInTheDocument());
-    expect(screen.getByRole("heading", { name: /Translation Sources/ })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Translation Process/ })).toBeInTheDocument();
     expect(screen.getByText(/I translated by the gift of God/)).toBeInTheDocument();
   });
 
