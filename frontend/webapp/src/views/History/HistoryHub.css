@@ -50,11 +50,11 @@
   gap: 18px;
 }
 
-/* card: image full-height LEFT (clamped 4:3), text RIGHT. Follows the house
-   HistorySourceCard: #EEE bg, dark border, hover -> #FFF + lift. */
+/* card: TOP row = hero (left) + text (right); BOTTOM row = content sampler.
+   Follows house HistorySourceCard: #EEE bg, dark border, hover -> #FFF + lift. */
 .historyCard {
   display: grid;
-  grid-template-columns: 46% 1fr;
+  grid-template-columns: 42% 1fr;
   text-decoration: none;
   color: inherit;
   border: 1px solid var(--line);
@@ -70,10 +70,10 @@
   bottom: 2px;
 }
 
-/* ── hero (left column) — portrait 3:4 box (tall), never panoramic ── */
+/* ── hero (left column) — fills the card height, never panoramic ── */
 .historyHero {
   position: relative;
-  aspect-ratio: 3 / 4;
+  height: 100%;
   overflow: hidden;
   border-right: 3px solid var(--gold);
   background: #ddd;
@@ -125,10 +125,14 @@
   background-color: #ddd;
 }
 
-/* ── text (right column) ──────────────────────────────────── */
+/* ── text (right of top row) ──────────────────────────────── */
 .historyCard-body {
   padding: 14px 16px;
-  align-self: center;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
 }
 .historyCard-name {
   font-size: 1.32rem;
@@ -150,6 +154,35 @@
   line-height: 1.34;
 }
 
+/* ── content sampler — sits inside the body, below the blurb ── */
+.historyCard-sampler {
+  margin-top: 11px;
+  padding-top: 11px;
+  border-top: 1px solid var(--line);
+}
+.historyCard-quote {
+  margin: 0;
+  padding-left: 10px;
+  border-left: 3px solid var(--gold);
+  font-size: 0.85rem;
+  line-height: 1.32;
+  color: #333;
+}
+.historyCard-quoteText {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.historyCard-quoteBy {
+  display: block;
+  margin-top: 5px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-style: normal;
+  color: #777;
+}
+
 /* ── dark mode — parity with HistorySourceCard dark treatment ── */
 html[data-theme="dark"] .historyHub {
   --ink: #e6e6e6;
@@ -159,6 +192,9 @@ html[data-theme="dark"] .historyCard { background: #222; border-color: #000; }
 html[data-theme="dark"] .historyCard:hover { background: #2b2b2b; }
 html[data-theme="dark"] .historyCard-name { color: #eee; }
 html[data-theme="dark"] .historyCard-sig { color: #9a9a9a; }
+html[data-theme="dark"] .historyCard-sampler { border-top-color: #000; }
+html[data-theme="dark"] .historyCard-quote { color: #ccc; }
+html[data-theme="dark"] .historyCard-quoteBy { color: #999; }
 
 /* ── responsive ───────────────────────────────────────────── */
 /* Single column → cards stack image-over-text. The hero drops its height cap so
@@ -166,5 +202,5 @@ html[data-theme="dark"] .historyCard-sig { color: #9a9a9a; }
 @media (max-width: 700px) {
   .historyHub-grid { grid-template-columns: 1fr; }
   .historyCard { grid-template-columns: 1fr; }
-  .historyHero { max-height: none; border-right: none; border-bottom: 3px solid var(--gold); }
+  .historyHero { height: 200px; border-right: none; border-bottom: 3px solid var(--gold); }
 }

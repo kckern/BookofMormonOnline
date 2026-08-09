@@ -5,14 +5,16 @@ import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "../../models/Utils";
 import { HISTORY_SECTIONS, pickRandom } from "./sections";
 import { deriveSignal, formatSignal } from "./historySignal";
+import { renderMoneyQuote } from "../_Common/moneyQuote";
 import "./HistoryHub.css";
 
-// Section key -> archive name to fetch a live list for (count + date range).
-// josephSmith's archive name differs from its key (see JosephSmith.js).
+// Section key -> archive name to fetch a live list for (count + date range,
+// and a content sampler). josephSmith's archive name differs from its key.
 const ARCHIVE_BY_KEY = {
   josephSmith: "joseph-smith-statements",
   translation: "translation",
   reception: "reception",
+  witnesses: "witnesses",
 };
 
 const thumbUrl = (id) => `${assetUrl}/history/thumbs/${String(id).padStart(4, "0")}`;
@@ -85,6 +87,39 @@ function Hero({ section, list }) {
   return <HeroPlaceholder icon={section.icon} />;
 }
 
+const clampText = (html, n) => {
+  const t = String(html || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  return t.length > n ? t.slice(0, n).replace(/\s+\S*$/, "") + "…" : t;
+};
+
+// Pick a doc to preview: prefer one with a quote, else a teaser.
+const pickPreview = (list) => {
+  const quoted = (list || []).filter((d) => d && (d.money_quote || d.mini_quote));
+  if (quoted.length) return pickRandom(quoted);
+  return pickRandom((list || []).filter((d) => d && d.teaser));
+};
+
+// Bottom-half content sampler — a real money-quote (or teaser) from the archive,
+// so each card previews what's inside (cf. Home/tiles ArchiveDocTile quote hero).
+function Sampler({ list }) {
+  const doc = useMemo(() => pickPreview(list), [list]);
+  if (!doc) return null;
+  const by = doc.quote_speaker || doc.source || doc.principal || null;
+  const isQuote = !!(doc.money_quote || doc.mini_quote);
+  return (
+    <div className="historyCard-sampler">
+      <blockquote className="historyCard-quote">
+        <span className="historyCard-quoteText">
+          {isQuote
+            ? <>&ldquo;{renderMoneyQuote(doc.money_quote, doc.mini_quote)}&rdquo;</>
+            : clampText(doc.teaser, 220)}
+        </span>
+        {by ? <cite className="historyCard-quoteBy">— {by}</cite> : null}
+      </blockquote>
+    </div>
+  );
+}
+
 function Card({ section, list }) {
   const signal = useMemo(() => {
     if (section.signal) return section.signal; // static (Witnesses)
@@ -100,6 +135,7 @@ function Card({ section, list }) {
         <div className="historyCard-name">{section.title}</div>
         {signal ? <div className="historyCard-sig">{signal}</div> : null}
         <div className="historyCard-blurb">{section.blurb}</div>
+        <Sampler list={list} />
       </div>
     </Link>
   );
