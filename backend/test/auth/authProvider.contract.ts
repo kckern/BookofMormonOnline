@@ -33,4 +33,25 @@ export function runAuthProviderContract(
     await provider.revokeAll(username);
     expect(await provider.verify(res.session.token)).toBeNull();
   });
+
+  it('refresh yields a new session that verifies to the same user', async () => {
+    const { provider, username, password } = await makeProvider();
+    const res = await provider.authenticate({ username, password });
+    if (!res.ok) throw new Error('setup');
+    const next = await provider.refresh(res.session.token);
+    expect(next).not.toBeNull();
+    // A provider that just returns null (or a junk token) from refresh must fail here.
+    expect((await provider.verify(next!.token))?.userId).toBe(username);
+  });
+
+  it('revoke invalidates ONLY the target session, not other live ones', async () => {
+    const { provider, username, password } = await makeProvider();
+    const a = await provider.authenticate({ username, password });
+    const b = await provider.authenticate({ username, password });
+    if (!a.ok || !b.ok) throw new Error('setup');
+    await provider.revoke(a.session.token);
+    // A provider implementing revoke() as revokeAll() would wrongly kill b too.
+    expect(await provider.verify(a.session.token)).toBeNull();
+    expect((await provider.verify(b.session.token))?.userId).toBe(username);
+  });
 }

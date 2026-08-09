@@ -25,7 +25,10 @@ export interface AuthProvider {
 export function makeAuthProvider(ctx: { db: Kysely<DB>; sandbox: boolean }): AuthProvider {
   switch (env.AUTH_PROVIDER) {
     case 'opaque':
-    default:
       return new OpaqueTokenProvider(ctx);
+    default:
+      // 'jwt'/'cognito' are declared in the env enum but not implemented yet.
+      // Fail loud rather than silently running opaque under a misleading config.
+      throw new Error(`AUTH_PROVIDER="${env.AUTH_PROVIDER}" is not implemented (only "opaque")`);
   }
 }

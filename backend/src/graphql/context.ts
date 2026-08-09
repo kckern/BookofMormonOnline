@@ -95,7 +95,10 @@ export async function buildContext(db: Kysely<DB>, lang: string, ip = '', bearer
   if (bearerToken) {
     try {
       auth = await verifyToken(db, bearerToken);
-    } catch {
+    } catch (err) {
+      // Degrade to anonymous, but never silently — a DB blip or a bug in
+      // verifyToken would otherwise log the whole userbase out with no trace.
+      console.error('[auth] token verify failed; treating request as anonymous:', err);
       auth = null;
     }
   }
