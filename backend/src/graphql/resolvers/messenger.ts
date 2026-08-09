@@ -37,22 +37,12 @@ import type { MessageDTO } from '../../messaging/dto.js';
 // ─── Auth helper ──────────────────────────────────────────────────────────────
 
 /**
- * Resolve the acting messenger user_id from ctx.bearerToken.
- * bearerToken → bom_user_token join → bom_user.user → md5() = messenger user_id.
- * Returns null when the token is absent or unknown.
+ * Resolve the acting messenger user_id from ctx.auth.
+ * ctx.auth.userId is the bom_user username; md5() of that is the messenger user_id.
+ * Returns null when unauthenticated.
  */
 async function resolveActingUserId(ctx: AppContext): Promise<string | null> {
-  const token = ctx.bearerToken;
-  if (!token) return null;
-  const row = await ctx.db
-    .selectFrom('bom_user_token')
-    .innerJoin('bom_user', 'bom_user.user', 'bom_user_token.user')
-    .select('bom_user.user as username')
-    .where('bom_user_token.token', '=', token)
-    .limit(1)
-    .executeTakeFirst();
-  if (!row) return null;
-  return md5(row.username);
+  return ctx.auth ? md5(ctx.auth.userId) : null;
 }
 
 /**
