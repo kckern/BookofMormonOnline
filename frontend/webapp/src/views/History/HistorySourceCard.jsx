@@ -59,6 +59,10 @@ export default function HistorySourceCard({ doc, variant = "reception", displayD
               src={`${assetUrl}/history/thumbs/${String(doc.id).padStart(4, "0")}`}
               alt={doc.document}
               loading="lazy"
+              onError={(e) => {
+                const wrap = e.currentTarget.closest(".historyThumb");
+                if (wrap) wrap.style.display = "none";
+              }}
             />
           </div>
         )}

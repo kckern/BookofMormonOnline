@@ -5,7 +5,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { useAppController } from "src/contexts/AppControllerContext";
-import HistoryArchiveFeed, { groupByYearAscending, principalOptions } from "../HistoryArchiveFeed";
+import HistoryArchiveFeed, { groupByYearAscending, principalOptions, shouldPackFeed } from "../HistoryArchiveFeed";
 
 jest.mock("src/models/BoMOnlineAPI", () => ({ __esModule: true, default: jest.fn() }));
 jest.mock("src/contexts/AppControllerContext");
@@ -35,6 +35,13 @@ describe("archive feed helpers", () => {
     const opts = principalOptions([...MULTI, { principal: "Joseph Smith, Jr." }]);
     expect(opts[0]).toEqual(["Joseph Smith, Jr.", 2]);
     expect(opts.map((o) => o[0])).toContain("Oliver Cowdery");
+  });
+  test("shouldPackFeed packs wide/sparse archives (>40yr span), not dense ones", () => {
+    const wide = groupByYearAscending([{ event_year: 1827, seq: 1 }, { event_year: 1998, seq: 1 }]);
+    const dense = groupByYearAscending([{ event_year: 1829, seq: 1 }, { event_year: 1844, seq: 1 }]);
+    expect(shouldPackFeed(wide)).toBe(true);
+    expect(shouldPackFeed(dense)).toBe(false);
+    expect(shouldPackFeed(groupByYearAscending([{ event_year: 1830, seq: 1 }]))).toBe(false);
   });
 });
 

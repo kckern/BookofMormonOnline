@@ -40,6 +40,14 @@ export function groupByYearAscending(docs) {
   return buckets;
 }
 
+// Wide, sparse archives (e.g. Translation spans 1827–1998) get packed into one
+// grid instead of dozens of single-item year sections. Threshold: >40yr span.
+export function shouldPackFeed(buckets) {
+  const years = (buckets || []).map((b) => b.year).filter((y) => y != null);
+  if (years.length < 2) return false;
+  return years[years.length - 1] - years[0] > 40;
+}
+
 // Distinct principals with counts, most frequent first.
 export function principalOptions(docs) {
   const counts = new Map();
@@ -96,6 +104,8 @@ export default function HistoryArchiveFeed({ archive, sectionKey }) {
     [docs, principal]
   );
   const buckets = useMemo(() => groupByYearAscending(visible), [visible]);
+  const packed = useMemo(() => shouldPackFeed(buckets), [buckets]);
+  const packedDocs = useMemo(() => (packed ? buckets.flatMap((b) => b.items) : []), [packed, buckets]);
 
   const openDoc = (doc) =>
     appController.functions.setPopUp({
@@ -140,6 +150,24 @@ export default function HistoryArchiveFeed({ archive, sectionKey }) {
                   Show all
                 </button>
               </div>
+            ) : packed ? (
+              /* Wide/sparse archive → one packed, chronologically-sorted grid
+                 (date chips carry the timeline; no dead single-item year rows). */
+              <Masonry
+                breakpointCols={breakpointColumnsObj}
+                className="my-masonry-grid"
+                columnClassName="my-masonry-grid_column"
+              >
+                {packedDocs.map((doc) => (
+                  <HistorySourceCard
+                    key={doc.slug}
+                    doc={doc}
+                    variant="reception"
+                    displayDate={displayDate}
+                    onOpen={openDoc}
+                  />
+                ))}
+              </Masonry>
             ) : (
               buckets.map((bucket) => (
                 <section key={bucket.year ?? "undated"} className="archiveYearGroup">
