@@ -480,6 +480,9 @@ ul.source_tabs li:hover
     display: flow-root;
 }
 
+/* Breathing room beneath the final prose paragraph. */
+#popUp .ppbody > .bodytext > p:last-child { padding-bottom: 2rem; }
+
 /* Hero image. Square (matching the .fallback below) with the height reserved
    from the width via aspect-ratio, so the box is sized BEFORE the image loads —
    no layout shift on load, and no rugpull between the fallback and real artwork.
