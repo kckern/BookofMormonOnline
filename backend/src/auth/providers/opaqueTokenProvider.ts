@@ -30,6 +30,11 @@ export class OpaqueTokenProvider implements AuthProvider {
   async refresh(raw: string): Promise<Session | null> {
     const p = await store.verifyToken(this.ctx.db, raw);
     if (!p) return null;
+    // Issue-then-revoke (not the reverse) on purpose: the new token is live
+    // before the old one dies, so an in-flight request on the old token still
+    // resolves during the gap — avoiding the revoke-then-crash "logged out with
+    // no new token" failure. The old token stays valid for that brief window;
+    // strict single-live-token semantics (if ever needed) would wrap this in a tx.
     const next = await store.issueToken(this.ctx, p.userId);
     await store.revokeToken(this.ctx, raw);
     return next;
