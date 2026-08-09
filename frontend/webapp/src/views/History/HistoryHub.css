@@ -127,6 +127,20 @@
   background-position: 50% 76%;
   clip-path: polygon(50% 38%, 0 67%, 0 100%, 100% 100%, 100% 67%);
 }
+/* deliberate gold seams from the vertex, so the three portraits read as a
+   3-piece medallion instead of merging into one composite face */
+.historyHero--pie .pieSeams {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.historyHero--pie .pieSeams line {
+  stroke: var(--gold);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
 
 /* ── text (right column) ──────────────────────────────────── */
 .historyCard-body {

@@ -48,6 +48,12 @@ function HeroPie({ srcs }) {
       {srcs.map((src, i) => (
         <div key={i} className={`w${i}`} style={{ backgroundImage: `url("${src}")` }} />
       ))}
+      {/* deliberate gold seams from the 38% vertex — reads as a 3-piece medallion */}
+      <svg className="pieSeams" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <line x1="50" y1="38" x2="50" y2="0" />
+        <line x1="50" y1="38" x2="0" y2="67" />
+        <line x1="50" y1="38" x2="100" y2="67" />
+      </svg>
     </div>
   );
 }
