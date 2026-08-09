@@ -296,6 +296,7 @@ export type HistoricalDocument = {
   event_year?: Maybe<Scalars['Int']['output']>;
   id?: Maybe<Scalars['Int']['output']>;
   link?: Maybe<Scalars['String']['output']>;
+  mini_quote?: Maybe<Scalars['String']['output']>;
   money_quote?: Maybe<Scalars['String']['output']>;
   pages?: Maybe<Scalars['Int']['output']>;
   principal?: Maybe<Scalars['String']['output']>;
@@ -359,7 +360,14 @@ export type HomeSampler = {
   faxPages?: Maybe<Array<Maybe<FaxPageRef>>>;
   faxVerse?: Maybe<FaxVersePage>;
   history?: Maybe<HistoricalDocument>;
+  josephSmith?: Maybe<HistoricalDocument>;
   mapstory?: Maybe<MapStorySample>;
+  mattersConcept?: Maybe<Array<Maybe<Matter>>>;
+  mattersConceptCount?: Maybe<Scalars['Int']['output']>;
+  mattersMaterial?: Maybe<Array<Maybe<Matter>>>;
+  mattersMaterialCount?: Maybe<Scalars['Int']['output']>;
+  mattersNarrative?: Maybe<Array<Maybe<Matter>>>;
+  mattersNarrativeCount?: Maybe<Scalars['Int']['output']>;
   notes?: Maybe<Array<Maybe<Commentary>>>;
   people?: Maybe<Array<Maybe<People>>>;
   peopleCount?: Maybe<Scalars['Int']['output']>;
@@ -370,6 +378,7 @@ export type HomeSampler = {
   sectionNext?: Maybe<Section>;
   seed?: Maybe<Scalars['Int']['output']>;
   text?: Maybe<TextBlock>;
+  translation?: Maybe<HistoricalDocument>;
   witnesses?: Maybe<Array<Maybe<Witness>>>;
 };
 
@@ -559,7 +568,7 @@ export type Matter = {
   tags?: Maybe<Scalars['String']['output']>;
   usage?: Maybe<Scalars['String']['output']>;
   verse_id?: Maybe<Scalars['Int']['output']>;
-  weight?: Maybe<Scalars['Int']['output']>;
+  weight?: Maybe<Scalars['Float']['output']>;
   xrels?: Maybe<Array<Maybe<Xrel>>>;
 };
 
@@ -2694,6 +2703,7 @@ export type HistoricalDocumentResolvers<ContextType = AppContext, ParentType ext
   event_year?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   id?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   link?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  mini_quote?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   money_quote?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   pages?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   principal?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2757,7 +2767,14 @@ export type HomeSamplerResolvers<ContextType = AppContext, ParentType extends Re
   faxPages?: Resolver<Maybe<Array<Maybe<ResolversTypes['FaxPageRef']>>>, ParentType, ContextType>;
   faxVerse?: Resolver<Maybe<ResolversTypes['FaxVersePage']>, ParentType, ContextType>;
   history?: Resolver<Maybe<ResolversTypes['HistoricalDocument']>, ParentType, ContextType>;
+  josephSmith?: Resolver<Maybe<ResolversTypes['HistoricalDocument']>, ParentType, ContextType>;
   mapstory?: Resolver<Maybe<ResolversTypes['MapStorySample']>, ParentType, ContextType>;
+  mattersConcept?: Resolver<Maybe<Array<Maybe<ResolversTypes['Matter']>>>, ParentType, ContextType>;
+  mattersConceptCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  mattersMaterial?: Resolver<Maybe<Array<Maybe<ResolversTypes['Matter']>>>, ParentType, ContextType>;
+  mattersMaterialCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  mattersNarrative?: Resolver<Maybe<Array<Maybe<ResolversTypes['Matter']>>>, ParentType, ContextType>;
+  mattersNarrativeCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   notes?: Resolver<Maybe<Array<Maybe<ResolversTypes['Commentary']>>>, ParentType, ContextType>;
   people?: Resolver<Maybe<Array<Maybe<ResolversTypes['People']>>>, ParentType, ContextType>;
   peopleCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
@@ -2768,6 +2785,7 @@ export type HomeSamplerResolvers<ContextType = AppContext, ParentType extends Re
   sectionNext?: Resolver<Maybe<ResolversTypes['Section']>, ParentType, ContextType>;
   seed?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   text?: Resolver<Maybe<ResolversTypes['TextBlock']>, ParentType, ContextType>;
+  translation?: Resolver<Maybe<ResolversTypes['HistoricalDocument']>, ParentType, ContextType>;
   witnesses?: Resolver<Maybe<Array<Maybe<ResolversTypes['Witness']>>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -2935,7 +2953,7 @@ export type MatterResolvers<ContextType = AppContext, ParentType extends Resolve
   tags?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   usage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   verse_id?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  weight?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  weight?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   xrels?: Resolver<Maybe<Array<Maybe<ResolversTypes['Xrel']>>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

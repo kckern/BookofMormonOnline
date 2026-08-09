@@ -18,6 +18,13 @@ type HomeSampler {
   seed: Int
   people: [People]
   places: [Place]
+  # Matters, split by branch × specificity into three groups (see docs/specs/2026-08-08-matters-home-tiles.md).
+  mattersNarrative: [Matter]   # concrete + instance — named artifacts in the narrative
+  mattersMaterial: [Matter]    # concrete + !instance — material typologies
+  mattersConcept: [Matter]     # concepts — abstractions
+  mattersNarrativeCount: Int
+  mattersMaterialCount: Int
+  mattersConceptCount: Int
   fax: Fax
   commentary: Commentary
   commentaries: [Commentary]

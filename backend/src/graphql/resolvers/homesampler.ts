@@ -686,6 +686,31 @@ const sampleText = async (ctx: AppContext, seed: number) => {
   return rows[0] ?? null;
 };
 
+// --- Matters: three groups by branch × specificity -----------------------
+// 17 = 5 cards + a 3×4 mosaic end cell, mirroring places.
+const MATTERS_COUNT = 17;
+type MatterGroup = 'narrative' | 'material' | 'concept';
+
+const sampleMatters = (group: MatterGroup) => async (ctx: AppContext, seed: number) => {
+  let qb = ctx.db
+    .selectFrom('bom_matters')
+    .select(['slug', 'guid', 'name', 'subtitle', 'description', 'nrefs', 'era_culture', 'branch', 'specificity'])
+    .where('name', 'is not', null);
+  if (group === 'narrative') qb = qb.where('branch', '=', 'concrete').where('specificity', '=', 'instance');
+  else if (group === 'material') qb = qb.where('branch', '=', 'concrete').where('specificity', '!=', 'instance');
+  else qb = qb.where('branch', '=', 'concepts');
+  return qb.orderBy(seededOrder('slug', seed)).limit(MATTERS_COUNT).execute();
+};
+
+const countMatters = (group: MatterGroup) => async (ctx: AppContext) => {
+  let qb = ctx.db.selectFrom('bom_matters').where('name', 'is not', null);
+  if (group === 'narrative') qb = qb.where('branch', '=', 'concrete').where('specificity', '=', 'instance');
+  else if (group === 'material') qb = qb.where('branch', '=', 'concrete').where('specificity', '!=', 'instance');
+  else qb = qb.where('branch', '=', 'concepts');
+  const r = await qb.select(({ fn }) => fn.countAll<number>().as('n')).executeTakeFirst();
+  return Number(r?.n ?? 0);
+};
+
 const samplers: Record<string, (ctx: AppContext, seed: number) => Promise<unknown>> = {
   people: samplePeople,
   places: samplePlaces,
@@ -706,6 +731,12 @@ const samplers: Record<string, (ctx: AppContext, seed: number) => Promise<unknow
   crossrefs: sampleCrossRefs,
   relationship: sampleRelationship,
   mapstory: sampleMapStory,
+  mattersNarrative: sampleMatters('narrative'),
+  mattersMaterial: sampleMatters('material'),
+  mattersConcept: sampleMatters('concept'),
+  mattersNarrativeCount: countMatters('narrative'),
+  mattersMaterialCount: countMatters('material'),
+  mattersConceptCount: countMatters('concept'),
   art: sampleArt,
   witnesses: sampleWitnesses,
   peopleCount: countRows('bom_people'),
@@ -781,8 +812,8 @@ export const homesamplerResolvers: Resolvers = {
       const bucket = currentBucket(Date.now());
       const seed = hasSeed ? (argSeed as number) : seedForBucket(bucket);
       const key = hasSeed
-        ? `homesampler:v1:${lang}:seed:${seed}`
-        : `homesampler:v1:${lang}:${bucket}`;
+        ? `homesampler:v2:${lang}:seed:${seed}`
+        : `homesampler:v2:${lang}:${bucket}`;
 
       // A cache fault must never fail the request — fall back to a fresh compute.
       try {
