@@ -172,10 +172,10 @@ html[data-theme="dark"] .historyHero > img,
 html[data-theme="dark"] .historyHero--pie > img { filter: sepia(0.26) brightness(0.8) contrast(1.02); }
 
 /* ── responsive ───────────────────────────────────────────── */
+/* Single column → cards stack image-over-text. The hero drops its height cap so
+   a full-width image keeps its 4:3 shape instead of going panoramic. */
 @media (max-width: 700px) {
   .historyHub-grid { grid-template-columns: 1fr; }
-}
-@media (max-width: 520px) {
-  .historyCard { grid-template-columns: 1fr; }        /* stack: image over text */
-  .historyHero { border-right: none; border-bottom: 3px solid var(--gold); }
+  .historyCard { grid-template-columns: 1fr; }
+  .historyHero { max-height: none; border-right: none; border-bottom: 3px solid var(--gold); }
 }

@@ -15,7 +15,7 @@ export const HISTORY_SECTIONS = [
     title: "Joseph Smith",
     path: "/history/joseph-smith",
     icon: josephIcon,
-    blurb: "Statements by and about Joseph Smith.",
+    blurb: "Statements by Joseph Smith about the Book of Mormon.",
     unit: "statements",
     status: "live",
     hero: { type: "image", src: person("joseph-smith") },
