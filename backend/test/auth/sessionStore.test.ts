@@ -24,6 +24,15 @@ beforeAll(() => {
 });
 afterAll(async () => { await db?.destroy(); });
 
+// The junk-token guard short-circuits in isValidToken before any DB access, so
+// it needs no credentials and always runs (real coverage of the guard on CI).
+describe('sessionStore junk-token guard', () => {
+  it('rejects junk tokens without a DB hit', async () => {
+    expect(await verifyToken(db, 'null')).toBeNull();
+    expect(await resolveUsername(db, '')).toBeNull();
+  });
+});
+
 d('sessionStore read path', () => {
   it('resolves a valid token to a username', async () => {
     expect(await resolveUsername(db, TOKEN)).toBeTruthy();
@@ -31,10 +40,6 @@ d('sessionStore read path', () => {
   it('returns a Principal with userId for a valid token', async () => {
     const p = await verifyToken(db, TOKEN);
     expect(p?.userId).toBeTruthy();
-  });
-  it('rejects junk tokens without a DB hit', async () => {
-    expect(await verifyToken(db, 'null')).toBeNull();
-    expect(await resolveUsername(db, '')).toBeNull();
   });
   it('returns null for an unknown token', async () => {
     expect(await verifyToken(db, 'deadbeef'.repeat(4))).toBeNull();
