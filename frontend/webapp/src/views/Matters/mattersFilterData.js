@@ -178,7 +178,7 @@ export const subformsByForm = {
 export const filterAxes = [
   { name: "era_culture", title: "matter_axis_culture",  titleEn: "Era & Culture", chips: eraCultureChips },
   { name: "form_group",  title: "matter_axis_form",     titleEn: "Kind",          chips: formGroupChips },
-  { name: "category",    title: "matter_axis_category", titleEn: "Category",      chips: categoryChips },
+  { name: "category",    title: "matter_axis_category", titleEn: "Category",      chips: categoryChips, exclusive: true },
 ];
 
 // Once a Kind is selected the right column becomes MatterDetailColumn, a

@@ -90,6 +90,7 @@ export function MattersFilter({ matterFilters, setFilter, matterList, resultCoun
   const axes = shown.map((a) => ({
     name: a.name,
     title: tr(a.title, a.titleEn),
+    exclusive: !!a.exclusive,
     options: a.chips.map((c) => ({
       tag: c.tag,
       label: optionLabel(a.name, c, tr(c.key, c.label)),

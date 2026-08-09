@@ -54,6 +54,13 @@ export default function FilterPanel({ heading, axes, value, onChange, search, ex
     onChange({ ...value, [axisName]: next });
   };
 
+  // Mutually-exclusive (radio) axis: pick one; clicking the current one clears it.
+  const setOne = (axisName, tag) => {
+    const cur = value[axisName] || [];
+    const next = cur.length === 1 && cur[0] === tag ? [] : [tag];
+    onChange({ ...value, [axisName]: next });
+  };
+
   const setAll = (axisName, all) => {
     const axis = axes.find((a) => a.name === axisName);
     onChange({ ...value, [axisName]: all ? axis.options.map((o) => o.tag) : [] });
@@ -62,11 +69,13 @@ export default function FilterPanel({ heading, axes, value, onChange, search, ex
   const clearAll = () => onChange(Object.fromEntries(axes.map((a) => [a.name, []])));
 
   // The option list for one axis (switches + select-all/clear), reused by both modes.
-  const renderAxisList = (axis, { showTitle = true, itemDetail = false } = {}) => (
+  const renderAxisList = (axis, { showTitle = true, itemDetail = false } = {}) => {
+    const exclusive = !!axis.exclusive; // radio (single-select) vs. toggle (multi)
+    return (
     <ul key={axis.name}>
       {showTitle ? <li className="lihead">{axis.title}</li> : null}
       <li className="lifoot">
-        <Button onClick={() => setAll(axis.name, true)}>{label("select_all")}</Button>
+        {exclusive ? null : <Button onClick={() => setAll(axis.name, true)}>{label("select_all")}</Button>}
         <Button onClick={() => setAll(axis.name, false)}>{label("clear")}</Button>
       </li>
       {axis.options.map((opt) => {
@@ -76,14 +85,18 @@ export default function FilterPanel({ heading, axes, value, onChange, search, ex
         const detail = itemDetail && renderItemDetail ? renderItemDetail(axis.name, opt.tag, on) : null;
         return (
           <React.Fragment key={opt.tag}>
-            <li className="item" onClick={() => toggleTag(axis.name, opt.tag)}>
-              <BootstrapSwitchButton
-                checked={on}
-                onstyle="success"
-                offlabel={label("off")}
-                onlabel={label("on")}
-                size="xs"
-              />
+            <li className="item" onClick={() => (exclusive ? setOne(axis.name, opt.tag) : toggleTag(axis.name, opt.tag))}>
+              {exclusive ? (
+                <input type="radio" className="fpRadio" name={`fp-${axis.name}`} checked={on} readOnly />
+              ) : (
+                <BootstrapSwitchButton
+                  checked={on}
+                  onstyle="success"
+                  offlabel={label("off")}
+                  onlabel={label("on")}
+                  size="xs"
+                />
+              )}
               {opt.label}
             </li>
             {detail ? <li className="fpItemDetail">{detail}</li> : null}
@@ -91,7 +104,8 @@ export default function FilterPanel({ heading, axes, value, onChange, search, ex
         );
       })}
     </ul>
-  );
+    );
+  };
 
   const searchEl = search ? (
     <SearchPopUp
