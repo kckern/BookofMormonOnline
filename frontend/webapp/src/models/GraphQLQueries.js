@@ -1844,6 +1844,12 @@ const queries = {
         seed
         people { slug guid name title date description index { ref slug text } }
         places { slug name info description index { ref slug text } }
+        mattersNarrative { slug name subtitle nrefs era_culture index { ref slug text } }
+        mattersMaterial { slug name subtitle nrefs era_culture index { ref slug } }
+        mattersConcept { slug name subtitle description nrefs xrels { rel dst_type dst_slug dst_name note } index { ref slug } }
+        mattersNarrativeCount
+        mattersMaterialCount
+        mattersConceptCount
         peopleCount
         placesCount
         fax { slug title pages info format }
