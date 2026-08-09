@@ -123,3 +123,29 @@ export async function loadUserRowByToken(db: Kysely<DB>, token: string) {
     .executeTakeFirst();
   return row ?? null;
 }
+
+/**
+ * Batch variant used by the DataLoader in loaders.ts.
+ * Returns rows keyed by token; invalid tokens are filtered before querying.
+ */
+export async function loadUserRowsByTokens(db: Kysely<DB>, tokens: readonly string[]) {
+  const valid = [...new Set([...tokens].filter(isValidToken))];
+  if (!valid.length) return [];
+  return db
+    .selectFrom('bom_user_token')
+    .innerJoin('bom_user', 'bom_user.user', 'bom_user_token.user')
+    .select([
+      'bom_user_token.token as token',
+      'bom_user.user as user',
+      'bom_user.email as email',
+      'bom_user.name as name',
+      'bom_user.zip as zip',
+      'bom_user.finished as finished',
+      'bom_user.complete as complete',
+      'bom_user.started as started',
+      'bom_user.time as time',
+      'bom_user.pass as pass',
+    ])
+    .where('bom_user_token.token', 'in', valid)
+    .execute();
+}
