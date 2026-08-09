@@ -3,8 +3,8 @@
 // "Stateless" token + a denylist — exactly the shape a real JwtProvider needs so
 // revoke()/revokeAll() are honored. If this passes the SAME contract as the
 // opaque provider, the seam is real.
-import type { AuthProvider, AuthResult } from '../authProvider.js';
-import type { Session, Principal } from '../sessionStore.js';
+import type { AuthProvider, AuthResult } from '../../../src/auth/authProvider.js';
+import type { Session, Principal } from '../../../src/auth/sessionStore.js';
 
 export class FakeJwtProvider implements AuthProvider {
   private users = new Map<string, string>();       // username → password

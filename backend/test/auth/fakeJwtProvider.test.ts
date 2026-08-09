@@ -1,5 +1,5 @@
 import { describe } from 'vitest';
-import { FakeJwtProvider } from '../../src/auth/providers/fakeJwtProvider.js';
+import { FakeJwtProvider } from './providers/fakeJwtProvider.js';
 import { runAuthProviderContract } from './authProvider.contract.js';
 
 describe('AuthProvider contract — FakeJwtProvider', () => {
