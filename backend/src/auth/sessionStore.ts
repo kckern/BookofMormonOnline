@@ -62,7 +62,11 @@ export async function bindToken(ctx: WriteCtx, token: string, username: string):
   }
 }
 
-/** Server-minted session. Implemented + tested now; wired into resolvers in Phase 1. */
+/**
+ * Server-minted session. Implemented + tested now; wired into resolvers in Phase 1.
+ * Under sandbox the upsert is suppressed (runWrite) but we still return the freshly
+ * minted token so dev flows resolve — Phase 1 makes verify() sandbox-aware to match.
+ */
 export async function issueToken(ctx: WriteCtx, username: string): Promise<Session> {
   const token = randomBytes(32).toString('hex');
   await runWrite(
@@ -80,6 +84,8 @@ export async function revokeToken(ctx: WriteCtx, token: string): Promise<boolean
     ctx.db.deleteFrom('bom_user_token').where('token', '=', token) as Parameters<typeof runWrite>[1],
   );
   if (!res.executed) return false;
+  // rows[0] is a Kysely DeleteResult instance; its count is numDeletedRows (a
+  // bigint), NOT numAffectedRows — same gotcha the signout resolver documents.
   const rows = res.rows as unknown as Array<{ numDeletedRows?: bigint }>;
   return rows.length > 0 && (rows[0]?.numDeletedRows ?? 0n) >= 1n;
 }
