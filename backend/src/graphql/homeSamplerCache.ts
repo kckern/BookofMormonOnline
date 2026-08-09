@@ -9,7 +9,7 @@
  *      an injected adapter so this core stays unit-testable without a DB.
  *
  * The cache is keyed by a string the caller builds (e.g.
- * `homesampler:v1:${lang}:${bucket}`). Freshness is a 6h window; results are
+ * `homesampler:v2:${lang}:${bucket}`). Freshness is a 6h window; results are
  * deep-frozen before caching so a field resolver can't mutate state shared across
  * every request in the window.
  */

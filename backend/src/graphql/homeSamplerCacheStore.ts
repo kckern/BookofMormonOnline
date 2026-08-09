@@ -24,7 +24,7 @@ import {
 const md5 = (s: string): string => createHash('md5').update(s).digest('hex');
 
 /** Only our own keys are ever evicted, so a stray other tool's rows are untouched. */
-const KEY_PREFIX = 'homesampler:v1:';
+const KEY_PREFIX = 'homesampler:v2:';
 
 export function bomCacheL2(db: Kysely<DB>): L2Adapter {
   return {
