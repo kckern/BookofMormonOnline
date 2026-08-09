@@ -1,14 +1,37 @@
 import { HISTORY_SECTIONS, getSection, pickRandom } from "./sections";
 
-test("registry has four sections, each with required fields", () => {
-  expect(HISTORY_SECTIONS).toHaveLength(4);
+test("registry has four sections in the JS → Witnesses → Translation → Reception order", () => {
+  expect(HISTORY_SECTIONS.map((s) => s.key)).toEqual([
+    "josephSmith",
+    "witnesses",
+    "translation",
+    "reception",
+  ]);
+});
+
+test("every section has the required display + hero fields", () => {
+  const HERO_TYPES = ["image", "pie", "placeholder", "randomThumb"];
   for (const s of HISTORY_SECTIONS) {
     expect(s.key).toBeTruthy();
     expect(s.title).toBeTruthy();
     expect(s.path).toMatch(/^\/history/);
-    expect(s.icon).toBeTruthy();
+    expect(s.blurb).toBeTruthy();
+    expect(s.unit).toBeTruthy();
     expect(["live", "placeholder"]).toContain(s.status);
+    expect(s.hero).toBeTruthy();
+    expect(HERO_TYPES).toContain(s.hero.type);
   }
+});
+
+test("Translation is retitled to 'Translation Process'", () => {
+  expect(getSection("translation").title).toBe("Translation Process");
+});
+
+test("hero descriptors carry the data each type needs", () => {
+  expect(getSection("josephSmith").hero.src).toMatch(/joseph-smith\.jpg$/);
+  expect(getSection("witnesses").hero.srcs).toHaveLength(3);
+  expect(getSection("translation").hero.icon).toBeTruthy();
+  expect(getSection("reception").hero.archive).toBe("reception");
 });
 
 test("getSection resolves by key, null otherwise", () => {
