@@ -119,6 +119,7 @@ function SearchComponent() {
               </button>
             </div>
           )}
+          <div className={"search-rich-layout" + (groupCount > 0 ? " has-media" : "")}>
           {groupCount > 0 && (
             <div className="search-rich-groups">
               <ResultGroup label={label("menu_people") || "People"} cards={sa.people} kind="person" query={keyword} semantic={semantic} />
@@ -141,6 +142,7 @@ function SearchComponent() {
               </div>
             </section>
           )}
+          </div>
         </div>);
       }
     })

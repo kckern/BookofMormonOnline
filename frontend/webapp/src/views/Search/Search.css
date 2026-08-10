@@ -170,6 +170,18 @@ html[data-theme="dark"] .result-card{ background: #2b2b2b; border-color: #444; c
 html[data-theme="dark"] .result-card h6{ color: #fff; }
 html[data-theme="dark"] .result-card p{ color: #aaa; }
 
+/* Wide screens: two columns — media panels on the LEFT, verse results on the RIGHT. */
+@media (min-width: 1200px) {
+    .search-rich-layout.has-media {
+        display: grid;
+        grid-template-columns: minmax(300px, 38%) 1fr;
+        gap: 1.5em;
+        align-items: start;
+    }
+    .search-rich-layout.has-media .search-rich-groups { margin: 0; }
+    .search-rich-layout.has-media .result-group.verses { margin: 0; }
+}
+
 .resultItem .text{
 
     flex-grow: 1;
