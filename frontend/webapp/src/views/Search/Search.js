@@ -133,7 +133,7 @@ function SearchComponent() {
           )}
           {verses.length > 0 && (
             <section className="result-group verses">
-              <h4 className="result-group-header">Verses <span className="count">({verseTotal})</span></h4>
+              {groupCount > 0 && <h4 className="result-group-header">Verses <span className="count">({verseTotal})</span></h4>}
               <div className="verse-list">
                 {verses.map((item, i) => (
                   <VerseResult key={item.slug || i} item={item} keyword={keyword} semantic={semantic}

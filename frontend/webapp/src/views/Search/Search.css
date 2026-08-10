@@ -357,3 +357,5 @@ html[data-theme="dark"] .result-card p{ color: #aaa; }
 }
 
 .semantic-hl { background: rgba(255, 214, 102, 0.5); font-style: normal; border-radius: 2px; }
+/* Mode toggle hidden until rich ("Everything") search is ready to release. */
+.search-mode-toggle { display: none; }
