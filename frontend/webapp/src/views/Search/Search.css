@@ -91,6 +91,85 @@ html[data-theme="dark"] .search-mode-toggle button + button{ border-left-color: 
 html[data-theme="dark"] .search-mode-toggle button:hover{ color: #fff; }
 html[data-theme="dark"] .search-mode-toggle button.active{ background: #d0d0d0; color: #111; border-left-color: #d0d0d0; }
 
+/* ============================================================
+   Rich ("Everything") results — entity panels + rails, surfaced
+   above the verse list.
+   ============================================================ */
+.search-rich-groups{
+    display: grid;
+    gap: 1em;
+    margin: 1.2em 0 1.6em;
+}
+.result-group{
+    border: 1px solid #e0e0e0;
+    border-radius: 0.6em;
+    background: #fafafa;
+    padding: 0.7em 0.9em 0.9em;
+}
+.result-group.verses{ border: 0; background: none; padding: 0; }
+.result-group-header{
+    margin: 0 0 0.6em;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #333;
+}
+.result-group-header .count{ margin-left: 0.3ex; color: #999; font-weight: 400; font-size: 0.85em; }
+
+/* People / Places — chip rail */
+.chip-row{ display: flex; flex-wrap: wrap; gap: 0.5em; }
+.result-chip{
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45em;
+    padding: 0.22em 0.8em 0.22em 0.3em;
+    border: 1px solid #cbcbcb;
+    border-radius: 2em;
+    background: #fff;
+    color: #333;
+    text-decoration: none;
+    font-size: 0.82rem;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: border-color 0.12s, box-shadow 0.12s;
+}
+.result-chip:hover{ border-color: #888; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12); }
+.result-chip.place{ padding-left: 0.8em; }
+.result-chip img{
+    width: 1.7em; height: 1.7em;
+    border-radius: 50%; object-fit: cover;
+    border: 1px solid #ddd; background: #eee;
+}
+
+/* Matters / Commentary / Narration / Pages — card grid */
+.card-list{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 0.6em;
+}
+.result-card{
+    display: block;
+    border: 1px solid #e0e0e0;
+    border-radius: 0.5em;
+    background: #fff;
+    padding: 0.6em 0.75em;
+    text-decoration: none;
+    color: #333;
+    transition: border-color 0.12s, box-shadow 0.12s;
+}
+.result-card:hover{ border-color: #888; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
+.result-card h6{ margin: 0 0 0.25em; font-size: 0.88rem; font-weight: 800; color: #000; }
+.result-card p{ margin: 0; font-size: 0.8rem; color: #555; line-height: 1.35; }
+.result-card.event{ display: flex; align-items: baseline; gap: 0.6em; }
+.result-card.event .event-date{ flex: 0 0 auto; font-weight: 700; color: #888; font-size: 0.76rem; }
+
+html[data-theme="dark"] .result-group{ border-color: #3a3a3a; background: #262626; }
+html[data-theme="dark"] .result-group-header{ color: #ddd; }
+html[data-theme="dark"] .result-chip{ background: #333; border-color: #555; color: #eee; }
+html[data-theme="dark"] .result-chip:hover{ border-color: #888; }
+html[data-theme="dark"] .result-card{ background: #2b2b2b; border-color: #444; color: #ddd; }
+html[data-theme="dark"] .result-card h6{ color: #fff; }
+html[data-theme="dark"] .result-card p{ color: #aaa; }
+
 .resultItem .text{
 
     flex-grow: 1;

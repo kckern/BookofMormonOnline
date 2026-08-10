@@ -119,17 +119,28 @@ function SearchComponent() {
               </button>
             </div>
           )}
-          {verses.map((item, i) => (
-            <VerseResult key={item.slug || i} item={item} keyword={keyword} semantic={semantic}
-              keywordRender={(t) => highlight(keyword, t)} />
-          ))}
-          <ResultGroup label={label("menu_people") || "People"} cards={r.searchAll.people} kind="person" query={keyword} semantic={semantic} />
-          <ResultGroup label={label("menu_places") || "Places"} cards={r.searchAll.places} kind="place" query={keyword} semantic={semantic} />
-          <ResultGroup label={label("menu_matters", [-1]) || "Matters"} cards={r.searchAll.matters} kind="matter" query={keyword} semantic={semantic} />
-          <ResultGroup label="Commentary" cards={r.searchAll.commentary} kind="commentary" query={keyword} semantic={semantic} />
-          <ResultGroup label="Narration" cards={r.searchAll.narration} kind="narration" query={keyword} semantic={semantic} />
-          <ResultGroup label="Pages" cards={r.searchAll.pages} kind="page" query={keyword} semantic={semantic} />
-          <ResultGroup label="Events" cards={r.searchAll.events} kind="event" query={keyword} semantic={semantic} />
+          {groupCount > 0 && (
+            <div className="search-rich-groups">
+              <ResultGroup label={label("menu_people") || "People"} cards={sa.people} kind="person" query={keyword} semantic={semantic} />
+              <ResultGroup label={label("menu_places") || "Places"} cards={sa.places} kind="place" query={keyword} semantic={semantic} />
+              <ResultGroup label={label("menu_matters", [-1]) || "Matters"} cards={sa.matters} kind="matter" query={keyword} semantic={semantic} />
+              <ResultGroup label="Commentary" cards={sa.commentary} kind="commentary" query={keyword} semantic={semantic} />
+              <ResultGroup label="Narration" cards={sa.narration} kind="narration" query={keyword} semantic={semantic} />
+              <ResultGroup label="Pages" cards={sa.pages} kind="page" query={keyword} semantic={semantic} />
+              <ResultGroup label="Events" cards={sa.events} kind="event" query={keyword} semantic={semantic} />
+            </div>
+          )}
+          {verses.length > 0 && (
+            <section className="result-group verses">
+              <h4 className="result-group-header">Verses <span className="count">({verseTotal})</span></h4>
+              <div className="verse-list">
+                {verses.map((item, i) => (
+                  <VerseResult key={item.slug || i} item={item} keyword={keyword} semantic={semantic}
+                    keywordRender={(t) => highlight(keyword, t)} />
+                ))}
+              </div>
+            </section>
+          )}
         </div>);
       }
     })
