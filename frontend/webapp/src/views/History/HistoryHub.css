@@ -169,10 +169,7 @@
   color: #333;
 }
 .historyCard-quoteText {
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  display: block;
 }
 .historyCard-quoteBy {
   display: block;

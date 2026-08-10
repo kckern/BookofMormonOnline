@@ -87,10 +87,8 @@ function Hero({ section, list }) {
   return <HeroPlaceholder icon={section.icon} />;
 }
 
-const clampText = (html, n) => {
-  const t = String(html || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-  return t.length > n ? t.slice(0, n).replace(/\s+\S*$/, "") + "…" : t;
-};
+// Plain text of a teaser (no truncation — the data layer already right-sizes it).
+const plainText = (html) => String(html || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
 // Pick a doc to preview: prefer one with a quote, else a teaser.
 const pickPreview = (list) => {
@@ -112,7 +110,7 @@ function Sampler({ list }) {
         <span className="historyCard-quoteText">
           {isQuote
             ? <>&ldquo;{renderMoneyQuote(doc.money_quote, doc.mini_quote)}&rdquo;</>
-            : clampText(doc.teaser, 220)}
+            : plainText(doc.teaser)}
         </span>
         {by ? <cite className="historyCard-quoteBy">— {by}</cite> : null}
       </blockquote>
