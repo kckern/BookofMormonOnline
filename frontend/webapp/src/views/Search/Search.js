@@ -73,11 +73,11 @@ function SearchComponent() {
       <button
         className={mode === "keyword" ? "active" : ""}
         onClick={() => history.push(buildSearchPath(getSearchSlug(keyword), "keyword"))}
-      >{label("search_verses_only", [-1]) || "Verses"}</button>
+      >{(label("search_verses_only", [-1]) || "").trim() || "Verses"}</button>
       <button
         className={mode === "rich" ? "active" : ""}
         onClick={() => history.push(buildSearchPath(getSearchSlug(keyword), "rich"))}
-      >{label("search_everything", [-1]) || "Everything"}</button>
+      >{(label("search_everything", [-1]) || "").trim() || "Everything"}</button>
     </div>
   );
 

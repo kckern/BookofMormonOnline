@@ -59,6 +59,38 @@ html[data-theme="dark"] .search h5 button:hover{
     color: #fff;
 }
 
+/* Search mode toggle — a clean house-style segmented control (Verses/Everything). */
+.search-mode-toggle{
+    display: inline-flex;
+    border: 1px solid #cbcbcb;
+    border-radius: 2em;
+    overflow: hidden;
+    background: #f2f2f2;
+}
+.search-mode-toggle button{
+    border: 0;
+    background: transparent;
+    color: #555;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    padding: 0.3em 1.1em;
+    cursor: pointer;
+    transition: background-color 0.12s, color 0.12s;
+}
+.search-mode-toggle button + button{ border-left: 1px solid #d8d8d8; }
+.search-mode-toggle button:hover{ color: #000; }
+.search-mode-toggle button.active{
+    background: #333;
+    color: #fff;
+    border-left-color: #333;
+}
+html[data-theme="dark"] .search-mode-toggle{ background: #2e2e2e; border-color: #555; }
+html[data-theme="dark"] .search-mode-toggle button{ color: #bbb; }
+html[data-theme="dark"] .search-mode-toggle button + button{ border-left-color: #4a4a4a; }
+html[data-theme="dark"] .search-mode-toggle button:hover{ color: #fff; }
+html[data-theme="dark"] .search-mode-toggle button.active{ background: #d0d0d0; color: #111; border-left-color: #d0d0d0; }
+
 .resultItem .text{
 
     flex-grow: 1;
