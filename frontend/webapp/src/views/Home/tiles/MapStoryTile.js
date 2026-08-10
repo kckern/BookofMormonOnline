@@ -320,7 +320,6 @@ export default function MapStoryTile({ data }) {
           <MapStoryMoveCard
             move={{ ...currentMove, detached: legs[step]?.detached }}
             step={step}
-            moveCount={moves.length}
           />
         )}
       </div>

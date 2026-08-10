@@ -1,6 +1,6 @@
 import React from "react";
 import { openScripture } from "./ScripturePopup";
-import { label } from "src/models/Utils";
+import { label, tr } from "src/models/Utils";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 
 const placeLabel = (name, slug) => name || slug;
@@ -26,13 +26,10 @@ const travelerText = (move) => {
 };
 
 /** Compact current-beat caption; the people themselves now move on the map. */
-export function MapStoryMoveCard({ move, step, moveCount }) {
+export function MapStoryMoveCard({ move, step }) {
   const travelers = travelerText(move);
   return (
-    <section
-      className="mapStoryBeat"
-      aria-label={`Move ${step + 1} of ${moveCount}: ${placeLabel(move.startName, move.start)} to ${placeLabel(move.endName, move.end)}`}
-    >
+    <section className="mapStoryBeat">
       <div className="mapStoryBeatIndex" aria-hidden="true">{step + 1}</div>
       <div className="mapStoryBeatBody">
         <div className="mapStoryLeg">
@@ -63,7 +60,7 @@ export function MapStoryMoveCard({ move, step, moveCount }) {
         {travelers ? (
           <p className="mapStoryTravelerText">
             <span aria-hidden="true">●</span>
-            <strong>Traveling:</strong> {travelers}
+            <strong>{tr("mapstory_traveling", "Traveling:")}</strong> {travelers}
           </p>
         ) : null}
       </div>
@@ -73,10 +70,10 @@ export function MapStoryMoveCard({ move, step, moveCount }) {
 
 export function MapStoryCompleteCard({ title, description, stopCount, moveCount }) {
   return (
-    <section className="mapStoryBeat mapStoryComplete" aria-label="Journey complete">
+    <section className="mapStoryBeat mapStoryComplete">
       <div className="mapStoryCompleteMark" aria-hidden="true">✓</div>
       <div className="mapStoryBeatBody">
-        <div className="mapStoryCompleteHeading">Journey complete</div>
+        <div className="mapStoryCompleteHeading">{tr("mapstory_complete", "Journey complete")}</div>
         {description ? <p className="mapStoryDesc">{description}</p> : null}
         <div className="mapStoryCompleteMeta">
           {title} · {label("mapstory_meta", [moveCount, stopCount])}
