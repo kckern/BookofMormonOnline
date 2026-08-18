@@ -8,6 +8,7 @@ import witnessIcon from "src/views/People/svg/group.svg";
 import translationIcon from "src/views/_Common/svg/book.svg";
 import josephIcon from "src/views/People/svg/prophet.svg";
 import manuscriptIcon from "src/views/_Common/svg/facsimiles.svg";
+import newYorkIcon from "src/views/_Common/svg/map-pin.svg";
 
 const person = (slug) => `${assetUrl}/history/witnesses/people/${slug}.jpg`;
 
@@ -82,11 +83,11 @@ export const HISTORY_SECTIONS = [
     key: "josephNewYork",
     title: "Joseph Smith in New York",
     path: "/history/joseph-smith-new-york", // reserved; not routed yet
-    icon: josephIcon,
+    icon: newYorkIcon,
     blurb: "The prophet's early years and the coming forth of the record in New York.",
     unit: "documents",
     status: "placeholder",
-    hero: { type: "placeholder", icon: josephIcon },
+    hero: { type: "placeholder", icon: newYorkIcon },
   },
 ];
 
