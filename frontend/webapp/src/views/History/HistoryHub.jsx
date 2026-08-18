@@ -15,6 +15,7 @@ const ARCHIVE_BY_KEY = {
   translation: "translation",
   reception: "reception",
   witnesses: "witnesses",
+  lostPages: "lost-116-pages",
 };
 
 const thumbUrl = (id) => `${assetUrl}/history/thumbs/${String(id).padStart(4, "0")}`;
@@ -118,6 +119,22 @@ function Sampler({ list }) {
   );
 }
 
+// A non-clickable "coming soon" tile: hero + title + badge + blurb, no archive
+// fetch, no signal or sampler. Distinct component so the live Card's hooks stay
+// unconditional (react-hooks/rules-of-hooks).
+function PlaceholderCard({ section }) {
+  return (
+    <div className="historyCard historyCard--placeholder">
+      <Hero section={section} list={null} />
+      <div className="historyCard-body">
+        <div className="historyCard-name">{section.title}</div>
+        <div className="historyCard-badge">Coming Soon</div>
+        <div className="historyCard-blurb">{section.blurb}</div>
+      </div>
+    </div>
+  );
+}
+
 function Card({ section, list }) {
   const signal = useMemo(() => {
     if (section.signal) return section.signal; // static (Witnesses)
@@ -152,14 +169,18 @@ export default function HistoryHub() {
             <div className="historyHub-kicker">The Book of Mormon in History</div>
             <h1 className="historyHub-title">Historical Sources</h1>
             <p className="historyHub-lede">
-              Four collections tracing the record from its coming forth to its reception in the world.
+              Five collections tracing the record from its coming forth to its reception in the world — with more on the way.
             </p>
             <div className="historyHub-rule" />
           </div>
           <div className="historyHub-grid">
-            {HISTORY_SECTIONS.map((s) => (
-              <Card key={s.key} section={s} list={lists[s.key]} />
-            ))}
+            {HISTORY_SECTIONS.map((s) =>
+              s.status === "placeholder" ? (
+                <PlaceholderCard key={s.key} section={s} />
+              ) : (
+                <Card key={s.key} section={s} list={lists[s.key]} />
+              )
+            )}
           </div>
         </div>
       </div>
