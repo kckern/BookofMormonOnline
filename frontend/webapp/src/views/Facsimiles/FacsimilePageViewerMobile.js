@@ -1,242 +1,366 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
-import { useParams, useHistory } from "react-router-dom";
-import { useSwipe } from "../../models/Utils";
-import { assetUrl } from 'src/models/BoMOnlineAPI';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { useParams, useHistory, useLocation } from "react-router-dom";
 import "./FacsimilePageViewer.scss";
-import { getRefFromIndex, PageOverlay } from "./Facsimiles";
-import PageImage from "./PageImage";
-import { generateReference, lookupReference } from "scripture-guide";
+import { lookupReference } from "scripture-guide";
+import { useFaxHighlight } from "./useFaxHighlight";
+import FaxScrollPageRow from "./FaxScrollPageRow";
+import FaxVerseModal from "./FaxVerseModal";
+import { useFaxPageVerses } from "./useFaxPageVerses";
+import { readPath } from "../_Common/ScriptureExcerpt";
 
 /**
- * FacsimilePageViewerMobile - Mobile version of the facsimile page viewer
- * Displays a single page at a time, optimized for mobile screens
+ * FacsimilePageViewerMobile — continuous vertical scroll of the whole edition,
+ * one page per row, with a rail (page # · reference) above each page and a
+ * sticky header tracking the current page. Navigation: fling scrubber + preview,
+ * and jump-to-reference. See docs/plans/2026-07-24-fax-mobile-infinite-scroll.md
+ *
+ * Virtualization: rows are a uniform height derived from a single measured
+ * edition aspect ratio (scanned pages of one edition are near-identical size),
+ * so only the pages near the viewport mount while spacers hold total height —
+ * scroll position stays stable with no rug-pull.
  */
+const RAIL_H = 34;   // px — inline rail above each page
+const BUFFER = 2;    // rows rendered beyond the viewport each side
+
 function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = [], currentVolumeIndex = -1 }) {
   const history = useHistory();
   const { pageNumber } = useParams();
+  const location = useLocation();
 
-  const [currentPageIndex, setCurrentPageIndex] = useState(0);
-  const [sliderValue, setSliderValue] = useState(0);
-  const sliderRef = useRef(null);
+  const scrollRef = useRef(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [viewportH, setViewportH] = useState(0);
+  const [containerW, setContainerW] = useState(0);
+  const [aspect, setAspect] = useState(1 / 1.5); // w/h, refined once a scan loads
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-  const totalPages = leafIndex.length;
+  const [scrubOpen, setScrubOpen] = useState(false);
+  const [scrubValue, setScrubValue] = useState(0);
 
-  // Check if the pageNumber contains any letters (A-z), which means it's a reference
+  // Tapped verse → inspector drawer. `openList` is the tapped page's verse list so
+  // the drawer's prev/next step within the page.
+  const [openVerse, setOpenVerse] = useState(null);
+  const [openList, setOpenList] = useState([]);
+  const onOpenVerse = useCallback((verse, list) => { setOpenVerse(verse); setOpenList(list || []); }, []);
+  const navVerse = useCallback((dir) => {
+    setOpenVerse((cur) => {
+      if (!cur) return cur;
+      const idx = openList.findIndex((v) => v.verse_id === cur.verse_id);
+      const next = idx >= 0 ? openList[idx + (dir === "next" ? 1 : -1)] : null;
+      return next || cur;
+    });
+  }, [openList]);
+
+  const total = leafIndex.length;
+  const didInit = useRef(false);
+  const lastWrittenSlug = useRef(null);
+
   const hasLetters = /[A-Za-z]/.test(pageNumber || '');
+  const refParam = new URLSearchParams(location.search).get('ref') || (hasLetters ? pageNumber : null);
+  const highlight = useFaxHighlight(item.slug, refParam);
 
-  // Initialize page index based on URL
+  // Uniform row geometry from container width + measured aspect.
+  const pageH = containerW > 0 ? Math.round(containerW / aspect) : 0;
+  const ROW = pageH > 0 ? RAIL_H + pageH : 0;
+  const ready = ROW > 0;
+
+  // ---- Measure container + viewport (rAF-deferred + change-guarded so the
+  //      ResizeObserver callback never re-enters synchronously → no loop warning) ----
   useEffect(() => {
-    // Special handling for the last page (or any specific page)
-    if (pageNumber === String(item.pages) || parseInt(pageNumber) === item.pages) {
-      // Direct check for the last page by its number
-      const lastPageIndex = leafIndex.findIndex(leaf => 
-        leaf.pageNumInt === parseInt(pageNumber) || `${leaf.pageSlugLeaf}` === pageNumber
-      );
-      
-      if (lastPageIndex !== -1) {
-        setCurrentPageIndex(lastPageIndex);
-        setSliderValue(lastPageIndex);
-        return;
-      }
-    }
-    
-    // Handle reference URLs (containing A-Z letters)
-    if (hasLetters) {
+    const el = scrollRef.current;
+    if (!el) return undefined;
+    let raf = null;
+    const read = () => {
+      raf = null;
+      setContainerW((w) => (w === el.clientWidth ? w : el.clientWidth));
+      setViewportH((h) => (h === el.clientHeight ? h : el.clientHeight));
+    };
+    const schedule = () => { if (raf == null) raf = requestAnimationFrame(read); };
+    read();
+    const ro = new ResizeObserver(schedule);
+    ro.observe(el);
+    return () => { if (raf != null) cancelAnimationFrame(raf); try { ro.disconnect(); } catch {} };
+  }, []);
+
+  // ---- Measure the edition's aspect ratio once (from a real page scan) ----
+  useEffect(() => {
+    const probe = leafIndex.find((l) => l?.thumbAssetUrl || l?.pageAssetUrl);
+    if (!probe) return undefined;
+    let cancelled = false;
+    const img = new Image();
+    img.onload = () => {
+      if (!cancelled && img.naturalHeight > 0) setAspect(img.naturalWidth / img.naturalHeight);
+    };
+    img.src = probe.thumbAssetUrl || probe.pageAssetUrl;
+    return () => { cancelled = true; };
+  }, [item.slug]);
+
+  // ---- rAF-throttled scroll ----
+  const rafRef = useRef(null);
+  const onScroll = useCallback(() => {
+    if (rafRef.current != null) return;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
+      const el = scrollRef.current;
+      if (el) setScrollTop(el.scrollTop);
+    });
+  }, []);
+  useEffect(() => () => { if (rafRef.current != null) cancelAnimationFrame(rafRef.current); }, []);
+
+  // ---- Resolve a URL page/ref to a leaf index ----
+  const resolveIndex = useCallback((raw) => {
+    if (raw == null) return 0;
+    if (/[A-Za-z]/.test(raw)) {
       try {
-        const refs = lookupReference(pageNumber);
-        const verseIds = refs?.verse_ids || [];
-        
-        if (verseIds.length > 0) {
-          // Get the minimum verse ID to find the first page containing this reference
-          const minVerseId = Math.min(...verseIds);
-          
-          // Look for a page containing this verse ID
+        const verseIds = lookupReference(raw)?.verse_ids || [];
+        if (verseIds.length) {
+          const minId = Math.min(...verseIds);
           for (let i = 0; i < leafIndex.length; i++) {
-            const page = leafIndex[i];
-            if (page?.pageReference) {
-              const pageVerseIds = lookupReference(page.pageReference)?.verse_ids || [];
-              if (pageVerseIds.includes(minVerseId)) {
-                setCurrentPageIndex(i);
-                setSliderValue(i);
-                return;
-              }
-            }
+            const pr = leafIndex[i]?.pageReference;
+            if (pr && (lookupReference(pr)?.verse_ids || []).includes(minId)) return i;
           }
         }
-        
-        // If we can't find a match, just default to page 1
-        setCurrentPageIndex(0);
-        setSliderValue(0);
-        return;
-      } catch (e) {
-        // If reference parsing fails, default to page 1
-        setCurrentPageIndex(0);
-        setSliderValue(0);
-        return;
-      }
+      } catch { /* fall through */ }
+      return 0;
     }
-    
-    // Standard page lookup
-    const index = leafIndex.findIndex(leaf => `${leaf.pageSlugLeaf}` === pageNumber);
-    
-    if (index !== -1) {
-      setCurrentPageIndex(index);
-      setSliderValue(index);
-    } else {
-      // If page not found, check if it's the last page
-      const lastPageNum = leafIndex[leafIndex.length - 1]?.pageSlugLeaf;
-      if (lastPageNum && `${lastPageNum}` === pageNumber) {
-        // It's the last page but wasn't found with exact match - handle special case
-        const lastIndex = leafIndex.length - 1;
-        setCurrentPageIndex(lastIndex);
-        setSliderValue(lastIndex);
+    // Digits beyond the page count are a verse id — find its page.
+    const n = parseInt(raw, 10);
+    if (Number.isFinite(n) && n > leafIndex.length) {
+      for (let i = 0; i < leafIndex.length; i++) {
+        const pr = leafIndex[i]?.pageReference;
+        if (pr && (lookupReference(pr)?.verse_ids || []).includes(n)) return i;
       }
+      return 0;
     }
-  }, [pageNumber, leafIndex, item.pages]);
+    const idx = leafIndex.findIndex((l) => `${l.pageSlugLeaf}` === `${raw}`);
+    return idx !== -1 ? idx : 0;
+  }, [leafIndex]);
 
-  // Preload adjacent pages
-  const getPagesToPreload = useCallback(() => {
-    if (!leafIndex) return [];
-    const preloadRange = 3;
-    const startIdx = Math.max(0, currentPageIndex - preloadRange);
-    const endIdx = Math.min(leafIndex.length - 1, currentPageIndex + preloadRange);
-    return leafIndex.slice(startIdx, endIdx + 1);
-  }, [currentPageIndex, leafIndex]);
+  const scrollToIndex = useCallback((idx, smooth) => {
+    const el = scrollRef.current;
+    if (!el || !ready) return;
+    const reduce = typeof window !== 'undefined' && window.matchMedia
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const useSmooth = smooth && !reduce;
+    el.scrollTo({ top: idx * ROW, behavior: useSmooth ? 'smooth' : 'auto' });
+    // For instant jumps, sync the windowing state immediately so the target rows
+    // mount in the same commit (no blank frame). Smooth jumps let onScroll drive it.
+    if (!useSmooth) setScrollTop(idx * ROW);
+  }, [ready, ROW]);
 
+  // ---- Initial deep-link scroll + external URL changes (edition switch / ref jump) ----
   useEffect(() => {
-    const pagesToLoad = getPagesToPreload();
-    pagesToLoad.forEach(page => {
-      const img = new Image();
-      img.src = page.pageAssetUrl;
-    });
-  }, [getPagesToPreload]);
+    if (!ready) return;
+    // Ignore URL changes we caused ourselves via scroll sync.
+    if (didInit.current && pageNumber === lastWrittenSlug.current) return;
+    const idx = resolveIndex(pageNumber);
+    setCurrentIndex(idx);
+    setScrubValue(idx);
+    scrollToIndex(idx, didInit.current); // instant on first paint, smooth thereafter
+    didInit.current = true;
+  }, [ready, pageNumber, resolveIndex, scrollToIndex]);
 
-  const currentPage = leafIndex[currentPageIndex] || null;
-
-  // Navigation handlers
-  const handlePageChange = useCallback((newIndex) => {
-    if (newIndex < 0 || newIndex >= leafIndex.length) return;
-    
-    const targetPage = leafIndex[newIndex];
-    if (targetPage) {
-      history.push(`/fax/${item.slug}/${targetPage.pageSlugLeaf}`);
+  // ---- Deep-link to a verse (ref slug or verse id) opens the inspector drawer ----
+  // The URL scrolls to the page (above); here we also resolve the verse and open the
+  // drawer. A raw verse id is normalized to its ref in the URL (never persisted).
+  const urlVerseId = useMemo(() => {
+    const raw = pageNumber;
+    if (!raw) return null;
+    if (/[A-Za-z]/.test(raw)) {
+      try { const ids = lookupReference(raw)?.verse_ids || []; return ids.length ? Math.min(...ids) : null; } catch { return null; }
     }
-  }, [history, item.slug, leafIndex]);
+    const n = parseInt(raw, 10);
+    return (Number.isFinite(n) && n > total) ? n : null; // digits beyond page count = verse id
+  }, [pageNumber, total]);
 
-  // Navigate one page at a time for mobile
-  const handleSwipeLeft = useCallback(() => {
-    const newIndex = Math.min(totalPages - 1, currentPageIndex + 1);
-    handlePageChange(newIndex);
-  }, [currentPageIndex, totalPages, handlePageChange]);
+  const targetLeaf = useMemo(() => {
+    if (urlVerseId == null) return null;
+    return leafIndex.find((l) => l.pageReference && (lookupReference(l.pageReference)?.verse_ids || []).includes(urlVerseId)) || null;
+  }, [urlVerseId, leafIndex]);
 
-  const handleSwipeRight = useCallback(() => {
-    const newIndex = Math.max(0, currentPageIndex - 1);
-    handlePageChange(newIndex);
-  }, [currentPageIndex, handlePageChange]);
+  const deepLink = useFaxPageVerses(urlVerseId != null ? item.slug : null, targetLeaf);
+  const deepLinkDone = useRef(false);
+  useEffect(() => { deepLinkDone.current = false; }, [urlVerseId]);
+  useEffect(() => {
+    if (urlVerseId == null || deepLinkDone.current || openVerse) return;
+    const v = deepLink.verses.find((x) =>
+      x.verse_id === urlVerseId || (lookupReference(x.ref)?.verse_ids || []).includes(urlVerseId));
+    if (!v) return;
+    deepLinkDone.current = true;
+    setOpenVerse(v);
+    setOpenList(deepLink.verses);
+    const slug = (v.ref || "").replace(/[ :]+/g, ".").toLowerCase();
+    if (slug && slug !== pageNumber) { lastWrittenSlug.current = slug; history.replace(`/fax/${item.slug}/${slug}`); }
+  }, [urlVerseId, deepLink, openVerse, pageNumber, history, item.slug]);
 
-  const swipeHandlers = useSwipe({
-    onSwipedLeft: handleSwipeLeft,
-    onSwipedRight: handleSwipeRight
-  });
+  // While the verse drawer is open, hold the ref permalink in the URL — don't let the
+  // scroll-sync overwrite it with the page number (read via ref so the sync effect,
+  // which isn't keyed on openVerse, always sees the live value).
+  const openVerseRef = useRef(null);
+  useEffect(() => { openVerseRef.current = openVerse; }, [openVerse]);
 
-  // Arrow keys: left/right page, up/down volumes
+  // ---- Track the centered page → debounced URL sync ----
+  const syncTimer = useRef(null);
+  useEffect(() => {
+    if (!ready) return;
+    const idx = Math.max(0, Math.min(total - 1, Math.floor((scrollTop + viewportH / 2) / ROW)));
+    if (idx !== currentIndex) {
+      setCurrentIndex(idx);
+      if (!scrubOpen) setScrubValue(idx);
+    }
+    const slug = leafIndex[idx]?.pageSlugLeaf;
+    if (slug != null && `${slug}` !== `${lastWrittenSlug.current}`) {
+      clearTimeout(syncTimer.current);
+      syncTimer.current = setTimeout(() => {
+        if (openVerseRef.current) return; // keep the ref permalink while the drawer is open
+        lastWrittenSlug.current = `${slug}`;
+        history.replace(`/fax/${item.slug}/${slug}`);
+      }, 180);
+    }
+  }, [scrollTop, viewportH, ROW, ready, total]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => clearTimeout(syncTimer.current), []);
+
+  // ---- Preload scans just beyond the mounted window ----
+  const start = ready ? Math.max(0, Math.floor(scrollTop / ROW) - BUFFER) : 0;
+  const end = ready ? Math.min(total - 1, Math.ceil((scrollTop + viewportH) / ROW) + BUFFER) : -1;
+  useEffect(() => {
+    if (!ready) return;
+    for (let i = end + 1; i <= Math.min(total - 1, end + 3); i++) {
+      const u = leafIndex[i]?.pageAssetUrl;
+      if (u) { const img = new Image(); img.src = u; }
+    }
+  }, [end, ready, total, leafIndex]);
+
+  const rows = useMemo(() => {
+    if (!ready) return [];
+    const out = [];
+    for (let i = start; i <= end; i++) out.push(i);
+    return out;
+  }, [start, end, ready]);
+
+  const topSpacer = ready ? start * ROW : 0;
+  const bottomSpacer = ready ? Math.max(0, (total - 1 - end) * ROW) : 0;
+
+  const currentLeaf = leafIndex[currentIndex] || null;
+  const previewLeaf = leafIndex[scrubValue] || null;
+
+  // Volume up/down still switches edition, keeping the current page.
   useEffect(() => {
     const onKey = (e) => {
       if (e.defaultPrevented) return;
-      if (e.key === 'ArrowLeft') { e.preventDefault(); handleSwipeRight(); }
-      else if (e.key === 'ArrowRight') { e.preventDefault(); handleSwipeLeft(); }
-      else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      const tag = (e.target?.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
+      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
         if (!Array.isArray(volumeOrder) || currentVolumeIndex < 0) return;
-        const isUp = e.key === 'ArrowUp';
-        const nextIndex = isUp ? currentVolumeIndex - 1 : currentVolumeIndex + 1;
-        const next = volumeOrder[nextIndex];
+        const next = volumeOrder[currentVolumeIndex + (e.key === 'ArrowUp' ? -1 : 1)];
         if (!next) return;
         e.preventDefault();
-        const targetSlug = currentPage?.pageSlugLeaf;
-        const targetPath = targetSlug ? `/fax/${next.slug}/${targetSlug}` : `/fax/${next.slug}`;
-        history.push(targetPath);
+        const slug = currentLeaf?.pageSlugLeaf;
+        history.push(slug ? `/fax/${next.slug}/${slug}` : `/fax/${next.slug}`);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [handleSwipeLeft, handleSwipeRight, volumeOrder, currentVolumeIndex, history, currentPage?.pageSlugLeaf]);
+  }, [volumeOrder, currentVolumeIndex, history, currentLeaf?.pageSlugLeaf]);
 
-  // Slider interaction handlers
-  const handleSliderChange = useCallback((e) => {
-    setSliderValue(parseInt(e.target.value, 10));
-  }, []);
-
-  const handleSliderRelease = useCallback(() => {
-    handlePageChange(sliderValue);
-  }, [handlePageChange, sliderValue]);
-
-  // Page rendering
-  const renderPage = (page) => {
-    if (!page) {
-      // Return a blank placeholder for missing pages
-      return <div className="blankPage"></div>;
-    }
-    
-    // Special handling for the last page
-    const isLastPage = (pgoffset !== undefined && page.pageNumInt === totalPages - pgoffset) || 
-                       page.pageSlugLeaf === leafIndex[leafIndex.length - 1]?.pageSlugLeaf;
-    
+  const renderRow = (i) => {
+    const leaf = leafIndex[i];
+    if (!leaf) return null;
     return (
-      <PageImage
-        src={page.pageAssetUrl}
-        previewSrc={page.thumbAssetUrl}
-        alt={`Page ${page.pageSlugLeaf}`}
-        label={page.pageReference || `Page ${page.pageSlugLeaf}`}
-        className={isLastPage ? "last-page" : ""}
+      <FaxScrollPageRow
+        key={leaf.leafCursor ?? i}
+        leaf={leaf}
+        row={ROW}
+        pageH={pageH}
+        version={item.slug}
+        highlight={highlight}
+        onOpenVerse={onOpenVerse}
       />
     );
   };
 
+  const submitJump = (e) => {
+    e.preventDefault();
+    const raw = e.target.elements.jumpInput.value.trim();
+    if (!raw) return;
+    const idx = resolveIndex(raw);
+    setScrubOpen(false);
+    scrollToIndex(idx, false); // instant — smooth across hundreds of pages is janky
+  };
+
   return (
-    <div className="faxPageViewer mobile" style={{ maxHeight: 'none' }} {...swipeHandlers}>
-      <div className="pageReferences">
-        <h6>{currentPage?.pageReference || ''}</h6>
-      </div>
-      <div className="pagesContainer">
-        <div className="pageContainer mobile">
-          <div className="page">
-            {renderPage(currentPage)}
-          </div>
-        </div>
+    <div className="faxMobileViewer">
+      {/* Virtualized scroll column */}
+      <div className="faxScrollColumn" ref={scrollRef} onScroll={onScroll}>
+        {!ready ? (
+          <div className="faxScrollLoading">Loading…</div>
+        ) : (
+          <>
+            <div style={{ height: topSpacer }} aria-hidden="true" />
+            {rows.map(renderRow)}
+            <div style={{ height: bottomSpacer }} aria-hidden="true" />
+          </>
+        )}
       </div>
 
-      <div className="facsimile-navigation mobile">
+      {/* Floating trigger (bottom-left) for the page thumbscroller */}
+      {!scrubOpen && (
         <button
-          className="nav-button"
-          onClick={handleSwipeRight}
-          disabled={currentPageIndex <= 0}
-        >
-          &#8249;
-        </button>
-        <div className="slider-container">
-          <input
-            type="range"
-            min={0}
-            max={totalPages - 1}
-            step={1} // Move slider in steps of 1 for mobile (single pages)
-            value={sliderValue}
-            onChange={handleSliderChange}
-            onMouseUp={handleSliderRelease}
-            onTouchEnd={handleSliderRelease}
-            className="custom-slider"
-          />
+          type="button"
+          className="faxScrubFab"
+          aria-label="Navigate pages"
+          onClick={() => { setScrubValue(currentIndex); setScrubOpen(true); }}
+        >⇅</button>
+      )}
+
+      {/* Scrubber sheet — fling across the book + jump-to-reference */}
+      {scrubOpen && (
+        <div className="faxScrubSheet">
+          <div className="scrub-row">
+            <input
+              type="range"
+              min={0}
+              max={Math.max(0, total - 1)}
+              step={1}
+              value={scrubValue}
+              onChange={(e) => setScrubValue(parseInt(e.target.value, 10))}
+              onMouseUp={() => scrollToIndex(scrubValue, false)}
+              onTouchEnd={() => scrollToIndex(scrubValue, false)}
+              className="custom-slider"
+              aria-label="Scrub pages"
+            />
+            {previewLeaf && (
+              <div className="scrub-preview">
+                <img src={previewLeaf.thumbAssetUrl} alt="" aria-hidden="true" style={{ aspectRatio: String(aspect) }} />
+                <div className="preview-label">
+                  {previewLeaf.pageReference || `Page ${previewLeaf.faxPageSlug}`}
+                </div>
+              </div>
+            )}
+          </div>
+          <form className="scrub-jump" onSubmit={submitJump}>
+            <input
+              name="jumpInput"
+              type="text"
+              placeholder="Go to page or reference (e.g. Alma 32)"
+              aria-label="Jump to page or reference"
+            />
+            <button type="submit">Go</button>
+          </form>
         </div>
-        <button
-          className="nav-button"
-          onClick={handleSwipeLeft}
-          disabled={currentPageIndex >= totalPages - 1}
-        >
-          &#8250;
-        </button>
-      </div>
-      <div className="page-counter">
-        {currentPageIndex + 1} / {totalPages}
-      </div>
+      )}
+
+      {/* Verse inspector — renders as a right side-drawer on mobile */}
+      {openVerse && (
+        <FaxVerseModal
+          verse={openVerse}
+          version={item.slug}
+          onPrev={openList.findIndex((v) => v.verse_id === openVerse.verse_id) > 0 ? () => navVerse("prev") : undefined}
+          onNext={openList.findIndex((v) => v.verse_id === openVerse.verse_id) < openList.length - 1 ? () => navVerse("next") : undefined}
+          onRead={(v) => { const rp = readPath(v.ref); if (rp) history.push(rp); }}
+          onClose={() => setOpenVerse(null)}
+        />
+      )}
     </div>
   );
 }
