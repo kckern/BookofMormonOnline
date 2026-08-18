@@ -33,7 +33,7 @@
 .historyHub-lede {
   color: var(--ink-soft);
   font-size: 0.9rem;
-  white-space: nowrap;
+  max-width: 40em;
   margin: 0 auto;
 }
 .historyHub-rule {
@@ -68,6 +68,30 @@
   background: #fff;
   border-color: #000;
   bottom: 2px;
+}
+
+/* ── placeholder ("coming soon") tile — non-clickable, muted ── */
+.historyCard--placeholder {
+  background: #f3f3f3;
+  cursor: default;
+}
+.historyCard--placeholder:hover {
+  background: #f3f3f3; /* no hover lift/brighten */
+  border-color: var(--line);
+  bottom: 0;
+}
+.historyCard--placeholder .historyHero {
+  filter: grayscale(0.45);
+  opacity: 0.85;
+}
+.historyCard-badge {
+  font-family: "Roboto", "Roboto Condensed", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #888;
+  margin: 0.32em 0 0.45em;
 }
 
 /* ── hero (left column) — fills the card height, never panoramic ── */
@@ -187,6 +211,8 @@ html[data-theme="dark"] .historyHub {
 }
 html[data-theme="dark"] .historyCard { background: #222; border-color: #000; }
 html[data-theme="dark"] .historyCard:hover { background: #2b2b2b; }
+html[data-theme="dark"] .historyCard--placeholder { background: #1c1c1c; }
+html[data-theme="dark"] .historyCard--placeholder:hover { background: #1c1c1c; }
 html[data-theme="dark"] .historyCard-name { color: #eee; }
 html[data-theme="dark"] .historyCard-sig { color: #9a9a9a; }
 html[data-theme="dark"] .historyCard-sampler { border-top-color: #000; }
