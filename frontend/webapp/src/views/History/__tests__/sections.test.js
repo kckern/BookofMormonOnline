@@ -39,8 +39,9 @@ describe("sections", () => {
     expect(pickRandom(undefined)).toBeNull();
   });
 
-  test("the translation and joseph-smith sections are live", () => {
+  test("the translation, joseph-smith, and lostPages sections are live", () => {
     expect(getSection("translation").status).toBe("live");
     expect(getSection("josephSmith").status).toBe("live");
+    expect(getSection("lostPages").status).toBe("live");
   });
 });

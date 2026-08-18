@@ -1,11 +1,13 @@
 /** @format */
 // Single source of truth for the /history sections. Order = display order in the
-// hub (JS → Witnesses → Translation → Reception). Reorder here.
+// hub (JS → Witnesses → Translation → Reception → Lost Pages → JS in New York).
+// Reorder here.
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import receptionIcon from "src/views/_Common/svg/history.svg";
 import witnessIcon from "src/views/People/svg/group.svg";
 import translationIcon from "src/views/_Common/svg/book.svg";
 import josephIcon from "src/views/People/svg/prophet.svg";
+import manuscriptIcon from "src/views/_Common/svg/facsimiles.svg";
 
 const person = (slug) => `${assetUrl}/history/witnesses/people/${slug}.jpg`;
 
@@ -62,6 +64,29 @@ export const HISTORY_SECTIONS = [
     status: "live",
     hero: { type: "randomThumb", archive: "reception" },
     archive: "reception",
+  },
+  {
+    key: "lostPages",
+    title: "The Lost 116 Pages",
+    path: "/history/lost-116-pages",
+    icon: manuscriptIcon,
+    blurb: "The lost Book of Lehi manuscript — what it contained and how it vanished.",
+    unit: "documents",
+    status: "live",
+    // No thumbnails yet (rows have id: null); randomThumb falls back to the icon
+    // placeholder and auto-upgrades if thumbnails ever land.
+    hero: { type: "randomThumb", archive: "lost-116-pages" },
+    archive: "lost-116-pages",
+  },
+  {
+    key: "josephNewYork",
+    title: "Joseph Smith in New York",
+    path: "/history/joseph-smith-new-york", // reserved; not routed yet
+    icon: josephIcon,
+    blurb: "The prophet's early years and the coming forth of the record in New York.",
+    unit: "documents",
+    status: "placeholder",
+    hero: { type: "placeholder", icon: josephIcon },
   },
 ];
 

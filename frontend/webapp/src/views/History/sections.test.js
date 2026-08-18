@@ -1,12 +1,27 @@
 import { HISTORY_SECTIONS, getSection, pickRandom } from "./sections";
 
-test("registry has four sections in the JS → Witnesses → Translation → Reception order", () => {
+test("registry has six sections in hub display order", () => {
   expect(HISTORY_SECTIONS.map((s) => s.key)).toEqual([
     "josephSmith",
     "witnesses",
     "translation",
     "reception",
+    "lostPages",
+    "josephNewYork",
   ]);
+});
+
+test("lostPages is a live thumbnail-hero archive", () => {
+  const s = getSection("lostPages");
+  expect(s.status).toBe("live");
+  expect(s.archive).toBe("lost-116-pages");
+  expect(s.hero).toEqual({ type: "randomThumb", archive: "lost-116-pages" });
+});
+
+test("josephNewYork is a placeholder section", () => {
+  const s = getSection("josephNewYork");
+  expect(s.status).toBe("placeholder");
+  expect(s.hero.type).toBe("placeholder");
 });
 
 test("every section has the required display + hero fields", () => {
