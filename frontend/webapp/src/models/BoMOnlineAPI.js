@@ -12,6 +12,11 @@ const isWebappOnly = parseInt(currentPort) === 3000;
 const localTest = /localhost/.test(currentDomain) && false;
 
 export const assetUrl = "https://media.bookofmormon.online";
+// Base origin for the dynamic facsimile render API (/fax/render, /fax/boxes).
+// Default is SAME-ORIGIN ("") so the requests are reverse-proxied to the backend
+// regardless of the host the browser used. Set REACT_APP_RENDER_URL to point at
+// a separate render host.
+export const renderBaseUrl = process.env.REACT_APP_RENDER_URL || "";
 // Use empty string for localhost:3000 to leverage proxy, otherwise use appropriate API URL
 export const ApiBaseUrl = localTest ? "http://localhost:5005" : isWebappOnly ? "" : containedAPI;
 export const fbPixel = "4544125442358924";

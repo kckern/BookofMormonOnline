@@ -1,19 +1,30 @@
-import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import React, { useState, useCallback, useEffect, useRef, useMemo, useReducer } from "react";
 import { useParams, useHistory } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
 import { useSwipe } from "../../models/Utils";
-import { assetUrl } from 'src/models/BoMOnlineAPI';
+import { assetUrl, renderBaseUrl } from 'src/models/BoMOnlineAPI';
 import "./FacsimilePageViewer.scss";
-import { getRefFromIndex, PageOverlay } from "./Facsimiles";
+import { PageOverlay } from "./Facsimiles";
+import { useElementSize } from "./useElementSize";
 import PageImage from "./PageImage";
 import PageStack from "./PageStack";
+import FaxPageFlip, { FAX_FLIP_MS, FAX_SETTLE_MS } from "./FaxPageFlip";
+import { openScripture } from "../_Common/ScripturePopup";
+import { readPath } from "../_Common/ScriptureExcerpt";
+import { prefetchThumbs, isThumbWarm } from "./faxThumbCache";
 import { generateReference, lookupReference } from "scripture-guide";
+import { normalizeStackWidths } from "./faxGeometry";
+import { getFaxRatio, setFaxRatio } from "./faxRatioCache";
+import { useFaxVerses } from "./useFaxVerses";
+import FaxVerseCutout from "./FaxVerseCutout";
+import FaxVerseModal from "./FaxVerseModal";
+import { faxVerseReducer, initialFaxVerseState } from "./faxVerseState";
 
 /**
  * FacsimilePageViewer - Desktop version of the facsimile page viewer
  * Displays pages in a book-like spread with left and right pages
  */
-function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], currentVolumeIndex = -1 }) {
+function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], currentVolumeIndex = -1, onSeamOffset }) {
   const history = useHistory();
   const { pageNumber } = useParams();
   
@@ -25,87 +36,124 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   const [tooltipPosition, setTooltipPosition] = useState({ left: 0, top: 0 });
   const sliderRef = useRef(null);
   const pagesContainerRef = useRef(null);
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0, top: 0, viewportH: typeof window !== 'undefined' ? window.innerHeight : 0 });
+  const spreadInnerRef = useRef(null);
+  const containerSize = useElementSize(pagesContainerRef);
   const [leftRatio, setLeftRatio] = useState(0.75);
   const [rightRatio, setRightRatio] = useState(0.75);
-  
-  // Check if the pageNumber contains any letters (A-z), which means it's a reference
-  const hasLetters = /[A-Za-z]/.test(pageNumber || '');
-  const totalPages = leafIndex.length;
+  // Transient page-turn animation. `flip` holds the overlay payload; flipRef
+  // mirrors it so the imperative turn handlers can guard re-entrancy without
+  // waiting for a re-render. See docs/plans/2026-07-24-fax-page-turn-animation.md
+  const [flip, setFlip] = useState(null);
+  const [settling, setSettling] = useState(false); // true during the post-landing cross-fade
+  const flipRef = useRef(null);        // the in-flight turn (null = idle). Lock for animateTo.
+  const committedRef = useRef(false);  // has this turn already committed its navigation?
+  const committingRef = useRef(false);  // true only while the flip commits its OWN nav
+  const flipTimerRef = useRef(null);   // parent-level hard-clear backstop
+  const settleTimerRef = useRef(null); // cross-fade teardown timer
+  const prefersReducedMotion = typeof window !== 'undefined'
+    && typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Initialize page index based on URL
+  // Single teardown path for the flip overlay: releases the animateTo lock,
+  // clears the backstop timer, and unmounts the overlay. Safe to call from any
+  // code path (land, external nav, volume switch, unmount).
+  const cancelFlip = useCallback(() => {
+    if (flipTimerRef.current) { clearTimeout(flipTimerRef.current); flipTimerRef.current = null; }
+    if (settleTimerRef.current) { clearTimeout(settleTimerRef.current); settleTimerRef.current = null; }
+    flipRef.current = null;
+    setSettling(false);
+    setFlip(null);
+  }, []);
+
+  // Never leave a timer running past unmount.
+  useEffect(() => () => {
+    if (flipTimerRef.current) clearTimeout(flipTimerRef.current);
+    if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
+  }, []);
+  
+  // --- URL taxonomy (pure path, no query params) ---------------------------
+  // A path segment is one of:
+  //   • roman ("viii")                  -> front-matter page
+  //   • digits <= item.pages            -> page number (image-file)
+  //   • digits >  item.pages            -> a VERSE ID -> resolve to its ref (opens modal)
+  //   • letters+digits ("3.nephi.11.5") -> a scripture REF (opens modal)
+  const rawSlug = pageNumber || "";
+  const isRoman = /^[ivxlcdm]+$/i.test(rawSlug);
+  const isDigits = /^\d+$/.test(rawSlug);
+  const slugNum = parseInt(rawSlug, 10);
+  const isRefSlug = /[a-z]/i.test(rawSlug) && /\d/.test(rawSlug) && !isRoman;
+  const isVerseIdSlug = isDigits && Number.isFinite(slugNum) && slugNum > (parseInt(item.pages, 10) || 0);
+  const urlTargetsVerse = isRefSlug || isVerseIdSlug;
+  // The verse id a verse-targeting URL points at (the range's first verse).
+  const urlVerseId = (() => {
+    if (isVerseIdSlug) return slugNum;
+    if (isRefSlug) { try { const ids = lookupReference(rawSlug)?.verse_ids || []; return ids.length ? Math.min(...ids) : null; } catch { return null; } }
+    return null;
+  })();
+  // The page reference index (leaf.pageReference) is populated ASYNC — leafIndex is
+  // rebuilt once Facsimiles fetches pageIndex. Until then every pageReference is
+  // blank, so we must not conclude "verse isn't on any page" prematurely.
+  const refsLoaded = useMemo(() => leafIndex.some((l) => l && l.pageReference), [leafIndex]);
+  // The leaf index of the page that CONTAINS the verse (its page range covers it),
+  // or -1 if no page does (out-of-range / URL-hacked verse). Meaningful only once
+  // refsLoaded is true.
+  const versePageIdx = useMemo(() => {
+    if (!(urlTargetsVerse && urlVerseId != null)) return -1;
+    return leafIndex.findIndex((leaf) =>
+      leaf.pageReference && (lookupReference(leaf.pageReference)?.verse_ids || []).includes(urlVerseId));
+  }, [urlTargetsVerse, urlVerseId, leafIndex]);
+  // A verse-targeting slug normally auto-opens the modal — but NOT when:
+  //   • it's a cross-version switch (breadcrumb dropdown / volume keys set the
+  //     `faxPageOnly` nav state): the ref only informs which PAGE to land on in the
+  //     newly selected edition; the user asked to switch editions, not open a verse.
+  //   • the edition has no verse-level index, OR (once the ref index has loaded) the
+  //     verse maps to no page at all — a hacked / out-of-range URL: it could never
+  //     resolve a real hotspot.
+  // In those cases we resolve to a page and rewrite the URL to the plain page number.
+  const editionIndexed = !!item.indexRef;
+  const pageOnlyNav = !!(history.location && history.location.state && history.location.state.faxPageOnly);
+  const suppressModal = urlTargetsVerse && (pageOnlyNav || !editionIndexed || (refsLoaded && versePageIdx === -1));
+  const totalPages = leafIndex.length;
+  // Highest printed folio, for the jump-input max + "/ N" total. Folio is the
+  // canonical user-facing page number, so the denominator must live in the folio
+  // domain — not item.pages (the image-file count). See the SSoT audit.
+  const maxFolio = leafIndex.reduce(
+    (m, l) => (l.faxPageNum != null && l.faxPageNum > m ? l.faxPageNum : m), 0
+  ) || item.pages;
+
+  // Initialize the current page index from the URL.
   useEffect(() => {
-    // Special handling for the last page (or any specific page)
-    if (pageNumber === String(item.pages) || parseInt(pageNumber) === item.pages) {
-      // Direct check for the last page by its number
-      const lastPageIndex = leafIndex.findIndex(leaf => 
-        leaf.pageNumInt === parseInt(pageNumber) || `${leaf.pageSlugLeaf}` === pageNumber
-      );
-      
-      if (lastPageIndex !== -1) {
-        setCurrentPageIndex(lastPageIndex);
-        setSliderValue(lastPageIndex);
-        return;
+    // Verse-targeting URL (ref slug or verse id). Resolving the page needs the async
+    // ref index — until it's loaded (or the edition has none) we can't place the
+    // verse, so WAIT rather than park on the wrong page (the loader covers the wait).
+    if (urlTargetsVerse && urlVerseId != null) {
+      if (editionIndexed && !refsLoaded) return; // ref index still loading — re-runs when leafIndex updates
+      // Land on the page that contains the verse; if none does (out-of-range / hack)
+      // or the edition isn't indexed, fall back to the first real page (cover has no slug).
+      const idx = versePageIdx !== -1
+        ? versePageIdx
+        : Math.max(0, leafIndex.findIndex((l) => l && l.pageSlugLeaf != null));
+      setCurrentPageIndex(idx);
+      setSliderValue(idx);
+      // Cross-version carry / non-indexed edition / unresolvable verse: keep the page,
+      // drop the modal by rewriting the URL to the page number (no auto-open, no loader).
+      if (suppressModal) {
+        const leaf = leafIndex[idx];
+        if (leaf && leaf.pageSlugLeaf != null) history.replace(`/fax/${item.slug}/${leaf.pageSlugLeaf}`);
       }
+      return;
     }
-    
-    // Handle reference URLs (containing A-Z letters)
-    if (hasLetters) {
-      try {
-        const refs = lookupReference(pageNumber);
-        const verseIds = refs?.verse_ids || [];
-        
-        if (verseIds.length > 0) {
-          // Get the minimum verse ID to find the first page containing this reference
-          const minVerseId = Math.min(...verseIds);
-          
-          // Look for a page containing this verse ID
-          for (let i = 0; i < leafIndex.length; i++) {
-            const page = leafIndex[i];
-            if (page?.pageReference) {
-              const pageVerseIds = lookupReference(page.pageReference)?.verse_ids || [];
-              if (pageVerseIds.includes(minVerseId)) {
-                setCurrentPageIndex(i);
-                setSliderValue(i);
-                return;
-              }
-            }
-          }
-        }
-        
-        // If we can't find a match, just default to page 1
-        setCurrentPageIndex(0);
-        setSliderValue(0);
-        return;
-      } catch (e) {
-        // If reference parsing fails, default to page 1
-        setCurrentPageIndex(0);
-        setSliderValue(0);
-        return;
-      }
-    }
-    
-    // Standard page lookup for numeric pages
-    const index = leafIndex.findIndex(leaf => `${leaf.pageSlugLeaf}` === pageNumber);
-    
-    if (index !== -1) {
-      setCurrentPageIndex(index);
-      setSliderValue(index);
-    } else {
-      // If page not found, check if it's the last page
-      const lastPageNum = leafIndex[leafIndex.length - 1]?.pageSlugLeaf;
-      if (lastPageNum && `${lastPageNum}` === pageNumber) {
-        // It's the last page but wasn't found with exact match - handle special case
-        const lastIndex = leafIndex.length - 1;
-        setCurrentPageIndex(lastIndex);
-        setSliderValue(lastIndex);
-      } else {
-        // If we can't find a match, just default to page 1
-        setCurrentPageIndex(0);
-        setSliderValue(0);
-      }
-    }
-  }, [pageNumber, leafIndex, item.pages, hasLetters]);
+    // Page number / roman front matter: match the route slug (image-file number).
+    const index = leafIndex.findIndex((leaf) => `${leaf.pageSlugLeaf}` === rawSlug);
+    const target = index !== -1 ? index : 0;
+    setCurrentPageIndex(target);
+    setSliderValue(target);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageNumber, leafIndex, item.pages]);
+
+  // Keep the slider thumb aligned when the page changes by any means
+  // (arrows, buttons, stack, deep link). Audit §2.3.
+  useEffect(() => { setSliderValue(currentPageIndex); }, [currentPageIndex]);
 
   // Adjust page index to ensure even pages are on the left
   const getAdjustedPageIndex = useCallback((index) => {
@@ -138,8 +186,13 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   useEffect(() => {
     const pagesToLoad = getPagesToPreload();
     pagesToLoad.forEach(page => {
+      const url = page.pageAssetUrl;
+      if (!url) return;
       const img = new Image();
-      img.src = page.pageAssetUrl;
+      // Warm the ratio cache ahead of the turn so the landed spread never has to
+      // settle its dimensions (kills the post-turn jitter + ResizeObserver churn).
+      img.onload = () => { if (img.naturalHeight > 0) setFaxRatio(url, img.naturalWidth / img.naturalHeight); };
+      img.src = url;
     });
   }, [getPagesToPreload]);
 
@@ -147,182 +200,63 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   const leftPage = leafIndex[adjustedPageIndex] || null;
   const rightPage = leafIndex[adjustedPageIndex + 1] || null;
 
-  // Measure container size with improved throttling to prevent ResizeObserver loops
-  useEffect(() => {
-    if (!pagesContainerRef.current) return;
-    
-    const el = pagesContainerRef.current;
-    
-    // Track the last update timestamp to enforce minimum intervals between updates
-    let lastUpdateTime = 0;
-    let pendingUpdate = false;
-    let pendingSize = null;
-    let timeoutId = null;
-    let rafId = null;
-    let latestWidth = 0;
-    let latestHeight = 0;
-    
-    // Only update size if significant changes occurred or minimum time passed
-    const MIN_UPDATE_INTERVAL = 100; // ms between state updates
-    const SIZE_THRESHOLD = 5; // px difference to consider significant
-    
-    const processResize = (width, height, top) => {
-      // Round to avoid minor fluctuations
-      width = Math.floor(width);
-      height = Math.floor(height);
-      top = Math.floor(top || 0);
-      
-      const now = Date.now();
-      const timeSinceLastUpdate = now - lastUpdateTime;
-      const widthDiff = Math.abs(width - containerSize.width);
-      const heightDiff = Math.abs(height - containerSize.height);
-      const topDiff = Math.abs(top - (containerSize.top || 0));
-      const hasSizeChanged = widthDiff > SIZE_THRESHOLD || heightDiff > SIZE_THRESHOLD;
-      
-      // Either update immediately for significant changes or store for later update
-      if (hasSizeChanged || timeSinceLastUpdate >= MIN_UPDATE_INTERVAL) {
-        // Clear any pending update
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-          timeoutId = null;
-        }
-        
-        lastUpdateTime = now;
-        pendingUpdate = false;
-        pendingSize = null;
-        
-        // Only update state if size has actually changed
-        if (width !== containerSize.width || height !== containerSize.height || topDiff > 0) {
-          setContainerSize({ width, height, top, viewportH: window.innerHeight });
-        }
-      } else if (!pendingUpdate) {
-        // Schedule update for later
-        pendingUpdate = true;
-        pendingSize = { width, height, top };
-        
-        // Clear any existing timeout and set a new one
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-        }
-        
-        // Schedule update after delay
-        timeoutId = setTimeout(() => {
-          if (pendingSize) {
-            lastUpdateTime = Date.now();
-            setContainerSize({ ...pendingSize, viewportH: window.innerHeight });
-            pendingUpdate = false;
-            pendingSize = null;
-          }
-        }, MIN_UPDATE_INTERVAL - timeSinceLastUpdate);
-      } else {
-        // Update pending size with latest measurements
-        pendingSize = { width, height, top };
-      }
-    };
-    
-    const scheduleUpdate = (width, height) => {
-      latestWidth = Math.floor(width);
-      latestHeight = Math.floor(height);
-      if (rafId != null) return;
-      rafId = requestAnimationFrame(() => {
-        rafId = null;
-        if (!el) return;
-        const rect = el.getBoundingClientRect();
-        processResize(latestWidth, latestHeight, rect.top);
-      });
-    };
+  // Verse-inspector data + UI state for the visible spread.
+  const faxVerses = useFaxVerses(item.slug, leftPage, rightPage);
+  const [vstate, vdispatch] = useReducer(faxVerseReducer, initialFaxVerseState);
+  // Clear hover/open on any spread or edition change (also covers page-flip).
+  useEffect(() => { vdispatch({ type: "RESET" }); }, [adjustedPageIndex, item.slug]);
 
-    const updateSize = () => {
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      scheduleUpdate(rect.width, rect.height);
-    };
-    
-    // Get initial size
-    updateSize();
-    
-    // Set up ResizeObserver with error handling
-    const ro = new ResizeObserver((entries) => {
-      try {
-        // Only update if our target element has changed size
-        const entry = entries.find(entry => entry.target === el);
-        if (entry) {
-          // Use contentRect for more stable measurements
-          const { width, height } = entry.contentRect;
-          scheduleUpdate(width, height);
-        }
-      } catch (err) {
-        console.warn("ResizeObserver error:", err);
-      }
-    });
-    
-    // Start observing with error handling
-    try {
-      ro.observe(el, { box: 'border-box' });
-    } catch (err) {
-      console.warn("ResizeObserver failed to observe:", err);
-    }
-    
-    // Also listen for window resize events as backup
-    window.addEventListener('resize', updateSize);
-    
-    // Cleanup
-    return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      if (rafId != null) {
-        cancelAnimationFrame(rafId);
-      }
-      try {
-        ro.disconnect();
-      } catch (err) {
-        console.warn("ResizeObserver disconnect failed:", err);
-      }
-      window.removeEventListener('resize', updateSize);
-    };
-  }, []); // Empty dependency array - we handle updates manually
-
-  // Load left page image and calculate aspect ratio
+  // Load left page image and calculate aspect ratio. Seed synchronously from the
+  // cache when known (adjacent pages are preloaded) so the spread lands at the
+  // right size with no post-turn resize; refine + cache on load for cold pages.
   useEffect(() => {
-    if (!leftPage) { 
-      setLeftRatio(0.75); 
-      return; 
+    if (!leftPage) {
+      setLeftRatio(0.75);
+      return undefined;
     }
-    
+    const url = leftPage.thumbAssetUrl || leftPage.pageAssetUrl;
+    const cached = getFaxRatio(leftPage.thumbAssetUrl, leftPage.pageAssetUrl);
+    if (cached) setLeftRatio(cached);
     const img = new Image();
     img.onload = () => {
-      if (img.naturalHeight > 0) setLeftRatio(img.naturalWidth / img.naturalHeight);
+      if (img.naturalHeight > 0) {
+        const r = img.naturalWidth / img.naturalHeight;
+        setFaxRatio(url, r);
+        setLeftRatio(r);
+      }
     };
-    img.src = leftPage.thumbAssetUrl || leftPage.pageAssetUrl;
+    img.src = url;
     return () => { img.onload = null; };
-  }, [leftPage?.thumbAssetUrl, leftPage?.pageAssetUrl, leftPage]);
+  }, [leftPage?.thumbAssetUrl, leftPage?.pageAssetUrl]);
 
-  // Load right page image and calculate aspect ratio
+  // Load right page image and calculate aspect ratio (see left, above).
   useEffect(() => {
-    if (!rightPage) { 
-      setRightRatio(0.75); 
-      return; 
+    if (!rightPage) {
+      setRightRatio(0.75);
+      return undefined;
     }
-    
+    const url = rightPage.thumbAssetUrl || rightPage.pageAssetUrl;
+    const cached = getFaxRatio(rightPage.thumbAssetUrl, rightPage.pageAssetUrl);
+    if (cached) setRightRatio(cached);
     const img = new Image();
     img.onload = () => {
-      if (img.naturalHeight > 0) setRightRatio(img.naturalWidth / img.naturalHeight);
+      if (img.naturalHeight > 0) {
+        const r = img.naturalWidth / img.naturalHeight;
+        setFaxRatio(url, r);
+        setRightRatio(r);
+      }
     };
-    img.src = rightPage.thumbAssetUrl || rightPage.pageAssetUrl;
+    img.src = url;
     return () => { img.onload = null; };
-  }, [rightPage?.thumbAssetUrl, rightPage?.pageAssetUrl, rightPage]);
+  }, [rightPage?.thumbAssetUrl, rightPage?.pageAssetUrl]);
 
-  // Estimate stack widths with parity filtering: left = even pages before current spread; right = odd pages after
-  const { leftStackWidth, rightStackWidth } = useMemo(() => {
-    // adjustedPageIndex is even (left page)
-    const leftEvenCount = Math.max(0, Math.floor(adjustedPageIndex / 2));
-    const rightOddCount = Math.max(0, Math.floor((totalPages - (adjustedPageIndex + 2)) / 2));
-    return {
-      leftStackWidth: Math.min(200, leftEvenCount),
-      rightStackWidth: Math.min(200, rightOddCount)
-    };
-  }, [adjustedPageIndex, totalPages]);
+  const { leftStackWidth, rightStackWidth } = useMemo(
+    () => {
+      const { left, right } = normalizeStackWidths(adjustedPageIndex, totalPages, 160);
+      return { leftStackWidth: left, rightStackWidth: right };
+    },
+    [adjustedPageIndex, totalPages]
+  );
 
   // Calculate page dimensions width-first: fill horizontal space (after stacks),
   // then derive a uniform height that preserves each page's intrinsic ratio.
@@ -393,30 +327,248 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     return leftStackWidth + leftPageWidth + rightPageWidth + rightStackWidth;
   }, [leftPageWidth, rightPageWidth, leftStackWidth, rightStackWidth]);
 
+  // Report the seam's x-offset from center so the toolbar title can track it.
+  // The spread strip is centered, so the seam (between left & right pages) sits
+  // at delta = (leftSide - rightSide)/2 px from the container center.
+  useEffect(() => {
+    if (typeof onSeamOffset !== 'function') return;
+    if (!leftPageWidth || !rightPageWidth) { onSeamOffset(0); return; }
+    const delta = (leftStackWidth + leftPageWidth - rightPageWidth - rightStackWidth) / 2;
+    onSeamOffset(delta);
+  }, [onSeamOffset, leftStackWidth, rightStackWidth, leftPageWidth, rightPageWidth]);
+
+  // Anchor offset (px) for the scripture popup: the seam's x-position relative to
+  // the VIEWPORT center. The popup is position:fixed and centered on the viewport,
+  // but the spread is centered on the content area (offset by any sidebar), so we
+  // measure the live seam from the DOM at click time rather than reusing the
+  // content-area-relative onSeamOffset value.
+  const seamAnchorFromDom = useCallback(() => {
+    const rect = spreadInnerRef.current?.getBoundingClientRect();
+    if (!rect || !leftPageWidth) return 0;
+    const seamViewportX = rect.left + leftStackWidth + leftPageWidth;
+    return Math.round(seamViewportX - window.innerWidth / 2);
+  }, [leftStackWidth, leftPageWidth]);
+
   // Navigation handlers
   const handlePageChange = useCallback((newIndex) => {
+    // Any navigation that isn't the flip's own landing commit (slider, stack,
+    // jump-to-page) cancels an in-flight turn immediately so its stale overlay
+    // can't later revert the user's choice.
+    if (flipRef.current && !committingRef.current) cancelFlip();
     const adjustedIndex = getAdjustedPageIndex(newIndex);
     const targetPage = leafIndex[adjustedIndex];
     if (targetPage) {
-      history.push(`/fax/${item.slug}/${targetPage.pageSlugLeaf}`);
+      history.replace(`/fax/${item.slug}/${targetPage.pageSlugLeaf}`);
     }
-  }, [history, item.slug, leafIndex, getAdjustedPageIndex]);
+  }, [history, item.slug, leafIndex, getAdjustedPageIndex, cancelFlip]);
+
+  // Resolve the left (even) leaf index a forward/back turn should land on,
+  // preserving the pre-existing nav semantics (2 pages at a time, even-last clamp).
+  const resolveTarget = useCallback((dir) => {
+    if (dir === 'next') {
+      const newIndex = Math.min(totalPages - 1, currentPageIndex + 2);
+      if (totalPages % 2 === 0 && newIndex >= totalPages - 2) return totalPages - 2;
+      return getAdjustedPageIndex(newIndex);
+    }
+    return getAdjustedPageIndex(Math.max(0, currentPageIndex - 2));
+  }, [currentPageIndex, totalPages, getAdjustedPageIndex]);
+
+  // Play the single-leaf flip transitioning from the current spread to ANY target
+  // spread (direction inferred from target vs. current) — so slider scrubs,
+  // jump-to-page and page-stack clicks animate too, not just adjacent turns.
+  // Falls back to an instant commit when the layout isn't measured yet, the user
+  // prefers reduced motion, or a turn is already animating.
+  const animateTo = useCallback((targetRaw) => {
+    const base = adjustedPageIndex;
+    const targetLeft = getAdjustedPageIndex(targetRaw);
+    if (targetLeft === base) return; // same spread — nothing to do
+
+    const dir = targetLeft > base ? 'next' : 'prev';
+    const ready = !!(leftPageWidth && rightPageWidth && calculatedHeight);
+    if (flipRef.current || prefersReducedMotion || !ready) {
+      handlePageChange(targetLeft);
+      return;
+    }
+
+    // Prefer a warm full-res scan for crispness; fall back to the (prefetched)
+    // thumbnail so far-away jumps still show artwork instead of a blank face.
+    const faceUrl = (i) => {
+      const l = leafIndex[i];
+      if (!l) return null;
+      if (l.pageAssetUrl && isThumbWarm(l.pageAssetUrl)) return l.pageAssetUrl;
+      return l.thumbAssetUrl || l.pageAssetUrl || null;
+    };
+    // Capture the spread's viewport rect so the overlay can be portaled to <body>
+    // and float above the chrome (toolbar/nav) for the 3D curl.
+    const rect = spreadInnerRef.current?.getBoundingClientRect();
+    const geom = {
+      leftStackWidth, leftPageWidth, rightPageWidth, height: calculatedHeight,
+      viewport: rect ? { left: rect.left, top: rect.top, width: rect.width, height: rect.height } : null,
+    };
+    // The leaf carries current→destination; behind it the destination spread is
+    // revealed. Reduces exactly to the single-step turn when targetLeft = base±2.
+    // `base`/`slug` let the teardown effect + commit guard detect when the world
+    // has moved out from under an in-flight turn.
+    const payload = dir === 'next'
+      ? {
+          dir, geom, target: targetLeft, base, slug: item.slug,
+          behindLeftUrl: faceUrl(base),            // current left — covered on land
+          behindRightUrl: faceUrl(targetLeft + 1), // destination right — revealed
+          leafFrontUrl: faceUrl(base + 1),         // current right (front of leaf)
+          leafBackUrl: faceUrl(targetLeft),        // destination left (back of leaf)
+        }
+      : {
+          dir, geom, target: targetLeft, base, slug: item.slug,
+          behindLeftUrl: faceUrl(targetLeft),      // destination left — revealed
+          behindRightUrl: faceUrl(base + 1),       // current right — covered
+          leafFrontUrl: faceUrl(base),             // current left (front of leaf)
+          leafBackUrl: faceUrl(targetLeft + 1),    // destination right (back of leaf)
+        };
+    committedRef.current = false;
+    flipRef.current = payload;
+    setFlip(payload);
+    // Backstop: no matter what happens (animationend never fires, a commit
+    // no-ops, the DOM detaches), force the overlay down so the viewer can never
+    // deadlock behind a stuck flip.
+    if (flipTimerRef.current) clearTimeout(flipTimerRef.current);
+    flipTimerRef.current = setTimeout(() => cancelFlip(), FAX_FLIP_MS * 4);
+  }, [adjustedPageIndex, getAdjustedPageIndex, leftPageWidth, rightPageWidth, calculatedHeight,
+      leftStackWidth, leafIndex, prefersReducedMotion, handlePageChange, item.slug, cancelFlip]);
+
+  // --- Modal verse-by-verse navigation ---------------------------------------
+  // Ordered verse list for the current spread (both pages), each tagged with the
+  // page it lives on, deduped for verses that span the gutter.
+  const spreadVerses = useMemo(() => {
+    const out = [];
+    for (const pg of [leftPage, rightPage]) {
+      if (!pg) continue;
+      for (const v of (faxVerses.versesByPage.get(pg.pageNumInt) || [])) {
+        out.push({ ...v, pageAssetUrl: pg.pageAssetUrl });
+      }
+    }
+    out.sort((a, z) => a.verse_id - z.verse_id);
+    return out.filter((v, i, a) => a.findIndex((x) => x.verse_id === v.verse_id) === i);
+  }, [faxVerses, leftPage, rightPage]);
+
+  const pendingVerseNavRef = useRef(null); // 'next' | 'prev' while a cross-page step flips
+
+  // Step to the adjacent verse. In-spread -> open it; at the spread edge -> flip
+  // to the neighbouring spread (behind the modal) and resolve the verse when that
+  // spread's data arrives (see the effect below). The modal survives the flip
+  // because RESET no longer clears the open verse.
+  const handleVerseNav = useCallback((dir) => {
+    const cur = vstate.openVerse;
+    if (!cur) return;
+    const idx = spreadVerses.findIndex((v) => v.verse_id === cur.verse_id);
+    const neighbour = idx >= 0 ? spreadVerses[idx + (dir === "next" ? 1 : -1)] : null;
+    if (neighbour) { vdispatch({ type: "OPEN", verse: neighbour }); return; }
+    pendingVerseNavRef.current = dir;
+    animateTo(resolveTarget(dir === "next" ? "next" : "prev"));
+  }, [vstate.openVerse, spreadVerses, animateTo, resolveTarget]);
+
+  useEffect(() => {
+    const dir = pendingVerseNavRef.current;
+    if (!dir || !vstate.openVerse || !spreadVerses.length) return;
+    // Wait until the spread has actually turned (old verse no longer present).
+    if (spreadVerses.some((v) => v.verse_id === vstate.openVerse.verse_id)) return;
+    const target = dir === "next" ? spreadVerses[0] : spreadVerses[spreadVerses.length - 1];
+    if (target) vdispatch({ type: "OPEN", verse: target });
+    pendingVerseNavRef.current = null;
+  }, [spreadVerses, vstate.openVerse]);
+
+  // --- Modal <-> URL (pure path taxonomy, no query params) -----------------
+  // While a verse is open the path IS its ref slug (permalink); closing it (or a
+  // page turn) reverts the path to the page number. A verse id NEVER persists in
+  // the URL — it's resolved to a ref and the URL is rewritten.
+  useEffect(() => {
+    const open = vstate.openVerse;
+    if (!open) return; // closing reverts the URL via the modal's onClose, not here
+    const slug = (open.ref || "").replace(/[ :]+/g, ".").toLowerCase();
+    if (slug && slug !== rawSlug) history.replace(`/fax/${item.slug}/${slug}`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vstate.openVerse]);
+
+  // Open the modal for a verse-targeting URL with the FULL verse once its spread has
+  // loaded (no minimal/placeholder open — that shape-shifted the modal as text/boxes
+  // filled in). The viewer is held behind a loader until this fires (see below), so
+  // the spread + complete modal reveal together with no rug-pull.
+  useEffect(() => {
+    if (!urlTargetsVerse || suppressModal || urlVerseId == null || vstate.openVerse || !spreadVerses.length) return;
+    const target = spreadVerses.find((v) => v.verse_id === urlVerseId)
+      || spreadVerses.find((v) => (lookupReference(v.ref)?.verse_ids || []).includes(urlVerseId));
+    if (target) vdispatch({ type: "OPEN", verse: target });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlTargetsVerse, urlVerseId, spreadVerses]);
+
+  // Fallback for the rare index-gap case: the verse's page range claims it, so the
+  // modal is expected — but the loaded spread (which HAS verses) turns out to lack a
+  // hotspot for it. Don't spin the loader forever; settle to the plain page URL. The
+  // `faxVerses.ready` gates the empty pre-resolution spread. Deliberately NOT gated on
+  // spreadVerses.length: when the boxes API is unavailable the spread resolves permanently
+  // empty, and gating on it would hold the deep-link loader forever.
+  useEffect(() => {
+    if (!urlTargetsVerse || suppressModal || vstate.openVerse || !faxVerses.ready) return;
+    const found = urlVerseId != null && spreadVerses.some((v) =>
+      v.verse_id === urlVerseId || (lookupReference(v.ref)?.verse_ids || []).includes(urlVerseId));
+    if (found) return; // the open effect above will handle it
+    const dest = (leftPage && leftPage.pageSlugLeaf != null)
+      ? leftPage
+      : leafIndex.find((l) => l && l.pageSlugLeaf != null);
+    if (dest) history.replace(`/fax/${item.slug}/${dest.pageSlugLeaf}`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [faxVerses.ready, urlTargetsVerse, urlVerseId, spreadVerses, vstate.openVerse]);
+
+  // Hold a loader over the viewer while a verse deep-link is still resolving, so the
+  // user sees a clean loader -> complete reveal instead of the spread + modal
+  // sizing/filling in.
+  const deepLinkLoading = urlTargetsVerse && !suppressModal && urlVerseId != null && !vstate.openVerse;
+
+  // Preload the neighbouring verses' crops so prev/next steps paint instantly.
+  useEffect(() => {
+    if (!vstate.openVerse || !item.slug) return;
+    const idx = spreadVerses.findIndex((v) => v.verse_id === vstate.openVerse.verse_id);
+    for (const i of [idx - 1, idx + 1]) {
+      const v = spreadVerses[i];
+      if (v) { const img = new Image(); img.src = `${renderBaseUrl}/fax/render/${item.slug}/crop/wfull/ids/${v.verse_id}.jpg`; }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vstate.openVerse, spreadVerses, item.slug]);
+
+  // Commit the navigation the moment the leaf lands. Guard against a stale turn
+  // whose edition changed underneath it, and against a double-fire.
+  const handleFlipDone = useCallback(() => {
+    const p = flipRef.current;
+    if (!p || committedRef.current) return;
+    if (p.slug !== item.slug) { cancelFlip(); return; } // edition switched mid-flip
+    committedRef.current = true;
+    committingRef.current = true;
+    handlePageChange(p.target);
+    committingRef.current = false;
+    // Two-phase teardown: the leaf has landed flat on the new spread, which is
+    // now committed underneath. Cross-fade the overlay out (rather than the
+    // instant unmount below) so the compositing-layer handoff doesn't snap.
+    setSettling(true);
+    if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
+    settleTimerRef.current = setTimeout(() => cancelFlip(), FAX_SETTLE_MS);
+  }, [handlePageChange, item.slug, cancelFlip]);
+
+  // Tear the overlay down once the live spread has actually moved — whether that
+  // was our own landing commit (adjustedPageIndex -> target) or any external nav
+  // / edition switch. Keying on "moved away from base" (not "=== target") means a
+  // missed round-trip can never leave the overlay stuck.
+  useEffect(() => {
+    const p = flipRef.current;
+    if (!p) return;
+    // Our own landing commit owns teardown (it runs the cross-fade settle, then
+    // cancels). Only force an immediate cancel for EXTERNAL moves we didn't
+    // commit (edition switch / jump mid-flip), where there's nothing to fade to.
+    if (committedRef.current) return;
+    if (adjustedPageIndex !== p.base || item.slug !== p.slug) cancelFlip();
+  }, [adjustedPageIndex, item.slug, cancelFlip]);
 
   // Update to move 2 pages at a time
-  const handleSwipeLeft = useCallback(() => {
-    // For the last page(s), adjust how far to move based on whether totalPages is even or odd
-    const newIndex = Math.min(totalPages - 1, currentPageIndex + 2);
-    // Handle special case for even-numbered last page
-    if (totalPages % 2 === 0 && newIndex >= totalPages - 2) {
-      handlePageChange(totalPages - 2); // Go to second-to-last spread
-    } else {
-      handlePageChange(newIndex);
-    }
-  }, [currentPageIndex, totalPages, handlePageChange]);
-
-  const handleSwipeRight = useCallback(() => {
-    handlePageChange(Math.max(0, currentPageIndex - 2));
-  }, [currentPageIndex, handlePageChange]);
+  const handleSwipeLeft = useCallback(() => animateTo(resolveTarget('next')), [animateTo, resolveTarget]);
+  const handleSwipeRight = useCallback(() => animateTo(resolveTarget('prev')), [animateTo, resolveTarget]);
 
   const swipeHandlers = useSwipe({
     onSwipedLeft: handleSwipeLeft,
@@ -427,6 +579,8 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   useEffect(() => {
     const onKey = (e) => {
       if (e.defaultPrevented) return;
+      const tag = (e.target?.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
       if (e.key === 'ArrowLeft') { e.preventDefault(); handleSwipeRight(); }
       else if (e.key === 'ArrowRight') { e.preventDefault(); handleSwipeLeft(); }
       else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
@@ -436,7 +590,10 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
         const next = volumeOrder[nextIndex];
         if (!next) return;
         e.preventDefault();
-        
+        // Switching editions changes leafIndex/slug — cancel any in-flight turn
+        // so its stale overlay doesn't commit against the new edition.
+        if (flipRef.current) cancelFlip();
+
         // Try to navigate using reference if available, otherwise use page number
         let targetPath;
         
@@ -462,12 +619,14 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
           targetPath = targetSlug ? `/fax/${next.slug}/${targetSlug}` : `/fax/${next.slug}`;
         }
         
-        history.push(targetPath);
+        // faxPageOnly: this is an edition switch, not a verse deep-link — the ref in
+        // targetPath only picks the page; the viewer must land there without a modal.
+        history.push(targetPath, { faxPageOnly: true });
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [handleSwipeLeft, handleSwipeRight, volumeOrder, currentVolumeIndex, history, leftPage?.pageSlugLeaf, rightPage?.pageSlugLeaf, leftPage?.pageReference, rightPage?.pageReference]);
+  }, [handleSwipeLeft, handleSwipeRight, volumeOrder, currentVolumeIndex, history, cancelFlip, leftPage?.pageSlugLeaf, rightPage?.pageSlugLeaf, leftPage?.pageReference, rightPage?.pageReference]);
 
   // Slider interaction handlers
   const handleSliderChange = useCallback((e) => {
@@ -475,8 +634,8 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   }, []);
 
   const handleSliderRelease = useCallback(() => {
-    handlePageChange(sliderValue);
-  }, [handlePageChange, sliderValue]);
+    animateTo(sliderValue);
+  }, [animateTo, sliderValue]);
 
   const handleSliderMouseMove = useCallback((e) => {
     if (!sliderRef.current) return;
@@ -494,6 +653,15 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
       value = totalPages - 2; // Always show the last valid spread (last or second-to-last page on right)
     }
 
+    // Warm the thumbnails around the scrub position so the preview swaps
+    // instantly instead of flashing/loading while scrubbing.
+    const warm = [];
+    for (let i = Math.max(0, value - 4); i <= Math.min(leafIndex.length - 1, value + 5); i++) {
+      const u = leafIndex[i]?.thumbAssetUrl;
+      if (u) warm.push(u);
+    }
+    prefetchThumbs(warm);
+
     const leftPage = leafIndex[value];
     const rightPage = leafIndex[value + 1];
 
@@ -509,14 +677,14 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
           <div className="thumbnail-spread">
             <img
               src={leftPage.thumbAssetUrl}
-              alt={`Thumbnail of page ${leftPage.pageSlugLeaf}`}
-              style={{ width: '50px', height: 'auto' }}
+              alt={`Thumbnail of page ${leftPage.faxPageSlug}`}
+              style={{ width: '50px', aspectRatio: String(leftRatio || 1 / 1.5) }}
             />
             {rightPage && (
               <img
                 src={rightPage.thumbAssetUrl}
-                alt={`Thumbnail of page ${rightPage.pageSlugLeaf}`}
-                style={{ width: '50px', height: 'auto' }}
+                alt={`Thumbnail of page ${rightPage.faxPageSlug}`}
+                style={{ width: '50px', aspectRatio: String(rightRatio || 1 / 1.5) }}
               />
             )}
           </div>
@@ -524,8 +692,8 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
             <p className="ref">{combinedReference}</p>
           )}
           <p className="pages">
-            Pages {leftPage.pageSlugLeaf}
-            {rightPage ? ` - ${rightPage.pageSlugLeaf}` : ''}
+            Pages {leftPage.faxPageSlug}
+            {rightPage ? ` - ${rightPage.faxPageSlug}` : ''}
           </p>
         </div>
       );
@@ -553,44 +721,97 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     // Determine which side (left or right) for additional styling if needed
     const isLeft = page === leftPage;
     const aspectRatio = isLeft ? leftRatio : rightRatio;
-    
+    const pageVerses = faxVerses.versesByPage.get(page.pageNumInt) || [];
+
     return (
-      <PageImage
-        src={page.pageAssetUrl}
-        previewSrc={page.thumbAssetUrl}
-        label={`Page ${page.pageSlugLeaf}`}
-        reference={page.pageReference}
-        alt={`Page ${page.pageSlugLeaf}`}
-        onClick={onClick}
-        className={isLastPage ? "last-page" : ""}
-        style={{
-          aspectRatio: aspectRatio ? `${aspectRatio}` : undefined,
-          height: '100%',
-          width: 'auto'
-        }}
-      />
+      <>
+        <PageImage
+          src={page.pageAssetUrl}
+          previewSrc={page.thumbAssetUrl}
+          label={`Page ${page.faxPageSlug}`}
+          reference={page.pageReference}
+          alt={`Page ${page.faxPageSlug}`}
+          onClick={onClick}
+          className={isLastPage ? "last-page" : ""}
+          style={{
+            aspectRatio: aspectRatio ? `${aspectRatio}` : undefined,
+            height: '100%',
+            width: 'auto'
+          }}
+        />
+        {/* Rendered on BOTH pages (even a verse-less one) so hovering any verse
+            dims the whole spread, opposite page included. */}
+        <FaxVerseCutout
+          verses={pageVerses}
+          pageScale={faxVerses.pageScale}
+          displayedWidth={isLeft ? leftPageWidth : rightPageWidth}
+          displayedHeight={calculatedHeight}
+          idSuffix={page.pageNumInt}
+          activeVerseId={vstate.activeVerseId}
+          onHover={(id) => vdispatch({ type: "HOVER", verseId: id })}
+          onLeave={(id) => vdispatch({ type: "LEAVE", verseId: id })}
+          onOpen={(verse) => vdispatch({ type: "OPEN", verse: { ...verse, pageAssetUrl: page.pageAssetUrl } })}
+        />
+      </>
     );
   };
 
   // Page stack is now a separate component
   return (
     <div className="faxPageViewer" style={{ maxHeight: 'none' }} {...swipeHandlers}>
-      <div className="pageReferences">
-        <h6>{leftPage?.pageReference || ''}</h6>
-        <h6>{rightPage?.pageReference || ''}</h6>
+      {deepLinkLoading && (
+        <div className="faxDeepLinkLoader" aria-live="polite" aria-busy="true">
+          <div className="faxDeepLinkSpinner" />
+        </div>
+      )}
+      <div
+        className="pageReferences"
+        style={{
+          // Match the spread strip and inset by the stack widths so each ref
+          // aligns to its page's outer edge (not the full-width strip incl. stacks).
+          width: innerWidth ? `${innerWidth}px` : undefined,
+          margin: '0 auto',
+          paddingLeft: leftStackWidth ? `${leftStackWidth}px` : undefined,
+          paddingRight: rightStackWidth ? `${rightStackWidth}px` : undefined,
+          boxSizing: 'border-box',
+        }}
+      >
+        <a
+          className="scripture_link"
+          style={{ textAlign: 'left', visibility: leftPage?.pageReference ? 'visible' : 'hidden', cursor: 'pointer' }}
+          onClick={() => leftPage?.pageReference && openScripture(leftPage.pageReference, { anchorX: seamAnchorFromDom() })}
+        >{leftPage?.pageReference || ''}</a>
+        <a
+          className="scripture_link"
+          style={{ textAlign: 'right', visibility: rightPage?.pageReference ? 'visible' : 'hidden', cursor: 'pointer' }}
+          onClick={() => rightPage?.pageReference && openScripture(rightPage.pageReference, { anchorX: seamAnchorFromDom() })}
+        >{rightPage?.pageReference || ''}</a>
       </div>
       <div className="pagesContainer" ref={pagesContainerRef}>
-        <div className="pageContainer">
-          <div 
-            className="spreadInner" 
-            style={{ 
+        <div
+          className="pageContainer"
+          onClick={(e) => {
+            // Only the empty L/R padding around the centered spread (clicks on a
+            // page/stack/image are handled by those elements themselves).
+            if (e.target !== e.currentTarget) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            if (e.clientX < rect.left + rect.width / 2) handleSwipeRight();
+            else handleSwipeLeft();
+          }}
+        >
+          <div
+            className="spreadInner"
+            ref={spreadInnerRef}
+            style={{
               width: innerWidth ? `${innerWidth}px` : undefined,
               display: 'flex', 
               alignItems: 'stretch', 
               justifyContent: 'flex-start',
               gap: 0,
               // Center the exact-width strip; outside space is allowed only outside stacks
-              margin: '0 auto'
+              margin: '0 auto',
+              // Positioning context for the transient page-turn overlay
+              position: 'relative'
             }}
           >
             {adjustedPageIndex > 0 && (
@@ -599,8 +820,8 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
                 leafIndex={leafIndex}
                 adjustedPageIndex={adjustedPageIndex}
                 totalPages={totalPages}
-                onPageChange={handlePageChange}
-                width={leftStackWidth}
+                onPageChange={animateTo}
+                stackWidthPx={leftStackWidth}
               />
             )}
 
@@ -609,8 +830,6 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
               style={{
                 width: leftPageWidth ? `${leftPageWidth}px` : undefined,
                 height: calculatedHeight ? `${calculatedHeight}px` : undefined,
-                // Smooth transitions
-                transition: 'width 0.15s ease, height 0.15s ease',
                 // Flex for centering image within the page box
                 display: 'flex',
                 justifyContent: 'center',
@@ -629,8 +848,6 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
               style={{
                 width: rightPageWidth ? `${rightPageWidth}px` : undefined,
                 height: calculatedHeight ? `${calculatedHeight}px` : undefined,
-                // Smooth transitions
-                transition: 'width 0.15s ease, height 0.15s ease',
                 // Flex for centering
                 display: 'flex',
                 justifyContent: 'center',
@@ -652,10 +869,37 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
                 leafIndex={leafIndex}
                 adjustedPageIndex={adjustedPageIndex}
                 totalPages={totalPages}
-                onPageChange={handlePageChange}
-                width={rightStackWidth}
+                onPageChange={animateTo}
+                stackWidthPx={rightStackWidth}
               />
             )}
+
+            {flip && (
+              <FaxPageFlip
+                dir={flip.dir}
+                geom={flip.geom}
+                behindLeftUrl={flip.behindLeftUrl}
+                behindRightUrl={flip.behindRightUrl}
+                leafFrontUrl={flip.leafFrontUrl}
+                leafBackUrl={flip.leafBackUrl}
+                settling={settling}
+                onDone={handleFlipDone}
+              />
+            )}
+            <FaxVerseModal
+              verse={vstate.openVerse}
+              version={item.slug}
+              pageScale={faxVerses.pageScale}
+              anchorX={vstate.openVerse ? window.innerWidth / 2 + seamAnchorFromDom() : null}
+              onPrev={() => handleVerseNav("prev")}
+              onNext={() => handleVerseNav("next")}
+              onRead={(v) => { const rp = readPath(v.ref); if (rp) history.push(rp); }}
+              onClose={() => {
+                vdispatch({ type: "CLOSE" });
+                // Revert a ref/verse-id path back to the page number on close.
+                if (urlTargetsVerse && leftPage) history.replace(`/fax/${item.slug}/${leftPage.pageSlugLeaf}`);
+              }}
+            />
           </div>
         </div>
       </div>
@@ -680,16 +924,11 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
           className="nav-button"
           onClick={handleSwipeRight}
           disabled={currentPageIndex <= 0}
+          aria-label="Previous pages"
         >
           &#8249;
         </button>
         <div className="slider-container" ref={sliderRef}>
-          {showTooltip && (
-            <div
-              className="hover-cursor"
-              style={{ left: `${tooltipPosition.left}px` }}
-            />
-          )}
           {showTooltip && (
             <div
               className="custom-tooltip"
@@ -716,15 +955,39 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
             className="custom-slider"
+            aria-label="Page position"
+            aria-valuetext={`Page ${leafIndex[sliderValue]?.faxPageSlug ?? sliderValue} of ${maxFolio}`}
           />
         </div>
         <button
           className="nav-button"
           onClick={handleSwipeLeft}
           disabled={currentPageIndex >= totalPages - (totalPages % 2 === 0 ? 1 : 2)}
+          aria-label="Next pages"
         >
           &#8250;
         </button>
+        <form
+          className="fax-page-jump"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const n = parseInt(e.target.elements.pageInput.value, 10);
+            if (!Number.isFinite(n)) return;
+            const idx = leafIndex.findIndex((l) => l.faxPageNum === n || `${l.faxPageSlug}` === `${n}`);
+            if (idx !== -1) animateTo(idx);
+          }}
+        >
+          <input
+            name="pageInput"
+            type="number"
+            min={1}
+            max={maxFolio}
+            defaultValue={leftPage?.faxPageSlug || ''}
+            key={leftPage?.faxPageSlug}
+            aria-label="Jump to page"
+          />
+          <span className="of-total">/ {maxFolio}</span>
+        </form>
       </div>
     </div>
   );

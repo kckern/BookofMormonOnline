@@ -1,0 +1,101 @@
+/* Breadcrumb — shared design-system component.
+   Tokens live on .breadcrumb and are remapped once for dark mode; a variant or
+   one-off theme overrides a --bc-* variable instead of forking these rules. */
+.breadcrumb {
+  --bc-link: #555;
+  --bc-link-hover: #323b4d;
+  --bc-sep: #bbb;
+  --bc-current: #111;
+  --bc-root: #777;
+  --bc-gap: 0.3em;
+  --bc-size: 0.9rem;
+
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--bc-gap);
+  font-size: var(--bc-size);
+  line-height: 1.4;
+}
+.breadcrumb.bc-size-sm { --bc-size: 0.72rem; }
+
+html[data-theme="dark"] .breadcrumb {
+  --bc-link: #bbb;
+  --bc-link-hover: #fff;
+  --bc-sep: #666;
+  --bc-current: #fff;
+  --bc-root: #999;
+}
+
+.bc-sep { color: var(--bc-sep); user-select: none; }
+
+.bc-link {
+  color: var(--bc-link);
+  text-decoration: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+.bc-link:hover { color: var(--bc-link-hover); text-decoration: underline; }
+
+.bc-current { color: var(--bc-current); font-weight: 600; }
+
+.bc-text { color: var(--bc-link); }
+
+.bc-root {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+  color: var(--bc-root);
+  text-decoration: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+}
+.bc-root:hover { color: var(--bc-link-hover); }
+.bc-root svg { width: 1.05em; height: 1.05em; }
+
+.bc-dropdown-wrap { position: relative; display: inline-flex; align-items: center; }
+
+.bc-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2em;
+  padding: 0.05em 0.25em;
+  border-radius: 4px;
+  color: var(--bc-current);
+  font-weight: 600;
+  background: none;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+.bc-trigger:hover { background: rgba(0, 0, 0, 0.05); }
+html[data-theme="dark"] .bc-trigger:hover { background: rgba(255, 255, 255, 0.08); }
+
+.bc-chevron { font-size: 0.7em; transition: transform 0.15s ease; }
+.bc-trigger.open .bc-chevron { transform: rotate(180deg); }
+
+.bc-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 50;
+  margin-top: 0.35em;
+  max-height: 62vh;
+  overflow: auto;
+  padding: 0.5em;
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+}
+html[data-theme="dark"] .bc-dropdown {
+  background: #262626;
+  border-color: #3a3a3a;
+}
