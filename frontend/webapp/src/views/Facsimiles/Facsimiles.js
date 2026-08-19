@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 // COMPONENTS
 import Loader from "../_Common/Loader";
 import ReactTooltip from "react-tooltip";
@@ -10,70 +10,63 @@ import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { assetUrl } from 'src/models/BoMOnlineAPI';
 import "./Facsimiles.scss"
 import { useParams, useHistory } from "react-router-dom";
-import { label, determineLanguage } from "src/models/Utils";
-import { generateReference, lookupReference } from "scripture-guide";
-import { isMobile, useSwipe, convertIntToRomanNumeral } from "../../models/Utils";
+import { label } from "src/models/Utils";
+import { isMobile, useSwipe } from "../../models/Utils";
 import FacsimilePageViewer from './FacsimilePageViewer';
 import FacsimilePageViewerMobile from './FacsimilePageViewerMobile';
+import FaxBreadcrumbs from './FaxBreadcrumbs';
 import PageImage from './PageImage';
 import backIcon from '../_Common/svg/back.svg';
+import { resolvePgOffset, buildLeafIndex, getRefFromIndex } from "./faxGeometry";
 
 function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
   const match = useParams();
+  const history = useHistory();
   const findLeafFromSlug = (leafIndex, match) => {
     return leafIndex.find((leaf) => `${leaf.pageSlugLeaf}` === `${match.pageNumber}`) || null;
   };
 
   const [pageIndex, setPageIndex] = useState([]);
+  // per-edition printed-folio offset (imageFile = faxPage + offset), from faxIndex
+  const [faxOffset, setFaxOffset] = useState(0);
+
+  const pgoffset = resolvePgOffset(item);
 
   useEffect(() => {
     if (!item.indexRef) return;
-    const { indexRef, pgOffset, pgfirstVerse } = item || {};
-    const blankPageCount = (pgOffset || 0) + pgfirstVerse - 1;
-    BoMOnlineAPI({ faxIndex: indexRef }).then((r) => {
-      const { pages } = r?.fax[indexRef];
-      const placeholderArray = Array.from({ length: blankPageCount }, (_, i) => [0, 0]);
-      setPageIndex([...placeholderArray, ...pages]);
-    });
-  }, [item.slug, item]);
+    const { indexRef } = item || {};
+    // `pages` arrives DENSE and keyed by image-file page number: element i is
+    // image page i+1, and pageless scans are [0,0] gaps (the backend builds it
+    // via buildDensePages). So getRefFromIndex(pageIndex, pageNum) lands on the
+    // right page with no placeholder math — the old positional padding only
+    // compensated for LEADING gaps, so any interior pageless scan drifted every
+    // later page. See docs/bugs/2026-07-25-fax-verse-highlights-index-drift.md.
+    let cancelled = false;
+    BoMOnlineAPI({ faxIndex: indexRef })
+      .then((r) => {
+        if (cancelled) return;
+        const entry = r?.fax?.[indexRef];
+        const pages = entry?.pages;
+        if (!Array.isArray(pages)) return;
+        setFaxOffset(Number.isFinite(entry?.offset) ? entry.offset : 0);
+        setPageIndex(pages);
+      })
+      .catch(() => { /* leave pageIndex empty; refs simply won't show */ });
+    return () => { cancelled = true; };
+  }, [item.slug, item.indexRef, pgoffset]);
 
-  const { pages, pgoffset } = item;
-  // Ensure we include page 380 by making sure totalLeaves is correctly calculated
-  // We add 1 here because pages appears to be 0-indexed (0-379 instead of 1-380)
-  const totalLeaves = (parseInt(pages) + 1) + parseInt(pgoffset);
-  
-  const leafIndex = Array.from({ length: totalLeaves }, (_, idx) => {
-    const i = idx - pgoffset + 0;
-    const baseUrl = `${assetUrl}/fax/pages/${item.slug}/`;
-    
-    // Check if this is the last page (page 380 in this case)
-    const isLastPage = (i === pages);
-    
-    const pageNumInt = i > 0 ? i : null;
-    const pageNumRoman = i <= 0 ? convertIntToRomanNumeral(pgoffset + i, true) : null;
-    const pageAssetUrl = i > 0 ? `${baseUrl}${i.toString().padStart(3, "0")}.${item.format || "jpg"}` : `${baseUrl}000.${(pgoffset + i).toString().padStart(2, "0")}.${item.format || "jpg"}`;
-    const thumbAssetUrl = pageAssetUrl.replace("pages", "thumb");
-    const isLeftSide = i % 2 === 0; // Even pages are on the left
-    return {
-      leafCursor: idx,
-      leafSequence: pageNumInt || idx,
-      pageNumInt,
-      pageNumRoman,
-      pageSlugLeaf: pageNumRoman || pageNumInt,
-      pageReference: getRefFromIndex(pageIndex, i),
-      isLeftSide,
-      pageAssetUrl,
-      thumbAssetUrl
-    };
-  });
+  const leafIndex = useMemo(
+    () => buildLeafIndex(item, pgoffset, pageIndex, getRefFromIndex, assetUrl, faxOffset),
+    [item, pgoffset, pageIndex, faxOffset]
+  );
 
   // Handle keypress for escape
   const handleKeyPress = useCallback((e) => {
     if (e.key === "Escape") {
-      document.getElementById("fax_back").click();
+      history.push(match.pageNumber !== undefined ? `/fax/${item.slug}` : "/fax");
     }
     // Left and right arrow keys can be added here if desired
-  }, []);
+  }, [history, match.pageNumber, item.slug]);
 
   useEffect(() => {
     document.addEventListener("keydown", handleKeyPress);
@@ -91,22 +84,30 @@ function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
   const defaultLeaf = hasPathParameter && !activeLeaf ? leafIndex.find(leaf => leaf.pageNumInt === 1 || leaf.pageSlugLeaf === "1") : null;
   // Only show grid if there's no path parameter (no "tail" in the URL)
   const isGridMode = !hasPathParameter;
+  // The contact-sheet grid is useless on mobile — skip straight to the infinite
+  // page scroll (which starts at the top when there's no path parameter).
+  const showGrid = isGridMode && !isMobile();
   // Use the found leaf or the default leaf (page 1)
   const displayLeaf = activeLeaf || defaultLeaf;
   
-  const { title } = item;
+  // Only renderable editions (those with page scans) are switchable targets.
+  const renderableEditions = (volumeOrder || []).filter((v) => v?.pages);
   return (
-    <div className={`facsimileViewer${isGridMode ? ' gridMode' : ''}`}>
-      <h1 className="facsimileViewerTitle">
-        <Link id="fax_back" to={displayLeaf ? `/fax/${item.slug}` : "/fax"} aria-label="Back to facsimiles">
-          <img src={backIcon} alt="Back" style={{ width: 20, height: 20 }} />
+    <div className={`facsimileViewer${showGrid ? ' gridMode' : ''}`}>
+      <div className="facsimileToolbar">
+        <Link id="fax_back" className="fax-back" to={displayLeaf ? `/fax/${item.slug}` : "/fax"} aria-label="Back to facsimiles">
+          <img src={backIcon} alt="" aria-hidden="true" style={{ width: 20, height: 20 }} />
         </Link>
-        <span style={{ flexGrow: 1, color: "black" }}>{title}</span>
-      </h1>
-      {isGridMode ?
+        <FaxBreadcrumbs
+          editions={renderableEditions}
+          current={item}
+          currentRef={displayLeaf?.pageReference}
+        />
+      </div>
+      {showGrid ?
         <FacsimileGridViewer item={item} leafIndex={leafIndex} /> :
-        (isMobile() ? 
-          <FacsimilePageViewerMobile item={item} leafIndex={leafIndex} pgoffset={pgoffset} volumeOrder={volumeOrder} currentVolumeIndex={currentVolumeIndex} /> :
+        (isMobile() ?
+          <FacsimilePageViewerMobile key={item.slug} item={item} leafIndex={leafIndex} pgoffset={pgoffset} volumeOrder={volumeOrder} currentVolumeIndex={currentVolumeIndex} /> :
           <FacsimilePageViewer item={item} leafIndex={leafIndex} pgoffset={pgoffset} volumeOrder={volumeOrder} currentVolumeIndex={currentVolumeIndex} />
         )
       }
@@ -242,30 +243,24 @@ function FacsimileGridViewer({ item, leafIndex }) {
     >
       <div className={`gridOverhang ${hasScrolled ? 'visible' : ''}`} />
       {tileWidth > 0 && tileHeight > 0 && validLeaves.map((i) => {
-        const alt = `${item.title} - Page ${i.pageSlugLeaf}`;
+        const alt = `${item.title} - Page ${i.faxPageSlug}`;
         return (
           <Link key={i.leafCursor} to={`/fax/${item.slug}/${i.pageSlugLeaf}`}>
             <div
               key={i.leafCursor}
               className="faxPage"
-              style={{ 
-                width: `${tileWidth}px`, 
-                height: `${tileHeight}px`,
-                // Add will-change to help browser optimize rendering
-                willChange: 'transform',
-                // Use transform instead of width/height for smoother transitions when size changes
-                transform: 'translate3d(0, 0, 0)'
-              }}
+              style={{ width: `${tileWidth}px`, height: `${tileHeight}px` }}
             >
               <PageOverlay pageLeaf={i} />
               <PageImage
                 src={i.thumbAssetUrl}
                 previewSrc={i.thumbAssetUrl}
                 alt={alt}
-                label={`Page ${i.pageSlugLeaf}`}
+                label={`Page ${i.faxPageSlug}`}
                 reference={i.pageReference}
                 onClick={undefined}
                 className="grid-thumb"
+                loading="lazy"
               />
             </div>
           </Link>
@@ -275,21 +270,11 @@ function FacsimileGridViewer({ item, leafIndex }) {
   );
 }
 
-export const getRefFromIndex = (pageIndex, pageNum) => {
-  const itemIndex = parseInt(pageNum) - 1;
-  const [startingVerseId, verseCount] = pageIndex?.[itemIndex] || [0, 0];
-  const verseRangeArray = Array.from({ length: verseCount }, (_, i) => startingVerseId + i);
-  const lang = determineLanguage();
-  const ref = generateReference(verseRangeArray, lang);
-  const showRef = pageIndex.length > 0 && startingVerseId > 0;
-  return showRef ? ref : null;
-};
-
 export function PageOverlay({ pageLeaf }) {
-  const { pageReference, pageNumInt, pageNumRoman } = pageLeaf;
+  const { pageReference, faxPageSlug } = pageLeaf;
   return (
     <div className="pageOverlay">
-      <div className="pageNum">Page {pageNumRoman || pageNumInt}</div>
+      <div className="pageNum">Page {faxPageSlug}</div>
       {!!pageReference && <div className="pageRef">{pageReference}</div>}
     </div>
   );
@@ -301,86 +286,36 @@ export function PageOverlay({ pageLeaf }) {
 
 function Facsimiles() {
   const [FaxList, setFaxList] = useState(null);
+  const [loadError, setLoadError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    BoMOnlineAPI({ fax: "pdf" })
+      .then((r) => { if (!cancelled) setFaxList(r?.fax || {}); })
+      .catch(() => { if (!cancelled) setLoadError(true); });
+    return () => { cancelled = true; };
+  }, []);
+
   const match = useParams();
   const history = useHistory();
   const activeFax = FaxList?.[match.faxVersion];
   useEffect(() => document.title = (activeFax?.title || label("menu_fax")) + " | " + label("home_title"), [activeFax?.code])
 
-  // Handle route expansions and redirects
+  // Route is PURE TAXONOMY (no query params): the path segment is a page number,
+  // a roman front-matter slug, a scripture ref ("3.nephi.11.5"), or an out-of-range
+  // number treated as a verse id. FacsimilePageViewer resolves all of those (refs +
+  // verse ids open the modal and rewrite the path to the ref). The only thing to
+  // normalize here is the "/last" convenience alias.
   useEffect(() => {
-    if (!FaxList) return; // wait until list is loaded
+    if (!FaxList) return;
     const edition = match.faxVersion;
-    const rawPage = match.pageNumber; // could be undefined, 'last', numeric, or scripture ref
+    const rawPage = match.pageNumber;
     const fax = FaxList?.[edition];
-    if (!fax) return; // unknown edition, let normal rendering handle
-
-    // Determine highest numeric page for this edition
+    if (!fax) return;
     const totalPages = parseInt(fax?.pages, 10);
     const maxPage = Number.isFinite(totalPages) ? totalPages : null;
-
-    // 1) '/fax/{edition}/last' -> forward to highest page
-    if (rawPage === 'last' && maxPage) {
-      if (history?.replace) history.replace(`/fax/${edition}/${maxPage}`);
-      return;
-    }
-
-    // If page isn't present, nothing to normalize
-    if (rawPage == null) return;
-
-    // 2) numeric overflow -> clamp to highest page
-    const pageNum = parseInt(rawPage, 10);
-    const isNumeric = String(pageNum) === String(rawPage);
-    if (isNumeric && maxPage && pageNum > maxPage) {
-      if (history?.replace) history.replace(`/fax/${edition}/${maxPage}`);
-      return;
-    }
-
-    // 3) Non-numeric page -> treat as scripture reference
-    if (!isNumeric && /[A-Za-z]/.test(rawPage || '')) {
-      try {
-        const refs = lookupReference(rawPage);
-        const firstVerseId = refs?.verse_ids?.length ? Math.min(...refs.verse_ids) : null;
-        const isIndexed = !!fax?.indexRef;
-
-        // If edition is indexed and we have a verse id, fetch page index and map to page
-        if (isIndexed && firstVerseId) {
-          const { indexRef, pgOffset, pgoffset, pgfirstVerse } = fax || {};
-          const effectivePgOffset = (typeof pgOffset === 'number' ? pgOffset : pgoffset) || 0;
-          const blankPageCount = effectivePgOffset + (pgfirstVerse || 1) - 1;
-          BoMOnlineAPI({ faxIndex: indexRef }).then((r) => {
-            try {
-              const { pages } = r?.fax?.[indexRef] || {};
-              if (!Array.isArray(pages) || pages.length === 0) return;
-              const pageIndex = [
-                ...Array.from({ length: blankPageCount }, () => [0, 0]),
-                ...pages,
-              ];
-              // Find first page that contains this verse id
-              let targetPage = null;
-              for (let i = 0; i < pageIndex.length; i++) {
-                const [start, count] = pageIndex[i] || [0, 0];
-                if (start > 0 && count > 0) {
-                  if (firstVerseId >= start && firstVerseId < start + count) {
-                    targetPage = i + 1; // page numbers are 1-based
-                    break;
-                  }
-                }
-              }
-              // Clamp and navigate if found
-              if (targetPage) {
-                const target = maxPage ? Math.min(targetPage, maxPage) : targetPage;
-                if (history?.replace) history.replace(`/fax/${edition}/${target}`);
-              }
-            } catch (e) {
-              // Ignore errors and fall back to grid
-            }
-          });
-        } else {
-          // Not indexed or no verse match: fall back to grid view (no redirect)
-        }
-      } catch (e) {
-        // Invalid reference: ignore and stay in grid
-      }
+    if (rawPage === 'last' && maxPage && history?.replace) {
+      history.replace(`/fax/${edition}/${maxPage}`);
     }
   }, [FaxList, match.faxVersion, match.pageNumber, history]);
   const contentsUI = () => {
@@ -459,15 +394,20 @@ function Facsimiles() {
       </>);
   }
 
-  if (!FaxList) BoMOnlineAPI({ fax: "pdf" }).then((r) => {
-    setFaxList(r.fax);
-  });
-  return (
-    FaxList ?
+  if (loadError) {
+    return (
       <div className="faxMainContainer">
-        {contentsUI()}
-      </div> : <Loader />
-  )
+        <Alert color="danger" className="text-center m-4">
+          {label("fax_load_error") || "Could not load facsimiles. Please try again."}
+        </Alert>
+      </div>
+    );
+  }
+  return FaxList ? (
+    <div className="faxMainContainer">{contentsUI()}</div>
+  ) : (
+    <Loader />
+  );
 }
 
 export default Facsimiles;

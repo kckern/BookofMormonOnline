@@ -1,0 +1,232 @@
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import Drawer from "react-modern-drawer";
+import "react-modern-drawer/dist/index.css";
+import { assetUrl, renderBaseUrl } from "src/models/BoMOnlineAPI";
+import { label, isMobile } from "src/models/Utils";
+import { unionBox } from "./faxVerseData";
+import FaxVerseZoom from "./FaxVerseZoom";
+import StudyBreadcrumb from "../_Common/StudyBreadcrumb";
+
+// Desired on-screen width of the verse cutout in the modal (px).
+const CUTOUT_TARGET_W = 560;
+
+/**
+ * Inspector modal for a single verse: a cropped image of the verse, the
+ * speaker/voice avatar, the verse text, and prev/next verse navigation.
+ *
+ * Image source is HYBRID: a plain single-box verse is CSS-cropped from the page
+ * scan (already warm, instant, free zoom context); a notched / multi-box /
+ * cross-page verse uses the render-crop API, which composites the fragments and
+ * paper-fills the notches server-side — the CSS rect can't do that cleanly.
+ *
+ * Esc / arrows are window-capture with stopImmediatePropagation so they don't
+ * turn a page or exit the viewer to the grid (mirrors ScripturePopup).
+ *
+ * Props:
+ *  - verse: the open verse ({ verse_id, ref, boxes, text, person_slug, voice, pageAssetUrl })
+ *  - version: edition slug (for the render-crop API)
+ *  - anchorX: viewport x of the spread's optical center (seam); the card centers there
+ *  - onPrev/onNext: step to the adjacent verse (may flip the page behind the modal)
+ */
+export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX = null, onPrev, onNext, onRead, onClose }) {
+  useEffect(() => {
+    if (!verse) return undefined;
+    const onKey = (e) => {
+      const stop = () => {
+        e.stopPropagation();
+        if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+        e.preventDefault();
+      };
+      if (e.key === "Escape" || e.keyCode === 27) { stop(); onClose && onClose(); }
+      else if (e.key === "ArrowLeft") { stop(); onPrev && onPrev(); }
+      else if (e.key === "ArrowRight") { stop(); onNext && onNext(); }
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [verse, onPrev, onNext, onClose]);
+
+  // Reserve the cutout box from the KNOWN verse geometry so the image height is
+  // fixed before it loads (no rug pull). Computed above the early return so the
+  // height-measure hooks below stay unconditional (Rules of Hooks). Null-safe.
+  const modalBoxes = verse?.boxes || [];
+  const box = unionBox(modalBoxes) || { x: 0, y: 0, w: pageScale, h: pageScale };
+  // The render service STACKS a verse's fragments vertically (width = widest box,
+  // height = sum of heights) — so a cross-column / cross-page verse's crop is far
+  // wider-and-shorter than its page-space bounding box. Reserving the union bbox
+  // aspect there left a huge blank band; reserve the stacked aspect instead. (For a
+  // single-box verse this equals the box, so the CSS-crop fallback still uses `box`.)
+  const renderBox = modalBoxes.length
+    ? { w: Math.max(...modalBoxes.map((b) => b.w)), h: modalBoxes.reduce((sum, b) => sum + (b.h || 0), 0) }
+    : box;
+  const aspectBox = version ? renderBox : box;
+
+  // The render service stacks a cross-page/column verse's fragments into ONE
+  // tall crop, but `boxes` here only holds the clicked page's fragments — so the
+  // box estimate under-reserves height. Adopt the loaded crop's real aspect as
+  // the source of truth once known; until then, the estimate reserves height so
+  // there's no zero-height flash. Reset per verse (a new verse's image hasn't
+  // loaded yet) so the previous verse's loaded aspect can't carry over once its
+  // image lands. (The measured `cutoutH` persists across the switch, so the box
+  // eases from the old height rather than snapping — no wrong-aspect flash.)
+  const [natSize, setNatSize] = useState(null);
+  useEffect(() => { setNatSize(null); }, [verse?.verse_id]);
+  const cropAspect = natSize && natSize.w ? natSize : aspectBox;
+
+  // Smooth the card's height change on prev/next: `aspect-ratio` doesn't animate
+  // reliably (the used height jumps), so we measure the cutout's width — which is
+  // 100% of the card and NOT height-driven, so no feedback loop — and drive an
+  // explicit pixel height that CSS *can* transition. Falls back to aspect-ratio for
+  // the first paint before measurement.
+  const cutoutRef = useRef(null);
+  const [cutoutH, setCutoutH] = useState(null);
+  useLayoutEffect(() => {
+    const el = cutoutRef.current;
+    if (!el) return undefined;
+    let raf = null;
+    const read = () => {
+      raf = null;
+      const w = el.getBoundingClientRect().width;
+      if (w > 0) setCutoutH((w * cropAspect.h) / cropAspect.w);
+    };
+    read();
+    if (typeof ResizeObserver === "undefined") return undefined;
+    const schedule = () => { if (raf == null) raf = requestAnimationFrame(read); };
+    const ro = new ResizeObserver(schedule);
+    ro.observe(el);
+    return () => { if (raf != null) cancelAnimationFrame(raf); ro.disconnect(); };
+  }, [cropAspect.w, cropAspect.h]);
+
+  // Mobile presents the inspector as a right side-drawer (no centered modal on
+  // mobile). Flip `drawerOpen` on after mount so react-modern-drawer plays its
+  // slide-in transition instead of appearing already-open.
+  const mobile = isMobile();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  useEffect(() => {
+    if (!mobile || !verse) return undefined;
+    const t = setTimeout(() => setDrawerOpen(true), 10);
+    return () => clearTimeout(t);
+  }, [mobile, verse]);
+
+  if (!verse) return null;
+
+  const s = CUTOUT_TARGET_W / box.w;
+  const cropW = box.w * s;
+  const cropH = box.h * s;
+
+  const cardStyle = {
+    position: "absolute",
+    left: anchorX != null ? `${anchorX}px` : "50%",
+    top: "50%",
+    transform: "translate(-50%, -50%)",
+  };
+
+  const cardBody = (
+    <>
+      <button type="button" className="faxVerseModal-nav faxVerseModal-close" aria-label="Close" onClick={() => onClose && onClose()}>×</button>
+
+        <div className="faxVerseModal-header">
+          {(verse.person_slug || verse.voice) && (
+            <div className="faxVerseModal-speaker">
+              {verse.person_slug && (
+                <img
+                  className="faxVerseModal-avatar"
+                  src={`${assetUrl}/people/${verse.person_slug}`}
+                  alt=""
+                  onError={(e) => { e.target.style.visibility = "hidden"; }}
+                />
+              )}
+              {verse.voice && <div className="faxVerseModal-voice">{label(verse.voice)}</div>}
+            </div>
+          )}
+          <div className="faxVerseModal-heading">
+            {onRead ? (
+              <button type="button" className="faxVerseModal-ref as-link" onClick={() => onRead(verse)} title="Open in the Reader">
+                {verse.ref}
+              </button>
+            ) : (
+              <div className="faxVerseModal-ref">{verse.ref}</div>
+            )}
+            {(verse.page || verse.section) && (
+              <div className="faxVerseModal-loc">
+                <StudyBreadcrumb page={verse.page} section={verse.section} linked />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {version ? (
+          // Native-res render crop in a hover magnifier. Fills the modal width at a
+          // fixed landscape ratio (reserves height -> no rug pull). `wfull` so the
+          // zoom shows real scan detail.
+          <div
+            ref={cutoutRef}
+            className="faxVerseModal-cutout landscape"
+            style={cutoutH != null
+              ? { height: `${Math.round(cutoutH)}px` }
+              : { aspectRatio: `${cropAspect.w} / ${cropAspect.h}` }}
+          >
+            <FaxVerseZoom
+              key={verse.verse_id}  /* remount so the previous verse's crop can't linger */
+              src={`${renderBaseUrl}/fax/render/${version}/crop/wfull/ids/${verse.verse_id}.jpg`}
+              onNaturalSize={setNatSize}
+            />
+          </div>
+        ) : verse.pageAssetUrl ? (
+          // Fallback with no render service: CSS crop of the page scan.
+          <div className="faxVerseModal-cutout" style={{ width: cropW, height: cropH }}>
+            <img
+              key={verse.verse_id}
+              src={verse.pageAssetUrl}
+              alt=""
+              style={{ position: "absolute", width: pageScale * s, maxWidth: "none", left: -box.x * s, top: -box.y * s }}
+            />
+          </div>
+        ) : null}
+
+        {/* Verse text flanked by the stepper arrows in the left/right margins,
+            top-aligned so they sit beside the first line. */}
+        <div className="faxVerseModal-body">
+          <button
+            type="button"
+            className="faxVerseModal-nav prev"
+            aria-label="Previous verse"
+            onClick={onPrev}
+            disabled={!onPrev}
+          >‹</button>
+          {verse.text && <p className="faxVerseModal-text">{verse.text}</p>}
+          <button
+            type="button"
+            className="faxVerseModal-nav next"
+            aria-label="Next verse"
+            onClick={onNext}
+            disabled={!onNext}
+          >›</button>
+        </div>
+    </>
+  );
+
+  // Mobile: right side-drawer (consistent with the app's mobile drawer pattern).
+  if (mobile) {
+    return (
+      <Drawer
+        open={drawerOpen}
+        direction="right"
+        size="92vw"
+        className="faxVerseDrawer"
+        onClose={() => onClose && onClose()}
+      >
+        <div className="faxVerseDrawer-inner">{cardBody}</div>
+      </Drawer>
+    );
+  }
+
+  // Desktop: centered modal, portaled to <body>.
+  const node = (
+    <div className="faxVerseModal" role="dialog" aria-modal="true" aria-label={verse.ref}>
+      <div className="faxVerseModal-backdrop" onClick={() => onClose && onClose()} />
+      <div className="faxVerseModal-card" style={cardStyle}>{cardBody}</div>
+    </div>
+  );
+  return createPortal(node, document.body);
+}

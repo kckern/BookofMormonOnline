@@ -1,0 +1,47 @@
+/* Compact Read-format scripture styling — shared by ScripturePopup and any
+   inline caller (e.g. the art tile). Add .scriptureExcerptCompact to the
+   .read-content wrapper. */
+/* We reuse Read.scss's .read-content .read-section markup for the Read verse
+   typography (speaker gutter, scripture font). But Read.scss's SPACING is
+   built for the full page — its selectors are 3-4 classes deep, so overrides
+   must match that specificity (prefix .scriptureExcerptCompact) or
+   they silently lose. Here we strip the page-scale padding/margins/justify and
+   set a tight, popup-appropriate rhythm. */
+.scriptureExcerptCompact .read-section {
+  background: transparent;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+}
+.scriptureExcerptCompact .read-section + .read-section { margin-top: 1rem; }
+.scriptureExcerptCompact .read-block { margin: 0; align-items: flex-start; }
+.scriptureExcerptCompact .read-block + .read-block { margin-top: 0.55rem; }
+/* speaker gutter: mirror Read's avatar size (61×64px ≈ 3.8×4rem circle), just
+   flush-left with no page margin */
+.scriptureExcerptCompact .read-section .read-block .left-gutter {
+  margin-left: 0;
+  width: 4rem;
+  padding: 0 0.7rem 0 0;
+}
+.scriptureExcerptCompact .read-section .read-block .left-gutter img { width: 3.3rem; height: 3.5rem; }
+.scriptureExcerptCompact .read-section .read-block .main-content { padding: 0; }
+/* verse body: mimic Read's ratio (16px / 16px = 1.0). Left-aligned instead of
+   justified (justify created rivers of whitespace in the narrow popup); a hair
+   of leading (1.12) over Read's 1.0 for readability without a loose gap. */
+.scriptureExcerptCompact .read-scripture {
+  font-size: 1rem;
+  line-height: 1.12;
+  text-align: left;
+  margin: 0;
+}
+.scriptureExcerptCompact .read-scripture + .read-scripture { margin-top: 0.5rem; }
+/* section header: smaller heading, tight to the verses; Study action inline right */
+.scriptureExcerptCompact .read-section .read-section-header { margin-bottom: 0.4rem; align-items: baseline; }
+.scriptureExcerptCompact .read-section .read-section-header h4 {
+  font-size: 1rem;
+  line-height: 1.3;
+  margin: 0 0 0 0;
+}
+.scriptureExcerptCompact .read-section .read-section-header p { margin: 0; padding-left: 0.5rem; }
+html[data-theme="dark"] .scriptureExcerptCompact .read-scripture { color: #d6d6d6; }
+.scriptureExcerptCompact .samplerScriptureEllipsis { color: #999; }

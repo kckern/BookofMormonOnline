@@ -80,6 +80,14 @@ function Main(props) {
   }, []);
 
 
+  // The facsimile viewer's dark rules key off html[data-theme]; mirror the dark-mode
+  // preference onto the root element (additive — nothing else on prod reads it).
+  // Must sit above the `apiFailure` early return so the hook order stays stable.
+  const darkPref = !!appController.states.preferences.darkMode;
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", darkPref ? "dark" : "light");
+  }, [darkPref]);
+
   useEffect(() => {
     if (!appController) return setApiFailed({ appController });
     let localToken = localStorage.getItem("token") || Cookies.get("u") ;
