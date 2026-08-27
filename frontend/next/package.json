@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/gen-features.mjs",
+    "prebuild": "node scripts/gen-features.mjs",
     "dev": "next dev --port 8200",
     "build": "next build",
     "start": "next start --port 8200",
@@ -20,6 +22,7 @@
     "@types/node": "^22",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "js-yaml": "^4.3.2",
     "typescript": "^5"
   }
 }
