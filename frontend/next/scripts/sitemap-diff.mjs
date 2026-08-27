@@ -2,9 +2,20 @@
 // Compare our /sitemap.xml against the PHP box benchmark: URL set + per-URL
 // priority/changefreq/lastmod. Reports missing/extra URLs and field mismatches.
 
+import { readFileSync } from 'node:fs'
+
 const BOT_UA = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
 const BENCH = process.env.BENCH ?? 'https://bookofmormon.online'
 const OURS = process.env.OURS ?? 'http://localhost:8200'
+
+// Intent gates from the shared flag config: bench URLs owned by a non-crawl
+// feature are INTENTIONALLY absent from ours — don't count them as MISSING.
+const cfg = JSON.parse(readFileSync(new URL('../config/features.generated.json', import.meta.url), 'utf8'))
+const GATES = Object.values(cfg)
+  .filter((f) => f && f.seo && f.seo !== 'crawl' && Array.isArray(f.paths))
+  .flatMap((f) => f.paths)
+const intentionallyRemoved = (p) =>
+  GATES.some((prefix) => p === prefix || p.startsWith(prefix + '/'))
 
 function parse(xml) {
   const map = new Map()
@@ -36,7 +47,7 @@ const cat = (p) => {
   return `pageslug d${s.length}`
 }
 
-const missing = [...bm.keys()].filter((k) => !om.has(k))
+const missing = [...bm.keys()].filter((k) => !om.has(k) && !intentionallyRemoved(k))
 const extra = [...om.keys()].filter((k) => !bm.has(k))
 
 // Group missing/extra by category for a readable summary.
