@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
-import { isMessengerEnabled } from '../../models/featureFlags';
+import { isMessengerEnabled, HIDE_HOME_NAV, HIDE_MATTERS_NAV, HIDE_HISTORY_NAV } from '../../models/featureFlags';
 import { Link, NavLink, useHistory, useRouteMatch } from "react-router-dom";
 import { Nav, Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import "./Sidebar.css";
@@ -48,6 +48,7 @@ import slv from "./svg/flags/slv.svg";
 import tr from "./svg/flags/tr.svg";
 import { menuConfig } from "./menuConfig";
 import { resolveActivePath } from "./sidebarPath";
+import { filterMenu } from "./menuFilter";
 import { isMobile } from "../../models/Utils";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { useMessenger } from "src/contexts/MessengerContext";
@@ -94,53 +95,36 @@ export const MenuItem = ({ icon, labelKey, customTitle }) => {
 export function loadMenu(){
 
   const lang = determineLanguage();
+  const isDev = /localhost|^dev/.test(window.location.hostname);
 
-  // Build menu list from configuration
-  var list = menuConfig.map(item => {
-    const icon = iconMap[item.slug];
-    const jsx = <MenuItem 
-      icon={icon} 
-      labelKey={item.labelKey} 
-      customTitle={item.customTitle} 
-    />;
-    
-    return {
-      slug: item.slug,
-      jsx: jsx,
-      lang: item.lang,
-      langNot: item.langNot,
-      dev: item.dev,
-      beta: item.beta,
-      requiresMessenger: item.requiresMessenger
-    };
+  // Cutover hidden-flag map (prod-only; false in dev/test). Keys match the
+  // `hiddenFlag` values in menuConfig.
+  const hiddenFlags = {
+    home: HIDE_HOME_NAV,
+    matters: HIDE_MATTERS_NAV,
+    history: HIDE_HISTORY_NAV,
+  };
+
+  // Filter the RAW menuConfig (still carries hiddenFlag), THEN attach JSX — so
+  // the hidden gate can't be defeated by a prop-stripping map.
+  const visible = filterMenu(menuConfig, {
+    hiddenFlags,
+    isDev,
+    lang,
+    useMessenger: isMessengerEnabled(),
   });
 
-  // Feature flag - messaging disabled until Phase 5 data migration
-  const USE_MESSENGER = isMessengerEnabled();
-
-  return list.filter(i=>{
-    // Filter by messenger requirement
-    if (i.requiresMessenger && !USE_MESSENGER) return false;
-    return true;
-  }).filter(i=>{
-    const envIsDev = /localhost|^dev/.test(window.location.hostname);
-    const itemIsDev = i.dev;
-    const okayToShowBasedOnDev = itemIsDev ? envIsDev : true;
-    return okayToShowBasedOnDev;
-  }).filter(i => {
-    const envLang = lang;
-    const itemLangs = i.lang;
-    const itemLangsNot = i.langNot;
-    
-    // Check whitelist (lang)
-    const okayToShowBasedOnLang = itemLangs ? itemLangs.includes(envLang) : true;
-    
-    // Check blacklist (langNot)
-    const okayToShowBasedOnLangNot = itemLangsNot ? !itemLangsNot.includes(envLang) : true;
-    
-    return okayToShowBasedOnLang && okayToShowBasedOnLangNot;
-  });
-
+  return visible.map((item) => ({
+    slug: item.slug,
+    jsx: (
+      <MenuItem
+        icon={iconMap[item.slug]}
+        labelKey={item.labelKey}
+        customTitle={item.customTitle}
+      />
+    ),
+    beta: item.beta,
+  }));
 }
 
 function SearchBox({setActivePath}) {

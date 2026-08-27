@@ -18,6 +18,7 @@ export const menuConfig = [
   {
     slug: "home",
     labelKey: "menu_home",
+    hiddenFlag: "home",
   },
   {
     slug: "contents",
@@ -63,6 +64,7 @@ export const menuConfig = [
   {
     slug: "matters",
     labelKey: "menu_matters",
+    hiddenFlag: "matters",
   },
   {
     slug: "map",
@@ -83,6 +85,7 @@ export const menuConfig = [
     slug: "history",
     labelKey: "menu_history",
     lang: ["en"],
+    hiddenFlag: "history",
   },
   {
     slug: "analysis",
