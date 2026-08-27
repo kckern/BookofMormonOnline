@@ -6,7 +6,7 @@
 # NOTE: one prod build serves both staging and prod, so STAGING ALSO applies
 # these (accepted).
 
-homeNav:      { hidden: true }   # hide "Home" (Explore + Community) menu entrance
-mattersNav:   { hidden: true }   # hide "Matters" menu + search-result group
-historyNav:   { hidden: true }   # hide "History" menu entrance
-passageNotes: { hidden: true }   # disable the whole reader-margin PassageNotes panel
+homeNav:      { hidden: true, seo: remove,  paths: [/home] }
+mattersNav:   { hidden: true, seo: remove,  paths: [/matters] }
+historyNav:   { hidden: true, seo: noindex, paths: [/history] }
+passageNotes: { hidden: true }   # reader panel — no SSR/crawl surface; SSR ignores it

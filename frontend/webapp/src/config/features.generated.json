@@ -1,12 +1,24 @@
 {
   "homeNav": {
-    "hidden": true
+    "hidden": true,
+    "seo": "remove",
+    "paths": [
+      "/home"
+    ]
   },
   "mattersNav": {
-    "hidden": true
+    "hidden": true,
+    "seo": "remove",
+    "paths": [
+      "/matters"
+    ]
   },
   "historyNav": {
-    "hidden": true
+    "hidden": true,
+    "seo": "noindex",
+    "paths": [
+      "/history"
+    ]
   },
   "passageNotes": {
     "hidden": true
