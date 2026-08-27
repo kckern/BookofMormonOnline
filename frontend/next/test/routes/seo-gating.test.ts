@@ -63,4 +63,10 @@ test.describe('canonical is host-aware', () => {
     const html = await r.text()
     expect(html).toContain('rel="canonical" href="https://ko.bookofmormon.online/people"')
   })
+  test('untrusted x-forwarded-host falls back to apex canonical', async ({ request }) => {
+    const r = await request.get('/people', {
+      headers: { ...bot, 'x-forwarded-host': 'evil.example.com', 'x-forwarded-proto': 'https' },
+    })
+    expect(await r.text()).toContain('rel="canonical" href="https://bookofmormon.online/people"')
+  })
 })

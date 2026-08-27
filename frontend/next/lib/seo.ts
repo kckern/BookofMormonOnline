@@ -63,6 +63,17 @@ interface SeoInput {
   ogSub?: string
 }
 
+// x-forwarded-host is client-influenced; only trust our own domain (+ localhost
+// for dev/harness). Anything else falls back to the apex, so a crafted request
+// can't inject an arbitrary canonical/og:url. Handles a comma-joined forwarded
+// list and an optional :port.
+function safeHost(candidate: string | null): string {
+  const host = (candidate ?? '').split(',')[0].trim()
+  const bare = host.split(':')[0]
+  const ok = bare === SITE_DOMAIN || bare.endsWith('.' + SITE_DOMAIN) || bare === 'localhost'
+  return ok ? host : SITE_DOMAIN
+}
+
 // Single source of truth for the head tag-set the PHP box emits, expressed as a
 // Next.js Metadata object. Uses title.absolute for exact control so the layout
 // template never double-appends the suffix.
@@ -78,7 +89,7 @@ export async function buildMetadata(input: SeoInput): Promise<Metadata> {
   const ogImage = `/og?${ogParams.toString()}`
 
   const h = await headers()
-  const host = h.get('x-forwarded-host') ?? h.get('host') ?? SITE_DOMAIN
+  const host = safeHost(h.get('x-forwarded-host') ?? h.get('host'))
   const proto = h.get('x-forwarded-proto') ?? 'https'
   const abs = `${proto}://${host}${path}`
 
