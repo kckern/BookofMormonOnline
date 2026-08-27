@@ -28,3 +28,12 @@ test.describe('sitemap excludes non-crawl features', () => {
     expect(xml).toContain('<loc>https://bookofmormon.online/people</loc>')
   })
 })
+
+test.describe('default shell does not link noindexed sections', () => {
+  test('/ shell has no History nav link', async ({ request }) => {
+    const r = await request.get('/', { headers: bot })
+    const html = await r.text()
+    expect(html).not.toContain('href="/history"')
+    expect(html).toContain('href="/people"') // sanity: other nav links present
+  })
+})

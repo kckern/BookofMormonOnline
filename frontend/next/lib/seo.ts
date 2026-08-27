@@ -14,7 +14,6 @@ export const DEFAULT_NAV: ReadonlyArray<{ href: string; label: string }> = [
   { href: '/map', label: 'Map' },
   { href: '/people', label: 'People' },
   { href: '/places', label: 'Places' },
-  { href: '/history', label: 'History' },
   { href: '/fax', label: 'Facsimiles' },
   { href: '/about', label: 'About' },
 ]
