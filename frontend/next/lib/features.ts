@@ -1,11 +1,7 @@
 import features from '@/config/features.generated.json'
+import { LOCALE_SEGS } from '@/lib/locales'
 
 export type SeoIntent = 'crawl' | 'noindex' | 'remove'
-
-// Language segments stripped before matching. For bots the middleware does NOT
-// strip the locale prefix, so a subdomain-language URL arrives as /{lang}/…;
-// mirror the middleware's CRA_LOCALE_SEG (which includes 'en').
-const LOCALE_SEGS = new Set(['en', 'ko', 'fr', 'de', 'es', 'pt', 'ja', 'zh'])
 
 interface FeatureCfg {
   seo?: SeoIntent

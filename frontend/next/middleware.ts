@@ -1,14 +1,13 @@
 export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
+import { LANG_PREFIXES, LOCALE_SEGS } from '@/lib/locales'
 
-const LANG_PREFIXES = ['ko', 'fr', 'de', 'es', 'pt', 'ja', 'zh']
 // The CRA uses bare routes (/timeline, not /en/timeline) — language is by
 // subdomain, not URL path. So a locale-prefixed path must have that prefix
 // stripped before proxying to the CRA, or its router finds no match and the
 // page (e.g. the timeline) never mounts. 'en' included (it's the default and
 // not in LANG_PREFIXES, but /en/* URLs still occur).
-const CRA_LOCALE_SEG = new Set(['en', ...LANG_PREFIXES])
 
 // Crawlers and social-preview fetchers get SSR HTML.
 // Everyone else gets proxied to the React app (CRA) on port 8201.
@@ -47,7 +46,7 @@ export function middleware(request: NextRequest) {
     // CRITICAL: only redirect GET navigations. The GraphQL API is POSTed to
     // /{lang} (e.g. POST /en) — redirecting that breaks every query (it 404s at
     // /). API POSTs fall through to the rewrite below.
-    if (request.method === 'GET' && segs.length && CRA_LOCALE_SEG.has(segs[0])) {
+    if (request.method === 'GET' && segs.length && LOCALE_SEGS.has(segs[0])) {
       const url = request.nextUrl.clone()
       url.pathname = '/' + segs.slice(1).join('/')
       return NextResponse.redirect(url)
