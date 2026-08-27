@@ -1,0 +1,14 @@
+{
+  "homeNav": {
+    "hidden": true
+  },
+  "mattersNav": {
+    "hidden": true
+  },
+  "historyNav": {
+    "hidden": true
+  },
+  "passageNotes": {
+    "hidden": true
+  }
+}

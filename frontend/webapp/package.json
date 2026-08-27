@@ -106,6 +106,8 @@
     "web-vitals": "^1.1.2"
   },
   "scripts": {
+    "prestart": "node scripts/gen-features.js",
+    "prebuild": "node scripts/gen-features.js",
     "start": "react-app-rewired start",
     "build": "react-app-rewired build",
     "test": "react-scripts test",
@@ -149,6 +151,7 @@
     "css-loader": "^6.8.1",
     "eslint-plugin-react-hooks": "^4.6.0",
     "http-proxy-middleware": "^3.0.5",
+    "js-yaml": "^4.3.2",
     "process": "^0.11.10",
     "sass": "^1.69.5",
     "stream": "^0.0.2"

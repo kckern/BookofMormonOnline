@@ -61,6 +61,8 @@ docs/audits/data-backups/
 /docs/audits/fax-geometry
 /docs/sql
 *.json
+# Allow the feature-flag codegen output (committed so Jest sees it without running prestart)
+!frontend/webapp/src/config/features.generated.json
 
 # study.cli.mjs synthetic-user roster (tokens — never commit)
 .study-cli/

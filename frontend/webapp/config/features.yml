@@ -1,0 +1,12 @@
+# Feature-flag config. Hand-edited; scripts/gen-features.js compiles it to
+# src/config/features.generated.json at build time (prestart/prebuild).
+#
+# All flags below are HONORED IN PRODUCTION BUILDS ONLY (NODE_ENV=production).
+# In dev (npm start) and tests everything is shown regardless of these values.
+# NOTE: one prod build serves both staging and prod, so STAGING ALSO applies
+# these (accepted).
+
+homeNav:      { hidden: true }   # hide "Home" (Explore + Community) menu entrance
+mattersNav:   { hidden: true }   # hide "Matters" menu + search-result group
+historyNav:   { hidden: true }   # hide "History" menu entrance
+passageNotes: { hidden: true }   # disable the whole reader-margin PassageNotes panel
