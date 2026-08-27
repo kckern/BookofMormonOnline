@@ -42,7 +42,9 @@ test.describe('Page catch-all route /{slug}', () => {
   test('generic unknown single-segment is a 200 soft-404 (PHP-box parity)', async ({ request }) => {
     const r = await request.get('/zzz-no-such-page-xyz')
     expect(r.status()).toBe(200)
-    expect(await r.text()).toContain('Book of Mormon Online')
+    // A DefaultShell-unique phrase (from DEFAULT_BODY) — proves the soft-404 renders
+    // the generic shell, not a real page.
+    expect(await r.text()).toContain('interactive study resource')
   })
 
   test('unknown entity slug (2-segment) is a real 404', async ({ request }) => {
