@@ -18,12 +18,13 @@ import { ChapterNav } from "./components/ChapterNav";
 import { SkeletonLoader } from "./components/SkeletonLoader";
 import { ChapterContent } from "./components/ChapterContent";
 import PassageNotes from "./PassageNotes";
+import { HIDE_PASSAGE_NOTES } from "src/models/featureFlags";
 
 const DEBUG_SKELETON = false;
 
-// Feature flag: PassageNotes panels are still under perf/design work.
-// Off by default; flip REACT_APP_ENABLE_PASSAGE_NOTES=true to enable.
-const PASSAGE_NOTES_ENABLED = process.env.REACT_APP_ENABLE_PASSAGE_NOTES === 'true';
+// Feature flag: PassageNotes panels are gated OFF in prod builds (perf/design
+// WIP); ON in dev/test. Source: config/features.yml -> HIDE_PASSAGE_NOTES.
+const PASSAGE_NOTES_ENABLED = !HIDE_PASSAGE_NOTES;
 
 const sectionPassageNotesKey = (chapterRef, sectionIndex, sectionRef) =>
     `${chapterRef}__section_${sectionIndex}_${(sectionRef || "").replace(/[^a-zA-Z0-9]/g, '_')}`;

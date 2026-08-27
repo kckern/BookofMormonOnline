@@ -5,10 +5,11 @@ import { slugify, getEnglishReference, verseIdToSlug } from '../../../utils/scri
 import { label } from '../../../models/Utils';
 import { useAppController } from "src/contexts/AppControllerContext";
 import PassageNotes from '../PassageNotes';
+import { HIDE_PASSAGE_NOTES } from "src/models/featureFlags";
 
-// Feature flag: PassageNotes panels are still under perf/design work.
-// Off by default; flip REACT_APP_ENABLE_PASSAGE_NOTES=true to render them.
-const PASSAGE_NOTES_ENABLED = process.env.REACT_APP_ENABLE_PASSAGE_NOTES === 'true';
+// Feature flag: PassageNotes panels are gated OFF in prod builds (perf/design
+// WIP); ON in dev/test. Source: config/features.yml -> HIDE_PASSAGE_NOTES.
+const PASSAGE_NOTES_ENABLED = !HIDE_PASSAGE_NOTES;
 
 const sectionPassageNotesKey = (chapterRef, sectionIndex, sectionRef) =>
     `${chapterRef}__section_${sectionIndex}_${(sectionRef || "").replace(/[^a-zA-Z0-9]/g, '_')}`;
