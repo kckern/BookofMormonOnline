@@ -7,7 +7,7 @@ import { buildMetadata } from '@/lib/seo'
 // and /history/witnesses (no distinct SSR for the latter two), differing only in
 // canonical/og:url. This module is the single source so all three stay in sync;
 // each page passes its OWN path.
-export function historyMetadata(path: string): Metadata {
+export async function historyMetadata(path: string): Promise<Metadata> {
   return buildMetadata({
     title: 'Historical Sources Relating to the Book of Mormon',
     // Meta description is the intro paragraph, truncated to 159 chars + '…'.

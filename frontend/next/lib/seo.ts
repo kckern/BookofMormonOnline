@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { headers } from 'next/headers'
 
 // Constants mirrored from the PHP SSR box head (the parity benchmark).
 export const SITE_SUFFIX = 'Book of Mormon Online'
@@ -65,7 +66,7 @@ interface SeoInput {
 // Single source of truth for the head tag-set the PHP box emits, expressed as a
 // Next.js Metadata object. Uses title.absolute for exact control so the layout
 // template never double-appends the suffix.
-export function buildMetadata(input: SeoInput): Metadata {
+export async function buildMetadata(input: SeoInput): Promise<Metadata> {
   const { title, description, path, withSuffix = true, preTruncated = false, ogSub } = input
   const fullTitle = withSuffix ? `${title} • ${SITE_SUFFIX}` : title
   const desc = preTruncated ? description : truncateDesc(description)
@@ -76,15 +77,20 @@ export function buildMetadata(input: SeoInput): Metadata {
   if (ogSub) ogParams.set('sub', ogSub)
   const ogImage = `/og?${ogParams.toString()}`
 
+  const h = await headers()
+  const host = h.get('x-forwarded-host') ?? h.get('host') ?? SITE_DOMAIN
+  const proto = h.get('x-forwarded-proto') ?? 'https'
+  const abs = `${proto}://${host}${path}`
+
   return {
     title: { absolute: fullTitle },
     description: desc,
     keywords: KEYWORDS,
-    alternates: { canonical: path },
+    alternates: { canonical: abs },
     openGraph: {
       title: fullTitle,
       description: desc,
-      url: path,
+      url: abs,
       type: 'article',
       images: [{ url: ogImage, secureUrl: ogImage, width: 1200, height: 630 }],
     },
@@ -105,7 +111,7 @@ export function buildMetadata(input: SeoInput): Metadata {
 
 // The generic fallback metadata the PHP box serves for any route it has no
 // specific handler for (e.g. /search, /user, /objects, and the homepage).
-export function defaultMetadata(path = '/'): Metadata {
+export async function defaultMetadata(path = '/'): Promise<Metadata> {
   return buildMetadata({
     title: DEFAULT_TITLE,
     description: DEFAULT_BODY, // truncated to 159 by buildMetadata

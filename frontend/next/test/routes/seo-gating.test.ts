@@ -54,3 +54,13 @@ test.describe('history is noindex for bots', () => {
     expect(r.headers()['x-robots-tag']).toBeUndefined()
   })
 })
+
+test.describe('canonical is host-aware', () => {
+  test('canonical uses x-forwarded-host + proto', async ({ request }) => {
+    const r = await request.get('/people', {
+      headers: { ...bot, 'x-forwarded-host': 'ko.bookofmormon.online', 'x-forwarded-proto': 'https' },
+    })
+    const html = await r.text()
+    expect(html).toContain('rel="canonical" href="https://ko.bookofmormon.online/people"')
+  })
+})
