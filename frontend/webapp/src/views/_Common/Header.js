@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { isMessengerEnabled } from '../../models/featureFlags';
+import { isMessengerEnabled, HIDE_HOME_NAV } from '../../models/featureFlags';
 import { Link } from "react-router-dom";
 import { assetUrl } from "models/BoMOnlineAPI";
 import { isMobile, label, tokenImage } from "models/Utils.js";
@@ -34,7 +34,7 @@ function Header({ isReady }) {
         {USE_MESSENGER && <StudyGroupBar />}
       </>
     );
-    homeLink = USE_MESSENGER ? <Link to="/home">{homeLink}</Link> : homeLink;
+    homeLink = (USE_MESSENGER && !HIDE_HOME_NAV) ? <Link to="/home">{homeLink}</Link> : homeLink;
   }
 
   if (isMobile() && appController) return <MobileHeader />
