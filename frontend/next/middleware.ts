@@ -2,6 +2,7 @@ export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { LANG_PREFIXES, LOCALE_SEGS } from '@/lib/locales'
+import { seoIntentForPath } from '@/lib/features'
 
 // The CRA uses bare routes (/timeline, not /en/timeline) — language is by
 // subdomain, not URL path. So a locale-prefixed path must have that prefix
@@ -60,7 +61,11 @@ export function middleware(request: NextRequest) {
   const lang = LANG_PREFIXES.includes(segments[0]) ? segments[0] : 'en'
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set('x-lang', lang)
-  return NextResponse.next({ request: { headers: requestHeaders } })
+  const res = NextResponse.next({ request: { headers: requestHeaders } })
+  if (seoIntentForPath(pathname) === 'noindex') {
+    res.headers.set('X-Robots-Tag', 'noindex, follow')
+  }
+  return res
 }
 
 export const config = {

@@ -37,3 +37,20 @@ test.describe('default shell does not link noindexed sections', () => {
     expect(html).toContain('href="/people"') // sanity: other nav links present
   })
 })
+
+test.describe('history is noindex for bots', () => {
+  test('/history → 200 + noindex meta + header', async ({ request }) => {
+    const r = await request.get('/history', { headers: bot })
+    expect(r.status()).toBe(200)
+    expect(r.headers()['x-robots-tag']).toBe('noindex, follow')
+    expect(await r.text()).toContain('noindex')
+  })
+  test('/ko/history → noindex header (locale stripped)', async ({ request }) => {
+    const r = await request.get('/ko/history', { headers: bot })
+    expect(r.headers()['x-robots-tag']).toBe('noindex, follow')
+  })
+  test('crawl pages have no noindex header', async ({ request }) => {
+    const r = await request.get('/people', { headers: bot })
+    expect(r.headers()['x-robots-tag']).toBeUndefined()
+  })
+})
