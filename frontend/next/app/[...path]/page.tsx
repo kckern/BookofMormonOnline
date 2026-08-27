@@ -7,6 +7,7 @@ import { sectionMetadata, getSection } from '@/lib/section'
 import { SectionView } from '../_components/SectionView'
 import { DefaultShell } from '../_components/DefaultShell'
 import { buildMetadata, stripMarkup, defaultMetadata } from '@/lib/seo'
+import { seoIntentForPath } from '@/lib/features'
 
 interface Props {
   params: Promise<{ path: string[] }>
@@ -28,6 +29,7 @@ function classify(path: string[]): Kind {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { path } = await params
+  if (seoIntentForPath('/' + path.join('/')) === 'remove') notFound()
   const kind = classify(path)
 
   if (kind === 'textblock') {
@@ -55,6 +57,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function CatchAllPage({ params }: Props) {
   const { path } = await params
+  if (seoIntentForPath('/' + path.join('/')) === 'remove') notFound()
   const kind = classify(path)
 
   if (kind === 'textblock') {
