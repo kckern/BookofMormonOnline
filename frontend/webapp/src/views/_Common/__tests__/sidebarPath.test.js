@@ -43,4 +43,15 @@ describe("resolveActivePath", () => {
   test("undefined pathname resolves to /home", () => {
     expect(resolveActivePath(undefined, SLUGS)).toBe("/home");
   });
+  test("direct-URL /matters highlights matters when its slug is present", () => {
+    expect(resolveActivePath("/matters", [...SLUGS, "matters"])).toBe("/matters");
+  });
+  test("/matters falls back to /study when matters is filtered out of slugs", () => {
+    // Documents why determinePath must pass the UNFILTERED menuConfig slugs:
+    // with a filtered list (no 'matters'), a live direct-URL visit mis-highlights Study.
+    expect(resolveActivePath("/matters", SLUGS)).toBe("/study");
+  });
+  test("direct-URL /history/lost-116-pages highlights history when present", () => {
+    expect(resolveActivePath("/history/lost-116-pages", [...SLUGS, "history"])).toBe("/history/lost-116-pages");
+  });
 });

@@ -255,7 +255,9 @@ function Sidebar(props) {
   useSidebarFit(menuRef, menu.length);
 
   const determinePath = () => {
-    let slugs = menu.map((m) => m.slug);
+    // Use the UNFILTERED menuConfig slugs: hidden rooms are still routable by
+    // direct URL, and their active-highlight must not fall through to /study.
+    const slugs = menuConfig.map((m) => m.slug);
     return resolveActivePath(window.location.pathname, slugs);
   };
 
