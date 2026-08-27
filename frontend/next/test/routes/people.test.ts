@@ -1,10 +1,15 @@
 import { test, expect } from '@playwright/test'
 import { getMeta, getTitle } from '../helpers/meta'
+import { expectSsrPage } from '../helpers/ssr'
 
 // nephi1 is the most prominent person in bom_prd (slug uses numeric suffix)
 const PATH = '/people/nephi1'
 
 test.describe('People route /people/{slug}', () => {
+  test('/people index renders SSR content', async ({ request }) => {
+    await expectSsrPage(request, '/people', { titleIncludes: 'people' })
+  })
+
   test('returns 200', async ({ request }) => {
     expect((await request.get(PATH)).status()).toBe(200)
   })
