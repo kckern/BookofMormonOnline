@@ -1,5 +1,6 @@
 import { cache } from 'react'
 import { gql } from './graphql'
+import { seoIntentForPath } from './features'
 
 // ── /sitemap.xml URL enumeration ─────────────────────────────────────────────
 // Parity target: the legacy PHP box's sitemap, which contains exactly 3179 URLs
@@ -153,5 +154,6 @@ export const getSitemapUrls = cache(async (): Promise<SitemapUrl[]> => {
     { path: '/studyedition', priority: '0.5' },
   ]
 
-  return [...statics, ...content, ...people, ...places, ...history, ...fax, ...maps, ...timeline]
+  const all = [...statics, ...content, ...people, ...places, ...history, ...fax, ...maps, ...timeline]
+  return all.filter((u) => seoIntentForPath(u.path) === 'crawl')
 })

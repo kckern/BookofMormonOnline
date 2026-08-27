@@ -19,3 +19,12 @@ test.describe('remove-intent features 404 for bots', () => {
     }
   })
 })
+
+test.describe('sitemap excludes non-crawl features', () => {
+  test('/sitemap.xml has no /history URLs but keeps content', async ({ request }) => {
+    const r = await request.get('/sitemap.xml', { headers: bot })
+    const xml = await r.text()
+    expect(xml).not.toContain('<loc>https://bookofmormon.online/history')
+    expect(xml).toContain('<loc>https://bookofmormon.online/people</loc>')
+  })
+})
