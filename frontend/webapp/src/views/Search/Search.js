@@ -5,6 +5,7 @@ import Loader from "../_Common/Loader";
 import { useRouteMatch, useHistory, useLocation, Link } from "react-router-dom";
 import { parseMode, buildSearchPath, shouldOfferRich, isRichDegraded, VERSE_CAP } from "./searchMode";
 import { label } from "src/models/Utils";
+import { HIDE_MATTERS_NAV } from "src/models/featureFlags";
 import { getSearchSlug, getSearchValue } from "src/models/searchSlug";
 import BoMOnlineAPI, {assetUrl} from "src/models/BoMOnlineAPI";
 import { toast } from "react-toastify";
@@ -124,7 +125,9 @@ function SearchComponent() {
             <div className="search-rich-groups">
               <ResultGroup label={label("menu_people") || "People"} cards={sa.people} kind="person" query={keyword} semantic={semantic} />
               <ResultGroup label={label("menu_places") || "Places"} cards={sa.places} kind="place" query={keyword} semantic={semantic} />
-              <ResultGroup label={label("menu_matters", [-1]) || "Matters"} cards={sa.matters} kind="matter" query={keyword} semantic={semantic} />
+              {!HIDE_MATTERS_NAV && (
+                <ResultGroup label={label("menu_matters", [-1]) || "Matters"} cards={sa.matters} kind="matter" query={keyword} semantic={semantic} />
+              )}
               <ResultGroup label="Commentary" cards={sa.commentary} kind="commentary" query={keyword} semantic={semantic} />
               <ResultGroup label="Narration" cards={sa.narration} kind="narration" query={keyword} semantic={semantic} />
               <ResultGroup label="Pages" cards={sa.pages} kind="page" query={keyword} semantic={semantic} />
