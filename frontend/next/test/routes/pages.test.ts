@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { getMeta, getTitle } from '../helpers/meta'
+import { expectSsrPage } from '../helpers/ssr'
 
 // "jaredites" is a static page that exists in bom_prd
 const PATH = '/jaredites'
@@ -36,8 +37,20 @@ test.describe('Page catch-all route /{slug}', () => {
     expect(r.headers()['content-type']).toContain('image/png')
   })
 
-  test('unknown page returns 404', async ({ request }) => {
+  // Generic unknown single-segment slugs are a 200 "soft-404" DefaultShell — this
+  // is intentional PHP-box parity (see docs/reference/ssr.md). KNOWN soft-404.
+  test('generic unknown single-segment is a 200 soft-404 (PHP-box parity)', async ({ request }) => {
     const r = await request.get('/zzz-no-such-page-xyz')
-    expect(r.status()).toBe(404)
+    expect(r.status()).toBe(200)
+    expect(await r.text()).toContain('Book of Mormon Online')
+  })
+
+  test('unknown entity slug (2-segment) is a real 404', async ({ request }) => {
+    expect((await request.get('/people/zzz-no-such-person-xyz')).status()).toBe(404)
+  })
+
+  // Section kind: 2-segment non-numeric — the bulk of the sitemap.
+  test('section route /{page}/{section} renders SSR content', async ({ request }) => {
+    await expectSsrPage(request, '/lehites/lehis-prophetic-call')
   })
 })

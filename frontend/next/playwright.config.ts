@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test'
+import { BOT_UA } from './test/helpers/meta'
 
 export default defineConfig({
   testDir: './test',
@@ -12,7 +13,7 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], userAgent: BOT_UA },
     },
   ],
   webServer: {

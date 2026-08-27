@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test'
 import { getMeta, getTitle } from '../helpers/meta'
 
-// Uses a real chapter from bom_prd. 1 Nephi 1 is the canonical first chapter.
-const REF = '/1-nephi/1'
+// A real textblock URL: /{pageSlug}/{blockno}. /1-nephi/1 is NOT an SSR route
+// (there is no book/chapter route — see the spec's recorded gap); /lehites/64 is
+// the real textblock form (also used by scripts/parity.mjs).
+const REF = '/lehites/64'
 
 test.describe('Scripture route /{slug}/{blockno}', () => {
   test('returns 200', async ({ request }) => {
