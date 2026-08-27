@@ -1,4 +1,5 @@
 /** @format */
+import features from '../config/features.generated.json';
 /**
  * Feature flags — single source of truth.
  *
@@ -61,3 +62,16 @@ export function isMessengerEnabled() {
  * exactly where they previously wrote `process.env.REACT_APP_USE_MESSENGER === 'true'`.
  */
 export const USE_MESSENGER = isMessengerEnabled();
+
+/**
+ * Cutover flags — honored in PRODUCTION BUILDS ONLY. In dev (`npm start`) and
+ * Jest, NODE_ENV !== 'production', so these are always false and nothing is
+ * hidden. A single prod build serves both staging and prod, so staging also
+ * applies them (accepted). Source of truth: config/features.yml.
+ */
+const IS_PROD = process.env.NODE_ENV === 'production';
+
+export const HIDE_HOME_NAV      = IS_PROD && !!features.homeNav?.hidden;
+export const HIDE_MATTERS_NAV   = IS_PROD && !!features.mattersNav?.hidden;
+export const HIDE_HISTORY_NAV   = IS_PROD && !!features.historyNav?.hidden;
+export const HIDE_PASSAGE_NOTES = IS_PROD && !!features.passageNotes?.hidden;
