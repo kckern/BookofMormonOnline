@@ -99,6 +99,117 @@ data layers drift, the equivalence (and the SEO defensibility) breaks.
 Keep self-canonical on each detail URL (`buildMetadata` does) so the page ranks on
 its own rather than being folded into the chapter.
 
+## Feature flags & the crawl surface (robots, sitemap, SEO)
+
+Because the two renderers are UA-split, **a feature flag evaluated in only one of them
+governs only that audience.** The cutover flags (`frontend/webapp/config/features.yml`
+→ `HIDE_*` in `frontend/webapp/src/models/featureFlags.js`) compile into the **CRA
+bundle** and run on the **human** path only. Googlebot and the social scrapers take the
+**SSR** path and never execute them. So today a flag that "hides" a feature hides it
+from users while the SSR layer keeps serving it and `/sitemap.xml` keeps advertising it
+to search engines.
+
+### The second invariant: flag parity
+
+The content-equivalence invariant above has a sibling. **A feature's visibility decision
+must hold in BOTH renderers.** If a feature is flagged off for humans but the SSR route
+still renders it and the sitemap still lists it, the flag is cosmetic for SEO — and
+worse: because routes stay live, a visitor arriving from a search result lands *directly
+on the "hidden" feature*. The hidden thing becomes the first thing search traffic sees.
+
+Reaching the SSR layer means two distinct surfaces (plus a third):
+
+1. **URL resolution — what the SSR route returns.** A flagged-off feature's route must
+   stop returning indexable `200` content: `notFound()` (404), `410 Gone`, or a
+   `robots: noindex` meta. Pulling it from the sitemap is *not enough* alone — crawlers
+   also find URLs via external inbound links, the prior index, shares, and the address
+   bar; if the route still answers `200`, the page stays indexed.
+   > **Soft-404 trap:** the catch-all's single-segment `page` branch returns the generic
+   > `DefaultShell` at **HTTP 200** for unknown slugs (`app/[...path]/page.tsx`), so bare
+   > `/matters` and `/home` are indexable *soft-404s*, not real 404s.
+
+2. **Sitemap enumeration — what you advertise.** `/sitemap.xml` (`lib/sitemap.ts`) is the
+   site telling search engines "crawl and index these." A flagged-off feature's URLs must
+   be omitted, or you are explicitly inviting indexing of something you decided to pull.
+
+3. **Internal SSR links.** Server-rendered `<a href>`s keep a target in the crawl graph
+   even with no sitemap entry (e.g. `DefaultShell`'s `DEFAULT_NAV` links `/history`, and
+   it renders on *every* soft-404 page). A flagged-off feature must also leave the SSR
+   link chrome.
+
+**Why both #1 and #2, never one alone:**
+- Sitemap removal alone → crawlers still discover the URL elsewhere; an SSR `200` keeps
+  it indexed.
+- SSR `404`/noindex alone → the sitemap now advertises URLs that 404, which Search
+  Console reports as errors and which waste crawl budget and erode site trust.
+- Together → stop advertising **and** stop resolving: one consistent signal.
+
+### HTTP status codes are SEO signals, not decoration
+
+The SSR route's **HTTP status is the machine-readable truth crawlers act on** — they use
+it to decide what to index, keep, drop, or transfer. It must reflect reality (flag state,
+content availability, moves), or the index diverges from the product. A JS/client-side
+redirect or a self-canonical `200` on a page that has really moved is **invisible to
+non-JS bots and transfers no ranking signal** — only real HTTP codes do.
+
+| Code | Means to a crawler | Use it for |
+|---|---|---|
+| **200** | Real, indexable content | Live, available content only. *Never* the soft-404 case (200 + empty `DefaultShell` gets thin pages indexed and burns crawl budget). |
+| **301 / 308** | Permanent move — transfer ranking to target, replace old URL in index | Relocated/merged content. **The History redesign move `/history/{slug}` → `/history/reception/{slug}` must be a 301** — today it's a *client-side* redirect for humans and a self-canonical `200` for bots, so equity never transfers and the two audiences disagree. |
+| **302 / 307** | Temporary move — keep the *original* indexed | Genuinely temporary redirects only. Using it where 301 is meant strands equity on the old URL. |
+| **404 / 410** | Not here (404 = gone, may retry; 410 = permanently gone, drop faster) | Missing content, and features flagged **remove**. A "remove"-mode feature must 404/410, not 200-with-empty. |
+| **503** | Temporarily unavailable, retry later, **don't de-index** | A feature toggled off *transiently* whose index status you want to preserve (e.g. a maintenance window). |
+
+The flag's SEO intent maps straight onto status + meta: **crawl → 200**, **noindex →
+200 + `robots: noindex`**, **remove → 404/410** (or **503** if the disablement is
+temporary). So "make the SSR honor the flag" is concretely "return the status code the
+flag intent implies."
+
+### robots.txt is *not* the hiding tool
+
+`app/robots.txt` is intentionally allow-all (`Disallow:` empty) + a `Sitemap:` pointer.
+`robots.txt` blocks *crawling*, but a `Disallow`ed URL can still be **indexed** (URL-only,
+no snippet) if it's linked externally — and blocking the crawl means Google can't even
+see a `noindex`. So `robots.txt` is the wrong lever for hiding a feature. Use **sitemap
+omission + SSR `noindex`/404 + link removal**; leave `robots.txt` allow-all.
+
+### "Hidden" has two SEO meanings — a boolean can't express them
+
+A per-feature flag must carry SEO *intent*, because the intents demand opposite SSR
+behavior:
+
+| Intent | Meaning | CRA | SSR route | Sitemap |
+|---|---|---|---|---|
+| **crawl** | Hide the human nav entrance, keep the feature indexed ("deep links okay") | hide nav | serve `200`, self-canonical | keep URLs |
+| **noindex** | Reachable by direct URL, but keep it out of the index | hide nav | `200` + `robots: noindex` | remove URLs |
+| **remove** | De-feature entirely for cutover (not public / not ready) | hide nav | `404` / `410` | remove URLs |
+
+The current `hidden: true` boolean only encodes "hide from humans"; it can't tell the
+SSR layer which of crawl/noindex/remove is meant. For the SSR layer to honor flags, the
+config must express intent (e.g. `matters: { seo: remove }`), and `frontend/next/` must
+read the **same** `features.yml` / `features.generated.json` to gate its routes, its
+sitemap enumeration, and its internal links from one source of truth.
+
+### Current state (source of truth: none yet)
+
+The SSR layer has **no knowledge of `features.yml`** — the two sides are wholly
+disconnected, so flags and crawl surface drift by construction. As of the 2026-08-27
+cutover flags, the human-hidden features resolve for crawlers as:
+
+- **Matters** — no SSR route, not sitemapped, no inbound SSR links; bare `/matters` is a
+  soft-404 (`200` DefaultShell), `/matters/{slug}` a real 404. *Nearly* "remove" already;
+  only the soft-200 leaks.
+- **Home** — same shape (soft-404 on `/home`, real 404 on `/home/community`).
+- **History** — the opposite: full SSR routes + ~1024 sitemap URLs + a `DEFAULT_NAV`
+  link; fully crawlable/indexed (it carried legacy SEO equity). Consistent with **crawl**,
+  not with hiding from search. Decide the intent: keep indexed (no SSR change) or pull it
+  (sitemap + routes + nav link all change).
+
+See [`../audits/2026-08-27-ssr-cutover-seo-gaps.md`](../audits/2026-08-27-ssr-cutover-seo-gaps.md)
+for the concrete gaps (soft-404s, History SSR ↔ redesign divergence, orphaned new
+History section pages that bot-404, the `/history/{slug}` redirect-vs-self-canonical
+split, and a canonical cross-subdomain de-index blocker).
+
 ## Known limitations / pending (none are blockers)
 
 1. **Two data layers can drift** — `GraphQLQueries.js` (CRA) vs `lib/*.ts` (Next),
@@ -112,6 +223,10 @@ its own rather than being folded into the chapter.
 5. **UA gaps** — a crawler whose UA matches none of `BOT_RE` (a novel bot, or a
    headless browser spoofing Chrome) gets the CRA shell. Hardening option: also treat
    empty/no-UA requests as bots.
+6. **Feature flags don't reach the SSR layer** — `features.yml`/`HIDE_*` are CRA-only,
+   so the crawl surface ignores them (see "Feature flags & the crawl surface" above and
+   [`../audits/2026-08-27-ssr-cutover-seo-gaps.md`](../audits/2026-08-27-ssr-cutover-seo-gaps.md)).
+   This *is* a cutover blocker to resolve, unlike the others here.
 
 ## The end state ("fold into one app")
 
