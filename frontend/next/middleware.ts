@@ -1,7 +1,7 @@
 export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
-import { LANG_PREFIXES, LOCALE_SEGS } from '@/lib/locales'
+import { LANG_PREFIXES, LOCALE_SEGS, langForHost } from '@/lib/locales'
 import { seoIntentForPath } from '@/lib/features'
 
 // The CRA uses bare routes (/timeline, not /en/timeline) — language is by
@@ -57,11 +57,12 @@ export function middleware(request: NextRequest) {
   }
 
   // --- Bot/crawler: serve Next.js SSR with lang header ---
-  const segments = pathname.split('/').filter(Boolean)
-  const lang = LANG_PREFIXES.includes(segments[0]) ? segments[0] : 'en'
+  // Language is by HOST (subdomain/domain), not URL path.
+  const lang = langForHost(request.headers.get('x-forwarded-host') ?? request.headers.get('host'))
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set('x-lang', lang)
   const res = NextResponse.next({ request: { headers: requestHeaders } })
+  res.headers.set('X-Resolved-Lang', lang)
   if (seoIntentForPath(pathname) === 'noindex') {
     res.headers.set('X-Robots-Tag', 'noindex, follow')
   }
