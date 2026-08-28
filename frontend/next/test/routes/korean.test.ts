@@ -115,3 +115,14 @@ test.describe('localized default shell', () => {
     expect(html).toContain('Table of Contents')
   })
 })
+
+test.describe('html lang', () => {
+  test('korean host → <html lang="ko">', async ({ request }) => {
+    const html = await (await request.get('/people/nephi1', { headers: ko })).text()
+    expect(html).toMatch(/<html[^>]*lang="ko"/)
+  })
+  test('apex → <html lang="en">', async ({ request }) => {
+    const html = await (await request.get('/people/nephi1', { headers: bot })).text()
+    expect(html).toMatch(/<html[^>]*lang="en"/)
+  })
+})
