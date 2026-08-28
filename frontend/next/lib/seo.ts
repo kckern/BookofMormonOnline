@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
+import { HOST_LANG } from './locales'
 
 // Constants mirrored from the PHP SSR box head (the parity benchmark).
 export const SITE_SUFFIX = 'Book of Mormon Online'
@@ -69,8 +70,8 @@ interface SeoInput {
 // list and an optional :port.
 function safeHost(candidate: string | null): string {
   const host = (candidate ?? '').split(',')[0].trim()
-  const bare = host.split(':')[0]
-  const ok = bare === SITE_DOMAIN || bare.endsWith('.' + SITE_DOMAIN) || bare === 'localhost'
+  const bare = host.split(':')[0].toLowerCase()
+  const ok = bare === SITE_DOMAIN || bare.endsWith('.' + SITE_DOMAIN) || bare === 'localhost' || bare in HOST_LANG
   return ok ? host : SITE_DOMAIN
 }
 

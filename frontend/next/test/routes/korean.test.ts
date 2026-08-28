@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { getCanonical } from '../helpers/meta'
 
 const bot = { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' }
 const ko = { ...bot, 'x-forwarded-host': 'xn--289a67xla.kr', 'x-forwarded-proto': 'https' }
@@ -39,5 +40,16 @@ test.describe('fax catalog is the fixed cross-language set on every host', () =>
     const links = [...html.matchAll(/href="\/fax\/([^"]+)"/g)].map((m) => m[1])
     expect(new Set(links).size).toBeGreaterThan(40) // the ~57 catalog, not just 5
     expect(links.filter((s) => s === '1962k').length).toBe(1) // ko-only edition appears once
+  })
+})
+
+test.describe('self-on-host canonical', () => {
+  test('korean host self-canonicalizes', async ({ request }) => {
+    const html = await (await request.get('/people/nephi1', { headers: ko })).text()
+    expect(getCanonical(html)).toBe('https://xn--289a67xla.kr/people/nephi1')
+  })
+  test('untrusted host still falls back to apex', async ({ request }) => {
+    const html = await (await request.get('/people/nephi1', { headers: { ...bot, 'x-forwarded-host': 'evil.example.com' } })).text()
+    expect(getCanonical(html)!).toContain('bookofmormon.online/people/nephi1')
   })
 })
