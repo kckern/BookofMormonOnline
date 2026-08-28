@@ -54,7 +54,8 @@ function pageForVerse(idx: PageIdxEntry[], v: number): PageIdxEntry | null {
   let lo = 0, hi = idx.length - 1, ans: PageIdxEntry | null = null;
   while (lo <= hi) {
     const m = (lo + hi) >> 1;
-    if (idx[m].v <= v) { ans = idx[m]; lo = m + 1; } else hi = m - 1;
+    const entry = idx[m]!;
+    if (entry.v <= v) { ans = entry; lo = m + 1; } else hi = m - 1;
   }
   return ans;
 }
