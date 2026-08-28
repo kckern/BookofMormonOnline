@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { getMeta } from '../helpers/meta'
 
 test.describe('OG image route /og', () => {
   test('returns 200 with content-type image/png', async ({ request }) => {
@@ -55,5 +56,27 @@ test.describe('og image thumbnails', () => {
     const r = await request.get('/og?title=X&img=' + encodeURIComponent('../people/nephi') + '&imgtype=art')
     expect(r.status()).toBe(200)
     expect(r.headers()['content-type']).toContain('image/png')
+  })
+})
+
+test.describe('pages request their thumbnail', () => {
+  test('/art/{id} og:image carries img + imgtype=art', async ({ request }) => {
+    const og = getMeta(await (await request.get('/art/1000')).text(), 'og:image')!
+    expect(og).toContain('img=1000')
+    expect(og).toContain('imgtype=art')
+  })
+  test('/people/{slug} og:image carries img + imgtype=people', async ({ request }) => {
+    const og = getMeta(await (await request.get('/people/nephi1')).text(), 'og:image')!
+    expect(og).toContain('img=nephi1')
+    expect(og).toContain('imgtype=people')
+  })
+  test('/place/{slug} og:image carries img + imgtype=places', async ({ request }) => {
+    const og = getMeta(await (await request.get('/place/jerusalem-1')).text(), 'og:image')!
+    expect(og).toContain('img=jerusalem-1')
+    expect(og).toContain('imgtype=places')
+  })
+  test('a text page (/contents) has no img param', async ({ request }) => {
+    const og = getMeta(await (await request.get('/contents')).text(), 'og:image')!
+    expect(og).not.toContain('img=')
   })
 })

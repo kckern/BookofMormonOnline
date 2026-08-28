@@ -17,6 +17,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: stripMarkup(wikiToText(person.description ?? '')),
     path: `/people/${slug}`,
     ogSub: superscript(person.title ?? ''),
+    ogImg: slug,
+    ogImgType: 'people',
   })
 }
 

@@ -18,6 +18,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: `${art.artist} • ${art.descText}`,
     path: `/art/${id}`,
     ogSub: ref,
+    ogImg: id,
+    ogImgType: 'art',
   })
 }
 

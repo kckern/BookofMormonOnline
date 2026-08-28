@@ -91,6 +91,10 @@ interface SeoInput {
   preTruncated?: boolean
   /** Subtitle line drawn on the OG card (e.g. section name). */
   ogSub?: string
+  /** Thumbnail id/slug for the og:image card (art id, or people/place slug). */
+  ogImg?: string
+  /** Which media type ogImg addresses (drives the /og imgtype param). */
+  ogImgType?: 'art' | 'people' | 'places'
 }
 
 // x-forwarded-host is client-influenced; only trust our own domain (+ localhost
@@ -108,7 +112,7 @@ function safeHost(candidate: string | null): string {
 // Next.js Metadata object. Uses title.absolute for exact control so the layout
 // template never double-appends the suffix.
 export async function buildMetadata(input: SeoInput): Promise<Metadata> {
-  const { title, description, path, withSuffix = true, preTruncated = false, ogSub } = input
+  const { title, description, path, withSuffix = true, preTruncated = false, ogSub, ogImg, ogImgType } = input
   const { siteSuffix } = await getSiteChrome()
   const fullTitle = withSuffix ? `${title} • ${siteSuffix}` : title
   const desc = preTruncated ? description : truncateDesc(description)
@@ -121,6 +125,10 @@ export async function buildMetadata(input: SeoInput): Promise<Metadata> {
   const ogParams = new URLSearchParams({ title })
   if (ogSub) ogParams.set('sub', ogSub)
   if (lang !== 'en') ogParams.set('lang', lang)
+  if (ogImg) {
+    ogParams.set('img', ogImg)
+    if (ogImgType) ogParams.set('imgtype', ogImgType)
+  }
   const ogImage = `/og?${ogParams.toString()}`
 
   const host = safeHost(h.get('x-forwarded-host') ?? h.get('host'))

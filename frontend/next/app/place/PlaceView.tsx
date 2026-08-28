@@ -14,6 +14,8 @@ export async function placeMetadata(slug: string, base: string): Promise<Metadat
     description: stripMarkup(wikiToText(place.description ?? '')),
     path: `${base}/${slug}`,
     ogSub: place.info ?? '',
+    ogImg: slug,
+    ogImgType: 'places',
   })
 }
 
