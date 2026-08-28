@@ -73,7 +73,18 @@ export async function SectionView({ slug }: { slug: string }) {
   // Page-first: a slug that resolves to a page WITH sections is rendered as a page
   // index even when it is also a section (the PHP box prefers the page view).
   const page = await getPageContent(slug)
-  if (page && page.sections.length > 0) return <PageIndex page={page} />
+  if (page && page.sections.length > 0) {
+    const pageLd = breadcrumb([
+      { name: 'Home', url: await absoluteUrl('/') },
+      { name: page.title, url: await absoluteUrl(`/${page.slug}`) },
+    ])
+    return (
+      <>
+        <JsonLd data={pageLd} />
+        <PageIndex page={page} />
+      </>
+    )
+  }
 
   const data = await getSection(slug)
   if (!data) notFound()
