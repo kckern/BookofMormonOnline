@@ -24,3 +24,11 @@ test.describe('lang-aware content', () => {
     expect(html.toLowerCase()).toContain('nephi')
   })
 })
+
+test.describe('sitemap stays English + valid', () => {
+  test('/sitemap.xml has content URLs regardless of host', async ({ request }) => {
+    const r = await request.get('/sitemap.xml', { headers: ko })
+    expect(r.status()).toBe(200)
+    expect(await r.text()).toContain('<loc>https://bookofmormon.online/people</loc>')
+  })
+})

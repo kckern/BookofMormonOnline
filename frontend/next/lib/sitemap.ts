@@ -40,9 +40,9 @@ const PAGES_QUERY = `query SitemapPages($slugs: [String]) { page(slug: $slugs) {
 const ORPHANED_SECTION_SLUGS = ['reign-of-judges/ammonihah/antioniah/mercy-through-jesus']
 
 async function contentTreeUrls(): Promise<SitemapUrl[]> {
-  const divData = await gql<{ division: DivisionRow[] }>(DIVISIONS_QUERY, {}, { revalidate: 3600 })
+  const divData = await gql<{ division: DivisionRow[] }>(DIVISIONS_QUERY, {}, { revalidate: 3600, lang: 'en' })
   const pageSlugs = (divData.division ?? []).flatMap((d) => (d.pages ?? []).map((p) => p.slug))
-  const pageData = await gql<{ page: PageRow[] }>(PAGES_QUERY, { slugs: pageSlugs }, { revalidate: 3600 })
+  const pageData = await gql<{ page: PageRow[] }>(PAGES_QUERY, { slugs: pageSlugs }, { revalidate: 3600, lang: 'en' })
 
   const paths = new Set<string>()
   for (const page of pageData.page ?? []) {
@@ -60,18 +60,18 @@ const PEOPLE_QUERY = `query SitemapPeople { person { slug } }`
 const PLACES_QUERY = `query SitemapPlaces { place { slug } }`
 
 async function peopleUrls(): Promise<SitemapUrl[]> {
-  const d = await gql<{ person: { slug: string }[] }>(PEOPLE_QUERY, {}, { revalidate: 3600 })
+  const d = await gql<{ person: { slug: string }[] }>(PEOPLE_QUERY, {}, { revalidate: 3600, lang: 'en' })
   return (d.person ?? []).map((p) => ({ path: `/people/${p.slug}`, priority: '0.6' }))
 }
 async function placeUrls(): Promise<SitemapUrl[]> {
-  const d = await gql<{ place: { slug: string }[] }>(PLACES_QUERY, {}, { revalidate: 3600 })
+  const d = await gql<{ place: { slug: string }[] }>(PLACES_QUERY, {}, { revalidate: 3600, lang: 'en' })
   return (d.place ?? []).map((p) => ({ path: `/place/${p.slug}`, priority: '0.6' }))
 }
 
 // ── history (index 0.7 + 1024 docs at 0.3) ───────────────────────────────────
 const HISTORY_QUERY = `query SitemapHistory { history { slug } }`
 async function historyUrls(): Promise<SitemapUrl[]> {
-  const d = await gql<{ history: { slug: string }[] }>(HISTORY_QUERY, {}, { revalidate: 3600 })
+  const d = await gql<{ history: { slug: string }[] }>(HISTORY_QUERY, {}, { revalidate: 3600, lang: 'en' })
   return (d.history ?? []).map((h) => ({ path: `/history/${h.slug}`, priority: '0.3' }))
 }
 
@@ -84,7 +84,7 @@ async function historyUrls(): Promise<SitemapUrl[]> {
 const FAX_QUERY = `query SitemapFax { fax(filter: "pdf") { slug } }`
 const KO_ONLY_FAX_SLUGS = ['1962k', '1967k', '1973kr', '2005k', '2020k']
 async function faxUrls(): Promise<SitemapUrl[]> {
-  const d = await gql<{ fax: { slug: string }[] }>(FAX_QUERY, {}, { revalidate: 3600 })
+  const d = await gql<{ fax: { slug: string }[] }>(FAX_QUERY, {}, { revalidate: 3600, lang: 'en' })
   const slugs = new Set([...(d.fax ?? []).map((f) => f.slug), ...KO_ONLY_FAX_SLUGS])
   return [...slugs].map((slug) => ({ path: `/fax/${slug}`, priority: '0.5' }))
 }
@@ -99,7 +99,7 @@ interface MapRow { slug: string; places: { slug: string }[] | null }
 const MAPS_QUERY = `query SitemapMaps { maps { slug places { slug } } }`
 const CLONED_MAPS: Record<string, string> = { newyork: 'panama' }
 async function mapUrls(): Promise<SitemapUrl[]> {
-  const d = await gql<{ maps: MapRow[] }>(MAPS_QUERY, {}, { revalidate: 3600 })
+  const d = await gql<{ maps: MapRow[] }>(MAPS_QUERY, {}, { revalidate: 3600, lang: 'en' })
   const maps = d.maps ?? []
   const placesBySlug = new Map(maps.map((m) => [m.slug, m.places ?? []]))
 
@@ -121,7 +121,7 @@ async function mapUrls(): Promise<SitemapUrl[]> {
 // from the text items that embed them.)
 const TIMELINE_QUERY = `query SitemapTimeline { timeline { slug } }`
 async function timelineUrls(): Promise<SitemapUrl[]> {
-  const d = await gql<{ timeline: { slug: string }[] }>(TIMELINE_QUERY, {}, { revalidate: 3600 })
+  const d = await gql<{ timeline: { slug: string }[] }>(TIMELINE_QUERY, {}, { revalidate: 3600, lang: 'en' })
   const slugs = new Set((d.timeline ?? []).map((t) => t.slug).filter(Boolean))
   return [...slugs].map((slug) => ({ path: `/timeline/${slug}`, priority: '0.5' }))
 }
