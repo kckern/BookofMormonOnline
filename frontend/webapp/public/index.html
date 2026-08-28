@@ -98,7 +98,11 @@
       }).observe( document.querySelector('title'), { subtree: true, characterData: true, childList: true });
 
     </script>
-    <script async src="/stats.js"></script>
+    <!-- Clicky anti-adblock tracker: first-party JS + beacon proxied via the Next
+         front door (see frontend/next/lib/clicky.ts). Path + site id come from env
+         (%REACT_APP_*%, substituted at build) so no account-specific id is committed.
+         Keep the clicky_custom opt-outs above so the SPA fires its own pageviews. -->
+    <script async data-id="%REACT_APP_CLICKY_SITE_ID%" src="%REACT_APP_CLICKY_JS_PATH%"></script>
     <style>
       @font-face {
     font-family: 'Scripture';

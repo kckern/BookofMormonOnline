@@ -1,120 +1,92 @@
 # Clicky analytics integration
 
-How Book of Mormon Online wires up Clicky (getclicky.com) for traffic and goal tracking. This is a **first-party / anti-adblock** deployment — the tracker JS is self-hosted and beacons are proxied through the BoM backend instead of hitting `*.getclicky.com` directly from the browser.
+How Book of Mormon Online wires up Clicky (getclicky.com) for traffic and goal tracking. This is a **first-party / anti-adblock** deployment using Clicky's official reverse-proxy method (https://clicky.com/help/proxy), implemented in the **Next.js front door** (`frontend/next/`). The tracker JS and all beacons route through obfuscated first-party paths on our own origin, so filter lists (EasyPrivacy, uBlock Origin) can't match a `getclicky.com` domain or a known path like `/stats.js`.
+
+> **History:** this replaced an earlier homegrown variant (a vendored/patched `public/stats.js` posting base64 to an Express `/ping` proxy). That approach is fully removed from the live path. See [Migration notes](#migration-notes).
+
+## Secrets / public-repo rule
+
+**This repo is public.** Clicky's obfuscated proxy paths are account-specific and are **never committed**. They live only in env (Infisical / gitignored `.env` files) and are referenced by variable name:
+
+| Variable | Side | Purpose |
+|---|---|---|
+| `CLICKY_JS_PATH` | Next (server) | Public path the browser requests the tracker JS from, e.g. `/<obfuscated>.js`. Middleware matches it. |
+| `CLICKY_BEACON_PATH` | Next (server) | Public path beacons POST to, e.g. `/<obfuscated>`. Middleware matches it; also baked into the served JS via the `in=` param. |
+| `REACT_APP_CLICKY_SITE_ID` | CRA (browser) | Clicky numeric site id (`data-id`). Public by design, but env-sourced for consistency. |
+| `REACT_APP_CLICKY_JS_PATH` | CRA (browser) | Same value as `CLICKY_JS_PATH`; substituted into the `<script src>` at build. |
+
+`REACT_APP_*` are read by the CRA (`react-app-rewired`) and substituted into `public/index.html` at build/serve time. The two server vars are read by Next middleware at runtime. On the dev host they sit in gitignored `frontend/next/.env.local` and `frontend/webapp/.env.development.local`; the durable/prod home is Infisical (`bom-dev.env`, loaded via the service `EnvironmentFile`).
 
 ## Pieces
 
 | File | Role |
 |---|---|
-| `frontend/webapp/public/stats.js` | Vendored Clicky tracker library. Patched: `this.domain = '/ping'` (line 16), beacons POSTed base64-encoded via `sendPostData` (line 442) instead of GET. |
-| `frontend/webapp/public/index.html` (L67–88) | Bootstrap config + `MutationObserver` on `<title>` that fires synthetic pageviews; loads `/stats.js` async. |
-| `frontend/webapp/src/models/Utils.js` (L713–718) | `clickyUser({ userid, username })` — populates `clicky_custom.visitor`, then fires `signin` goal. |
-| `frontend/webapp/src/models/appController.js` (L365, L690) | Calls `clickyUser(...)` after token sign-in and after `processSignIn`. |
-| `src/library/ping.ts` | Express handler that decodes the base64 POST body and proxies to `https://in.getclicky.com/in.php?sitekey_admin=...`. |
-| `src/index.ts` (L18, L81) | `app.all("/ping", ping)` mounts the proxy. |
+| `frontend/next/lib/clicky.ts` | `clickyPaths()` (reads env) + `proxyClickyJs()` / `proxyClickyBeacon(req)`. Edge-compatible (only `fetch`/`Response`/`Headers`). The JS proxy fetches `static.getclicky.com/js?in=<beacon-path>`; the beacon proxy forwards to `in.getclicky.com/in.php`, passing the real visitor IP via `X-Forwarded-For` and the UA. |
+| `frontend/next/middleware.ts` | Early carve-out: if the request path equals `CLICKY_JS_PATH` or `CLICKY_BEACON_PATH`, it returns the proxied response directly (before the human→CRA rewrite and before the bot-SSR branch). Nothing Clicky-related is a routable app path. |
+| `frontend/webapp/public/index.html` (L81–99) | `clicky_custom` opt-outs (`pageview_disable`, `history_disable`) + a `MutationObserver` on `<title>` that fires synthetic pageviews via `window.clicky.log(...)`, then the tracker `<script async data-id="%REACT_APP_CLICKY_SITE_ID%" src="%REACT_APP_CLICKY_JS_PATH%">`. |
+| `frontend/webapp/src/models/analytics/index.js` | `createProvider()` factory + the singleton `export const analytics`. `NoopProvider` under SSR / when `config.enabled === false`; otherwise `ClickyProvider`. Re-exports `GOALS`. |
+| `frontend/webapp/src/models/analytics/providers/clicky.js` | `ClickyProvider` — the only code that touches `window.clicky`. `identify`/`pageview`/`goal`, each wrapped in `safe()` so analytics can never break the UI. `init()` is a deliberate no-op (the Clicky loader self-inits from `data-id`; a second `init()` would double-fire). |
+| `frontend/webapp/src/models/analytics/{goals.js,contract.js,useAnalytics.js,noop.js}` | `GOALS` string constants (single source of truth), JSDoc provider contract, `useAnalytics()` hook, `NoopProvider`. |
+| `frontend/webapp/src/models/analytics/*.test.js` | Jest tests incl. `callsites-migration.test.js` (guards against any view re-introducing a raw `window.clicky` call). |
 
 ## Bootstrap flow (browser)
 
-1. `index.html` defines `clicky_custom` with two opt-outs:
-   - `pageview_disable = true` — suppress Clicky's auto-pageview-on-load.
-   - `history_disable = true` — suppress Clicky's `history.pushState` hook (the SPA fires its own pageviews via the title observer).
-2. `<script async src="/stats.js">` loads the vendored tracker. The IIFE in `stats.js` returns `{}` if `location.hostname === 'localhost'` (L4), so dev on `localhost:8200` is a no-op — `window.clicky` is an empty object.
-3. On non-localhost, `clicky_obj.getInstance()` constructs the singleton and assigns it to `window.clicky`. The tail of the file (L647–650) tries to call `clicky.init()` for each entry in `clicky_site_ids` — see the **Caveat** below.
-4. The title `MutationObserver` (index.html L74–85) watches the `<title>` element. When the SPA changes the document title (and the path actually changed), it calls `window.clicky.log(path, newTitle, "pageview")`, which fires a pageview beacon.
+1. `index.html` sets `clicky_custom.pageview_disable = true` and `history_disable = true` (the SPA fires its own pageviews).
+2. `<script async data-id="66488278" src="/<CLICKY_JS_PATH>">` requests the tracker from **our** origin.
+3. The Next front door's `middleware.ts` sees the path == `CLICKY_JS_PATH` and returns `proxyClickyJs()` — which fetches `static.getclicky.com/js?in=<CLICKY_BEACON_PATH>` and returns it as `application/javascript` (`Cache-Control: public, max-age=3600`). The `in=` param makes the returned tracker send its beacons to `CLICKY_BEACON_PATH` on our origin.
+4. The Clicky loader auto-registers the site from `data-id` and exposes `window.clicky` (with `.log()`, `.goal()`, `.custom_data()`). `pageview_disable` suppresses its auto-pageview.
+5. The title `MutationObserver` calls `window.clicky.log(path, title, "pageview")` on SPA navigations → a beacon POST to `CLICKY_BEACON_PATH`.
+6. Middleware sees the path == `CLICKY_BEACON_PATH` and returns `proxyClickyBeacon(req)` — forwarding to `in.getclicky.com/in.php` with `X-Forwarded-For` (real visitor IP), UA, and `Cache-Control: no-store`.
+
+> **Localhost:** Clicky's tracker no-ops on `localhost`, so `localhost:8200` doesn't beacon. The proxy endpoints themselves are still directly testable with curl (see [Verification](#verification)).
 
 ## Goal calls (conversion events)
 
-`window.clicky?.goal("<name>")` fires a goal beacon. The optional-chaining is universal — the call is always defensive.
+React fires goals via `analytics.goal(GOALS.<NAME>)` (never `window.clicky` directly). `GOALS` lives in `analytics/goals.js`.
 
-| Goal id | File:line | Trigger |
+| Goal id | Call site | Trigger |
 |---|---|---|
-| `signin` | `src/models/Utils.js:717` | Called inside `clickyUser()` whenever a user identity is set. |
-| `signup` | `src/views/User/SignUp.js:43` | Successful new-account creation. |
-| `comment` | `src/views/_Common/Study/StudyChat.js:107`, `:648`; `src/views/_Common/Study/Study.js:123`; `src/views/Home/Feed.js:729` | Sendbird `sendUserMessage().onSucceeded`. Four call sites — chat, threaded reply, study reactions, home feed. |
-| `study` | `src/views/_Common/Study/StudyHall.js:277` | StudyHall mount effect — fires once when a user opens a study group. |
-| `read` | `src/views/Page/Page.js:690` | After `userprogress` save on a page, before the victory popup decision. |
-| `watch` | `src/views/Theater/Theater.js:956` | After `userprogress` save in Theater. |
-| `finish` | `src/views/User/Victory.js:42` | Victory modal mount. |
-| `language` | `src/views/_Common/Sidebar.js:303` | User picks a different language host from the sidebar. |
-| `kr_buy`, `kr_download` | `src/views/About/KRSEB.js:27–28` | Korean special-edition CTA buttons. **Bug:** `onClick={window.clicky?.goal("kr_buy")}` invokes the goal at render time (the result, `undefined`, is set as the handler). To fire on click, this needs to be `onClick={() => window.clicky?.goal("kr_buy")}`. |
+| `signin` | `appController.js:675` | after `analytics.identify(...)` on sign-in |
+| `signup` | `views/User/SignUp.js:45` | new-account creation |
+| `comment` | `Study/StudyChat.js:120,687`; `Study/Study.js:152`; `Home/Feed.js:850` | message sent (Sendbird `onSucceeded`) |
+| `study` | `Study/StudyHall.js:289` | opening a study group |
+| `read` | `views/Page/Page.js:218` | page progress saved |
+| `watch` | `views/Theater/Theater.js:1015` | theater progress saved |
+| `finish` | `views/User/Victory.js:45` | victory modal mount |
+| `language` | `_Common/Sidebar.js:393` | language host switch |
+| `kr_buy`, `kr_download` | `views/About/KRSEB.js:28-29` | Korean CTA buttons (correctly click-deferred) |
+
+An explicit pageview also fires at `views/Page/Narration.js:749` (`analytics.pageview('/lookup/…', 'Lookup: …')`).
 
 ## User identification
 
-`clickyUser({ userid, username })` (Utils.js L713):
+`analytics.identify({ userid, username })` (`providers/clicky.js`) sets `window.clicky_custom.visitor` and calls `window.clicky.custom_data()`, adding `&custom[userid]=…&custom[username]=…` to subsequent beacons. `identify(null)` clears the visitor. Called from `appController.js:327` (token sign-in) and `:674` (social refresh, followed by the `signin` goal).
 
-```js
-var clicky_custom = window.clicky_custom || {};
-clicky_custom.visitor = userData;
-window.clicky?.custom_data();   // attaches visitor fields to subsequent beacons
-window.clicky?.goal("signin");
+## Verification
+
+Proxy endpoints (work on any host, incl. dev):
+
+```bash
+# JS path → 200, application/javascript, real tracker ("var _CLOB=…")
+curl -sD- -o/dev/null "http://localhost:8200/<CLICKY_JS_PATH>"
+# beacon → 200, Clicky's response ("if( window._cgen ) { }"), Cache-Control: no-store
+curl -sD- -o/dev/null "http://localhost:8200/<CLICKY_BEACON_PATH>?site_id=66488278&type=pageview&href=%2Ftest"
 ```
 
-`appController.js` calls it from two places:
-- L365 — inside `processSignIn` (token-based sign-in path with a Sendbird user).
-- L690 — inside the same flow on the user/social refresh path.
+End-to-end (real, non-localhost browser): load a page, watch DevTools → Network for POSTs to `CLICKY_BEACON_PATH` on title changes and goal calls; confirm hits land in the Clicky dashboard for the site id.
 
-The visitor object becomes `&custom[userid]=...&custom[username]=...` query params on subsequent beacons (see `custom_data()` in stats.js L49–87).
+## Deployment / prod checklist
 
-## Beacon transport (the anti-adblock path)
+- [ ] Add `CLICKY_JS_PATH`, `CLICKY_BEACON_PATH` to Infisical for the Next service (dev + prod) so they survive beyond the gitignored `.env.local`.
+- [ ] Add `REACT_APP_CLICKY_SITE_ID`, `REACT_APP_CLICKY_JS_PATH` to the prod CRA build env.
+- [ ] **Cloudflare:** the beacon path must not be edge-cached. We send `Cache-Control: no-store` and the path has no file extension (CF won't cache it by default) — confirm there's no override cache rule matching it. The JS path (`.js`, `max-age=3600`) caching at the edge is fine.
+- [ ] Verify beacons in a real browser on the public host + confirm hits in the Clicky dashboard.
 
-Standard Clicky tracking GETs a 1×1 pixel from `in.getclicky.com/in.php?site_id=...&type=pageview&...`. Both the script (`static.getclicky.com`) and the beacon (`in.getclicky.com`) are blocked by common filter lists (EasyPrivacy, uBlock Origin defaults).
+## Migration notes
 
-This integration sidesteps that:
-
-1. **Script is self-hosted.** `<script src="/stats.js">` serves from the BoM origin — no `getclicky.com` domain in the script tag for filter lists to match.
-2. **Beacons go to a first-party endpoint.** `this.domain = '/ping'` (stats.js L16) makes every `beacon()` call POST to `/ping` on the BoM origin.
-3. **Payload is base64-encoded inside a POST body.** `sendPostData` (stats.js L442–486) base64-encodes the query string and POSTs it as `data=<base64>` — generic enough that URL-pattern-based blockers don't flag it. It prefers `navigator.sendBeacon` for non-critical types, falls back to `fetch`, then `XMLHttpRequest`.
-4. **Backend proxy forwards to Clicky.** `src/library/ping.ts`:
-   - Decodes `req.body.data` (base64) → query params.
-   - Adds `ip_address` (best public IPv4 from `x-forwarded-for`, filtering private/loopback/link-local) and `ua` (User-Agent header).
-   - GETs `https://in.getclicky.com/in.php?sitekey_admin=${process.env.clickySiteAdmin}&<merged-query>`.
-   - Pipes Clicky's response back to the client as `text/plain`.
-
-The `sitekey_admin` is what authenticates the write to Clicky; it lives in `process.env.clickySiteAdmin` (sourced from Infisical at service start — see CLAUDE.md). It is never exposed to the browser.
-
-### What still leaks to `*.getclicky.com`
-
-`stats.js` still calls `static.getclicky.com` and `clicky.com/ajax/...` directly for optional features:
-- Heatmap script (`heatmap()` L232, L236, L242).
-- On-site stats widget (`onsitestats()` L252–273).
-- HTML video tracking (`html_media_monitor` L308–310).
-
-None of these are enabled by the current `clicky_custom` config (`heatmap_disable` is unset but the heatmap module is only loaded when the URL hash matches `^#_heatmap`; the others require explicit opt-in via `clicky_custom.html_media_track` etc.). The core pageview/goal path is fully first-party.
-
-## Caveat: `clicky_site_id` is never set in this codebase
-
-`stats.js` only registers a site (and thus only sends beacons) for site IDs pushed onto `clicky_site_ids` before `init()` is called:
-
-```js
-var clicky_site_ids = clicky_site_ids || [];
-if (window.async_site_id) clicky_site_ids.push(async_site_id);
-if (window.clicky_site_id) clicky_site_ids.push(clicky_site_id);
-while (clicky_site_ids.length) clicky.init(clicky_site_ids.shift());
-```
-
-A repo-wide search finds **no assignment** of `window.clicky_site_id`, `window.async_site_id`, or the `clicky_site_ids` global — not in `index.html`, not in any React component, not in the SSR output (SSR is only registered for `/sitemap.xml`, `/robots.txt`, `/manifest.json`, `/.well-known/assetlinks.json` per `src/ssr/index.ts:71`).
-
-Consequence: `init()` never runs, the internal `site_ids` closure stays empty, and the `for (... site_ids.length ...)` loop in `beacon()` (stats.js L371) is a no-op. **No `/ping` POSTs are actually fired** by the goal/pageview calls scattered through the app, even though every call site is defensively wired with `window.clicky?.`.
-
-To make tracking active you'd need to inject something like:
-
-```html
-<script>var clicky_site_id = '<your-public-site-id>';</script>
-<script async src="/stats.js"></script>
-```
-
-into `frontend/webapp/public/index.html` before the stats.js tag. (The public `site_id` is the numeric ID from your Clicky dashboard; it is separate from `sitekey_admin`, which stays server-side.)
-
-## Quick verification recipe
-
-Once a site_id is configured:
-
-1. From the dev host, `journalctl --user -u bom-dev -f` while loading a page.
-2. The browser DevTools Network tab should show POSTs to `/ping` with `data=<base64>` payloads on title changes and goal calls.
-3. The backend should see those requests; `axios.get` to `in.getclicky.com/in.php` should return Clicky's `OK` response.
-4. Heatmap, on-site-stats, and HTML media tracking will hit `getclicky.com` directly — that traffic is not first-party.
+The previous homegrown method (`public/stats.js` patched to POST base64 to an Express `/ping` handler in `src/library/ping.ts`, authenticated server-side with `clickySiteAdmin`) is removed from the live path: `public/stats.js` is deleted and `index.html` no longer references it. The deprecated `src/` backend still contains `ping.ts` and the `/ping` mount; those can be dropped whenever `_deprecated/src` is cleaned up (nothing calls `/ping` anymore). The new method needs **no** server-side `sitekey_admin` — the browser's beacon carries its own session, and we merely forward it.
 
 ## Related
 
-- Backend env loading: see CLAUDE.md → "On this dev host" (Infisical → `bom-load-env` → `$XDG_RUNTIME_DIR/bom-dev.env`).
-- The only external hostname referenced in chat/study code is `getclicky.com` (analytics only) — see `docs/reference/chat-studygroup-inventory.md` for the broader chat data-flow audit.
+- Env loading: CLAUDE.md → "On this dev host" (Infisical → `bom-load-env` → `$XDG_RUNTIME_DIR/bom-dev.env`, consumed by the service `EnvironmentFile`).
+- Front-door architecture: `docs/reference/nextjs-ssr-parity.md` (UA-gated middleware, human→CRA proxy).

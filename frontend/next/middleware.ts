@@ -3,6 +3,7 @@ export const runtime = 'nodejs'
 import { NextRequest, NextResponse } from 'next/server'
 import { LANG_PREFIXES, LOCALE_SEGS, langForHost } from '@/lib/locales'
 import { seoIntentForPath } from '@/lib/features'
+import { proxyClickyJs, proxyClickyBeacon } from '@/lib/clicky'
 
 // The CRA uses bare routes (/timeline, not /en/timeline) — language is by
 // subdomain, not URL path. So a locale-prefixed path must have that prefix
@@ -30,6 +31,15 @@ export function middleware(request: NextRequest) {
     url.hostname = hostname.slice(4)
     return NextResponse.redirect(url, 301)
   }
+
+  // --- First-party analytics proxy (Clicky anti-adblock) ---
+  // Obfuscated public paths come from env (never hardcoded — public repo). Proxy
+  // them straight from middleware so nothing Clicky-related is a routable path,
+  // and humans (the whole point of tracking) reach them without CRA proxying.
+  const clickyJsPath = process.env.CLICKY_JS_PATH
+  const clickyBeaconPath = process.env.CLICKY_BEACON_PATH
+  if (clickyJsPath && pathname === clickyJsPath) return proxyClickyJs()
+  if (clickyBeaconPath && pathname === clickyBeaconPath) return proxyClickyBeacon(request)
 
   // --- Crawler/SEO assets: always served by Next, regardless of UA ---
   // robots.txt, sitemap.xml, and OG images are fetched by scrapers that may not
