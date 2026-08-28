@@ -40,6 +40,8 @@ export function BomOgCard({ title, sub, desc, artUrl }: BomOgCardProps) {
         <img
           src={artUrl}
           alt=""
+          width={260}
+          height={260}
           style={{
             position: 'absolute',
             right: 30,

@@ -21,11 +21,27 @@ export async function GET(request: Request) {
   const desc  = searchParams.get('desc')  ?? undefined
   const lang  = searchParams.get('lang')  ?? 'en'
 
-  // Art image: numeric art ID → media CDN URL
-  const artId = searchParams.get('img')
-  const artUrl = artId
-    ? `https://media.bookofmormon.online/art/square/${artId}.jpg`
-    : undefined
+  // Thumbnail: id/slug + whitelisted type → media path. Sanitize (fetch normalizes
+  // '../', so an unsanitized img could traverse to another media path). Preflight so a
+  // missing image (404, common) degrades to a text card instead of crashing Satori.
+  const MEDIA = 'https://media.bookofmormon.online'
+  const imgId = searchParams.get('img')
+  const imgType = searchParams.get('imgtype') ?? 'art'
+  const MEDIA_PATH: Record<string, string> = {
+    art: `${MEDIA}/art/${imgId}`,
+    people: `${MEDIA}/people/${imgId}`,
+    places: `${MEDIA}/places/${imgId}`,
+  }
+  let artUrl: string | undefined
+  if (imgId && /^[A-Za-z0-9_-]+$/.test(imgId) && MEDIA_PATH[imgType]) {
+    const candidate = MEDIA_PATH[imgType]
+    try {
+      const head = await fetch(candidate, { method: 'HEAD', signal: AbortSignal.timeout(2000) })
+      if (head.ok) artUrl = candidate
+    } catch {
+      /* unreachable/timeout → leave artUrl undefined (text card) */
+    }
+  }
 
   const isKorean = lang === 'ko'
 

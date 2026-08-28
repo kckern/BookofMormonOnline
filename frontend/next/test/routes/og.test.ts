@@ -36,3 +36,24 @@ test.describe('OG image route /og', () => {
     expect(res.headers()['content-type']).toContain('image/png')
   })
 })
+
+test.describe('og image thumbnails', () => {
+  test('valid art img → 200 png, larger than the text-only card', async ({ request }) => {
+    const withImg = await request.get('/og?title=Art&img=1000&imgtype=art')
+    expect(withImg.status()).toBe(200)
+    expect(withImg.headers()['content-type']).toContain('image/png')
+    const textOnly = await request.get('/og?title=Art')
+    // the embedded artwork adds pixel data → larger PNG (proves the image path ran)
+    expect((await withImg.body()).byteLength).toBeGreaterThan((await textOnly.body()).byteLength)
+  })
+  test('missing image → 200 png text-card fallback (no crash/dropped connection)', async ({ request }) => {
+    const r = await request.get('/og?title=X&img=moroni&imgtype=people')
+    expect(r.status()).toBe(200)
+    expect(r.headers()['content-type']).toContain('image/png')
+  })
+  test('path-traversal img is rejected → 200 png', async ({ request }) => {
+    const r = await request.get('/og?title=X&img=' + encodeURIComponent('../people/nephi') + '&imgtype=art')
+    expect(r.status()).toBe(200)
+    expect(r.headers()['content-type']).toContain('image/png')
+  })
+})
