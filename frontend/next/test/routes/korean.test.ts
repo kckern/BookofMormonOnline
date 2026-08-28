@@ -32,3 +32,12 @@ test.describe('sitemap stays English + valid', () => {
     expect(await r.text()).toContain('<loc>https://bookofmormon.online/people</loc>')
   })
 })
+
+test.describe('fax catalog is the fixed cross-language set on every host', () => {
+  test('korean /fax lists the full catalog (not just the 5 ko), no double-count', async ({ request }) => {
+    const html = await (await request.get('/fax', { headers: ko })).text()
+    const links = [...html.matchAll(/href="\/fax\/([^"]+)"/g)].map((m) => m[1])
+    expect(new Set(links).size).toBeGreaterThan(40) // the ~57 catalog, not just 5
+    expect(links.filter((s) => s === '1962k').length).toBe(1) // ko-only edition appears once
+  })
+})

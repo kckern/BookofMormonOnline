@@ -3,16 +3,15 @@ import { gql } from './graphql'
 
 // ── /fax + /fax/:slug data layer ─────────────────────────────────────────────
 // Parity target: the legacy PHP box's facsimiles index (57 editions) and detail
-// pages. The data is the `fax` GraphQL query, but it is language-scoped: the
-// resolver fetches rows in the REQUEST language (en here — the gql endpoint URL
-// has no lang segment, so resolveLang() falls back to 'en') and only falls back
-// to en when a non-en result is EMPTY. fax(filter:"pdf") therefore returns the
-// 52 en editions (com=0, hide=0); five further editions are Korean-only printings
-// (lang='ko') that the en query can never surface — same gap lib/sitemap.ts
-// documents for KO_ONLY_FAX_SLUGS. The PHP sitemap/index merged across languages
-// → 57 total, so we supplement the 5 ko-only rows verbatim (title/info captured
-// from the live PHP box) and splice them into the en list at the positions the
-// benchmark renders them.
+// pages. The facsimiles catalog is a FIXED cross-language set of 57 editions:
+// 52 international editions (returned by the en gql endpoint) + 5 Korean-only
+// printings (lang='ko') that only appear on the ko endpoint. The gql() call in
+// getFaxList is explicitly pinned to lang:'en' so that the base query always
+// returns the 52 en editions on every host (including the Korean host, whose ko
+// endpoint returns only the 5 ko editions and would produce duplicates/missing
+// entries). The 5 ko-only rows are supplemented verbatim (title/info captured
+// from the live PHP box) and spliced into the en list at the positions the
+// benchmark renders them — same approach lib/sitemap.ts uses for KO_ONLY_FAX_SLUGS.
 
 export interface FaxItem {
   slug: string
@@ -69,7 +68,7 @@ const FAX_LIST_QUERY = `query FaxList { fax(filter: "pdf") { slug title info } }
 export const getFaxList = cache(async (): Promise<FaxItem[]> => {
   let en: FaxItem[] = []
   try {
-    const d = await gql<{ fax: FaxItem[] }>(FAX_LIST_QUERY, {}, { revalidate: 3600 })
+    const d = await gql<{ fax: FaxItem[] }>(FAX_LIST_QUERY, {}, { revalidate: 3600, lang: 'en' })
     en = d.fax ?? []
   } catch {
     en = []
