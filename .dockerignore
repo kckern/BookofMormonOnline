@@ -1,0 +1,8 @@
+**/node_modules
+**/.next
+**/build
+**/dist
+_deprecated
+docs
+.git
+*.log
