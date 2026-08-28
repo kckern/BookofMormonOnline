@@ -1,5 +1,3 @@
-export const runtime = 'nodejs'
-
 import { NextRequest, NextResponse } from 'next/server'
 import { LANG_PREFIXES, LOCALE_SEGS, langForHost } from '@/lib/locales'
 import { seoIntentForPath } from '@/lib/features'
@@ -20,6 +18,34 @@ import { proxyClickyJs, proxyClickyBeacon } from '@/lib/clicky'
 const BOT_RE = /bot|crawl|spider|slurp|google|bing|baidu|yandex|duckduck|facebook|twitter|linkedin|whatsapp|telegram|slack|discord|preview|curl|python-requests|yeti|naver|daum|kakao/i
 
 const CRA_ORIGIN = 'http://localhost:8201'
+
+// fetch() decodes content encodings, while a browser applies any encoding
+// headers it receives.  Do not copy hop-by-hop or representation-length
+// headers from the CRA response: forwarding a stale content-length or
+// content-encoding produces a successful response with an unreadable (often
+// zero-byte) body at the client.
+const FORWARDED_RESPONSE_HEADERS = new Set([
+  'connection',
+  'content-encoding',
+  'content-length',
+  'keep-alive',
+  'proxy-authenticate',
+  'proxy-authorization',
+  'te',
+  'trailer',
+  'transfer-encoding',
+  'upgrade',
+])
+
+function responseHeadersForClient(source: Headers): Headers {
+  const headers = new Headers()
+  source.forEach((value, name) => {
+    if (!FORWARDED_RESPONSE_HEADERS.has(name.toLowerCase())) {
+      headers.set(name, value)
+    }
+  })
+  return headers
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname, hostname } = request.nextUrl
@@ -63,8 +89,11 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url)
     }
     const target = new URL(CRA_ORIGIN + pathname + request.nextUrl.search)
-    const craRes = await fetch(target, { redirect: 'manual' })
-    return new Response(craRes.body, { status: craRes.status, headers: craRes.headers })
+    const craRes = await fetch(target, { redirect: 'follow' })
+    return new Response(craRes.body, {
+      status: craRes.status,
+      headers: responseHeadersForClient(craRes.headers),
+    })
   }
 
   // --- Bot/crawler: serve Next.js SSR with lang header ---
