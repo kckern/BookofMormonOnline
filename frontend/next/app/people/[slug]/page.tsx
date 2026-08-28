@@ -1,8 +1,10 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getPerson } from '@/lib/people'
-import { buildMetadata, stripMarkup } from '@/lib/seo'
+import { buildMetadata, stripMarkup, absoluteUrl, currentLang } from '@/lib/seo'
 import { superscript, wikiToHtml, wikiToText } from '@/lib/entity'
+import { breadcrumb, creativeWork } from '@/lib/jsonld'
+import { JsonLd } from '../../_components/JsonLd'
 
 interface Props { params: Promise<{ slug: string }> }
 
@@ -28,9 +30,27 @@ export default async function PeoplePage({ params }: Props) {
   if (!person) notFound()
 
   const name = superscript(person.name)
+  const url = await absoluteUrl(`/people/${slug}`)
+  const lang = await currentLang()
+  const ld = [
+    breadcrumb([
+      { name: 'Home', url: await absoluteUrl('/') },
+      { name: 'People', url: await absoluteUrl('/people') },
+      { name, url },
+    ]),
+    creativeWork({
+      type: 'Person',
+      name,
+      description: stripMarkup(wikiToText(person.description ?? '')),
+      url,
+      lang,
+      image: `https://media.bookofmormon.online/people/${slug}`,
+    }),
+  ]
 
   return (
     <>
+      <JsonLd data={ld} />
       <h1>{name}</h1>
       <h2>{superscript(person.title ?? '')}</h2>
       <p>

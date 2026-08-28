@@ -111,6 +111,19 @@ function safeHost(candidate: string | null): string {
   return ok ? host : SITE_DOMAIN
 }
 
+// Absolute URL for the current request host (self-referential, like the canonical).
+export async function absoluteUrl(path: string): Promise<string> {
+  const h = await headers()
+  const host = safeHost(h.get('x-forwarded-host') ?? h.get('host'))
+  const proto = h.get('x-forwarded-proto') ?? 'https'
+  return `${proto}://${host}${path}`
+}
+
+// The host-derived language for this request (matches x-lang set in middleware).
+export async function currentLang(): Promise<string> {
+  return (await headers()).get('x-lang') ?? 'en'
+}
+
 // hreflang alternates for the backend-supported language domains + x-default.
 // Slugs are language-invariant, so the path is identical across every domain.
 function hreflangLanguages(path: string): Record<string, string> {
@@ -145,9 +158,7 @@ export async function buildMetadata(input: SeoInput): Promise<Metadata> {
   }
   const ogImage = `/og?${ogParams.toString()}`
 
-  const host = safeHost(h.get('x-forwarded-host') ?? h.get('host'))
-  const proto = h.get('x-forwarded-proto') ?? 'https'
-  const abs = `${proto}://${host}${path}`
+  const abs = await absoluteUrl(path)
 
   return {
     title: { absolute: fullTitle },
