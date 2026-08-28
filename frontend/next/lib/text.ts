@@ -60,12 +60,17 @@ export const getTextBlock = cache(
       return null
     }
 
-    const bySlug = new Map(rows.filter(Boolean).map((r) => [r.slug, r]))
-    const block = bySlug.get(cur)
+    // Match by the numeric `link`, not the requested slug string: the backend
+    // resolves a bare-leaf alias (e.g. "zoramites/1") to the FULL canonical slug
+    // ("reign-of-judges/zoramites/1"), so a slug-string lookup on the short form
+    // would miss. `link` equals the URL's block number and is unique among the
+    // three requested rows (id-1, id, id+1).
+    const byLink = new Map(rows.filter(Boolean).map((r) => [r.link, r]))
+    const block = byLink.get(id)
     if (!block) return null
 
-    const sibling = (s: string): SiblingRef | null => {
-      const r = bySlug.get(s)
+    const sibling = (lnk: number): SiblingRef | null => {
+      const r = byLink.get(lnk)
       return r ? { slug: r.slug, heading: r.heading } : null
     }
 
@@ -79,8 +84,8 @@ export const getTextBlock = cache(
       sectionSlug: block.parent_section?.slug ?? '',
       sectionTitle: block.parent_section?.title ?? '',
       coms: block.coms ?? [],
-      prev: sibling(prevSlug),
-      next: sibling(nextSlug),
+      prev: sibling(id - 1),
+      next: sibling(id + 1),
     }
   },
 )

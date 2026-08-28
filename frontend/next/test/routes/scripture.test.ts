@@ -1,10 +1,23 @@
 import { test, expect } from '@playwright/test'
-import { getMeta, getTitle } from '../helpers/meta'
+import { getMeta, getTitle, getCanonical } from '../helpers/meta'
 
 // A real textblock URL: /{pageSlug}/{blockno}. /1-nephi/1 is NOT an SSR route
 // (there is no book/chapter route — see the spec's recorded gap); /lehites/64 is
 // the real textblock form (also used by scripts/parity.mjs).
 const REF = '/lehites/64'
+
+test.describe('short-form textblock alias', () => {
+  // /zoramites/1 is the bare-leaf alias of the canonical full path
+  // /reign-of-judges/zoramites/1. The backend text() resolver expands the leaf,
+  // so the alias must resolve (200) and canonical to the full path (SEO consolidation).
+  test('bare-leaf /zoramites/1 resolves 200 and canonicals to the full path', async ({ request }) => {
+    const res = await request.get('/zoramites/1')
+    expect(res.status()).toBe(200)
+    const html = await res.text()
+    expect(getTitle(html)).toBeTruthy()
+    expect(getCanonical(html)).toContain('/reign-of-judges/zoramites/1')
+  })
+})
 
 test.describe('Scripture route /{slug}/{blockno}', () => {
   test('returns 200', async ({ request }) => {

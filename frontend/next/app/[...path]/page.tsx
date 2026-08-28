@@ -40,9 +40,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const block = await getTextBlock(pageSlug, id)
     if (!block) return {}
     return buildMetadata({
+      // block.slug is the FULL canonical path even when the request used a bare-leaf
+      // alias (e.g. /zoramites/1 → reign-of-judges/zoramites/1), so the alias
+      // canonicals to the full path and Google consolidates.
       title: `${block.heading} | ${block.sectionTitle}`,
       description: stripMarkup(block.content),
-      path: `/${path.join('/')}`,
+      path: `/${block.slug}`,
       ogSub: block.sectionTitle,
     })
   }
@@ -67,7 +70,8 @@ export default async function CatchAllPage({ params }: Props) {
     const pageSlug = path.slice(0, -1).join('/')
     const block = await getTextBlock(pageSlug, id)
     if (!block) notFound()
-    const here = `/${path.join('/')}`
+    // Full canonical path (resolves bare-leaf aliases to their hierarchical slug).
+    const here = `/${block.slug}`
     const url = await absoluteUrl(here)
     const lang = await currentLang()
     const ld = [
