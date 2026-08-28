@@ -1,4 +1,5 @@
 import { cache } from 'react'
+import { headers } from 'next/headers'
 import { gql } from './graphql'
 
 interface LabelRow { key: string; val: string }
@@ -11,6 +12,15 @@ export const getLabels = cache(async (): Promise<Record<string, string>> => {
   return map
 })
 
+// English uses the fallback (the English source string) with no fetch — keeps English
+// pages free of the labels dependency. Non-English degrades to the fallback on a labels
+// outage rather than 500 the page.
 export async function label(key: string, fallback: string): Promise<string> {
-  return (await getLabels())[key] ?? fallback
+  const lang = (await headers()).get('x-lang') ?? 'en'
+  if (lang === 'en') return fallback
+  try {
+    return (await getLabels())[key] ?? fallback
+  } catch {
+    return fallback
+  }
 }

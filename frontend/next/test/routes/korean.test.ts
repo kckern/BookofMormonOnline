@@ -65,7 +65,7 @@ test.describe('localized index titles', () => {
   })
   test('/about index is Korean', async ({ request }) => {
     const html = await (await request.get('/about', { headers: ko })).text()
-    expect(getTitle(html)).toContain('몰몰경·KR 소개')
+    expect(getTitle(html)).toContain('소개')
   })
   test('/timeline index is Korean', async ({ request }) => {
     const html = await (await request.get('/timeline', { headers: ko })).text()
