@@ -17,6 +17,10 @@ module.exports = {
       cwd: '/app/frontend/next',
       script: '/app/frontend/next/node_modules/.bin/next',
       args: 'start --port 8200',
+      // SSR runs in the same container as Fastify. Keep the local-development
+      // fallback (:5006) out of production or reading-page renders fail with
+      // ECONNREFUSED while the browser-facing GraphQL proxy still appears healthy.
+      env: { GRAPHQL_URL: 'http://localhost:5005/graphql' },
       max_memory_restart: '400M',
     },
     {
