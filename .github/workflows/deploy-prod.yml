@@ -40,13 +40,15 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          # file: ./Dockerfile          # greenfield Dockerfile — create during cutover
+          file: ./Dockerfile
           push: true
           tags: |
             kckern/bookofmormon-online:prod
             kckern/bookofmormon-online:prod-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          # build-args: |               # uncomment when the Dockerfile consumes them
-          #   REACT_APP_CLICKY_JS_PATH=${{ secrets.REACT_APP_CLICKY_JS_PATH }}
-          #   REACT_APP_CLICKY_SITE_ID=${{ secrets.REACT_APP_CLICKY_SITE_ID }}
+          build-args: |
+            REACT_APP_CLICKY_SITE_ID=66488278
+            REACT_APP_CLICKY_JS_PATH=${{ secrets.CLICKY_JS_PATH }}
+            CLICKY_JS_PATH=${{ secrets.CLICKY_JS_PATH }}
+            CLICKY_BEACON_PATH=${{ secrets.CLICKY_BEACON_PATH }}
