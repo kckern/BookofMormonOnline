@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { getHistory, HISTORY_INTRO } from '@/lib/history'
 import { buildMetadata } from '@/lib/seo'
+import { label } from '@/lib/labels'
 
 // Shared render + metadata for the History index. The PHP box serves byte-
 // identical output for /history and for the static sub-paths /history/joseph-smith
@@ -9,7 +10,7 @@ import { buildMetadata } from '@/lib/seo'
 // each page passes its OWN path.
 export async function historyMetadata(path: string): Promise<Metadata> {
   return buildMetadata({
-    title: 'Historical Sources Relating to the Book of Mormon',
+    title: await label('title_history', 'Historical Sources Relating to the Book of Mormon'),
     // Meta description is the intro paragraph, truncated to 159 chars + '…'.
     description: HISTORY_INTRO,
     path,

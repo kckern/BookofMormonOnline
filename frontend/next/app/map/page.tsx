@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
 import { getMaps } from '@/lib/maps'
 import { buildMetadata } from '@/lib/seo'
+import { label } from '@/lib/labels'
 
 export async function generateMetadata(): Promise<Metadata> {
   const maps = await getMaps()
   return buildMetadata({
-    title: 'Maps and Geography Models',
+    title: await label('bom_maps', 'Maps and Geography Models'),
     description: maps.map((m) => m.name).join(' • '),
     path: '/map',
   })

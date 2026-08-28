@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { getTimeline, timelineIndex } from '@/lib/timeline'
 import { buildMetadata } from '@/lib/seo'
+import { label } from '@/lib/labels'
 
 // The PHP /timeline index draws from the events that have a name (heading),
 // in the resolver's y-order, with the last-seen era carried forward. Both the
@@ -8,7 +9,7 @@ import { buildMetadata } from '@/lib/seo'
 export async function generateMetadata(): Promise<Metadata> {
   const items = timelineIndex(await getTimeline())
   return buildMetadata({
-    title: 'Timeline',
+    title: await label('timeline_title', 'Timeline'),
     description: items.map((i) => i.heading).join(' • '),
     path: '/timeline',
   })

@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
 import { ABOUT_HTML } from '@/lib/about'
 import { buildMetadata, stripMarkup } from '@/lib/seo'
+import { label } from '@/lib/labels'
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
-    title: 'About Book of Mormon Online',
+    title: await label('about_bookofmormononline', 'About Book of Mormon Online'),
     description: stripMarkup(ABOUT_HTML),
     path: '/about',
   })

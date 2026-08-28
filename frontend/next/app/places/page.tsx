@@ -2,13 +2,14 @@ import type { Metadata } from 'next'
 import { getPlacesList } from '@/lib/peopleplaces'
 import { superscript } from '@/lib/entity'
 import { buildMetadata } from '@/lib/seo'
+import { label } from '@/lib/labels'
 
 export async function generateMetadata(): Promise<Metadata> {
   const places = await getPlacesList()
   // PHP box derives the description from the raw (non-superscripted) names,
   // bullet-joined, then hard-truncates to 159 chars + '…'.
   return buildMetadata({
-    title: 'Places in the Book of Mormon',
+    title: await label('title_places', 'Places in the Book of Mormon'),
     description: places.map((p) => p.name).join(' • '),
     path: '/places',
   })

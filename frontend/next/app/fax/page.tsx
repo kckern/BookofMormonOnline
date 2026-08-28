@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { getFaxList, faxSuperscript } from '@/lib/fax'
 import { buildMetadata } from '@/lib/seo'
+import { label } from '@/lib/labels'
 
 const TITLE = 'Facsimiles of Historical Book of Mormon Editions'
 
@@ -9,7 +10,7 @@ export async function generateMetadata(): Promise<Metadata> {
   // Description = every edition's plain title joined by ' • ', truncated to 159
   // + '…' by buildMetadata (matches the PHP box meta description).
   return buildMetadata({
-    title: TITLE,
+    title: await label('title_facsimilies', TITLE),
     description: list.map((f) => f.title).join(' • '),
     path: '/fax',
   })

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { getPeopleList } from '@/lib/peopleplaces'
 import { superscript } from '@/lib/entity'
 import { buildMetadata } from '@/lib/seo'
+import { label } from '@/lib/labels'
 
 const SUP: Record<string, string> = {
   '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
@@ -23,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
   // PHP box derives the description from the raw (non-superscripted) names,
   // bullet-joined, then hard-truncates to 159 chars + '…'.
   return buildMetadata({
-    title: 'People in the Book of Mormon',
+    title: await label('title_people', 'People in the Book of Mormon'),
     description: people.map((p) => p.name).join(' • '),
     path: '/people',
   })

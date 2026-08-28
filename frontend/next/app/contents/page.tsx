@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
 import { getContents, type ContentsPage, type ContentsSection } from '@/lib/contents'
 import { buildMetadata } from '@/lib/seo'
+import { label } from '@/lib/labels'
 
 export async function generateMetadata(): Promise<Metadata> {
   // The PHP box emits an empty description for /contents (verified: the head's
   // <meta name="description"> is blank). buildMetadata passes '' through.
-  return buildMetadata({ title: 'Table of Contents', description: '', path: '/contents' })
+  return buildMetadata({ title: await label('table_of_contents', 'Table of Contents'), description: '', path: '/contents' })
 }
 
 // The TOC tree is built as a raw HTML string to reproduce the PHP template's

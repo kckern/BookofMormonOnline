@@ -54,6 +54,41 @@ test.describe('self-on-host canonical', () => {
   })
 })
 
+test.describe('localized index titles', () => {
+  test('/people index is Korean', async ({ request }) => {
+    const html = await (await request.get('/people', { headers: ko })).text()
+    expect(getTitle(html)).toContain('몰몬경에 나오는 인물')
+  })
+  test('/contents index is Korean', async ({ request }) => {
+    const html = await (await request.get('/contents', { headers: ko })).text()
+    expect(getTitle(html)).toContain('목차')
+  })
+  test('/about index is Korean', async ({ request }) => {
+    const html = await (await request.get('/about', { headers: ko })).text()
+    expect(getTitle(html)).toContain('몰몰경·KR 소개')
+  })
+  test('/timeline index is Korean', async ({ request }) => {
+    const html = await (await request.get('/timeline', { headers: ko })).text()
+    expect(getTitle(html)).toContain('연대표')
+  })
+  test('/places index is Korean', async ({ request }) => {
+    const html = await (await request.get('/places', { headers: ko })).text()
+    expect(getTitle(html)).toContain('몰몬경에 나오는 장소')
+  })
+  test('/map index is Korean', async ({ request }) => {
+    const html = await (await request.get('/map', { headers: ko })).text()
+    expect(getTitle(html)).toContain('지도 및 지리적 가설')
+  })
+  test('/fax index is Korean', async ({ request }) => {
+    const html = await (await request.get('/fax', { headers: ko })).text()
+    expect(getTitle(html)).toContain('몰몬경 전의 판 사본')
+  })
+  test('/history index is Korean', async ({ request }) => {
+    const html = await (await request.get('/history', { headers: ko })).text()
+    expect(getTitle(html)).toContain('몰몬경에 대한 역사적 출처')
+  })
+})
+
 test.describe('localized chrome', () => {
   test('korean home title uses Korean suffix', async ({ request }) => {
     const html = await (await request.get('/', { headers: ko })).text()
