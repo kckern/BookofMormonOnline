@@ -86,7 +86,7 @@ export async function SectionView({ slug }: { slug: string }) {
       { name: data.parentTitle, url: await absoluteUrl(`/${data.parentSlug}`) },
       { name: data.title, url },
     ]),
-    creativeWork({ type: 'Article', name: data.title, description: data.title, url, lang }),
+    creativeWork({ type: 'Article', name: data.title, description: data.descParts.join(' '), url, lang }),
   ]
 
   return (

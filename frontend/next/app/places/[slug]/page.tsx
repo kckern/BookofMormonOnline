@@ -9,5 +9,5 @@ export function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PlacesRoute({ params }: Props) {
   const { slug } = await params
-  return <PlaceView slug={slug} />
+  return <PlaceView slug={slug} base="/places" />
 }

@@ -21,12 +21,12 @@ export async function placeMetadata(slug: string, base: string): Promise<Metadat
   })
 }
 
-export async function PlaceView({ slug }: { slug: string }) {
+export async function PlaceView({ slug, base }: { slug: string; base: string }) {
   const place = await getPlace(slug)
   if (!place) notFound()
 
   const name = superscript(place.name)
-  const url = await absoluteUrl(`/places/${slug}`)
+  const url = await absoluteUrl(`${base}/${slug}`)
   const lang = await currentLang()
   const ld = [
     breadcrumb([
