@@ -15,7 +15,8 @@
   "dependencies": {
     "next": "15.3.3",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "scripture-guide": "^1.0.88"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.1",
