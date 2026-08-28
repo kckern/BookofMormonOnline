@@ -13,3 +13,14 @@ test.describe('host→lang middleware', () => {
     expect(r.headers()['x-resolved-lang']).toBe('en')
   })
 })
+
+test.describe('lang-aware content', () => {
+  test('korean host serves Korean person name', async ({ request }) => {
+    const html = await (await request.get('/people/nephi1', { headers: ko })).text()
+    expect(html).toContain('니파이') // Nephi in Korean (assert the STRING — unknown codes clamp to en)
+  })
+  test('apex host still English', async ({ request }) => {
+    const html = await (await request.get('/people/nephi1', { headers: bot })).text()
+    expect(html.toLowerCase()).toContain('nephi')
+  })
+})
