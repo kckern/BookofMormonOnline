@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { getCanonical, getTitle } from '../helpers/meta'
+import { getCanonical, getTitle, getMeta } from '../helpers/meta'
 
 const bot = { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' }
 const ko = { ...bot, 'x-forwarded-host': 'xn--289a67xla.kr', 'x-forwarded-proto': 'https' }
@@ -124,5 +124,21 @@ test.describe('html lang', () => {
   test('apex → <html lang="en">', async ({ request }) => {
     const html = await (await request.get('/people/nephi1', { headers: bot })).text()
     expect(html).toMatch(/<html[^>]*lang="en"/)
+  })
+})
+
+test.describe('og lang + naver', () => {
+  test('korean og:image carries lang=ko', async ({ request }) => {
+    const html = await (await request.get('/people/nephi1', { headers: ko })).text()
+    expect(getMeta(html, 'og:image')).toContain('lang=ko')
+  })
+  test('korean home has naver-site-verification', async ({ request }) => {
+    const html = await (await request.get('/', { headers: ko })).text()
+    expect(getMeta(html, 'naver-site-verification')).toBe('2e4aebbde9e85f415075e53c9ebcad129e3a83e4')
+  })
+  test('apex has no lang param and no naver', async ({ request }) => {
+    const html = await (await request.get('/people/nephi1', { headers: bot })).text()
+    expect(getMeta(html, 'og:image')).not.toContain('lang=')
+    expect(getMeta(html, 'naver-site-verification')).toBeNull()
   })
 })

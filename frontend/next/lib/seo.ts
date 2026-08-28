@@ -113,13 +113,16 @@ export async function buildMetadata(input: SeoInput): Promise<Metadata> {
   const fullTitle = withSuffix ? `${title} • ${siteSuffix}` : title
   const desc = preTruncated ? description : truncateDesc(description)
 
+  const h = await headers()
+  const lang = h.get('x-lang') ?? 'en'
+
   // og:image — our next/og route replaces the retired GD preview service.
   // Path-based identity keeps URLs clean and the card content matches the page.
   const ogParams = new URLSearchParams({ title })
   if (ogSub) ogParams.set('sub', ogSub)
+  if (lang !== 'en') ogParams.set('lang', lang)
   const ogImage = `/og?${ogParams.toString()}`
 
-  const h = await headers()
   const host = safeHost(h.get('x-forwarded-host') ?? h.get('host'))
   const proto = h.get('x-forwarded-proto') ?? 'https'
   const abs = `${proto}://${host}${path}`
@@ -147,6 +150,7 @@ export async function buildMetadata(input: SeoInput): Promise<Metadata> {
     other: {
       'fb:app_id': FB_APP_ID,
       'twitter:domain': SITE_DOMAIN,
+      ...(lang === 'ko' ? { 'naver-site-verification': '2e4aebbde9e85f415075e53c9ebcad129e3a83e4' } : {}),
     },
   }
 }
