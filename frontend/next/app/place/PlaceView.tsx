@@ -1,8 +1,10 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getPlace } from '@/lib/places'
-import { buildMetadata, stripMarkup } from '@/lib/seo'
+import { buildMetadata, stripMarkup, absoluteUrl, currentLang } from '@/lib/seo'
 import { superscript, wikiToHtml, wikiToText } from '@/lib/entity'
+import { breadcrumb, creativeWork } from '@/lib/jsonld'
+import { JsonLd } from '../_components/JsonLd'
 
 // Shared by /place/:slug and /places/:slug (both 200 on the PHP box). The base
 // is passed so canonical/og:url match the request path the visitor used.
@@ -24,9 +26,27 @@ export async function PlaceView({ slug }: { slug: string }) {
   if (!place) notFound()
 
   const name = superscript(place.name)
+  const url = await absoluteUrl(`/places/${slug}`)
+  const lang = await currentLang()
+  const ld = [
+    breadcrumb([
+      { name: 'Home', url: await absoluteUrl('/') },
+      { name: 'Places', url: await absoluteUrl('/places') },
+      { name, url },
+    ]),
+    creativeWork({
+      type: 'Place',
+      name,
+      description: stripMarkup(wikiToText(place.description ?? '')),
+      url,
+      lang,
+      image: `https://media.bookofmormon.online/places/${slug}`,
+    }),
+  ]
 
   return (
     <>
+      <JsonLd data={ld} />
       <h1>{name}</h1>
       {place.info && (
         <h2>

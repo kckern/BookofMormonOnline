@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getCommentary, coverId, commentaryTitle } from '@/lib/commentary'
-import { buildMetadata, stripMarkup } from '@/lib/seo'
+import { buildMetadata, stripMarkup, absoluteUrl, currentLang } from '@/lib/seo'
+import { breadcrumb, creativeWork } from '@/lib/jsonld'
+import { JsonLd } from '../../_components/JsonLd'
 
 interface Props { params: Promise<{ id: string }> }
 
@@ -27,6 +29,15 @@ export default async function CommentaryPage({ params }: Props) {
   if (!c) notFound()
 
   const { source_id, source_title, source_name, source_url } = c.publication
+  const url = await absoluteUrl(`/commentary/${id}`)
+  const lang = await currentLang()
+  const ld = [
+    breadcrumb([
+      { name: 'Home', url: await absoluteUrl('/') },
+      { name: c.title, url },
+    ]),
+    creativeWork({ type: 'Article', name: c.title, description: stripMarkup(c.text), url, lang }),
+  ]
 
   // Match the PHP box body byte-for-byte. The box renders <h1>, a <div class="source">
   // (external/archive <a target="_blank"> around the cover <img/>, then the caption
@@ -48,6 +59,7 @@ export default async function CommentaryPage({ params }: Props) {
 
   return (
     <>
+      <JsonLd data={ld} />
       <h1 dangerouslySetInnerHTML={{ __html: c.title }} />
       <div className="source" dangerouslySetInnerHTML={{ __html: sourceDiv }} />
       <section dangerouslySetInnerHTML={{ __html: c.text }} />

@@ -2,6 +2,9 @@ import { Fragment } from 'react'
 import { notFound } from 'next/navigation'
 import { getSection, type SectionBlock } from '@/lib/section'
 import { getPageContent, type PageContent } from '@/lib/pages'
+import { absoluteUrl, currentLang } from '@/lib/seo'
+import { breadcrumb, creativeWork } from '@/lib/jsonld'
+import { JsonLd } from './JsonLd'
 
 // Content-tree section page. The PHP box emits the parent crumb (h2), the section
 // title (h1), then one <section> per narration block. Each block's inner markup
@@ -75,8 +78,20 @@ export async function SectionView({ slug }: { slug: string }) {
   const data = await getSection(slug)
   if (!data) notFound()
 
+  const url = await absoluteUrl(`/${slug}`)
+  const lang = await currentLang()
+  const ld = [
+    breadcrumb([
+      { name: 'Home', url: await absoluteUrl('/') },
+      { name: data.parentTitle, url: await absoluteUrl(`/${data.parentSlug}`) },
+      { name: data.title, url },
+    ]),
+    creativeWork({ type: 'Article', name: data.title, description: data.title, url, lang }),
+  ]
+
   return (
     <>
+      <JsonLd data={ld} />
       <h2>
         <a href={`/${data.parentSlug}`}>{data.parentTitle}</a>
       </h2>

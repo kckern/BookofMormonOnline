@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getArt } from '@/lib/art'
-import { buildMetadata } from '@/lib/seo'
+import { buildMetadata, absoluteUrl, currentLang } from '@/lib/seo'
+import { breadcrumb, creativeWork } from '@/lib/jsonld'
+import { JsonLd } from '../../_components/JsonLd'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -28,6 +30,23 @@ export default async function ArtPage({ params }: Props) {
   const art = await getArt(id)
   if (!art) notFound()
 
+  const url = await absoluteUrl(`/art/${id}`)
+  const lang = await currentLang()
+  const ld = [
+    breadcrumb([
+      { name: 'Home', url: await absoluteUrl('/') },
+      { name: art.title, url },
+    ]),
+    creativeWork({
+      type: 'CreativeWork',
+      name: art.title,
+      description: `${art.artist} • ${art.descText}`,
+      url,
+      lang,
+      image: `https://media.bookofmormon.online/art/${id}`,
+    }),
+  ]
+
   // Each element is a direct child of <body> (no wrapper div), matching the PHP
   // box. The title- and credit-bearing elements carry raw HTML via
   // dangerouslySetInnerHTML because PHP does no entity-escaping — an apostrophe
@@ -45,6 +64,7 @@ export default async function ArtPage({ params }: Props) {
 
   return (
     <>
+      <JsonLd data={ld} />
       <h1 dangerouslySetInnerHTML={{ __html: art.title }} />
       <img className="img" alt={art.title} title={art.title} src={`/art/${id}`} />
       <a href={art.link} dangerouslySetInnerHTML={{ __html: `© ${art.artist}` }} />

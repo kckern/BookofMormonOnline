@@ -8,6 +8,20 @@ function ldBlocks(html: string): any[] {
   return out
 }
 
+test.describe('JSON-LD on other content pages', () => {
+  test('/place/{slug} emits Place + breadcrumb', async ({ request }) => {
+    const blocks = ldBlocks(await (await request.get('/place/jerusalem-1')).text())
+    expect(blocks.find((b) => b['@type'] === 'Place')).toBeTruthy()
+    expect(blocks.find((b) => b['@type'] === 'BreadcrumbList')).toBeTruthy()
+  })
+  test('/art/{id} emits CreativeWork', async ({ request }) => {
+    const blocks = ldBlocks(await (await request.get('/art/1000')).text())
+    const cw = blocks.find((b) => b['@type'] === 'CreativeWork')
+    expect(cw).toBeTruthy()
+    expect(cw.url).toContain('/art/1000')
+  })
+})
+
 test.describe('JSON-LD structured data', () => {
   test('/people/{slug} emits BreadcrumbList + Person', async ({ request }) => {
     const html = await (await request.get('/people/nephi1')).text()

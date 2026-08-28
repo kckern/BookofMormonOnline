@@ -6,7 +6,9 @@ import { getPageContent } from '@/lib/pages'
 import { sectionMetadata, getSection } from '@/lib/section'
 import { SectionView } from '../_components/SectionView'
 import { DefaultShell } from '../_components/DefaultShell'
-import { buildMetadata, stripMarkup, defaultMetadata } from '@/lib/seo'
+import { buildMetadata, stripMarkup, defaultMetadata, absoluteUrl, currentLang } from '@/lib/seo'
+import { breadcrumb, creativeWork } from '@/lib/jsonld'
+import { JsonLd } from '../_components/JsonLd'
 import { seoIntentForPath } from '@/lib/features'
 
 interface Props {
@@ -66,8 +68,19 @@ export default async function CatchAllPage({ params }: Props) {
     const block = await getTextBlock(pageSlug, id)
     if (!block) notFound()
     const here = `/${path.join('/')}`
+    const url = await absoluteUrl(here)
+    const lang = await currentLang()
+    const ld = [
+      breadcrumb([
+        { name: 'Home', url: await absoluteUrl('/') },
+        ...(block.sectionTitle ? [{ name: block.sectionTitle, url: await absoluteUrl(`/${block.sectionSlug}`) }] : []),
+        { name: block.heading, url },
+      ]),
+      creativeWork({ type: 'Article', name: block.heading, description: stripMarkup(block.content), url, lang }),
+    ]
     return (
       <>
+        <JsonLd data={ld} />
         <h1>
           <a href={here}>{block.heading}</a>
         </h1>
@@ -118,8 +131,13 @@ export default async function CatchAllPage({ params }: Props) {
   if (kind === 'page') {
     const page = await getPageContent(path[0])
     if (!page) return <DefaultShell />
+    const pageLd = breadcrumb([
+      { name: 'Home', url: await absoluteUrl('/') },
+      { name: page.title, url: await absoluteUrl(`/${page.slug}`) },
+    ])
     return (
       <>
+        <JsonLd data={pageLd} />
         <h1>{page.title}</h1>
         {page.sections.map((section) => (
           <Fragment key={section.slug}>
