@@ -64,6 +64,22 @@ test("buildOpenList filters non-string parent slugs", () => {
   expect(openSlugs).toEqual(["lehites/2"]);
 });
 
+test("buildOpenList resolves a bare-leaf alias against full-path textids", () => {
+  // URL used the short pageSlug (/zoramites/1) but the rendered row carries the full
+  // hierarchical textid. The bare leaf must still resolve (as an alias) and open the
+  // real full-path slug, not report verseNotFound.
+  dom(`<div class="content"><div class="row"><div textid="reign-of-judges/zoramites/1"><span class="reference"><a>1</a></span></div></div></div>`);
+  const { targetRow, openSlugs } = buildOpenList("zoramites", "1");
+  expect(targetRow).not.toBeNull();
+  expect(openSlugs).toEqual(["reign-of-judges/zoramites/1"]);
+});
+
+test("buildOpenList leaf fallback does not mis-match a longer number (/11 for /1)", () => {
+  dom(`<div class="content"><div class="row"><div textid="reign-of-judges/zoramites/11"><span class="reference"><a>11</a></span></div></div></div>`);
+  const { targetRow } = buildOpenList("zoramites", "1");
+  expect(targetRow).toBeNull();
+});
+
 test("openAndAwait isOpen reads openRows membership — state is the truth, not the DOM class", () => {
   dom(`<div class="row"><div textid="lehites/7"><span class="reference"><a>7</a></span></div></div>`);
   const c = controller({ textId: "7" });

@@ -11,15 +11,28 @@ export const pageScrollManager = createScrollManager({
 
 export function buildOpenList(pageSlug, textId) {
   const textSlug = `${pageSlug}/${textId}`;
-  const el = document.querySelector(`[textid="${textSlug}"]`);
+  let el = document.querySelector(`[textid="${textSlug}"]`);
+  if (!el) {
+    // Bare-leaf alias: the URL used a short pageSlug (e.g. /zoramites/1) but the
+    // rendered rows carry the full hierarchical textid (reign-of-judges/zoramites/1).
+    // Fall back to the row whose trailing leaf equals this exact numeric textId
+    // (the `$="/id"` guard keeps /1 from matching /11).
+    el =
+      [...document.querySelectorAll(`[textid$="/${textId}"]`)].find(
+        (n) => n.getAttribute("textid")?.split("/").pop() === String(textId)
+      ) || null;
+  }
   if (!el) return { targetRow: null, openSlugs: [] };
+  // Use the element's own (full) textid, not the requested short form, so the
+  // opened slug matches what the rows are keyed by.
+  const resolvedSlug = el.getAttribute("textid");
   const targetRow = el.closest(".row");
   const parentSlug = el.closest(".row > [textid]")?.getAttribute("textid");
   const slugs = [];
-  if (typeof parentSlug === "string" && parentSlug && parentSlug !== textSlug) {
+  if (typeof parentSlug === "string" && parentSlug && parentSlug !== resolvedSlug) {
     slugs.push(parentSlug);
   }
-  slugs.push(textSlug);
+  slugs.push(resolvedSlug);
   return { targetRow, openSlugs: orderByDomAncestry(slugs) };
 }
 
