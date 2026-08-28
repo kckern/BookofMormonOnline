@@ -48,3 +48,16 @@ export function getH1(html: string): string | null {
   if (!m) return null
   return m[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim() || null
 }
+
+// <link rel="alternate" hreflang="ko" href="..."> — attribute order tolerant.
+export function getHreflang(html: string, hreflang: string): string | null {
+  const patterns = [
+    new RegExp(`<link[^>]+hreflang=["']${escapeRe(hreflang)}["'][^>]+href=["']([^"']+)["']`, 'i'),
+    new RegExp(`<link[^>]+href=["']([^"']+)["'][^>]+hreflang=["']${escapeRe(hreflang)}["']`, 'i'),
+  ]
+  for (const re of patterns) {
+    const m = html.match(re)
+    if (m) return m[1]
+  }
+  return null
+}

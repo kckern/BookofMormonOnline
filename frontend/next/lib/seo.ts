@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import { cache } from 'react'
 import { headers } from 'next/headers'
-import { HOST_LANG } from './locales'
+import { HOST_LANG, LANG_HOST, bcp47 } from './locales'
+import { seoIntentForPath } from './features'
 import { getLabels } from './labels'
 
 // Constants mirrored from the PHP SSR box head (the parity benchmark).
@@ -95,6 +96,8 @@ interface SeoInput {
   ogImg?: string
   /** Which media type ogImg addresses (drives the /og imgtype param). */
   ogImgType?: 'art' | 'people' | 'places'
+  /** Emit hreflang alternates (default true; false for language-variant slugs, e.g. /특별반). */
+  hreflang?: boolean
 }
 
 // x-forwarded-host is client-influenced; only trust our own domain (+ localhost
@@ -108,11 +111,22 @@ function safeHost(candidate: string | null): string {
   return ok ? host : SITE_DOMAIN
 }
 
+// hreflang alternates for the backend-supported language domains + x-default.
+// Slugs are language-invariant, so the path is identical across every domain.
+function hreflangLanguages(path: string): Record<string, string> {
+  const langs: Record<string, string> = {}
+  for (const [code, host] of Object.entries(LANG_HOST)) {
+    langs[bcp47(code)] = `https://${host}${path}`
+  }
+  langs['x-default'] = `https://${LANG_HOST.en}${path}`
+  return langs
+}
+
 // Single source of truth for the head tag-set the PHP box emits, expressed as a
 // Next.js Metadata object. Uses title.absolute for exact control so the layout
 // template never double-appends the suffix.
 export async function buildMetadata(input: SeoInput): Promise<Metadata> {
-  const { title, description, path, withSuffix = true, preTruncated = false, ogSub, ogImg, ogImgType } = input
+  const { title, description, path, withSuffix = true, preTruncated = false, ogSub, ogImg, ogImgType, hreflang = true } = input
   const { siteSuffix } = await getSiteChrome()
   const fullTitle = withSuffix ? `${title} • ${siteSuffix}` : title
   const desc = preTruncated ? description : truncateDesc(description)
@@ -139,7 +153,12 @@ export async function buildMetadata(input: SeoInput): Promise<Metadata> {
     title: { absolute: fullTitle },
     description: desc,
     keywords: KEYWORDS,
-    alternates: { canonical: abs },
+    alternates: {
+      canonical: abs,
+      ...(hreflang && seoIntentForPath(path) === 'crawl'
+        ? { languages: hreflangLanguages(path) }
+        : {}),
+    },
     openGraph: {
       title: fullTitle,
       description: desc,

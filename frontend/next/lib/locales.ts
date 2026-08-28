@@ -24,6 +24,22 @@ export const HOST_LANG: Record<string, string> = {
   'tgl.bookofmormon.online': 'tgl',
 }
 
+// Backend-SUPPORTED languages → canonical host, for hreflang alternates. Excludes
+// slv/tr (NOT in backend SUPPORTED_LANGUAGES — advertising them would mislabel
+// English content as Slovenian/Turkish). ko/ru use the punycode host so the tag
+// points at a stable ASCII origin.
+export const LANG_HOST: Record<string, string> = {
+  en: 'bookofmormon.online',
+  ko: 'xn--289a67xla.kr',
+  es: 'libromormon.es',
+  fr: 'livredemormon.fr',
+  de: 'buchmormon.de',
+  swe: 'swe.bookofmormon.online',
+  vn: 'sachmacmon.vn',
+  ru: 'xn--80aahtjpadfibw.net',
+  tgl: 'tgl.bookofmormon.online',
+}
+
 // Internal code → BCP47 tag for <html lang>. Identity unless listed.
 const BCP47_MAP: Record<string, string> = { swe: 'sv', jpn: 'ja', vn: 'vi', tgl: 'tl', slv: 'sl' }
 

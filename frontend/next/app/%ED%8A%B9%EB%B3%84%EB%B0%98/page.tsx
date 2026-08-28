@@ -11,6 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: STUDYEDITION_TITLE,
     description: STUDYEDITION_DESCRIPTION,
     path: '/특별반',
+    hreflang: false,
   })
 }
 
