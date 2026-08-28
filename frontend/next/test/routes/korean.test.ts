@@ -142,3 +142,10 @@ test.describe('og lang + naver', () => {
     expect(getMeta(html, 'naver-site-verification')).toBeNull()
   })
 })
+
+test.describe('map index-fallback title localized', () => {
+  test('korean /map/<unknown> uses the Korean maps title', async ({ request }) => {
+    const html = await (await request.get('/map/newyork', { headers: ko })).text()
+    expect(getTitle(html)).toContain('지도') // "map" in Korean (bom_maps label)
+  })
+})

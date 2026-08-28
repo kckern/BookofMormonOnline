@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { getMaps } from '@/lib/maps'
 import { getMapDetail } from '@/lib/mapdetail'
 import { buildMetadata } from '@/lib/seo'
+import { label } from '@/lib/labels'
 
 interface Props {
   params: Promise<{ type: string }>
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // canonical/og:url at the requested /map/:type (verified /map/newyork).
     const maps = await getMaps()
     return buildMetadata({
-      title: 'Maps and Geography Models',
+      title: await label('bom_maps', 'Maps and Geography Models'),
       description: maps.map((m) => m.name).join(' • '),
       path: `/map/${type}`,
     })
