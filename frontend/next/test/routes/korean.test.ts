@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { getCanonical } from '../helpers/meta'
+import { getCanonical, getTitle } from '../helpers/meta'
 
 const bot = { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' }
 const ko = { ...bot, 'x-forwarded-host': 'xn--289a67xla.kr', 'x-forwarded-proto': 'https' }
@@ -51,5 +51,20 @@ test.describe('self-on-host canonical', () => {
   test('untrusted host still falls back to apex', async ({ request }) => {
     const html = await (await request.get('/people/nephi1', { headers: { ...bot, 'x-forwarded-host': 'evil.example.com' } })).text()
     expect(getCanonical(html)!).toContain('bookofmormon.online/people/nephi1')
+  })
+})
+
+test.describe('localized chrome', () => {
+  test('korean home title uses Korean suffix', async ({ request }) => {
+    const html = await (await request.get('/', { headers: ko })).text()
+    expect(getTitle(html)).toBe('몰몬경·KR: 몰몬경 학습 자원')
+  })
+  test('korean person title has Korean suffix', async ({ request }) => {
+    const html = await (await request.get('/people/nephi1', { headers: ko })).text()
+    expect(getTitle(html)).toContain('몰몬경·KR')
+  })
+  test('apex home title unchanged', async ({ request }) => {
+    const html = await (await request.get('/', { headers: bot })).text()
+    expect(getTitle(html)).toBe('Book of Mormon Online: A Book of Mormon Study Resource')
   })
 })

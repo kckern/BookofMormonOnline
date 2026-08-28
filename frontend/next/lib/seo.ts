@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { HOST_LANG } from './locales'
+import { getLabels } from './labels'
 
 // Constants mirrored from the PHP SSR box head (the parity benchmark).
 export const SITE_SUFFIX = 'Book of Mormon Online'
@@ -9,6 +10,28 @@ export const DEFAULT_TITLE = 'Book of Mormon Online: A Book of Mormon Study Reso
 // derives the meta description from its first 159 chars.
 export const DEFAULT_BODY =
   'Book of Mormon Online is an interactive study resource designed to enhance accessibility and comprehension of the Book of Mormon. The text is broken into digestible sections, each supplemented with narrative synopses emphasizing context and connections. The platform is enriched with images, commentary, audio resources, and quick links to a database featuring people, places, facsimiles, maps, and events within the Book of Mormon, supported by historical and analytical resources to facilitate comprehensive research and study. \n\nDesigned for both casual and serious students of the Book of Mormon, Book of Mormon Online provides a systematic, immersive study experience complete with context explanations and multimedia support. Whether the student is seeking a basic overview or detailed study, the website presents narrative expositions, doctrinal commentary, artistic interpretations, study groups, and other multimedia offerings to foster an engaging, interactive experience for gaining a thorough understanding and appreciation for the text, narratives, characters, and teachings of the Book of Mormon.'
+// Default body paragraph is NOT in the labels table (verified) — per-language here.
+// English = the existing DEFAULT_BODY constant; Korean captured from 몰몬경.kr.
+const DEFAULT_BODY_BY_LANG: Record<string, string> = {
+  en: DEFAULT_BODY,
+  ko: '몰몬경·KR은 몰몬경의 글에 가능한 한 쉽게 접근할 수 있도록 도모하는 학습 자원이다. 문맥과 연결에 초점을 맞춰 정리된 소제목들과 구절 각각에 요약된 해설이 독자 친화적으로 글을 분할하여 이해를 돕는다.\n\n본문은 이미지, 해설, 오디오가 더해져 한층 보완되고 인물, 장소, 스캔 사본, 지도 및 사건들의 데이터베이스가 연결된다. 추가된 역사적이고 분석적인 자원들의 제공 역시 깊이 있는 연구와 학습이 가능하도록 해준다.',
+}
+
+// English short-circuits to the existing sync constants (labels are byte-identical);
+// other languages compose from labels + the body table.
+export async function getSiteChrome(): Promise<{ siteSuffix: string; defaultTitle: string; defaultBody: string }> {
+  const lang = (await headers()).get('x-lang') ?? 'en'
+  if (lang === 'en') return { siteSuffix: SITE_SUFFIX, defaultTitle: DEFAULT_TITLE, defaultBody: DEFAULT_BODY }
+  const labels = await getLabels()
+  const homeTitle = labels['home_title'] ?? SITE_SUFFIX
+  const homeHeading = labels['home_heading']
+  return {
+    siteSuffix: homeTitle,
+    defaultTitle: homeHeading ? `${homeTitle}: ${homeHeading}` : DEFAULT_TITLE,
+    defaultBody: DEFAULT_BODY_BY_LANG[lang] ?? DEFAULT_BODY,
+  }
+}
+
 // Fixed nav list rendered in the default shell, in PHP-box order.
 export const DEFAULT_NAV: ReadonlyArray<{ href: string; label: string }> = [
   { href: '/contents', label: 'Table of Contents' },
@@ -80,7 +103,8 @@ function safeHost(candidate: string | null): string {
 // template never double-appends the suffix.
 export async function buildMetadata(input: SeoInput): Promise<Metadata> {
   const { title, description, path, withSuffix = true, preTruncated = false, ogSub } = input
-  const fullTitle = withSuffix ? `${title} • ${SITE_SUFFIX}` : title
+  const { siteSuffix } = await getSiteChrome()
+  const fullTitle = withSuffix ? `${title} • ${siteSuffix}` : title
   const desc = preTruncated ? description : truncateDesc(description)
 
   // og:image — our next/og route replaces the retired GD preview service.
@@ -124,10 +148,6 @@ export async function buildMetadata(input: SeoInput): Promise<Metadata> {
 // The generic fallback metadata the PHP box serves for any route it has no
 // specific handler for (e.g. /search, /user, /objects, and the homepage).
 export async function defaultMetadata(path = '/'): Promise<Metadata> {
-  return buildMetadata({
-    title: DEFAULT_TITLE,
-    description: DEFAULT_BODY, // truncated to 159 by buildMetadata
-    path,
-    withSuffix: false,
-  })
+  const { defaultTitle, defaultBody } = await getSiteChrome()
+  return buildMetadata({ title: defaultTitle, description: defaultBody, path, withSuffix: false })
 }
