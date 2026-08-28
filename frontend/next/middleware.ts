@@ -21,7 +21,7 @@ const BOT_RE = /bot|crawl|spider|slurp|google|bing|baidu|yandex|duckduck|faceboo
 
 const CRA_ORIGIN = 'http://localhost:8201'
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname, hostname } = request.nextUrl
   const ua = request.headers.get('user-agent') ?? ''
 
@@ -63,7 +63,8 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(url)
     }
     const target = new URL(CRA_ORIGIN + pathname + request.nextUrl.search)
-    return NextResponse.rewrite(target)
+    const craRes = await fetch(target, { redirect: 'manual' })
+    return new Response(craRes.body, { status: craRes.status, headers: craRes.headers })
   }
 
   // --- Bot/crawler: serve Next.js SSR with lang header ---
