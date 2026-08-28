@@ -103,3 +103,15 @@ test.describe('localized chrome', () => {
     expect(getTitle(html)).toBe('Book of Mormon Online: A Book of Mormon Study Resource')
   })
 })
+
+test.describe('localized default shell', () => {
+  test('korean unknown-slug shell has Korean nav + body', async ({ request }) => {
+    const html = await (await request.get('/zzz-no-such-page-xyz', { headers: ko })).text()
+    expect(html).toContain('목차')       // Contents nav label, Korean
+    expect(html).not.toContain('Table of Contents')
+  })
+  test('english shell unchanged', async ({ request }) => {
+    const html = await (await request.get('/zzz-no-such-page-xyz', { headers: bot })).text()
+    expect(html).toContain('Table of Contents')
+  })
+})
