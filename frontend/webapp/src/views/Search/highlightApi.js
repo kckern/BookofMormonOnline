@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useEffect, useRef, useState } from "react";
-import { ApiBaseUrl } from "src/models/BoMOnlineAPI";
+import { GraphQLApiUrl } from "src/models/BoMOnlineAPI";
 import { determineLanguage } from "src/models/Utils";
 
 // Cache by (query, text) so each phrase is fetched at most once per session.
@@ -17,7 +17,7 @@ export async function fetchHighlightRange(query, text) {
     const lang = determineLanguage();
     const res = await axios({
       method: "post",
-      url: ApiBaseUrl + (lang ? "/" + lang : ""),
+      url: GraphQLApiUrl + (lang ? "/" + lang : ""),
       headers: { "Content-Type": "application/json" },
       data: { query: gql },
     });

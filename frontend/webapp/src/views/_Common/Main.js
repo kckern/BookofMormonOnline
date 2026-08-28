@@ -10,7 +10,7 @@ import routes from "src/models/Routes";
 import links from "./sideBarLinks";
 import { determineLanguage, label, makeLabelDictionary } from "src/models/Utils";
 import PopUp from "./PopUp";
-import BoMOnlineAPI,{ApiBaseUrl} from "src/models/BoMOnlineAPI";
+import BoMOnlineAPI,{GraphQLApiUrl} from "src/models/BoMOnlineAPI";
 // STYLE
 import "./Main.css";
 import "./ToolTip.css";
@@ -46,7 +46,7 @@ function Main(props) {
   const firedMessage = (e) => appController.functions.firedMessage(e);
   const setTypers = (e) => appController.functions.setTypers({channelUrl:e.channelUrl,ids:e.typers.map(t => t.userId)});
 
-  const  handleAway =  (e) =>  navigator.sendBeacon(ApiBaseUrl, JSON.stringify({ 'query': `{closetab(token:"${appController.states.user.token}")}` }));
+  const  handleAway =  (e) =>  navigator.sendBeacon(GraphQLApiUrl, JSON.stringify({ 'query': `{closetab(token:"${appController.states.user.token}")}` }));
 
   const  handleVisibilityChange =  (e) => {
     toast.clearWaitingQueue();

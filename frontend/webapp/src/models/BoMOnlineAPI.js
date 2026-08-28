@@ -21,10 +21,13 @@ export const assetUrl = "https://media.bookofmormon.online";
 export const renderBaseUrl = process.env.REACT_APP_RENDER_URL || "";
 // Use empty string for localhost:3000 to leverage proxy, otherwise use appropriate API URL
 export const ApiBaseUrl = localTest ? "http://localhost:5005" : isWebappOnly ? "" : containedAPI;
+// GraphQL must use the dedicated reverse-proxy location in production. Posting
+// to the site root is handled by the Next/CRA front door and returns index.html.
+export const GraphQLApiUrl = ApiBaseUrl + "/graphql";
 export const fbPixel = "4544125442358924";
 
 export function exitBeacon(appController){
-    navigator.sendBeacon(ApiBaseUrl, JSON.stringify({ 'query': `{closetab(token:"${appController.states.user.token}")}` }));
+    navigator.sendBeacon(GraphQLApiUrl, JSON.stringify({ 'query': `{closetab(token:"${appController.states.user.token}")}` }));
 }
 
 export default async function BoMOnlineAPI(input, options) {
@@ -73,7 +76,7 @@ async function serverGQLCall(graphQL) {
     const lang = determineLanguage();
     let config = {
         method: "post",
-        url: ApiBaseUrl + (lang ? "/"+lang : ""),
+        url: GraphQLApiUrl + (lang ? "/"+lang : ""),
         timeout: 1000 * 45, // Wait for 15 seconds
         headers: {
           "Content-Type": "application/json"
@@ -154,4 +157,3 @@ export function structureResults(queries, apiResults) {
     }
     return resultObj;
 }
-

@@ -3,7 +3,7 @@ import { fetchHighlightRange, __clearHighlightCache } from '../highlightApi';
 jest.mock('axios', () => ({ __esModule: true, default: jest.fn() }));
 import axios from 'axios';
 
-jest.mock('src/models/BoMOnlineAPI', () => ({ ApiBaseUrl: 'http://api.test' }));
+jest.mock('src/models/BoMOnlineAPI', () => ({ GraphQLApiUrl: 'http://api.test/graphql' }));
 jest.mock('src/models/Utils', () => ({ determineLanguage: () => 'en' }));
 
 beforeEach(() => { axios.mockReset(); __clearHighlightCache(); });
@@ -14,6 +14,7 @@ test('posts a highlight query and returns the range', async () => {
   expect(r).toEqual({ start: 2, end: 9 });
   const arg = axios.mock.calls[0][0];
   expect(arg.method).toBe('post');
+  expect(arg.url).toBe('http://api.test/graphql/en');
   expect(arg.data.query).toContain('highlight(query:');
   expect(arg.data.query).toContain(JSON.stringify('afterlife'));
 });
