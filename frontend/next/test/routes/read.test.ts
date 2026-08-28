@@ -82,3 +82,13 @@ test.describe('/read chapter route', () => {
     expect(blocks.find((b) => b['@type'] === 'BreadcrumbList')).toBeTruthy()
   })
 })
+
+test.describe('/read chapters in sitemap.xml', () => {
+  test('sitemap lists all 239 chapter URLs, first and last present', async ({ request }) => {
+    const xml = await (await request.get('/sitemap.xml')).text()
+    const readUrls = [...xml.matchAll(/<loc>([^<]*\/read\/[^<]+)<\/loc>/g)].map((m) => m[1])
+    expect(readUrls.length).toBe(239)
+    expect(readUrls).toContain('https://bookofmormon.online/read/1.nephi.1')
+    expect(readUrls).toContain('https://bookofmormon.online/read/moroni.10')
+  })
+})

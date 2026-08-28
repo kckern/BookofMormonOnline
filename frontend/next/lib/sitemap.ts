@@ -1,6 +1,7 @@
 import { cache } from 'react'
 import { gql } from './graphql'
 import { seoIntentForPath } from './features'
+import { bomChapterSlugs } from './scripture'
 
 // ── /sitemap.xml URL enumeration ─────────────────────────────────────────────
 // Parity target: the legacy PHP box's sitemap, which contains exactly 3179 URLs
@@ -113,6 +114,13 @@ async function mapUrls(): Promise<SitemapUrl[]> {
   return urls
 }
 
+// ── scripture (0.8) ──────────────────────────────────────────────────────────
+// All 239 BoM chapters as crawlable /read pages (primary content). Static list —
+// the canon is immutable — so no GraphQL call.
+function scriptureUrls(): SitemapUrl[] {
+  return bomChapterSlugs().map((slug) => ({ path: `/read/${slug}`, priority: '0.8' }))
+}
+
 // ── superset additions (NOT in the legacy box's sitemap) ─────────────────────
 // Crawlable content pages the PHP box server-rendered but never listed in its
 // sitemap. We list them so ours is a deliberate superset. Priorities follow the
@@ -154,6 +162,6 @@ export const getSitemapUrls = cache(async (): Promise<SitemapUrl[]> => {
     { path: '/studyedition', priority: '0.5' },
   ]
 
-  const all = [...statics, ...content, ...people, ...places, ...history, ...fax, ...maps, ...timeline]
+  const all = [...statics, ...content, ...people, ...places, ...history, ...fax, ...maps, ...timeline, ...scriptureUrls()]
   return all.filter((u) => seoIntentForPath(u.path) === 'crawl')
 })
