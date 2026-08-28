@@ -98,6 +98,12 @@ interface SeoInput {
   ogImgType?: 'art' | 'people' | 'places'
   /** Emit hreflang alternates (default true; false for language-variant slugs, e.g. /특별반). */
   hreflang?: boolean
+  /** Absolute canonical URL override (used for both canonical + og:url). For pages that
+   *  consolidate cross-host to a fixed origin, e.g. /read → the en apex. */
+  canonicalUrl?: string
+  /** Language override for the og-card lang param + naver tag (defaults to the x-lang
+   *  header). /read passes 'en' because its content is English on every host. */
+  lang?: string
 }
 
 // x-forwarded-host is client-influenced; only trust our own domain (+ localhost
@@ -139,13 +145,13 @@ function hreflangLanguages(path: string): Record<string, string> {
 // Next.js Metadata object. Uses title.absolute for exact control so the layout
 // template never double-appends the suffix.
 export async function buildMetadata(input: SeoInput): Promise<Metadata> {
-  const { title, description, path, withSuffix = true, preTruncated = false, ogSub, ogImg, ogImgType, hreflang = true } = input
+  const { title, description, path, withSuffix = true, preTruncated = false, ogSub, ogImg, ogImgType, hreflang = true, canonicalUrl, lang: langOverride } = input
   const { siteSuffix } = await getSiteChrome()
   const fullTitle = withSuffix ? `${title} • ${siteSuffix}` : title
   const desc = preTruncated ? description : truncateDesc(description)
 
   const h = await headers()
-  const lang = h.get('x-lang') ?? 'en'
+  const lang = langOverride ?? h.get('x-lang') ?? 'en'
 
   // og:image — our next/og route replaces the retired GD preview service.
   // Path-based identity keeps URLs clean and the card content matches the page.
@@ -158,7 +164,7 @@ export async function buildMetadata(input: SeoInput): Promise<Metadata> {
   }
   const ogImage = `/og?${ogParams.toString()}`
 
-  const abs = await absoluteUrl(path)
+  const abs = canonicalUrl ?? (await absoluteUrl(path))
 
   return {
     title: { absolute: fullTitle },
