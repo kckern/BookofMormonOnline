@@ -38,6 +38,17 @@ test.describe('default shell does not link noindexed sections', () => {
   })
 })
 
+test.describe('SSR access defaults open', () => {
+  test('an unrecognized indexer gets SSR without being named in a bot allowlist', async ({ request }) => {
+    const r = await request.get('/lehites', {
+      headers: { 'user-agent': 'ResearchIndexer/1.0', accept: 'text/html' },
+    })
+    expect(r.status()).toBe(200)
+    expect(r.headers()['x-resolved-lang']).toBe('en')
+    expect(await r.text()).toContain('<h1')
+  })
+})
+
 test.describe('history is noindex for bots', () => {
   test('/history → 200 + noindex meta + header', async ({ request }) => {
     const r = await request.get('/history', { headers: bot })

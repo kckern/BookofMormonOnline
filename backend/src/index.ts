@@ -12,6 +12,7 @@ import { initRealtime } from './realtime/server.js';
 import { startBotScheduler } from './bots/scheduler.js';
 import { startRetentionJob } from './messaging/retention.js';
 import { faxRoutes } from './media/fax/route.js';
+import { isInternalLoopback } from './http/rateLimit.js';
 
 const app = Fastify({
   logger: { level: env.LOG_LEVEL },
@@ -98,12 +99,17 @@ const graphqlHandler = async (req: FastifyRequest, reply: FastifyReply) => {
   return reply;
 };
 
-// A3: global per-IP rate limit on all routes (including the GraphQL handler).
-// 300 req/min is generous enough for real clients but throttles brute-force
-// credential stuffing. The fax sub-plugin applies its own tighter 120/min limit
-// on top of this. Match @fastify/rate-limit registration style from fax/route.ts.
+// A3: global per-IP rate limit on public routes. Next SSR calls GraphQL over
+// loopback inside this container; exempt that trusted internal hop so unrelated
+// crawlers do not collapse into one 127.0.0.1 bucket. Public traffic still has
+// the 300/minute ceiling. The fax sub-plugin applies its own tighter 120/min
+// limit on top of this.
 const rateLimit = (await import('@fastify/rate-limit')).default;
-await app.register(rateLimit, { max: 300, timeWindow: '1 minute' });
+await app.register(rateLimit, {
+  max: 300,
+  timeWindow: '1 minute',
+  allowList: (request) => isInternalLoopback(request.ip),
+});
 
 app.get('/health', async () => ({ ok: true }));
 app.route({ method: ['GET', 'POST', 'OPTIONS'], url: '/', handler: graphqlHandler });

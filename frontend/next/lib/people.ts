@@ -22,10 +22,6 @@ const PERSON_QUERY = `
 `
 
 export const getPerson = cache(async (slug: string): Promise<Person | null> => {
-  try {
-    const data = await gql<{ person: Person[] }>(PERSON_QUERY, { slug: [slug] }, { revalidate: 86400 })
-    return data.person?.[0] ?? null
-  } catch {
-    return null
-  }
+  const data = await gql<{ person: Person[] }>(PERSON_QUERY, { slug: [slug] }, { revalidate: 86400 })
+  return data.person?.[0] ?? null
 })
