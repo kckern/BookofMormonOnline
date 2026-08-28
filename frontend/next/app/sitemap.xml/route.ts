@@ -6,7 +6,10 @@ import { getSitemapUrls, BASE, CHANGEFREQ, LASTMOD } from '@/lib/sitemap'
 // 1.0 → '1'. Emitting the XML directly guarantees byte-equal priority fields and
 // the benchmark's <loc>/<lastmod>/<changefreq>/<priority> element order.
 
-export const revalidate = 3600
+// Force dynamic so Next doesn't attempt to pre-render at build time.
+// The sitemap fetches live data from the backend via GraphQL; during image
+// build there is no backend running. CDN/Cloudflare cache handles freshness.
+export const dynamic = 'force-dynamic'
 
 function xmlEscape(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
