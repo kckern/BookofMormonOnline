@@ -47,6 +47,7 @@ export async function proxyClickyBeacon(req: NextRequest): Promise<Response> {
   const headers: Record<string, string> = {
     Host: 'in.getclicky.com',
     'User-Agent': req.headers.get('user-agent') ?? '',
+    Referer: req.headers.get('referer') ?? '',
     'X-Forwarded-For': clientIp,
     'X-Forwarded-Proto': req.nextUrl.protocol.replace(':', ''),
     'X-Forwarded-Host': req.headers.get('host') ?? '',
