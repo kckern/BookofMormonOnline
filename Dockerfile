@@ -32,6 +32,7 @@ FROM node:${NODE_VERSION}-alpine AS runtime
 WORKDIR /app
 RUN npm i -g pm2 serve
 COPY --from=build /src/backend/dist ./backend/dist
+COPY --from=build /src/backend/schema ./backend/dist/schema
 COPY --from=build /src/backend/node_modules ./backend/node_modules
 COPY --from=build /src/backend/package*.json ./backend/
 COPY --from=build /src/frontend/next/.next ./frontend/next/.next
