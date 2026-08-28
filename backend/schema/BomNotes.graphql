@@ -91,6 +91,12 @@ type HistoricalDocument {
   quote_contains_witness_speech: Boolean
   witness_label: String
   reporter_label: String
+  narrative: String
+  place: String
+  tradition: String
+  proximity: String
+  attestation: String
+  provenance_chain: [String]
 }
 
 type Commentary {

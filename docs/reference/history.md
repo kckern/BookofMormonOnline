@@ -9,9 +9,31 @@ JSX that consumes it, shows which archives actually populate it, and lists the
 conventions to follow so a document renders completely and consistently.
 
 > Evergreen reference — update in place as the schema/data conventions change.
-> Fill-rates below were sampled from `bom_prd` (reception 580, translation 155,
-> joseph-smith-statements 26, witnesses 360 docs). They illustrate the *shape*
-> of the inconsistency; exact percentages drift as content is added.
+> Fill-rates below were **re-measured against `bom_prd` on 2026-08-18** (reception
+> 580, witnesses 360, translation 155, joseph-smith-statements 26,
+> lost-116-pages 24 — 1,145 docs total).
+
+**Measured 2026-08-18** — the quote fields, which drive the card lead and the Home
+sampler:
+
+| archive | n | `money_quote` | `miniquote` | `quote_speaker` | `transcript` |
+|---|---|---|---|---|---|
+| reception | 580 | 99% | 99% | 0% | 100% |
+| witnesses | 360 | 59% | 59% | 59% | 100% |
+| translation | 155 | **0%** | **0%** | 100% | 100% |
+| joseph-smith-statements | 26 | 100% | 100% | 0% | 100% |
+| lost-116-pages | 24 | 63% | 63% | 63% | 42% |
+
+⚠️ **`translation` has no `money_quote` or `miniquote` at all.** Its metadata
+carries `quote_speaker`, `quote_is_witness_voice`, `evidence_chain` and
+`quote_curation_status`, but no quote — so every translation card renders
+teaser-only with a speaker and nothing to attribute, and no translation doc can
+reach the Home sampler (which requires a money quote). An earlier revision of
+this document recorded translation as 100% on both fields; that was wrong.
+
+319 of 1,145 docs (28%) have no money quote. 541 (47%) have a teaser without the
+`Key Points` list — that convention is followed by `reception` and
+`lost-116-pages` and by neither `witnesses` nor `translation`.
 
 ---
 

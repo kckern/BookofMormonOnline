@@ -8,6 +8,46 @@ import "./HistorySourceCard.css";
 // Re-exported for backward compatibility (tests import withBrackets from here).
 export { withBrackets, renderMoneyQuote };
 
+// Reliability facets, currently carried only by the lost-116-pages archive.
+// Three independent facets, deliberately NOT collapsed into one score: a
+// single-witness contemporaneous notice and a well-corroborated late
+// recollection are differently trustworthy, not rankable on one axis.
+// Renders nothing when a doc carries none of them, so other archives are
+// untouched. See docs/specs/2026-08-18-lost-116-pages-archive.md §4.
+export function ReliabilityFacets({ doc }) {
+  if (!doc) return null;
+  const chain = Array.isArray(doc.provenance_chain) ? doc.provenance_chain : null;
+  if (!doc.proximity && !doc.attestation && !(chain && chain.length)) return null;
+  return (
+    <div className="historyFacets">
+      {chain && chain.length > 0 && (
+        <div className="facetChain" title="How the information reached this document">
+          {chain.map((step, i) => (
+            <span key={i} className="facetChainStep">
+              {i > 0 && <span className="facetChainArrow"> &rarr; </span>}
+              {step}
+            </span>
+          ))}
+        </div>
+      )}
+      {(doc.proximity || doc.attestation) && (
+        <div className="facetChips">
+          {doc.proximity && (
+            <span className={"facetChip facetProximity is-" + doc.proximity}>
+              {doc.proximity === "contemporaneous" ? "contemporaneous" : "recollection"}
+            </span>
+          )}
+          {doc.attestation && (
+            <span className={"facetChip facetAttestation is-" + doc.attestation}>
+              {doc.attestation === "independent" ? "independently attested" : "single witness"}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // One historical-source card, money-quote-led. Shared by the witness view and
 // the reception main view. variant="reception" additionally shows the source
 // (header) and document title (support); variant="witness" is the original
@@ -50,6 +90,8 @@ export default function HistorySourceCard({ doc, variant = "reception", displayD
       )}
 
       {doc.teaser && <div className="historyTeaserText">{Parser(doc.teaser)}</div>}
+
+      <ReliabilityFacets doc={doc} />
 
       <div className="historySupport">
         {doc.id && (

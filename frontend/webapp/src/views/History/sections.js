@@ -70,6 +70,7 @@ export const HISTORY_SECTIONS = [
     key: "lostPages",
     title: "The Lost 116 Pages",
     path: "/history/lost-116-pages",
+<<<<<<< Updated upstream
     icon: manuscriptIcon,
     blurb: "The lost Book of Lehi manuscript — what it contained and how it vanished.",
     unit: "documents",
@@ -88,6 +89,27 @@ export const HISTORY_SECTIONS = [
     unit: "documents",
     status: "placeholder",
     hero: { type: "placeholder", icon: newYorkIcon },
+=======
+    icon: translationIcon,
+    blurb: "Primary sources on what the lost manuscript contained.",
+    unit: "sources",
+    status: "live",
+    // No facsimiles on this archive (spec: 2026-08-18-lost-116-pages-archive) —
+    // placeholder hero, same as translation.
+    hero: { type: "placeholder", icon: translationIcon },
+    archive: "lost-116-pages",
+  },
+  {
+    key: "nyPa1820s",
+    title: "New York & Pennsylvania, 1820s",
+    path: "/history/1820s-ny-pa",
+    icon: josephIcon,
+    blurb: "Primary sources on Joseph Smith in New York and Pennsylvania, to April 1830.",
+    unit: "sources",
+    status: "live",
+    hero: { type: "placeholder", icon: josephIcon },
+    archive: "1820s-ny-pa",
+>>>>>>> Stashed changes
   },
 ];
 

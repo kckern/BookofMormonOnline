@@ -704,6 +704,12 @@ const queries = {
         quote_contains_witness_speech
         witness_label
         reporter_label
+        narrative
+        place
+        tradition
+        proximity
+        attestation
+        provenance_chain
         ${wantsTranscript ? 'transcript' : ''}
       }`,
     }

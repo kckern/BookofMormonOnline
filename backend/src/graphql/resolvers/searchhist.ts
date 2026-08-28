@@ -91,6 +91,12 @@ const baseResolvers: Resolvers = {
     quote_contains_witness_speech: (parent) => (parent as unknown as HistoryRow).quote_contains_witness_speech ?? null,
     witness_label: (parent) => (parent as unknown as HistoryRow).witness_label ?? null,
     reporter_label: (parent) => (parent as unknown as HistoryRow).reporter_label ?? null,
+    narrative: (parent) => (parent as unknown as HistoryRow).narrative ?? null,
+    place: (parent) => (parent as unknown as HistoryRow).place ?? null,
+    tradition: (parent) => (parent as unknown as HistoryRow).tradition ?? null,
+    proximity: (parent) => (parent as unknown as HistoryRow).proximity ?? null,
+    attestation: (parent) => (parent as unknown as HistoryRow).attestation ?? null,
+    provenance_chain: (parent) => (parent as unknown as HistoryRow).provenance_chain ?? null,
   },
 };
 

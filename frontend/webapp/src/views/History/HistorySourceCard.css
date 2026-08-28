@@ -168,3 +168,47 @@ html[data-theme="dark"] .historySourceCard .historyDocTitle { color: #f0f0f0; }
   line-height: 1.25;
   margin-top: 0.2rem;
 }
+
+/* Reliability facets — lost-116-pages archive. The provenance chain is the
+   emphasis (it is the most informative field on those rows); the two chips are
+   secondary. Absent on every other archive, which sends no such fields. */
+.historyFacets {
+  margin: 0.5rem 0 0.75rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.facetChain {
+  color: inherit;
+  opacity: 0.9;
+}
+
+.facetChainArrow {
+  opacity: 0.5;
+}
+
+.facetChips {
+  margin-top: 0.35rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.facetChip {
+  padding: 0.1rem 0.45rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(128, 128, 128, 0.35);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  opacity: 0.85;
+}
+
+/* Written while the manuscript existed — the strongest thing a row can say. */
+.facetChip.is-contemporaneous {
+  border-color: rgba(40, 120, 190, 0.5);
+  opacity: 1;
+}
+
+.facetChip.is-single {
+  font-style: italic;
+}

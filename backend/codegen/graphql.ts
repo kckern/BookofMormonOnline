@@ -288,6 +288,7 @@ export type HistoricalDocument = {
   __typename?: 'HistoricalDocument';
   archive?: Maybe<Scalars['String']['output']>;
   aspect?: Maybe<Scalars['Float']['output']>;
+  attestation?: Maybe<Scalars['String']['output']>;
   author?: Maybe<Scalars['String']['output']>;
   citation?: Maybe<Scalars['String']['output']>;
   date?: Maybe<Scalars['String']['output']>;
@@ -298,8 +299,12 @@ export type HistoricalDocument = {
   link?: Maybe<Scalars['String']['output']>;
   mini_quote?: Maybe<Scalars['String']['output']>;
   money_quote?: Maybe<Scalars['String']['output']>;
+  narrative?: Maybe<Scalars['String']['output']>;
   pages?: Maybe<Scalars['Int']['output']>;
+  place?: Maybe<Scalars['String']['output']>;
   principal?: Maybe<Scalars['String']['output']>;
+  provenance_chain?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
+  proximity?: Maybe<Scalars['String']['output']>;
   quote_contains_witness_speech?: Maybe<Scalars['Boolean']['output']>;
   quote_is_witness_voice?: Maybe<Scalars['Boolean']['output']>;
   quote_speaker?: Maybe<Scalars['String']['output']>;
@@ -308,6 +313,7 @@ export type HistoricalDocument = {
   slug?: Maybe<Scalars['String']['output']>;
   source?: Maybe<Scalars['String']['output']>;
   teaser?: Maybe<Scalars['String']['output']>;
+  tradition?: Maybe<Scalars['String']['output']>;
   transcript?: Maybe<Scalars['String']['output']>;
   type?: Maybe<Scalars['String']['output']>;
   witness_label?: Maybe<Scalars['String']['output']>;
@@ -2695,6 +2701,7 @@ export type HighlightRangeResolvers<ContextType = AppContext, ParentType extends
 export type HistoricalDocumentResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['HistoricalDocument'] = ResolversParentTypes['HistoricalDocument']> = {
   archive?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   aspect?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  attestation?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   author?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   citation?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   date?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2705,8 +2712,12 @@ export type HistoricalDocumentResolvers<ContextType = AppContext, ParentType ext
   link?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   mini_quote?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   money_quote?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  narrative?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   pages?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  place?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   principal?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  provenance_chain?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
+  proximity?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   quote_contains_witness_speech?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   quote_is_witness_voice?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   quote_speaker?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2715,6 +2726,7 @@ export type HistoricalDocumentResolvers<ContextType = AppContext, ParentType ext
   slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   source?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   teaser?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  tradition?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   transcript?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   type?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   witness_label?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;

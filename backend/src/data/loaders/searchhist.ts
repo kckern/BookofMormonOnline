@@ -48,6 +48,12 @@ export interface HistoryRow {
   quote_contains_witness_speech: boolean | null;
   witness_label: string | null;
   reporter_label: string | null;
+  narrative: string | null;
+  place: string | null;
+  tradition: string | null;
+  proximity: string | null;
+  attestation: string | null;
+  provenance_chain: string[] | null;
 }
 
 /**
@@ -486,6 +492,10 @@ export async function historyQuery(
       const v = meta?.[key];
       return typeof v === 'boolean' ? v : null;
     };
+    const metaStringArray = (key: string): string[] | null => {
+      const v = meta?.[key];
+      return Array.isArray(v) && v.every((x) => typeof x === 'string') ? (v as string[]) : null;
+    };
 
     return {
       id: r.id,
@@ -514,6 +524,12 @@ export async function historyQuery(
       quote_contains_witness_speech: metaBool('quote_contains_witness_speech'),
       witness_label: metaString('witness_label'),
       reporter_label: metaString('reporter_label'),
+      narrative: metaString('narrative'),
+      place: metaString('place'),
+      tradition: metaString('tradition'),
+      proximity: metaString('proximity'),
+      attestation: metaString('attestation'),
+      provenance_chain: metaStringArray('provenance_chain'),
     };
   });
 }

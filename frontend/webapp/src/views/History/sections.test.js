@@ -1,13 +1,21 @@
 import { HISTORY_SECTIONS, getSection, pickRandom } from "./sections";
 
+<<<<<<< Updated upstream
 test("registry has six sections in hub display order", () => {
+=======
+test("registry sections are in hub display order", () => {
+>>>>>>> Stashed changes
   expect(HISTORY_SECTIONS.map((s) => s.key)).toEqual([
     "josephSmith",
     "witnesses",
     "translation",
     "reception",
     "lostPages",
+<<<<<<< Updated upstream
     "josephNewYork",
+=======
+    "nyPa1820s",
+>>>>>>> Stashed changes
   ]);
 });
 
@@ -48,6 +56,22 @@ test("hero descriptors carry the data each type needs", () => {
   expect(getSection("witnesses").hero.eight).toHaveLength(8);
   expect(getSection("translation").hero.icon).toBeTruthy();
   expect(getSection("reception").hero.archive).toBe("reception");
+  expect(getSection("lostPages").hero.icon).toBeTruthy();
+});
+
+test("1820s-ny-pa section is wired to its archive and route", () => {
+  const s = getSection("nyPa1820s");
+  expect(s.path).toBe("/history/1820s-ny-pa");
+  expect(s.archive).toBe("1820s-ny-pa");
+  expect(s.hero.type).toBe("placeholder");
+});
+
+test("lost-116-pages section declares no facsimiles", () => {
+  const s = getSection("lostPages");
+  expect(s.path).toBe("/history/lost-116-pages");
+  expect(s.archive).toBe("lost-116-pages");
+  // No scans exist for this archive — hero must not be a thumbnail sampler.
+  expect(s.hero.type).toBe("placeholder");
 });
 
 test("getSection resolves by key, null otherwise", () => {

@@ -9,6 +9,8 @@ import { useAppController } from "src/contexts/AppControllerContext";
 import HistoryBreadcrumb from "./HistoryBreadcrumb";
 import HistorySourceCard from "./HistorySourceCard";
 import { getSection } from "./sections";
+import { LOST_PAGES_NARRATIVES } from "./narratives";
+import { JSNY_PLACES } from "./places";
 import "./HistoryArchiveFeed.css";
 
 const breakpointColumnsObj = { default: 4, 1600: 3, 1200: 2, 700: 1 };
@@ -61,6 +63,50 @@ export function groupByDecadeAscending(docs) {
   return buckets;
 }
 
+// Group by an ordered editorial key (lost-pages narrative, JSNY place, …) rather
+// than chronologically. Chronology is meaningless for archives whose sources span
+// a century but all describe the same short period. `table` is the ordered list of
+// {key, title, gap?, blurb?}; entries declaring a `gap` survive with no items so a
+// hole in the record still renders. Unknown keys collect last.
+export function groupByOrderedKey(docs, field, table) {
+  const byKey = new Map();
+  for (const d of docs || []) {
+    const k = d[field] || "";
+    if (!byKey.has(k)) byKey.set(k, []);
+    byKey.get(k).push(d);
+  }
+  const bySeq = (a, b) => (a.seq || 0) - (b.seq || 0);
+  const buckets = table.map((n) => ({
+    key: n.key,
+    heading: n.title,
+    blurb: n.blurb || null,
+    gap: n.gap || null,
+    items: (byKey.get(n.key) || []).sort(bySeq),
+  }));
+  const known = new Set(table.map((n) => n.key));
+  const rest = [...byKey.entries()]
+    .filter(([k]) => !known.has(k))
+    .flatMap(([, v]) => v)
+    .sort(bySeq);
+  if (rest.length) buckets.push({ key: null, heading: "Other", blurb: null, gap: null, items: rest });
+  return buckets.filter((b) => b.items.length || b.gap);
+}
+
+// Distinct keys present in the data, in table order, with counts.
+export function orderedKeyOptions(docs, field, table) {
+  const counts = new Map();
+  for (const d of docs || []) {
+    if (d[field]) counts.set(d[field], (counts.get(d[field]) || 0) + 1);
+  }
+  return table.filter((n) => counts.has(n.key)).map((n) => [n.key, n.title, counts.get(n.key)]);
+}
+
+// Back-compat wrappers — the lost-116-pages archive and its tests use these.
+export const groupByNarrative = (docs) =>
+  groupByOrderedKey(docs, "narrative", LOST_PAGES_NARRATIVES).map((b) => ({ ...b, narrative: b.key }));
+export const narrativeOptions = (docs) =>
+  orderedKeyOptions(docs, "narrative", LOST_PAGES_NARRATIVES);
+
 // Wide, sparse archives (e.g. Translation spans 1827–1998) group by decade
 // instead of dozens of single-item year sections. Threshold: >40yr span.
 export function shouldPackFeed(buckets) {
@@ -95,7 +141,14 @@ const displayDate = (date) => {
 // attributed money-quote card. Reused by /history/translation and
 // /history/joseph-smith. archive = the DB archive key; sectionKey = the
 // sections.js key (drives title / blurb / breadcrumb / popup underSlug).
-export default function HistoryArchiveFeed({ archive, sectionKey }) {
+const DIMENSIONS = {
+  narrative: { field: "narrative", table: LOST_PAGES_NARRATIVES, label: "Narrative", all: "All narratives", empty: "narrative" },
+  place: { field: "place", table: JSNY_PLACES, label: "Place", all: "All places", empty: "place" },
+};
+
+export default function HistoryArchiveFeed({ archive, sectionKey, groupBy = "chronological" }) {
+  const dim = DIMENSIONS[groupBy] || null;
+  const byNarrative = !!dim;
   const appController = useAppController();
   const section = getSection(sectionKey) || {};
   const underSlug = (section.path || "/history").replace(/^\//, "");
@@ -119,18 +172,36 @@ export default function HistoryArchiveFeed({ archive, sectionKey }) {
     };
   }, [archive]);
 
-  const options = useMemo(() => principalOptions(docs), [docs]);
+  // `filter` holds a principal on chronological archives, a narrative key on
+  // narrative ones — one control, two meanings, so the markup stays shared.
+  const options = useMemo(
+    () =>
+      byNarrative
+        ? orderedKeyOptions(docs, dim.field, dim.table).map(([key, title, n]) => [key, n, title])
+        : principalOptions(docs).map(([p, n]) => [p, n, p]),
+    [docs, byNarrative, dim]
+  );
   const visible = useMemo(
-    () => (docs || []).filter((d) => !principal || d.principal === principal),
-    [docs, principal]
+    () =>
+      (docs || []).filter((d) =>
+        !principal ? true : byNarrative ? d[dim.field] === principal : d.principal === principal
+      ),
+    [docs, principal, byNarrative, dim]
   );
-  const buckets = useMemo(() => groupByYearAscending(visible), [visible]);
-  const packed = useMemo(() => shouldPackFeed(buckets), [buckets]);
-  // Wide/sparse archives group by decade; dense ones stay per-year.
-  const groups = useMemo(
-    () => (packed ? groupByDecadeAscending(visible) : buckets),
-    [packed, visible, buckets]
+  const buckets = useMemo(
+    () => (byNarrative ? [] : groupByYearAscending(visible)),
+    [visible, byNarrative]
   );
+  const packed = useMemo(() => (byNarrative ? false : shouldPackFeed(buckets)), [buckets, byNarrative]);
+  // Narrative archives group by manuscript order; wide/sparse chronological
+  // archives group by decade; dense ones stay per-year.
+  const groups = useMemo(() => {
+    if (!byNarrative) return packed ? groupByDecadeAscending(visible) : buckets;
+    const all = groupByOrderedKey(visible, dim.field, dim.table);
+    // A sourceless narrative survives grouping on its `gap` alone, so when the
+    // reader has filtered to one narrative it would otherwise tag along.
+    return principal ? all.filter((b) => b.key === principal) : all;
+  }, [byNarrative, packed, visible, buckets, principal, dim]);
 
   const openDoc = (doc) =>
     appController.functions.setPopUp({
@@ -155,12 +226,14 @@ export default function HistoryArchiveFeed({ archive, sectionKey }) {
             {options.length > 1 ? (
               <div className="archiveControls">
                 <label className="archiveFilter">
-                  <span>Voice</span>
+                  <span>{byNarrative ? dim.label : "Voice"}</span>
                   <select value={principal} onChange={(e) => setPrincipal(e.target.value)}>
-                    <option value="">All voices ({docs.length})</option>
-                    {options.map(([p, n]) => (
-                      <option key={p} value={p}>
-                        {p} ({n})
+                    <option value="">
+                      {byNarrative ? dim.all : "All voices"} ({docs.length})
+                    </option>
+                    {options.map(([value, n, text]) => (
+                      <option key={value} value={value}>
+                        {text} ({n})
                       </option>
                     ))}
                   </select>
@@ -170,22 +243,46 @@ export default function HistoryArchiveFeed({ archive, sectionKey }) {
 
             {visible.length === 0 ? (
               <div className="archiveEmpty">
-                No accounts for this voice.{" "}
+                No accounts for this {byNarrative ? dim.empty : "voice"}.{" "}
                 <button type="button" className="archiveClear" onClick={() => setPrincipal("")}>
                   Show all
                 </button>
               </div>
             ) : (
               groups.map((bucket) => {
-                const key = packed ? bucket.decade ?? "undated" : bucket.year ?? "undated";
-                const heading = packed
+                const key = byNarrative
+                  ? bucket.key ?? "other"
+                  : packed
+                  ? bucket.decade ?? "undated"
+                  : bucket.year ?? "undated";
+                const heading = byNarrative
+                  ? bucket.heading
+                  : packed
                   ? bucket.decade != null
                     ? `${bucket.decade}s`
                     : "Undated"
                   : bucket.year ?? "Undated";
+                // A declared narrative with no sources renders the gap itself —
+                // a stated hole in the record is content, not an empty section.
+                if (byNarrative && !bucket.items.length) {
+                  return (
+                    <section key={key} className="archiveYearGroup archiveNarrativeGroup">
+                      <h4 className="archiveYear archiveNarrative">{heading}</h4>
+                      <p className="archiveNarrativeGap">{bucket.gap}</p>
+                    </section>
+                  );
+                }
                 return (
-                  <section key={key} className="archiveYearGroup">
-                    <h4 className="archiveYear">{heading}</h4>
+                  <section
+                    key={key}
+                    className={"archiveYearGroup" + (byNarrative ? " archiveNarrativeGroup" : "")}
+                  >
+                    <h4 className={"archiveYear" + (byNarrative ? " archiveNarrative" : "")}>
+                      {heading}
+                    </h4>
+                    {byNarrative && bucket.blurb ? (
+                      <p className="archiveGroupBlurb">{bucket.blurb}</p>
+                    ) : null}
                     <Masonry
                       breakpointCols={breakpointColumnsObj}
                       className="my-masonry-grid"

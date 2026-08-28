@@ -51,6 +51,8 @@ const HistoryHub = lazy(() => import("../views/History/HistoryHub.jsx"));
 const TranslationSources = lazy(() => import("../views/History/TranslationSources.jsx"));
 const LostPages = lazy(() => import("../views/History/LostPages.js"));
 const RedirectReceptionSlug = lazy(() => import("../views/History/RedirectReceptionSlug.jsx"));
+const LostPages = lazy(() => import("../views/History/LostPages.js"));
+const NyPa1820s = lazy(() => import("../views/History/NyPa1820s.js"));
 const ReadScripture = lazy(() => import("../views/Read/Read.js"));
 const lang = determineLanguage();
 
@@ -212,6 +214,13 @@ const routes = [
       component: LostPages,
   },
   {
+<<<<<<< Updated upstream
+=======
+      path: "/history/1820s-ny-pa",
+      component: NyPa1820s,
+  },
+  {
+>>>>>>> Stashed changes
       path: "/history/:slug",
       component: RedirectReceptionSlug,
   },
