@@ -8,7 +8,7 @@ const SUP: Record<string, string> = {
 // Name disambiguators are stored as trailing digits (Nephi1, Lehi1) and rendered
 // as Unicode superscripts (Nephi¹). Only digits immediately following a letter.
 export function superscript(s: string): string {
-  return (s ?? '').replace(/([A-Za-z])(\d+)/g, (_m, l, d: string) =>
+  return (s ?? '').replace(/(\p{L})(\d+)/gu, (_m, l, d: string) =>
     l + d.replace(/\d/g, (x) => SUP[x]),
   )
 }

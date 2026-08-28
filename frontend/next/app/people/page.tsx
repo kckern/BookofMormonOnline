@@ -13,7 +13,7 @@ const SUP: Record<string, string> = {
 // shared `superscript` (letter-then-digit only) does not catch. Match a digit
 // run that follows a letter with optional whitespace between.
 function supTitle(s: string): string {
-  return (s ?? '').replace(/([A-Za-z])(\s*)(\d+)/g, (_m, l, ws, d: string) =>
+  return (s ?? '').replace(/(\p{L})(\s*)(\d+)/gu, (_m, l, ws, d: string) =>
     l + ws + d.replace(/\d/g, (x) => SUP[x]),
   )
 }
