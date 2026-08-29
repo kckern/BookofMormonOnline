@@ -2,7 +2,7 @@
 set -eu
 
 BASE_DIR="${BOM_DEPLOY_DIR:-/home/ubuntu/greenfield}"
-GATEWAY="${BOM_GATEWAY_CONTAINER:-bookofmormon-gateway}"
+GATEWAY="${BOM_GATEWAY_CONTAINER:-bookofmormon-online}"
 TEMPLATE="$BASE_DIR/gateway/default.conf.template"
 CONFIG="$BASE_DIR/gateway/default.conf"
 STATE_FILE="$BASE_DIR/active-slot"

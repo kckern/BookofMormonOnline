@@ -1,0 +1,23 @@
+services:
+  gateway:
+    container_name: bookofmormon-online
+    image: nginx:stable-alpine
+    restart: always
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+    volumes:
+      - ./gateway:/etc/nginx/conf.d:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget -q -T 10 -O /dev/null http://127.0.0.1:8200/robots.txt && wget -q -T 10 -O /dev/null http://127.0.0.1:5005/health
+      interval: 15s
+      timeout: 12s
+      retries: 3
+      start_period: 30s
+    networks:
+      - bomdocker_phpnetwork
+
+networks:
+  bomdocker_phpnetwork:
+    external: true

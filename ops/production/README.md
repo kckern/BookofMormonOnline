@@ -1,6 +1,6 @@
 # Production blue/green deployment
 
-The stable `bookofmormon-gateway` container owns the Docker network alias
+The stable Nginx gateway container owns the exact Docker name
 `bookofmormon-online`, so Nginx Proxy Manager keeps its existing upstream.
 Only one application slot runs at steady state. The deployment timer pulls the
 `:prod` image every five minutes, starts the inactive slot, waits for the image
@@ -10,6 +10,7 @@ then drains the old slot.
 Install paths on the production host:
 
 - `/home/ubuntu/greenfield/deploy-blue-green.sh`
+- `/home/ubuntu/greenfield/migrate-blue-green.sh` (one-time initial cutover)
 - `/home/ubuntu/greenfield/rollback-blue-green.sh`
 - `/usr/local/sbin/bom-publish-host-metrics` (root-owned; it reads the
   root-owned NPM telemetry log)
@@ -22,6 +23,15 @@ Install paths on the production host:
 Watchtower must not manage the gateway or either app slot. They carry an
 explicit `com.centurylinklabs.watchtower.enable=false` label. The systemd timer
 is the sole production-image updater.
+
+For the initial cutover, install the new gateway-only `docker-compose.yml` and
+all scripts/config first, then run `migrate-blue-green.sh`. It starts and health
+checks the blue slot before touching the current container. It renames the
+current app to the green rollback slot, starts the gateway under the original
+`bookofmormon-online` name, verifies both upstreams, and only then reloads NPM.
+NPM's old workers retain the legacy container IP throughout the name handoff.
+Any failure before commit restores the original container name and reloads NPM.
+Enable `bom-deploy.timer` only after that migration succeeds.
 
 Useful commands:
 

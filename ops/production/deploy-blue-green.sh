@@ -5,9 +5,8 @@ IMAGE="${BOM_IMAGE:-kckern/bookofmormon-online:prod}"
 BASE_DIR="${BOM_DEPLOY_DIR:-/home/ubuntu/greenfield}"
 ENV_FILE="${BOM_ENV_FILE:-$BASE_DIR/.env}"
 NETWORK="${BOM_DOCKER_NETWORK:-bomdocker_phpnetwork}"
-GATEWAY="${BOM_GATEWAY_CONTAINER:-bookofmormon-gateway}"
+GATEWAY="${BOM_GATEWAY_CONTAINER:-bookofmormon-online}"
 GATEWAY_IMAGE="${BOM_GATEWAY_IMAGE:-nginx:stable-alpine}"
-GATEWAY_ALIAS="${BOM_GATEWAY_ALIAS:-bookofmormon-online}"
 GATEWAY_DIR="$BASE_DIR/gateway"
 TEMPLATE="$GATEWAY_DIR/default.conf.template"
 CONFIG="$GATEWAY_DIR/default.conf"
@@ -84,7 +83,7 @@ fi
 case "$active" in
   bookofmormon-online-blue) next="bookofmormon-online-green" ;;
   bookofmormon-online-green) next="bookofmormon-online-blue" ;;
-  *) next="bookofmormon-online-blue" ;;
+  *) fail "missing or invalid active slot; run migrate-blue-green.sh first" ;;
 esac
 
 log "pulling $IMAGE"
@@ -122,18 +121,23 @@ log "candidate $next is healthy"
 
 render_gateway_config "$next"
 
+gateway_created=0
 if container_exists "$GATEWAY"; then
   if ! container_running "$GATEWAY"; then
     docker start "$GATEWAY" >/dev/null
   fi
-  docker exec "$GATEWAY" nginx -t
-  docker exec "$GATEWAY" nginx -s reload
+  if ! docker exec "$GATEWAY" nginx -t || ! docker exec "$GATEWAY" nginx -s reload; then
+    render_gateway_config "$active"
+    docker exec "$GATEWAY" nginx -t >/dev/null 2>&1 || true
+    docker exec "$GATEWAY" nginx -s reload >/dev/null 2>&1 || true
+    docker rm -f "$next" >/dev/null 2>&1 || true
+    fail "gateway rejected candidate config; restored $active"
+  fi
 else
   log "starting stable gateway $GATEWAY"
   docker run -d \
     --name "$GATEWAY" \
     --network "$NETWORK" \
-    --network-alias "$GATEWAY_ALIAS" \
     --restart always \
     --label com.centurylinklabs.watchtower.enable=false \
     --health-cmd 'wget -q -T 10 -O /dev/null http://127.0.0.1:8200/robots.txt && wget -q -T 10 -O /dev/null http://127.0.0.1:5005/health' \
@@ -143,10 +147,19 @@ else
     --health-start-period 30s \
     -v "$GATEWAY_DIR:/etc/nginx/conf.d:ro" \
     "$GATEWAY_IMAGE" >/dev/null
+  gateway_created=1
 fi
 
 if ! verify_gateway; then
-  fail "gateway verification failed; previous application container remains available"
+  if [ "$gateway_created" -eq 1 ]; then
+    docker rm -f "$GATEWAY" >/dev/null 2>&1 || true
+  else
+    render_gateway_config "$active"
+    docker exec "$GATEWAY" nginx -t >/dev/null 2>&1 || true
+    docker exec "$GATEWAY" nginx -s reload >/dev/null 2>&1 || true
+  fi
+  docker rm -f "$next" >/dev/null 2>&1 || true
+  fail "gateway verification failed; restored $active"
 fi
 
 tmp_state="$STATE_FILE.next"
