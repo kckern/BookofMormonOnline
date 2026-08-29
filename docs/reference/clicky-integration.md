@@ -23,7 +23,7 @@ How Book of Mormon Online wires up Clicky (getclicky.com) for traffic and goal t
 |---|---|
 | `frontend/next/lib/clicky.ts` | `clickyPaths()` (reads env) + `proxyClickyJs()` / `proxyClickyBeacon(req)`. Edge-compatible (only `fetch`/`Response`/`Headers`). The JS proxy fetches `static.getclicky.com/js?in=<beacon-path>`; the beacon proxy forwards to `in.getclicky.com/in.php`, passing the real visitor IP via `X-Forwarded-For` and the UA. |
 | `frontend/next/middleware.ts` | Early carve-out: if the request path equals `CLICKY_JS_PATH` or `CLICKY_BEACON_PATH`, it returns the proxied response directly (before the human→CRA rewrite and before the bot-SSR branch). Nothing Clicky-related is a routable app path. |
-| `frontend/webapp/public/index.html` (L81–99) | `clicky_custom` opt-outs (`pageview_disable`, `history_disable`) + a `MutationObserver` on `<title>` that fires synthetic pageviews via `window.clicky.log(...)`, then the tracker `<script async data-id="%REACT_APP_CLICKY_SITE_ID%" src="%REACT_APP_CLICKY_JS_PATH%">`. |
+| `frontend/webapp/public/index.html` (L81–99) | Keeps Clicky's automatic initial pageview (which captures the external referrer), disables Clicky's history listener, and uses a `<title>` `MutationObserver` only for later SPA pageviews via `window.clicky.log(...)`; then loads the tracker `<script async data-id="%REACT_APP_CLICKY_SITE_ID%" src="%REACT_APP_CLICKY_JS_PATH%">`. |
 | `frontend/webapp/src/models/analytics/index.js` | `createProvider()` factory + the singleton `export const analytics`. `NoopProvider` under SSR / when `config.enabled === false`; otherwise `ClickyProvider`. Re-exports `GOALS`. |
 | `frontend/webapp/src/models/analytics/providers/clicky.js` | `ClickyProvider` — the only code that touches `window.clicky`. `identify`/`pageview`/`goal`, each wrapped in `safe()` so analytics can never break the UI. `init()` is a deliberate no-op (the Clicky loader self-inits from `data-id`; a second `init()` would double-fire). |
 | `frontend/webapp/src/models/analytics/{goals.js,contract.js,useAnalytics.js,noop.js}` | `GOALS` string constants (single source of truth), JSDoc provider contract, `useAnalytics()` hook, `NoopProvider`. |
@@ -31,11 +31,11 @@ How Book of Mormon Online wires up Clicky (getclicky.com) for traffic and goal t
 
 ## Bootstrap flow (browser)
 
-1. `index.html` sets `clicky_custom.pageview_disable = true` and `history_disable = true` (the SPA fires its own pageviews).
+1. `index.html` keeps Clicky's automatic initial pageview enabled so the tracker sends `document.referrer`; it sets only `history_disable = true` and initializes `lastPath` to prevent the SPA observer from duplicating that initial hit.
 2. `<script async data-id="66488278" src="/<CLICKY_JS_PATH>">` requests the tracker from **our** origin.
 3. The Next front door's `middleware.ts` sees the path == `CLICKY_JS_PATH` and returns `proxyClickyJs()` — which fetches `static.getclicky.com/js?in=<CLICKY_BEACON_PATH>` and returns it as `application/javascript` (`Cache-Control: public, max-age=3600`). The `in=` param makes the returned tracker send its beacons to `CLICKY_BEACON_PATH` on our origin.
-4. The Clicky loader auto-registers the site from `data-id` and exposes `window.clicky` (with `.log()`, `.goal()`, `.custom_data()`). `pageview_disable` suppresses its auto-pageview.
-5. The title `MutationObserver` calls `window.clicky.log(path, title, "pageview")` on SPA navigations → a beacon POST to `CLICKY_BEACON_PATH`.
+4. The Clicky loader auto-registers the site from `data-id`, captures the original external referrer, emits the initial pageview, and exposes `window.clicky` (with `.log()`, `.goal()`, `.custom_data()`).
+5. The title `MutationObserver` calls `window.clicky.log(path, title, "pageview")` only after the pathname changes, covering later SPA navigations without duplicating the initial pageview.
 6. Middleware sees the path == `CLICKY_BEACON_PATH` and returns `proxyClickyBeacon(req)` — forwarding to `in.getclicky.com/in.php` with `X-Forwarded-For` (real visitor IP), UA, and `Cache-Control: no-store`.
 
 > **Localhost:** Clicky's tracker no-ops on `localhost`, so `localhost:8200` doesn't beacon. The proxy endpoints themselves are still directly testable with curl (see [Verification](#verification)).

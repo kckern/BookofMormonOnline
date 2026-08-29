@@ -80,10 +80,13 @@
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <script type="text/javascript">
       var clicky_custom = {};
-      clicky_custom.pageview_disable = true;
+      // Let Clicky send the initial pageview itself. Its initial pageview is
+      // the only one that carries the browser's original external referrer.
+      // The title observer below is reserved for later SPA navigations.
       clicky_custom.history_disable = true;
 
       const defaultTitle = "Book of Mormon Online";
+      window.lastPath = window.location.pathname;
       window.titleObserver = new MutationObserver(function(mutations) {
         const newTitle = mutations[0].target.outerText.replace(/\s*[\|][^\|]+$/,'');
         if(window.lastTitle === newTitle) return false; 
