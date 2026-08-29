@@ -18,14 +18,12 @@ import {
   DropdownItem,
 } from "reactstrap";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
-import { breakCache, label } from "src/models/Utils";
+import { label } from "src/models/Utils";
 import "./Profile.css";
 import PictureWithOverlay from "./PictureWithOverlay";
-import uploadIcon from "./svg/uploadImage.svg";
-import Cropper from "react-cropper";
-import "cropperjs/dist/cropper.css";
-import ReactLoading from "react-loading";
-import Gluejar from "react-gluejar";
+import { ImageEditorError, profileUploadErrorKey } from "./imageEditorUtils";
+import { getProfileImageUrl } from "src/components/UserAvatar";
+import { toast } from "react-toastify";
 import loading from "./svg/loading.svg";
 
 import trophy from "./svg/trophy.svg";
@@ -261,27 +259,40 @@ export function Profile({
 
 function ProfilePicture() {
   const appController = useAppController();
-  const messenger = useMessenger();
-  const [openModal, setOpenModal] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
-  // sb is undefined for guests / before the chat controller connects; this
-  // value is unused here, so guard rather than crash the render.
-  const sb = messenger.sb;
   useEffect(() => {
-    if (
-      profileImage !== appController.states.user.social?.profile_url ||
-      profileImage === null
-    )
-      setProfileImage(appController.states.user.social?.profile_url);
+    setProfileImage(appController.states.user.social?.profile_url || null);
   }, [appController.states.user.social?.profile_url]);
+
+  const saveProfilePhoto = async ({ dataUrl }) => {
+    const token = appController.states.user.token;
+    let result;
+    try {
+      result = await BoMOnlineAPI(
+        { uploadProfileImage: [{ token, imageData: dataUrl }] },
+        { useCache: false }
+      );
+    } catch (error) {
+      throw new ImageEditorError(profileUploadErrorKey(error), error);
+    }
+    if (!result?.uploadProfileImage) {
+      throw new ImageEditorError(profileUploadErrorKey(result), result);
+    }
+
+    const userId = appController.states.user.social?.user_id || appController.states.user.user;
+    const baseUrl = getProfileImageUrl(userId);
+    const nextUrl = baseUrl ? `${baseUrl}?v=${Date.now()}` : null;
+    appController.functions.setUserSocialProfileImage(nextUrl);
+    setProfileImage(nextUrl);
+    toast.success(label("profile_updated"));
+  };
+
   return (
     <PictureWithOverlay
-      imgUrl={profileImage}
-      onError={breakCache}
-      setOpenModal={setOpenModal}
-      openModal={openModal}
-      isGroup={false}
+      kind="profile"
+      src={profileImage}
+      fallbackUserId={appController.states.user.user}
+      onCommit={saveProfilePhoto}
     />
   );
-  /* tmp */
 }

@@ -38,8 +38,6 @@ html[data-theme="dark"] {
 
   /* Contact.css */
   .contact .btn { background-color: var(--control); color: var(--text-primary); &:hover { background-color: var(--control-hover); } }
-  .dragField { border-color: var(--border-strong); }
-  .contact .imageUploaderWrapper { background: var(--surface-2); }
 
   /* Contents.css */
   div.toc ul:not(:first-of-type) { border-color: var(--border); background-color: rgba(255, 255, 255, 0.03); }

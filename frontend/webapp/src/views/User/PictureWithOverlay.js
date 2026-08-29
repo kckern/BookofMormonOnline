@@ -4,49 +4,43 @@ import ImageChanger from "./ImageChanger";
 import "./PictureWithOverlay.css";
 import { label } from "src/models/Utils";
 import UserAvatar from "src/components/UserAvatar";
-import { useAppController } from "src/contexts/AppControllerContext";
 
-function PictureWithOverlay({
-  imgUrl,
-  setOpenModal,
-  openModal,
-  isGroup,
-  setProfileImage,
+export default function PictureWithOverlay({
+  kind = "profile",
+  src,
+  fallbackUserId,
+  onCommit,
+  size,
 }) {
-  const appController = useAppController();
-  const [showOverlay, setShowOverlay] = useState(false);
-  const userId = appController.states?.user?.user;
-  
+  const [open, setOpen] = useState(false);
+  const group = kind === "group";
+  const triggerLabel = label(group ? "choose_group_image" : "change_profile_photo");
+
   return (
-    <div
-      className={isGroup ? "groupImgWrapper" : "imgWrapper"}
-      onMouseEnter={() => setShowOverlay(true)}
-      onMouseLeave={() => setShowOverlay(false)}
-    >
+    <div className={`editableImage ${group ? "editableImage-group" : "editableImage-profile"}`}>
       <UserAvatar
-        userId={userId}
-        profileUrl={imgUrl}
-        size={isGroup ? 80 : 100}
-        className={isGroup ? "groupImage" : "profileImage"}
-        style={{ borderRadius: '50%' }}
+        userId={group ? "group" : fallbackUserId}
+        profileUrl={src}
+        size={size || (group ? 80 : 100)}
+        className="editableImage-avatar"
       />
-      <div
-        className={`overlay ${showOverlay && "show"}`}
-        onClick={() => setOpenModal(true)}
+      <button
+        type="button"
+        className="editableImage-trigger"
+        aria-label={triggerLabel}
+        title={triggerLabel}
+        onClick={() => setOpen(true)}
       >
-        <img className="overlayImage" src={uploadIcon} alt="" /><br/>
-        <strong style={{ fontSize: "10px" }}>{label("upload_photo")}</strong>
-      </div>
-      {openModal && (
+        <img src={uploadIcon} alt="" />
+        <span>{triggerLabel}</span>
+      </button>
+      {open && (
         <ImageChanger
-          setOpenModal={setOpenModal}
-          setShowOverlay={setShowOverlay}
-          isGroup={isGroup}
-          setProfileImage={setProfileImage}
+          kind={kind}
+          onClose={() => setOpen(false)}
+          onCommit={onCommit}
         />
       )}
     </div>
   );
 }
-
-export default PictureWithOverlay;

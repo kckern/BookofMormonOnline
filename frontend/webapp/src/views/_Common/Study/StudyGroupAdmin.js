@@ -47,7 +47,6 @@ export default function StudyGroupAdmin() {
     img: appController.states.studyGroup.activeGroup.coverUrl,
     file: appController.states.studyGroup.activeGroup.coverUrl,
   });
-  const [openModal, setOpenModal] = useState(false);
 
   // Live membership: membership_changed → refreshChannel → activeGroup is
   // replaced with a fresh object. Key on a roster signature (not the object)
@@ -186,11 +185,11 @@ export default function StudyGroupAdmin() {
         <CardBody className={"group_profile"}>
           <div className={"groupImage"}>
             <PictureWithOverlay
-              imgUrl={groupImage.img}
-              setOpenModal={setOpenModal}
-              openModal={openModal}
-              isGroup={true}
-              setProfileImage={setGroupImage}
+              kind="group"
+              src={groupImage.img}
+              onCommit={async ({ file, dataUrl }) => {
+                setGroupImage({ img: dataUrl, file });
+              }}
             />
           </div>
           <div className={"groupInfo"}>

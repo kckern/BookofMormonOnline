@@ -41,7 +41,7 @@ export const LANG_HOST: Record<string, string> = {
 }
 
 // Internal code → BCP47 tag for <html lang>. Identity unless listed.
-const BCP47_MAP: Record<string, string> = { swe: 'sv', jpn: 'ja', vn: 'vi', tgl: 'tl', slv: 'sl' }
+const BCP47_MAP: Record<string, string> = { swe: 'sv', jp: 'ja', jpn: 'ja', vn: 'vi', tgl: 'tl', slv: 'sl' }
 
 export function langForHost(host: string | null | undefined): string {
   const bare = (host ?? '').split(',')[0].trim().split(':')[0].toLowerCase()

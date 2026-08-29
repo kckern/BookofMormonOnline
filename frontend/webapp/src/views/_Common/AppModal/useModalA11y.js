@@ -21,11 +21,25 @@ import { useEffect, useRef } from "react";
  *                                Cancel/Close button); omit to disable Esc-close
  * @param {string}  opts.label    accessible name for the dialog
  * @param {string}  opts.selector dialog node selector (default ".sweet-alert")
+ * @param {object}  opts.dialogRef optional ref for portaled/custom dialogs
+ * @param {object}  opts.initialFocusRef optional preferred initial control
+ * @param {boolean} opts.lockScroll lock body scrolling while visible
+ * @param {boolean} opts.closeDisabled suppress Escape while an operation is pending
  */
-export default function useModalA11y(visible, { onClose, label: ariaLabel, selector = ".sweet-alert" } = {}) {
+export default function useModalA11y(visible, {
+  onClose,
+  label: ariaLabel,
+  selector = ".sweet-alert",
+  dialogRef,
+  initialFocusRef,
+  lockScroll = false,
+  closeDisabled = false,
+} = {}) {
   const triggerRef = useRef(null);
   const onCloseRef = useRef(onClose);
+  const closeDisabledRef = useRef(closeDisabled);
   onCloseRef.current = onClose;
+  closeDisabledRef.current = closeDisabled;
 
   useEffect(() => {
     if (!visible) return undefined;
@@ -46,7 +60,7 @@ export default function useModalA11y(visible, { onClose, label: ariaLabel, selec
         : [];
 
     const onKeyDown = (e) => {
-      if (e.key === "Escape" && onCloseRef.current) {
+      if (e.key === "Escape" && onCloseRef.current && !closeDisabledRef.current) {
         e.preventDefault();
         onCloseRef.current(e);
         return;
@@ -72,7 +86,7 @@ export default function useModalA11y(visible, { onClose, label: ariaLabel, selec
 
     // SweetAlert mounts asynchronously; wait a frame for the node to exist.
     const setup = () => {
-      dialog = document.querySelector(selector);
+      dialog = dialogRef?.current || document.querySelector(selector);
       if (!dialog) {
         raf = requestAnimationFrame(setup);
         return;
@@ -82,19 +96,22 @@ export default function useModalA11y(visible, { onClose, label: ariaLabel, selec
       if (ariaLabel) dialog.setAttribute("aria-label", ariaLabel);
       if (!dialog.hasAttribute("tabindex")) dialog.setAttribute("tabindex", "-1");
       const focusable = getFocusable();
-      (focusable[0] || dialog).focus();
+      (initialFocusRef?.current || focusable[0] || dialog).focus();
     };
     raf = requestAnimationFrame(setup);
     document.addEventListener("keydown", onKeyDown, true);
+    const previousOverflow = document.body.style.overflow;
+    if (lockScroll) document.body.style.overflow = "hidden";
 
     return () => {
       if (raf) cancelAnimationFrame(raf);
       document.removeEventListener("keydown", onKeyDown, true);
+      if (lockScroll) document.body.style.overflow = previousOverflow;
       // Restore focus to the trigger that opened the dialog.
       const trigger = triggerRef.current;
       if (trigger && typeof trigger.focus === "function" && document.contains(trigger)) {
         trigger.focus();
       }
     };
-  }, [visible, selector, ariaLabel]);
+  }, [visible, selector, ariaLabel, dialogRef, initialFocusRef, lockScroll]);
 }

@@ -4,7 +4,7 @@ process.env.MYSQL_HOST ||= 'test';
 process.env.MYSQL_USER ||= 'test';
 process.env.MYSQL_PASSWORD ||= 'test';
 
-const { resolveLang } = await import('../src/graphql/lang.js');
+const { normalizeInternalLang, resolveLang } = await import('../src/graphql/lang.js');
 
 describe('resolveLang (legacy apollo.ts rules, verbatim)', () => {
   test('path language wins for plain hosts', () => {
@@ -24,8 +24,16 @@ describe('resolveLang (legacy apollo.ts rules, verbatim)', () => {
     expect(resolveLang('xn--289a67xla.kr', '/')).toBe('ko');
   });
 
-  test('legacy quirk preserved: last path segment is taken as-is', () => {
-    // legacy resolves POST /graphql to lang "graphql" (no translations match → English behavior)
-    expect(resolveLang('localhost:5006', '/graphql')).toBe('graphql');
+  test('unknown path segments clamp to English', () => {
+    expect(resolveLang('localhost:5006', '/graphql')).toBe('en');
+  });
+
+  test('Japanese aliases use the existing jp storage code', () => {
+    expect(normalizeInternalLang('jp')).toBe('jp');
+    expect(normalizeInternalLang('jpn')).toBe('jp');
+    expect(normalizeInternalLang('ja')).toBe('jp');
+    expect(resolveLang('localhost:5006', '/jp')).toBe('jp');
+    expect(resolveLang('localhost:5006', '/jpn')).toBe('jp');
+    expect(resolveLang('localhost:5006', '/ja')).toBe('jp');
   });
 });

@@ -10,15 +10,12 @@ html[data-theme="dark"] {
   .homeFeedHeader .blankWord { color: var(--surface-4); background-color: var(--surface-4); }
 
   /* Profile.css */
-  .profileImage { background-color: var(--surface-3); border-color: var(--border); }
+  .editableImage-avatar { background-color: var(--surface-3); border-color: var(--border); }
   .profileCard .threedots:hover { background-color: var(--surface-3); }
   .profileDropdown .dropdown-menu.show { border-color: var(--border); }
 
   /* Preferences.css:68 */
   .publicationCard .card-header .source_publisher { color: var(--text-muted); }
-
-  /* PictureWithOverlay.css:65 — white uploader modal */
-  .imageUploaderWrapper { background: var(--surface-2); color: var(--text-secondary); }
 
   /* SignIn.css / User.css: input prepend + study history headers */
   .input-group-prepend { background-color: var(--surface-3); }

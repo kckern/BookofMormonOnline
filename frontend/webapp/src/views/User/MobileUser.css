@@ -60,7 +60,7 @@
 {
     display: flex;
 }
-.mobileuser .profileCard .imgWrapper
+.mobileuser .profileCard .editableImage-profile
 {
     width: 25%;
     flex-shrink: 0;

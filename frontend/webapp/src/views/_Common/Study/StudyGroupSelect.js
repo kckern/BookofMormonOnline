@@ -759,7 +759,6 @@ const groupCoverUrl = (group_name) => {
 function NewStudyGroup() {
   const appController = useAppController();
   const messenger = useMessenger();
-  const [openModal, setOpenModal] = useState(false);
   const [name, setName] = useState("");
   const [buttonLabel, setButtonLabel] = useState(
     label("create_new_study_group"),
@@ -864,11 +863,11 @@ function NewStudyGroup() {
                 <span className="optional">({label("optional")})</span>
               </h5>
               <PictureWithOverlay
-                imgUrl={groupImage.img}
-                setOpenModal={setOpenModal}
-                openModal={openModal}
-                isGroup={true}
-                setProfileImage={setGroupImage}
+                kind="group"
+                src={groupImage.img}
+                onCommit={async ({ file, dataUrl }) => {
+                  setGroupImage({ img: dataUrl, file });
+                }}
               />
             </FormGroup>
             <FormGroup>
