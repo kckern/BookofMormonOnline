@@ -6,11 +6,10 @@ the implementation-state sections of
 
 ## Deployed application state
 
-- deployed `origin/prod`: `871ee14f5449fde70cc0cc03d556881987f59e55`
-- candidate application/operations baseline on `origin/dev`:
-  `ccd94d4b8210372c78e8ebd4d60fdc16a2c0bc56`
-- GitHub Actions production run: `33233537694`, successful
-- GitHub CodeQL run for the current `dev` candidate: `33236143862`, successful
+- production application/operations baseline: `7f9d346fa8b68b6f55a1cf1ff93a3ae9e03663a3`
+- tested CSP follow-up baseline: `ea3a8beac495a2a6ca002dae1c22724c40a52efa`
+- GitHub Actions production run: `33258877249`, successful
+- GitHub CodeQL run for the production baseline: `33258733840`, successful
 - production image: `kckern/bookofmormon-online:prod`
 - application container: healthy after deployment
 - browser navigation: CRA, HTTP 200 with a non-empty document
@@ -25,10 +24,9 @@ the implementation-state sections of
 - SSR loaders: upstream failures propagate instead of becoming empty pages or
   false 404s
 
-`dev` additionally contains the timeline correction, full-crawl tooling,
-atomic blue/green migration, production monitoring artifacts, and the Clicky
-referrer repair. Those changes are tested but are not represented in the
-currently deployed production image.
+The timeline correction, full-crawl tooling, atomic blue/green control,
+production monitoring artifacts, and Clicky referrer repair are now included
+in the production baseline.
 
 ## Full production sitemap crawl
 
@@ -60,16 +58,17 @@ present in all six cached documents.
 The crawl found one real data-shape class affecting six timeline URLs. Five are
 coordinate-only database markers with no page content. `land-of-nephi` has both
 an empty marker row and a real event row, but the old selector chose the empty
-row. The pending patch now:
+row. The deployed correction now:
 
 1. selects only timeline rows with content;
 2. uses the real `land-of-nephi` event;
 3. returns 404 for marker-only pseudo-pages; and
 4. excludes marker-only slugs from the sitemap.
 
-Focused Playwright coverage passes all five timeline cases. A fresh Screpy scan
-should start only after this patch is deployed, so the paid crawl becomes a clean
-post-cutover baseline rather than recording defects already corrected in source.
+Focused Playwright coverage passes all five timeline cases. Live validation now
+returns 200 for `/timeline/land-of-nephi`, 404 for `/timeline/east`, and excludes
+the marker-only route from the sitemap. The paid Screpy crawl can now provide a
+clean post-cutover baseline.
 
 ## Runtime and deployment acceptance
 
@@ -87,7 +86,7 @@ responses. The SSR latency distribution was p50 350 ms, p95 1.122 s, p99
 129,000 SSR requests in that interval. This is intentionally observation-only:
 the agreed seven-day evidence gate still applies before any crawler control.
 
-A blue/green deployment implementation is staged and tested in
+A blue/green deployment implementation is installed and tested from
 [`ops/production`](../../ops/production/README.md). It keeps a stable Nginx
 gateway, starts only the inactive application slot, waits for Docker health,
 gracefully switches upstreams, verifies ports 8200 and 5005, drains the old slot,
@@ -95,7 +94,7 @@ and retains it stopped for one-deployment rollback. A systemd timer replaces
 Watchtower only for this application image. Watchtower can continue managing
 unrelated labeled containers.
 
-The one-time migration uses the exact existing Docker name
+The completed one-time migration uses the exact existing Docker name
 `bookofmormon-online` for the stable gateway. It starts and verifies the blue
 slot before renaming the current container to the green rollback slot. NPM's
 existing workers retain the old container IP during that handoff; NPM reloads
@@ -103,9 +102,20 @@ only after the gateway and both upstreams pass health checks. A pre-commit trap
 restores the original name and reloads NPM on any failure. This avoids the DNS
 alias collision found in the first draft.
 
-Installing this control plane on production is pending explicit approval because
-it creates persistent systemd units. Until installed, the remaining deployment
-502 window is known and reproducible.
+The initial gateway migration completed at `2026-08-29T14:48:50Z`. The first
+production image deployment then started green, waited for full Docker health,
+switched the gateway at `15:02:24Z`, drained blue, and completed at `15:02:42Z`.
+Public and NPM-to-gateway samplers observed no HTTP failures during that image
+deployment, and VictoriaLogs recorded no 5xx. The inactive slot is stopped with
+`restart=no`; both application slots and the gateway are Watchtower-disabled.
+The health-gated systemd timer is now the sole updater for this image.
+
+A real Chromium navigation with an external Google referrer returned the CRA
+document (`browser` / `cra`), a 17,055-character body, and the correct title.
+The first-party analytics beacon contained both the full external referrer and
+resolved title. The exact Cloudflare Insights and Clicky media-helper hosts are
+included in the tested CSP follow-up so those legitimate scripts no longer
+produce policy errors.
 
 ## Ingress and TLS acceptance
 
@@ -184,24 +194,19 @@ and compressed size remain a required 24-hour acceptance check.
 
 ## Remaining acceptance gates
 
-1. Approve and install the persistent blue/green deployment control, perform
-   the health-gated initial gateway cutover, and disable Watchtower management
-   of the application slots.
-2. Promote `dev` to `prod`, including the timeline and Clicky referrer fixes,
-   without a stop-first outage.
-3. Verify a real externally referred browser visit is classified by Clicky as
-   search/link rather than direct; then rerun the full sitemap regression.
-4. Start and monitor the fresh Screpy crawl (project limit is 5,000 pages).
-5. Confirm a sustained memory plateau, zero PM2 restarts, and zero steady-state
+1. Confirm the external-referrer browser visit is classified by Clicky's API as
+   search/link rather than direct, then rerun the full sitemap regression.
+2. Start and monitor the fresh Screpy crawl (project limit is 5,000 pages).
+3. Confirm a sustained memory plateau, zero PM2 restarts, and zero steady-state
    502s over several hours of crawler traffic. The current container is healthy,
    Next is approximately 75 MiB, and all restart counts are zero, but the newest
    runtime sample is not yet several hours old.
-6. Wait for the accepted Korean nameserver change to reach the `.kr` registry;
+4. Wait for the accepted Korean nameserver change to reach the `.kr` registry;
    then verify Cloudflare activation, enable Full (strict), enable DNSSEC, and
    add the DS record at GoDaddy.
-7. Split the ALB and EC2 security groups and enforce Cloudflare-only ingress
+5. Split the ALB and EC2 security groups and enforce Cloudflare-only ingress
    after the Korean hostname is confirmed through Cloudflare.
-8. Confirm the AWS SNS subscription email so existing alarms can deliver.
-9. Retire the Korean Route 53 zone only after the agreed rollback window.
-10. Review VictoriaLogs and raw telemetry growth after a full 24-hour sample;
+6. Confirm the AWS SNS subscription email so existing alarms can deliver.
+7. Retire the Korean Route 53 zone only after the agreed rollback window.
+8. Review VictoriaLogs and raw telemetry growth after a full 24-hour sample;
    seven-day retention remains in place while bot policy data is collected.
