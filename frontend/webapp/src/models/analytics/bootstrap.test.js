@@ -38,6 +38,8 @@ test('the title bridge emits one initial view and later pathname changes', async
   window.addEventListener('bom:analytics-pageview', listener);
 
   window.eval(script);
+  title.textContent = ' ';
+  await new Promise((resolve) => setTimeout(resolve, 0));
   title.textContent = 'Lehites | Book of Mormon Online';
   await new Promise((resolve) => setTimeout(resolve, 0));
   title.textContent = 'Lehites updated | Book of Mormon Online';

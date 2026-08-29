@@ -82,22 +82,26 @@
       const defaultTitle = "Book of Mormon Online";
       window.lastPath = window.location.pathname;
       window.titleObserver = new MutationObserver(function(mutations) {
-        const newTitle = mutations[0].target.outerText.replace(/\s*[\|][^\|]+$/,'');
+        const newTitle = mutations[0].target.outerText
+          .replace(/\s*[\|][^\|]+$/,'')
+          .trim();
         if(window.lastTitle === newTitle) return false; 
+        // React Helmet can briefly write whitespace while replacing the empty
+        // shell title. Do not consume the one initial analytics pageview until
+        // the route's meaningful title arrives.
+        if(!newTitle) return false;
         if(defaultTitle === newTitle) return false;
         if(/^http/.test(newTitle)) return false;
         const path = window.location.pathname;
         const initial = window.lastTitle === undefined && window.lastPath === path;
         if(window.lastPath === path && !initial) return false;
-        if(newTitle) {
-          window.dispatchEvent(new CustomEvent('bom:analytics-pageview', {
-            detail: {
-              path: path,
-              title: newTitle,
-              initial: initial
-            }
-          }));
-        }
+        window.dispatchEvent(new CustomEvent('bom:analytics-pageview', {
+          detail: {
+            path: path,
+            title: newTitle,
+            initial: initial
+          }
+        }));
         window.lastTitle = newTitle;
         window.lastPath = path;
       });

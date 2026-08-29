@@ -125,6 +125,10 @@ last-resort loader now waits five seconds and reads the live document title;
 a title arriving while the script is in flight also updates the vendor global.
 This prevents a slow fresh React load from preserving the referrer with a blank
 page title.
+The live acceptance probe then exposed an earlier whitespace-only React Helmet
+transition that could consume the initial pageview before that adapter logic.
+The vendor-neutral title bridge now trims and ignores empty title mutations, so
+the first emitted pageview waits for the meaningful route title.
 
 ## Ingress and TLS acceptance
 
