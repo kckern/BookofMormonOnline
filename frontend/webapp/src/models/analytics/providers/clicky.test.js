@@ -3,7 +3,11 @@ function mockClicky() {
   window.clicky = { goal: jest.fn(), log: jest.fn(), custom_data: jest.fn() };
   window.clicky_custom = { pageview_disable: true, history_disable: true };
 }
-afterEach(() => { delete window.clicky; delete window.clicky_custom; });
+afterEach(() => {
+  delete window.clicky;
+  delete window.clicky_custom;
+  document.head.querySelectorAll('script[data-id]').forEach((node) => node.remove());
+});
 
 test('identify sets the GLOBAL visitor, calls custom_data, fires NO goal, keeps flags', () => {
   mockClicky();
@@ -28,10 +32,27 @@ test('goal passes name and revenue', () => {
   new ClickyProvider().goal('kr_buy', { revenue: 25 });
   expect(window.clicky.goal).toHaveBeenCalledWith('kr_buy', 25);
 });
-test('init is a no-op and does not init clicky', () => {
-  mockClicky(); window.clicky.init = jest.fn();
-  new ClickyProvider().init();
-  expect(window.clicky.init).not.toHaveBeenCalled();
+test('init owns the loader and leaves the initial automatic pageview enabled', () => {
+  window.clicky_custom = { pageview_disable: true };
+  const provider = new ClickyProvider({ siteId: '123', scriptPath: '/analytics.js' });
+  provider.init();
+
+  const script = document.head.querySelector('script[data-id="123"]');
+  expect(script).not.toBeNull();
+  expect(script.getAttribute('src')).toBe('/analytics.js');
+  expect(window.clicky_custom.history_disable).toBe(true);
+  expect(window.clicky_custom.pageview_disable).toBeUndefined();
+});
+test('events queued before the loader finishes are flushed after load', () => {
+  const provider = new ClickyProvider({ siteId: '123', scriptPath: '/analytics.js' });
+  provider.init();
+  provider.pageview('/queued', 'Queued');
+  mockClicky();
+
+  document.head.querySelector('script[data-id="123"]')
+    .dispatchEvent(new Event('load'));
+
+  expect(window.clicky.log).toHaveBeenCalledWith('/queued', 'Queued', 'pageview');
 });
 test('all methods are safe when window.clicky is undefined', () => {
   expect(() => { const p = new ClickyProvider(); p.identify({ userid: 'u1' }); p.pageview('/x'); p.goal('signin'); }).not.toThrow();

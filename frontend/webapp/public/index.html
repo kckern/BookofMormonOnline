@@ -79,12 +79,6 @@
       
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <script type="text/javascript">
-      var clicky_custom = {};
-      // Let Clicky send the initial pageview itself. Its initial pageview is
-      // the only one that carries the browser's original external referrer.
-      // The title observer below is reserved for later SPA navigations.
-      clicky_custom.history_disable = true;
-
       const defaultTitle = "Book of Mormon Online";
       window.lastPath = window.location.pathname;
       window.titleObserver = new MutationObserver(function(mutations) {
@@ -94,18 +88,16 @@
         if(defaultTitle === newTitle) return false;
         if(/^http/.test(newTitle)) return false;
         const path = window.location.pathname;
-        const logger = window.clicky?.log || function(){};
-        if(newTitle) logger(path,newTitle,"pageview");
+        if(newTitle) {
+          window.dispatchEvent(new CustomEvent('bom:analytics-pageview', {
+            detail: { path: path, title: newTitle }
+          }));
+        }
         window.lastTitle = newTitle;
         window.lastPath = path;
       }).observe( document.querySelector('title'), { subtree: true, characterData: true, childList: true });
 
     </script>
-    <!-- Clicky anti-adblock tracker: first-party JS + beacon proxied via the Next
-         front door (see frontend/next/lib/clicky.ts). Path + site id come from env
-         (%REACT_APP_*%, substituted at build) so no account-specific id is committed.
-         Keep the clicky_custom opt-outs above so the SPA fires its own pageviews. -->
-    <script async data-id="%REACT_APP_CLICKY_SITE_ID%" src="%REACT_APP_CLICKY_JS_PATH%"></script>
     <style>
       @font-face {
     font-family: 'Scripture';

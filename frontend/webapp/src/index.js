@@ -6,8 +6,15 @@ import * as Sentry from "@sentry/react";
 import { BrowserTracing } from "@sentry/tracing";
 import App from './App';
 import SimpleReactLightbox from 'simple-react-lightbox'
+import { analytics } from './models/analytics/index.js';
 import "./views/_Common/Header.css";
 import "./views/_Common/Main.css";
+
+analytics.init();
+window.addEventListener('bom:analytics-pageview', (event) => {
+  const { path, title } = event.detail || {};
+  if (path) analytics.pageview(path, title);
+});
 
 // Clear old Sendbird localStorage data (CDN is dead, service discontinued)
 try {

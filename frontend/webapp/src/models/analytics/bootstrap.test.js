@@ -6,9 +6,9 @@ const html = fs.readFileSync(
   'utf8'
 );
 
-test('Clicky owns the initial pageview so it can capture the external referrer', () => {
-  expect(html).not.toMatch(/clicky_custom\.pageview_disable\s*=/);
-  expect(html).toMatch(/clicky_custom\.history_disable\s*=\s*true/);
+test('the static bootstrap is vendor-neutral', () => {
+  expect(html).not.toMatch(/clicky/i);
+  expect(html).toMatch(/bom:analytics-pageview/);
 });
 
 test('the SPA observer skips the initial path to avoid a duplicate pageview', () => {
