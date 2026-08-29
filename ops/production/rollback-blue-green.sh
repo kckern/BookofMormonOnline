@@ -16,6 +16,7 @@ case "$active" in
 esac
 
 docker container inspect "$previous" >/dev/null 2>&1 || { echo "Rollback slot $previous does not exist" >&2; exit 1; }
+docker update --restart=always "$previous" >/dev/null
 docker start "$previous" >/dev/null
 
 elapsed=0
@@ -38,4 +39,5 @@ printf '%s\n' "$previous" > "$STATE_FILE.next"
 mv "$STATE_FILE.next" "$STATE_FILE"
 sleep "${BOM_DRAIN_SECONDS:-15}"
 docker stop --time 30 "$active" >/dev/null
+docker update --restart=no "$active" >/dev/null
 echo "Rolled back from $active to $previous"

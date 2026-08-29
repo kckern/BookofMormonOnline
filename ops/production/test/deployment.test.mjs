@@ -74,3 +74,11 @@ test('routine deployment restores the active upstream on reload or verification 
   assert.match(deployment, /gateway verification failed; restored \$active/)
   assert.match(deployment, /missing or invalid active slot; run migrate-blue-green\.sh first/)
 })
+
+test('inactive and rollback slots cannot restart alongside the active slot', () => {
+  assert.match(migration, /docker update --restart=no "\$ROLLBACK_SLOT"/)
+  assert.match(deployment, /docker update --restart=no "\$next"/)
+  assert.match(deployment, /docker update --restart=no "\$active"/)
+  assert.match(rollback, /docker update --restart=always "\$previous"/)
+  assert.match(rollback, /docker update --restart=no "\$active"/)
+})

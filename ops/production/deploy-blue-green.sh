@@ -86,6 +86,16 @@ case "$active" in
   *) fail "missing or invalid active slot; run migrate-blue-green.sh first" ;;
 esac
 
+# A retained rollback slot must stay down across Docker daemon and host
+# restarts. Normalize older slots before a no-op exit and after every drain.
+if container_exists "$next"; then
+  if container_running "$next"; then
+    log "stopping unexpectedly running inactive slot $next"
+    docker stop --time 30 "$next" >/dev/null
+  fi
+  docker update --restart=no "$next" >/dev/null
+fi
+
 log "pulling $IMAGE"
 docker pull "$IMAGE"
 desired_image="$(docker image inspect -f '{{.Id}}' "$IMAGE")"
@@ -171,6 +181,7 @@ if [ -n "$active" ] && [ "$active" != "$next" ] && container_running "$active"; 
   log "draining $active for ${DRAIN_SECONDS}s"
   sleep "$DRAIN_SECONDS"
   docker stop --time 30 "$active" >/dev/null
+  docker update --restart=no "$active" >/dev/null
   log "stopped previous slot $active (retained for rollback until the next deployment)"
 fi
 

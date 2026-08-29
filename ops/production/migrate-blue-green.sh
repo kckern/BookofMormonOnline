@@ -122,4 +122,5 @@ trap - EXIT HUP INT TERM
 log "gateway cutover complete; draining legacy slot for ${DRAIN_SECONDS}s"
 sleep "$DRAIN_SECONDS"
 docker stop --time 30 "$ROLLBACK_SLOT" >/dev/null
+docker update --restart=no "$ROLLBACK_SLOT" >/dev/null
 log "migration complete; $ROLLBACK_SLOT retained as the rollback slot"
