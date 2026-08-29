@@ -156,10 +156,14 @@ export async function faxRoutes(app: FastifyInstance): Promise<void> {
     const clamped = verseIds.length > MAX_VERSE_IDS;
     const ids = clamped ? verseIds.slice(0, MAX_VERSE_IDS) : verseIds;
 
-    const [boxes, meta] = await Promise.all([verseIdsToBoxes(version, ids), imageScanMeta(version)]);
+    const boxes = await verseIdsToBoxes(version, ids);
     const out = boxes.map((b) => ({
       verseId: b.verseId,
-      imagePage: b.page + meta.offset,
+      // b.page is the scan image-file number — the same canonical number used
+      // by the viewer's leaf.pageNumInt. `meta.offset` is needed when fetching
+      // a rendered source scan, but applying it here made the DOM-overlay join
+      // miss every non-zero-offset edition.
+      imagePage: b.page,
       x: b.x, y: b.y, w: b.w, h: b.h,
       tlw: b.tlw, tlh: b.tlh, brw: b.brw, brh: b.brh,
     }));
