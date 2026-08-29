@@ -21,7 +21,10 @@ module.exports = {
       // fallback (:5006) out of production or reading-page renders fail with
       // ECONNREFUSED while the browser-facing GraphQL proxy still appears healthy.
       env: { GRAPHQL_URL: 'http://localhost:5005/graphql' },
-      max_memory_restart: '400M',
+      // Production SSR crawler bursts stabilize around 400–430 MiB. The old
+      // 400M limit recycled Next every few minutes and exposed NPM 502s during
+      // each single-worker restart; retain headroom while preserving a guard.
+      max_memory_restart: '768M',
     },
     {
       name: 'cra',
