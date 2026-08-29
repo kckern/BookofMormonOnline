@@ -7,7 +7,9 @@ the implementation-state sections of
 ## Deployed application state
 
 - deployed `origin/prod`: `871ee14f5449fde70cc0cc03d556881987f59e55`
-- current `origin/dev`: `f1187bffe6fbc19c48b55ccedf8f9174269d4ee9`
+- candidate application/operations baseline on `origin/dev`:
+  `f1187bffe6fbc19c48b55ccedf8f9174269d4ee9` (followed only by acceptance and
+  monitoring documentation commits at the time of this update)
 - GitHub Actions production run: `33233537694`, successful
 - production image: `kckern/bookofmormon-online:prod`
 - application container: healthy after deployment
@@ -121,6 +123,14 @@ HTTPS listener has issued certificates covering every current production host,
 including `xn--289a67xla.kr`. That provides the certificate basis for Cloudflare
 Full (strict) after activation.
 
+Two replacement groups are now staged but unattached, so production behavior is
+unchanged: `bom-alb-cloudflare` (`sg-04cceb2bb571eab53`) allows ALB ports 80/443
+from Cloudflare's 15 current IPv4 ranges, and `bom-origin-alb`
+(`sg-0fe59ac614527a229`) allows origin port 80 from that ALB group plus the three
+existing administrator `/32` rules. The exact attachment, verification, and
+rollback order is recorded in
+[`ops/aws/cloudflare-ingress`](../../ops/aws/cloudflare-ingress/README.md).
+
 Current Korean state:
 
 - Cloudflare zone: `pending`
@@ -129,6 +139,10 @@ Current Korean state:
 - GoDaddy API update: accepted with HTTP 204 at `2026-08-29T05:12:33Z`, but
   GoDaddy's subsequent read API and the `.kr` parent still showed Route 53; the
   registrar/registry update is asynchronous and not yet complete
+- DNS parity: all 13 Route 53 application record sets are represented by the 15
+  equivalent Cloudflare records (split MX/TXT values included); this covers the
+  apex ALB target, wildcard, CloudFront game host, ACM validations, SES DKIM/MX,
+  Improvmx MX, SPF, DMARC, and Google verification
 - DNSSEC: must follow Cloudflare activation
 - Route 53 zone: retained as rollback until activation, strict TLS, and DNSSEC
   have been verified
