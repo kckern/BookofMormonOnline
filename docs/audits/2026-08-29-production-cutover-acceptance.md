@@ -117,7 +117,11 @@ resolved title. Clicky's visitor API then classified that `/lehites` visit as
 Google search traffic at 07:06 local time; it independently classified an
 unrelated real visitor as Google search traffic at 07:05. The exact Cloudflare
 Insights and Clicky media-helper hosts are included in the tested CSP follow-up
-so those legitimate scripts no longer produce policy errors.
+so those legitimate scripts no longer produce policy errors. The adapter's
+last-resort loader now waits five seconds and reads the live document title;
+a title arriving while the script is in flight also updates the vendor global.
+This prevents a slow fresh React load from preserving the referrer with a blank
+page title.
 
 ## Ingress and TLS acceptance
 

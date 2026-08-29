@@ -26,17 +26,26 @@ export class ClickyProvider {
 
       // The first meaningful route title normally starts the loader. Keep a
       // fallback for pages that intentionally retain an empty/default title.
-      this.fallbackTimer = window.setTimeout(() => this.load(), 2000);
+      // A fresh production bundle can take more than two seconds to resolve
+      // its React title under crawler load; use the live document title rather
+      // than racing the automatic first pageview with a blank vendor title.
+      this.fallbackTimer = window.setTimeout(
+        () => this.load(document.title?.trim()),
+        5000
+      );
     });
   }
 
   load(title) {
     safe(() => {
-      if (this.loading || !this.siteId || !this.scriptPath) return;
-      this.loading = true;
-      if (this.fallbackTimer) window.clearTimeout(this.fallbackTimer);
+      if (!this.siteId || !this.scriptPath) return;
       window.clicky_custom = window.clicky_custom || {};
       if (title) window.clicky_custom.title = title;
+      // A meaningful title can arrive while the script is in flight. Keep the
+      // global current even though a second script must never be appended.
+      if (this.loading) return;
+      this.loading = true;
+      if (this.fallbackTimer) window.clearTimeout(this.fallbackTimer);
 
       const existing = document.querySelector(
         `script[data-id="${this.siteId}"][src="${this.scriptPath}"]`

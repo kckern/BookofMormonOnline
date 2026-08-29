@@ -4,6 +4,7 @@ function mockClicky() {
   window.clicky_custom = { pageview_disable: true, history_disable: true };
 }
 afterEach(() => {
+  jest.useRealTimers();
   delete window.clicky;
   delete window.clicky_custom;
   document.head.querySelectorAll('script[data-id]').forEach((node) => node.remove());
@@ -56,6 +57,27 @@ test('events queued before the loader finishes are flushed after load', () => {
     .dispatchEvent(new Event('load'));
 
   expect(window.clicky.log).toHaveBeenCalledWith('/queued', 'Queued', 'pageview');
+});
+test('fallback waits for React and uses the current document title', () => {
+  jest.useFakeTimers();
+  document.title = 'Resolved React title';
+  const provider = new ClickyProvider({ siteId: '123', scriptPath: '/analytics.js' });
+  provider.init();
+
+  jest.advanceTimersByTime(4999);
+  expect(document.head.querySelector('script[data-id="123"]')).toBeNull();
+  jest.advanceTimersByTime(1);
+
+  expect(document.head.querySelector('script[data-id="123"]')).not.toBeNull();
+  expect(window.clicky_custom.title).toBe('Resolved React title');
+});
+test('a late initial title updates the in-flight automatic pageview', () => {
+  const provider = new ClickyProvider({ siteId: '123', scriptPath: '/analytics.js' });
+  provider.load();
+  provider.load('Late title');
+
+  expect(document.head.querySelectorAll('script[data-id="123"]')).toHaveLength(1);
+  expect(window.clicky_custom.title).toBe('Late title');
 });
 test('all methods are safe when window.clicky is undefined', () => {
   expect(() => { const p = new ClickyProvider(); p.identify({ userid: 'u1' }); p.pageview('/x'); p.goal('signin'); }).not.toThrow();
