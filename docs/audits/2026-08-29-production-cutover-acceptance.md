@@ -80,6 +80,13 @@ the single container. The complete telemetry window for the most recent
 replacement contains 140 HTTP 502 responses, all between
 `2026-08-29T04:24:52Z` and `04:25:17Z`. There have been no subsequent 502s.
 
+VictoriaLogs independently confirms the steady-state load result. Between
+`04:25:18Z` and `05:35:00Z`, it recorded 136,631 HTTP 200 responses and zero 5xx
+responses. The SSR latency distribution was p50 350 ms, p95 1.122 s, p99
+1.569 s, and maximum 2.722 s. ClaudeBot and GPTBot generated approximately
+129,000 SSR requests in that interval. This is intentionally observation-only:
+the agreed seven-day evidence gate still applies before any crawler control.
+
 A blue/green deployment implementation is staged and tested in
 [`ops/production`](../../ops/production/README.md). It keeps a stable Nginx
 gateway, starts only the inactive application slot, waits for Docker health,
@@ -168,6 +175,12 @@ health/5xx, Next memory, PM2 restarts, NPM 5xx, Vector health, non-Cloudflare
 ingress, root disk, and telemetry size and growth. Their SNS topic exists, but
 the email subscription for `kc@kckern.com` remains `PendingConfirmation`; alarm
 delivery is not accepted until that email link is confirmed.
+
+The raw telemetry file was 221 MiB after roughly three hours. Daily logrotate
+with compression retains seven files, and VictoriaLogs independently enforces
+seven-day retention. At the observed rate, the active daily file is projected
+to remain below the existing 2 GiB alarm threshold; the first actual rotation
+and compressed size remain a required 24-hour acceptance check.
 
 ## Remaining acceptance gates
 
