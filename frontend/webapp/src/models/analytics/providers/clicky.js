@@ -8,6 +8,8 @@ export class ClickyProvider {
     this.scriptPath = config.scriptPath || process.env.REACT_APP_CLICKY_JS_PATH;
     this.pending = [];
     this.initialized = false;
+    this.loading = false;
+    this.fallbackTimer = null;
   }
 
   init() {
@@ -21,6 +23,20 @@ export class ClickyProvider {
       window.clicky_custom = window.clicky_custom || {};
       window.clicky_custom.history_disable = true;
       delete window.clicky_custom.pageview_disable;
+
+      // The first meaningful route title normally starts the loader. Keep a
+      // fallback for pages that intentionally retain an empty/default title.
+      this.fallbackTimer = window.setTimeout(() => this.load(), 2000);
+    });
+  }
+
+  load(title) {
+    safe(() => {
+      if (this.loading || !this.siteId || !this.scriptPath) return;
+      this.loading = true;
+      if (this.fallbackTimer) window.clearTimeout(this.fallbackTimer);
+      window.clicky_custom = window.clicky_custom || {};
+      if (title) window.clicky_custom.title = title;
 
       const existing = document.querySelector(
         `script[data-id="${this.siteId}"][src="${this.scriptPath}"]`
@@ -54,7 +70,14 @@ export class ClickyProvider {
       window.clicky?.custom_data?.();
     });
   }
-  pageview(path, title) {
+  pageview(path, title, opts = {}) {
+    // Clicky's automatic first pageview is the only public API path that sends
+    // its captured external referrer. Give it the resolved React title and do
+    // not emit a duplicate manual view for that same initial route.
+    if (opts.initial || (!this.loading && !window.clicky)) {
+      this.load(title);
+      return;
+    }
     const operation = () => window.clicky?.log?.(path, title, 'pageview');
     if (window.clicky) safe(operation);
     else this.pending.push(operation);

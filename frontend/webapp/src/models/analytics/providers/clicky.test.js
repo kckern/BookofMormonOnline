@@ -36,16 +36,19 @@ test('init owns the loader and leaves the initial automatic pageview enabled', (
   window.clicky_custom = { pageview_disable: true };
   const provider = new ClickyProvider({ siteId: '123', scriptPath: '/analytics.js' });
   provider.init();
+  provider.pageview('/', 'Home', { initial: true });
 
   const script = document.head.querySelector('script[data-id="123"]');
   expect(script).not.toBeNull();
   expect(script.getAttribute('src')).toBe('/analytics.js');
   expect(window.clicky_custom.history_disable).toBe(true);
   expect(window.clicky_custom.pageview_disable).toBeUndefined();
+  expect(window.clicky_custom.title).toBe('Home');
 });
 test('events queued before the loader finishes are flushed after load', () => {
   const provider = new ClickyProvider({ siteId: '123', scriptPath: '/analytics.js' });
   provider.init();
+  provider.pageview('/', 'Home', { initial: true });
   provider.pageview('/queued', 'Queued');
   mockClicky();
 

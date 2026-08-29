@@ -12,8 +12,8 @@ import "./views/_Common/Main.css";
 
 analytics.init();
 window.addEventListener('bom:analytics-pageview', (event) => {
-  const { path, title } = event.detail || {};
-  if (path) analytics.pageview(path, title);
+  const { path, title, initial } = event.detail || {};
+  if (path) analytics.pageview(path, title, { initial });
 });
 
 // Clear old Sendbird localStorage data (CDN is dead, service discontinued)

@@ -84,18 +84,27 @@
       window.titleObserver = new MutationObserver(function(mutations) {
         const newTitle = mutations[0].target.outerText.replace(/\s*[\|][^\|]+$/,'');
         if(window.lastTitle === newTitle) return false; 
-        if(window.lastPath === window.location.pathname) return false;
         if(defaultTitle === newTitle) return false;
         if(/^http/.test(newTitle)) return false;
         const path = window.location.pathname;
+        const initial = window.lastTitle === undefined && window.lastPath === path;
+        if(window.lastPath === path && !initial) return false;
         if(newTitle) {
           window.dispatchEvent(new CustomEvent('bom:analytics-pageview', {
-            detail: { path: path, title: newTitle }
+            detail: {
+              path: path,
+              title: newTitle,
+              initial: initial
+            }
           }));
         }
         window.lastTitle = newTitle;
         window.lastPath = path;
-      }).observe( document.querySelector('title'), { subtree: true, characterData: true, childList: true });
+      });
+      window.titleObserver.observe(
+        document.querySelector('title'),
+        { subtree: true, characterData: true, childList: true }
+      );
 
     </script>
     <style>
