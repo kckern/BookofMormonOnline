@@ -113,9 +113,11 @@ The health-gated systemd timer is now the sole updater for this image.
 A real Chromium navigation with an external Google referrer returned the CRA
 document (`browser` / `cra`), a 17,055-character body, and the correct title.
 The first-party analytics beacon contained both the full external referrer and
-resolved title. The exact Cloudflare Insights and Clicky media-helper hosts are
-included in the tested CSP follow-up so those legitimate scripts no longer
-produce policy errors.
+resolved title. Clicky's visitor API then classified that `/lehites` visit as
+Google search traffic at 07:06 local time; it independently classified an
+unrelated real visitor as Google search traffic at 07:05. The exact Cloudflare
+Insights and Clicky media-helper hosts are included in the tested CSP follow-up
+so those legitimate scripts no longer produce policy errors.
 
 ## Ingress and TLS acceptance
 
@@ -194,8 +196,7 @@ and compressed size remain a required 24-hour acceptance check.
 
 ## Remaining acceptance gates
 
-1. Confirm the external-referrer browser visit is classified by Clicky's API as
-   search/link rather than direct, then rerun the full sitemap regression.
+1. Rerun the full sitemap regression against the promoted timeline/CSP baseline.
 2. Start and monitor the fresh Screpy crawl (project limit is 5,000 pages).
 3. Confirm a sustained memory plateau, zero PM2 restarts, and zero steady-state
    502s over several hours of crawler traffic. The current container is healthy,
