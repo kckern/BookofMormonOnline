@@ -8,9 +8,9 @@ the implementation-state sections of
 
 - deployed `origin/prod`: `871ee14f5449fde70cc0cc03d556881987f59e55`
 - candidate application/operations baseline on `origin/dev`:
-  `f1187bffe6fbc19c48b55ccedf8f9174269d4ee9` (followed only by acceptance and
-  monitoring documentation commits at the time of this update)
+  `ccd94d4b8210372c78e8ebd4d60fdc16a2c0bc56`
 - GitHub Actions production run: `33233537694`, successful
+- GitHub CodeQL run for the current `dev` candidate: `33236143862`, successful
 - production image: `kckern/bookofmormon-online:prod`
 - application container: healthy after deployment
 - browser navigation: CRA, HTTP 200 with a non-empty document
@@ -157,14 +157,17 @@ reboot Lambda directly through EventBridge. The disabled, unauthenticated API
 Gateway endpoint is no longer in the recovery path.
 
 The host metrics timer is installed, enabled, and publishing every five minutes.
-Observed samples at 05:00Z and 05:05Z reported Next at approximately 75 MiB,
-zero PM2 restart deltas, zero current-window 5xx, healthy Vector ingestion, and
-zero non-Cloudflare ingress after the temporary Korean-host exception. Eleven
-CloudWatch alarms cover API health, ALB health/5xx, Next memory, PM2 restarts,
-NPM 5xx, Vector health, non-Cloudflare ingress, root disk, and telemetry size and
-growth. Their SNS topic exists, but the email subscription for `kc@kckern.com`
-remains `PendingConfirmation`; alarm delivery is not accepted until that email
-link is confirmed.
+At `2026-08-29T05:30Z`, after approximately 66 minutes of sustained crawler
+traffic, the application container remained Docker-healthy with zero container
+or PM2 restarts. Next used approximately 74 MiB, the complete application
+container used 1.19 GiB, and the host retained 1.55 GiB available memory. Root
+disk use was 68%. Earlier host-metric samples reported zero current-window 5xx,
+healthy Vector ingestion, and zero non-Cloudflare ingress after the temporary
+Korean-host exception. Eleven CloudWatch alarms cover API health, ALB
+health/5xx, Next memory, PM2 restarts, NPM 5xx, Vector health, non-Cloudflare
+ingress, root disk, and telemetry size and growth. Their SNS topic exists, but
+the email subscription for `kc@kckern.com` remains `PendingConfirmation`; alarm
+delivery is not accepted until that email link is confirmed.
 
 ## Remaining acceptance gates
 
