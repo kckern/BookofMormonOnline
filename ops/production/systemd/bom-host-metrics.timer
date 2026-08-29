@@ -1,0 +1,12 @@
+[Unit]
+Description=Publish Book of Mormon Online host metrics every five minutes
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=5min
+AccuracySec=15s
+Persistent=true
+Unit=bom-host-metrics.service
+
+[Install]
+WantedBy=timers.target
