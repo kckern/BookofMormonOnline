@@ -22,19 +22,11 @@ const PEOPLE_LIST_QUERY = `query PeopleList { person { slug name title } }`
 const PLACES_LIST_QUERY = `query PlacesList { place { slug name info } }`
 
 export const getPeopleList = cache(async (): Promise<PersonListItem[]> => {
-  try {
-    const d = await gql<{ person: PersonListItem[] }>(PEOPLE_LIST_QUERY, {}, { revalidate: 3600 })
-    return d.person ?? []
-  } catch {
-    return []
-  }
+  const d = await gql<{ person: PersonListItem[] }>(PEOPLE_LIST_QUERY, {}, { revalidate: 3600 })
+  return d.person ?? []
 })
 
 export const getPlacesList = cache(async (): Promise<PlaceListItem[]> => {
-  try {
-    const d = await gql<{ place: PlaceListItem[] }>(PLACES_LIST_QUERY, {}, { revalidate: 3600 })
-    return d.place ?? []
-  } catch {
-    return []
-  }
+  const d = await gql<{ place: PlaceListItem[] }>(PLACES_LIST_QUERY, {}, { revalidate: 3600 })
+  return d.place ?? []
 })

@@ -81,15 +81,22 @@ export const useractivityResolvers: Resolvers = {
 
       const insertResult = await runWrite(
         ctx,
-        ctx.db.insertInto('bom_log').values({
-          timestamp: now,
-          user: queryBy,
-          ip: clientIp,
-          type: key,
-          value: resolvedValue,
-          credit: -1,
-          flag: 0,
-        }),
+        // The legacy table has a unique (timestamp,user) key. Browsers can send
+        // more than one progress beacon within the same second, and retries can
+        // replay the same beacon. Treat that collision as an idempotent success
+        // instead of surfacing ER_DUP_ENTRY through GraphQL.
+        ctx.db
+          .insertInto('bom_log')
+          .values({
+            timestamp: now,
+            user: queryBy,
+            ip: clientIp,
+            type: key,
+            value: resolvedValue,
+            credit: -1,
+            flag: 0,
+          })
+          .ignore(),
       );
 
       // Under sandbox, insertResult.executed is false — treat as if insert succeeded

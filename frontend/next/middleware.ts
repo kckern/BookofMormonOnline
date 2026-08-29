@@ -22,9 +22,34 @@ const KNOWN_CRAWLER_RE = /bot|crawl|spider|slurp|google|bing|baidu|yandex|duckdu
 const BROWSER_UA_RE = /mozilla\/5\.0.*(?:chrome|chromium|crios|firefox|fxios|safari|edg|opr)\//i
 
 const CRA_ORIGIN = 'http://localhost:8201'
+const CRA_ASSET_PATHS = new Set(['/sw.js', '/asset-manifest.json', '/manifest.json'])
+const CRA_ASSET_PREFIXES = ['/static/', '/font/', '/icons/', '/img/', '/md/', '/screenshots/', '/tinymce/']
 
 type RenderMode = 'ssr' | 'cra' | 'asset' | 'analytics'
 type ClientClass = 'browser' | 'known-crawler' | 'unknown'
+
+const SECURITY_HEADERS: Record<string, string> = {
+  'Strict-Transport-Security': 'max-age=31536000',
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'SAMEORIGIN',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Content-Security-Policy': [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    "frame-ancestors 'self'",
+    "form-action 'self'",
+    "script-src 'self' 'unsafe-inline' https://accounts.google.com https://www.google.com https://www.gstatic.com https://static.userback.io",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data: https:",
+    "connect-src 'self' https: wss:",
+    "media-src 'self' blob: https:",
+    "frame-src 'self' https://www.google.com https://recaptcha.google.com https://designrr.page",
+    "worker-src 'self' blob:",
+    'upgrade-insecure-requests',
+  ].join('; '),
+}
 
 // fetch() decodes content encodings, while a browser applies any encoding
 // headers it receives.  Do not copy hop-by-hop or representation-length
@@ -75,9 +100,16 @@ function classifyClient(request: NextRequest, ua: string): ClientClass {
   return 'unknown'
 }
 
+function isCraAsset(pathname: string): boolean {
+  return CRA_ASSET_PATHS.has(pathname) || CRA_ASSET_PREFIXES.some((prefix) => pathname.startsWith(prefix))
+}
+
 function markResponse<T extends Response>(response: T, clientClass: ClientClass, renderMode?: RenderMode): T {
   response.headers.set('X-BOM-Client-Class', clientClass)
   if (renderMode) response.headers.set('X-BOM-Render-Mode', renderMode)
+  for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
+    response.headers.set(name, value)
+  }
   return response
 }
 
@@ -113,7 +145,7 @@ export async function middleware(request: NextRequest) {
     pathname === '/robots.txt' || pathname === '/sitemap.xml' || pathname === '/og' || pathname.startsWith('/og/')
 
   // --- Human visitor: proxy transparently to CRA ---
-  if (!isSeoAsset && isInteractiveBrowserNavigation(request, ua)) {
+  if (!isSeoAsset && (isCraAsset(pathname) || isInteractiveBrowserNavigation(request, ua))) {
     const segs = pathname.split('/').filter(Boolean)
     // The CRA routes are bare (language is by subdomain). A locale-prefixed page
     // URL must be REDIRECTED to the bare path — a transparent rewrite keeps the
@@ -122,7 +154,7 @@ export async function middleware(request: NextRequest) {
     // CRITICAL: only redirect GET navigations. The GraphQL API is POSTed to
     // /{lang} (e.g. POST /en) — redirecting that breaks every query (it 404s at
     // /). API POSTs fall through to the rewrite below.
-    if (request.method === 'GET' && segs.length && LOCALE_SEGS.has(segs[0])) {
+    if (!isCraAsset(pathname) && request.method === 'GET' && segs.length && LOCALE_SEGS.has(segs[0])) {
       const url = request.nextUrl.clone()
       url.pathname = '/' + segs.slice(1).join('/')
       return markResponse(NextResponse.redirect(url), clientClass, 'cra')

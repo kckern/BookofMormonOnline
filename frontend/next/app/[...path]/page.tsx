@@ -22,6 +22,8 @@ interface Props {
 //   […, N]  (numeric tail)    → text block  (pageSlug = leading segments)
 //   […, name] (non-numeric)   → section page (named content-tree node)
 type Kind = 'textblock' | 'page' | 'section'
+const DEFAULT_SHELL_PATHS = new Set(['search', 'user'])
+
 function classify(path: string[]): Kind {
   const last = path[path.length - 1]
   if (path.length >= 2 && /^\d+$/.test(last)) return 'textblock'
@@ -52,7 +54,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (kind === 'page') {
     const page = await getPageContent(path[0])
-    if (!page) return defaultMetadata(`/${path[0]}`)
+    if (!page) {
+      if (DEFAULT_SHELL_PATHS.has(path[0])) return defaultMetadata(`/${path[0]}`)
+      notFound()
+    }
     const description = page.sections.map((s) => s.title).join('. ')
     return buildMetadata({ title: page.title, description, path: `/${path[0]}` })
   }
@@ -134,7 +139,10 @@ export default async function CatchAllPage({ params }: Props) {
 
   if (kind === 'page') {
     const page = await getPageContent(path[0])
-    if (!page) return <DefaultShell />
+    if (!page) {
+      if (DEFAULT_SHELL_PATHS.has(path[0])) return <DefaultShell />
+      notFound()
+    }
     const pageLd = breadcrumb([
       { name: 'Home', url: await absoluteUrl('/') },
       { name: page.title, url: await absoluteUrl(`/${page.slug}`) },

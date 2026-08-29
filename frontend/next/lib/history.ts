@@ -16,12 +16,8 @@ export interface HistoryDoc {
 const HISTORY_QUERY = `query History { history { id slug year date document source } }`
 
 export const getHistory = cache(async (): Promise<HistoryDoc[]> => {
-  try {
-    const d = await gql<{ history: HistoryDoc[] }>(HISTORY_QUERY, {}, { revalidate: 3600 })
-    return d.history ?? []
-  } catch {
-    return []
-  }
+  const d = await gql<{ history: HistoryDoc[] }>(HISTORY_QUERY, {}, { revalidate: 3600 })
+  return d.history ?? []
 })
 
 // Per-document detail page (the /history/:slug view). The PHP box renders the
@@ -54,18 +50,14 @@ const HISTORY_DOC_QUERY = `
 `
 
 export const getHistoryDoc = cache(async (slug: string): Promise<HistoryDocDetail | null> => {
-  try {
-    // One DB slug carries a trailing tab ("…-ancient-ruins\t") that the sitemap
-    // <loc> strips; pass the tab-suffixed variant too so the dirty record resolves.
-    const d = await gql<{ history: HistoryDocDetail[] }>(
-      HISTORY_DOC_QUERY,
-      { slug: [slug, slug + '\t'] },
-      { revalidate: 86400 },
-    )
-    return d.history?.[0] ?? null
-  } catch {
-    return null
-  }
+  // One DB slug carries a trailing tab ("…-ancient-ruins\t") that the sitemap
+  // <loc> strips; pass the tab-suffixed variant too so the dirty record resolves.
+  const d = await gql<{ history: HistoryDocDetail[] }>(
+    HISTORY_DOC_QUERY,
+    { slug: [slug, slug + '\t'] },
+    { revalidate: 86400 },
+  )
+  return d.history?.[0] ?? null
 })
 
 // Intro paragraph rendered verbatim by the PHP template. Its text is also the

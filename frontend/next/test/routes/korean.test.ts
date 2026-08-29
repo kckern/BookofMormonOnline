@@ -105,13 +105,13 @@ test.describe('localized chrome', () => {
 })
 
 test.describe('localized default shell', () => {
-  test('korean unknown-slug shell has Korean nav + body', async ({ request }) => {
-    const html = await (await request.get('/zzz-no-such-page-xyz', { headers: ko })).text()
+  test('korean app-shell route has Korean nav + body', async ({ request }) => {
+    const html = await (await request.get('/search', { headers: ko })).text()
     expect(html).toContain('목차')       // Contents nav label, Korean
     expect(html).not.toContain('Table of Contents')
   })
   test('english shell unchanged', async ({ request }) => {
-    const html = await (await request.get('/zzz-no-such-page-xyz', { headers: bot })).text()
+    const html = await (await request.get('/search', { headers: bot })).text()
     expect(html).toContain('Table of Contents')
   })
 })

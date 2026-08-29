@@ -95,23 +95,6 @@ interface RawBlockText {
 }
 interface RawRowText { slug: string; link: number }
 
-// Tolerant GraphQL fetch for the block batch. The backend's text.heading resolver
-// throws on a few blocks (the Title-Page blocks under /moroni/finishing-touches),
-// returning partial data alongside a GraphQL error. The shared gql() rejects on
-// any error, which would drop the whole section; here we keep the partial rows
-// (heading falls back to '') so those sections still render.
-const GRAPHQL_URL = process.env.GRAPHQL_URL ?? 'http://localhost:5006/graphql'
-async function gqlTolerant<T>(query: string, variables: Record<string, unknown>): Promise<T> {
-  const res = await fetch(GRAPHQL_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query, variables }),
-    next: { revalidate: 3600 },
-  })
-  if (!res.ok) throw new Error(`GraphQL fetch failed: ${res.status}`)
-  const json = await res.json()
-  return json.data as T // ignore json.errors — partial data is acceptable here
-}
 interface RawRow {
   type: string
   narration: { description: string | null; text: RawRowText | null } | null
@@ -184,17 +167,12 @@ export const getSection = cache(async (slug: string): Promise<SectionData | null
   const parentSlug = realSlug.split('/').slice(0, -1).join('/')
   if (!parentSlug) return null
 
-  let parent: RawParentPage | undefined
-  try {
-    const data = await gql<{ page: RawParentPage[] }>(
-      PAGE_SECTIONS_QUERY,
-      { slug: [parentSlug] },
-      { revalidate: 3600 },
-    )
-    parent = data.page?.[0]
-  } catch {
-    return null
-  }
+  const data = await gql<{ page: RawParentPage[] }>(
+    PAGE_SECTIONS_QUERY,
+    { slug: [parentSlug] },
+    { revalidate: 3600 },
+  )
+  const parent = data.page?.[0]
   const section = parent?.sections?.find((sec) => sec.slug === realSlug)
   if (!parent || !section) return null
 
@@ -205,12 +183,12 @@ export const getSection = cache(async (slug: string): Promise<SectionData | null
   // One batched text() call for every block's heading/content/imgs/quotes.
   let bySlug = new Map<string, RawBlockText>()
   if (blockSlugs.length) {
-    try {
-      const data = await gqlTolerant<{ text: RawBlockText[] }>(BLOCKS_QUERY, { slugs: blockSlugs })
-      bySlug = new Map((data.text ?? []).filter(Boolean).map((t) => [t.slug, t]))
-    } catch {
-      return null
-    }
+    const blockData = await gql<{ text: RawBlockText[] }>(
+      BLOCKS_QUERY,
+      { slugs: blockSlugs },
+      { revalidate: 3600 },
+    )
+    bySlug = new Map((blockData.text ?? []).filter(Boolean).map((t) => [t.slug, t]))
   }
 
   const blocks: SectionBlock[] = nRows.map((r) => {
@@ -218,10 +196,8 @@ export const getSection = cache(async (slug: string): Promise<SectionData | null
     const t = bySlug.get(blockSlug)
     return {
       slug: blockSlug,
-      // A normal block's heading is a scripture ref; an empty one means the
-      // text.heading resolver threw on a textParent-less Title-Page block (the
-      // BoM title page under /moroni/finishing-touches), which the PHP box labels
-      // "Title Page".
+      // Dirty legacy rows can still carry an empty heading; retain the display
+      // fallback without suppressing transport or GraphQL errors.
       heading: t?.heading || 'Title Page',
       description: narrationText(r.narration!.description ?? ''),
       body: blockBody(t?.content ?? '', t?.quotes ?? []),

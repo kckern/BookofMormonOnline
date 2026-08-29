@@ -37,14 +37,9 @@ test.describe('Page catch-all route /{slug}', () => {
     expect(r.headers()['content-type']).toContain('image/png')
   })
 
-  // Generic unknown single-segment slugs are a 200 "soft-404" DefaultShell — this
-  // is intentional PHP-box parity (see docs/reference/ssr.md). KNOWN soft-404.
-  test('generic unknown single-segment is a 200 soft-404 (PHP-box parity)', async ({ request }) => {
+  test('generic unknown single-segment is a real 404', async ({ request }) => {
     const r = await request.get('/zzz-no-such-page-xyz')
-    expect(r.status()).toBe(200)
-    // A DefaultShell-unique phrase (from DEFAULT_BODY) — proves the soft-404 renders
-    // the generic shell, not a real page.
-    expect(await r.text()).toContain('interactive study resource')
+    expect(r.status()).toBe(404)
   })
 
   test('unknown entity slug (2-segment) is a real 404', async ({ request }) => {
@@ -54,5 +49,10 @@ test.describe('Page catch-all route /{slug}', () => {
   // Section kind: 2-segment non-numeric — the bulk of the sitemap.
   test('section route /{page}/{section} renders SSR content', async ({ request }) => {
     await expectSsrPage(request, '/lehites/lehis-prophetic-call')
+  })
+
+  test('title-page section renders without a null-parent heading error', async ({ request }) => {
+    const html = await expectSsrPage(request, '/moroni/finishing-touches')
+    expect(html).toContain('Title Page')
   })
 })

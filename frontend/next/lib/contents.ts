@@ -82,19 +82,13 @@ function buildPage(page: RawPage, bySlug: Map<string, RawPage>): ContentsPage {
 }
 
 export const getContents = cache(async (): Promise<ContentsDivision[]> => {
-  let divisions: RawDivision[]
-  let pages: RawPage[]
-  try {
-    const divData = await gql<{ division: RawDivision[] }>(DIVISIONS_QUERY, {}, { revalidate: 3600 })
-    divisions = divData.division ?? []
-    // Every page (titlepages + capsulated sub-pages) is listed under some
-    // division; gather their slugs and pull sections in one batched page query.
-    const slugs = divisions.flatMap((d) => (d.pages ?? []).map((p) => p.slug))
-    const pageData = await gql<{ page: RawPage[] }>(PAGES_QUERY, { slugs }, { revalidate: 3600 })
-    pages = pageData.page ?? []
-  } catch {
-    return []
-  }
+  const divData = await gql<{ division: RawDivision[] }>(DIVISIONS_QUERY, {}, { revalidate: 3600 })
+  const divisions = divData.division ?? []
+  // Every page (titlepages + capsulated sub-pages) is listed under some
+  // division; gather their slugs and pull sections in one batched page query.
+  const slugs = divisions.flatMap((d) => (d.pages ?? []).map((p) => p.slug))
+  const pageData = await gql<{ page: RawPage[] }>(PAGES_QUERY, { slugs }, { revalidate: 3600 })
+  const pages = pageData.page ?? []
 
   const bySlug = new Map(pages.map((p) => [p.slug, p]))
   return divisions

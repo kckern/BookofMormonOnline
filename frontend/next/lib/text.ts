@@ -48,17 +48,12 @@ export const getTextBlock = cache(
     const cur = `${pageSlug}/${id}`
     const prevSlug = `${pageSlug}/${id - 1}`
     const nextSlug = `${pageSlug}/${id + 1}`
-    let rows: RawText[]
-    try {
-      const data = await gql<{ text: RawText[] }>(
-        TEXT_QUERY,
-        { slugs: [cur, prevSlug, nextSlug] },
-        { revalidate: 3600 },
-      )
-      rows = data.text ?? []
-    } catch {
-      return null
-    }
+    const data = await gql<{ text: RawText[] }>(
+      TEXT_QUERY,
+      { slugs: [cur, prevSlug, nextSlug] },
+      { revalidate: 3600 },
+    )
+    const rows = data.text ?? []
 
     // Match by the numeric `link`, not the requested slug string: the backend
     // resolves a bare-leaf alias (e.g. "zoramites/1") to the FULL canonical slug

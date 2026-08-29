@@ -41,6 +41,9 @@ COPY --from=build /src/frontend/next/package*.json ./frontend/next/
 COPY --from=build /src/frontend/next/public ./frontend/next/public
 COPY --from=build /src/frontend/next/config ./frontend/next/config
 COPY --from=build /src/frontend/webapp/build ./frontend/webapp/build
+COPY ops/container ./ops/container
 COPY ecosystem.config.cjs ./
 EXPOSE 8200 8201 5005
+HEALTHCHECK --interval=15s --timeout=10s --start-period=45s --retries=3 \
+  CMD ["node", "/app/ops/container/healthcheck.mjs"]
 CMD ["pm2-runtime", "ecosystem.config.cjs"]

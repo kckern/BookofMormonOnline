@@ -66,9 +66,9 @@ const translated = async (
 
 /**
  * Legacy TextBlock.heading rule (BomPage.ts:518-553): digitless headings get a
- * "[<quoting text heading>] " prefix from their quote group; when no group
- * exists, legacy CRASHES per-field — the baselines pin the (lang-dependent)
- * error message and null heading, so the crash is replicated. COMPAT.
+ * "[<quoting text heading>] " prefix from their quote group. Some legitimate
+ * title-page rows have no quote group; in that case their own heading is the
+ * complete heading and must not turn the entire GraphQL response into an error.
  */
 async function resolveHeading(t: TextRow, ctx: AppContext): Promise<string | null> {
   // Domain modules tag rows whose legacy path skipped heading translation
@@ -77,10 +77,7 @@ async function resolveHeading(t: TextRow, ctx: AppContext): Promise<string | nul
   const own = await translated(ctx, t.guid, 'heading', t.heading);
   if (own !== null && HAS_DIGIT.test(own)) return own;
   const quotingGuid = t.parent ? await ctx.loaders.quotingGuidByGroup.load(t.parent) : null;
-  if (!quotingGuid) {
-    const prop = ctx.lang && ctx.lang !== 'en' ? 'textParent.guid' : 'textParent.heading';
-    throw new Error(`Cannot read properties of null (reading '${prop}')`);
-  }
+  if (!quotingGuid) return own;
   const base = await ctx.loaders.textHeadingByGuid.load(quotingGuid);
   const prefix =
     ctx.lang && ctx.lang !== 'en'

@@ -50,13 +50,8 @@ interface RawPage { slug: string; title: string; sections: RawSection[] | null }
 const stripWikiLinks = wikiToText
 
 export const getPageContent = cache(async (slug: string): Promise<PageContent | null> => {
-  let p: RawPage | undefined
-  try {
-    const data = await gql<{ page: RawPage[] }>(PAGE_QUERY, { slug: [slug] }, { revalidate: 3600 })
-    p = data.page?.[0]
-  } catch {
-    return null
-  }
+  const data = await gql<{ page: RawPage[] }>(PAGE_QUERY, { slug: [slug] }, { revalidate: 3600 })
+  const p = data.page?.[0]
   if (!p) return null
 
   return {

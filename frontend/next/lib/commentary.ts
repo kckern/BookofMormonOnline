@@ -52,30 +52,26 @@ interface RawCommentary {
 }
 
 export const getCommentary = cache(async (id: string): Promise<Commentary | null> => {
-  try {
-    const data = await gql<{ commentary: RawCommentary[] }>(
-      COMMENTARY_QUERY,
-      { id: [id] },
-      { revalidate: 3600 },
-    )
-    const c = data.commentary?.[0]
-    if (!c) return null
-    const p = c.publication ?? {}
-    return {
-      id: c.id,
-      title: c.title ?? '',
-      text: c.text ?? '',
-      ref: c.location?.heading ?? '',
-      locationSlug: c.location?.slug ?? '',
-      publication: {
-        source_id: (p as RawCommentary['publication'])?.source_id ?? '',
-        source_title: (p as RawCommentary['publication'])?.source_title ?? '',
-        source_name: (p as RawCommentary['publication'])?.source_name ?? '',
-        source_url: (p as RawCommentary['publication'])?.source_url ?? '',
-      },
-    }
-  } catch {
-    return null
+  const data = await gql<{ commentary: RawCommentary[] }>(
+    COMMENTARY_QUERY,
+    { id: [id] },
+    { revalidate: 3600 },
+  )
+  const c = data.commentary?.[0]
+  if (!c) return null
+  const p = c.publication ?? {}
+  return {
+    id: c.id,
+    title: c.title ?? '',
+    text: c.text ?? '',
+    ref: c.location?.heading ?? '',
+    locationSlug: c.location?.slug ?? '',
+    publication: {
+      source_id: (p as RawCommentary['publication'])?.source_id ?? '',
+      source_title: (p as RawCommentary['publication'])?.source_title ?? '',
+      source_name: (p as RawCommentary['publication'])?.source_name ?? '',
+      source_url: (p as RawCommentary['publication'])?.source_url ?? '',
+    },
   }
 })
 

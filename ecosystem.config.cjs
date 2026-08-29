@@ -15,8 +15,9 @@ module.exports = {
     {
       name: 'next',
       cwd: '/app/frontend/next',
-      script: '/app/frontend/next/node_modules/.bin/next',
-      args: 'start --port 8200',
+      // Do not accept SSR traffic until the colocated GraphQL process is
+      // listening. This removes the startup ECONNREFUSED/false-404 window.
+      script: '/app/ops/container/start-next.mjs',
       // SSR runs in the same container as Fastify. Keep the local-development
       // fallback (:5006) out of production or reading-page renders fail with
       // ECONNREFUSED while the browser-facing GraphQL proxy still appears healthy.

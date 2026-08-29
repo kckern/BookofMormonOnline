@@ -79,13 +79,8 @@ function contentText(content: string): string {
 }
 
 export const getArt = cache(async (id: string): Promise<Art | null> => {
-  let img: RawImage | undefined
-  try {
-    const data = await gql<{ image: RawImage[] }>(ART_QUERY, { id: [id] }, { revalidate: 86400 })
-    img = data.image?.[0]
-  } catch {
-    return null
-  }
+  const data = await gql<{ image: RawImage[] }>(ART_QUERY, { id: [id] }, { revalidate: 86400 })
+  const img = data.image?.[0]
   if (!img) return null
 
   const loc = img.location

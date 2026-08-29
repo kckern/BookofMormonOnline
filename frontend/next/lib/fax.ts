@@ -66,13 +66,8 @@ const FAX_LIST_QUERY = `query FaxList { fax(filter: "pdf") { slug title info } }
 // Build the merged 57-edition list: the 52 en pdf rows in resolver order, with
 // the 5 ko-only rows spliced in after their chronological neighbours.
 export const getFaxList = cache(async (): Promise<FaxItem[]> => {
-  let en: FaxItem[] = []
-  try {
-    const d = await gql<{ fax: FaxItem[] }>(FAX_LIST_QUERY, {}, { revalidate: 3600, lang: 'en' })
-    en = d.fax ?? []
-  } catch {
-    en = []
-  }
+  const d = await gql<{ fax: FaxItem[] }>(FAX_LIST_QUERY, {}, { revalidate: 3600, lang: 'en' })
+  const en = d.fax ?? []
   const koBySlug = new Map(KO_ONLY_FAX.map((f) => [f.slug, f]))
   const merged: FaxItem[] = []
   for (const row of en) {

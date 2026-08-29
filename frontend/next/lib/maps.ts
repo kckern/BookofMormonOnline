@@ -10,10 +10,6 @@ export interface MapItem {
 const MAPS_QUERY = `query Maps { maps { slug name desc } }`
 
 export const getMaps = cache(async (): Promise<MapItem[]> => {
-  try {
-    const d = await gql<{ maps: MapItem[] }>(MAPS_QUERY, {}, { revalidate: 3600 })
-    return d.maps ?? []
-  } catch {
-    return []
-  }
+  const d = await gql<{ maps: MapItem[] }>(MAPS_QUERY, {}, { revalidate: 3600 })
+  return d.maps ?? []
 })

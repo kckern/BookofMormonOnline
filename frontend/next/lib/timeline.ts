@@ -20,12 +20,8 @@ export interface TimelineEvent {
 const TIMELINE_QUERY = `query Timeline { timeline { id slug heading date html } }`
 
 export const getTimeline = cache(async (): Promise<TimelineEvent[]> => {
-  try {
-    const d = await gql<{ timeline: TimelineEvent[] }>(TIMELINE_QUERY, {}, { revalidate: 3600 })
-    return d.timeline ?? []
-  } catch {
-    return []
-  }
+  const d = await gql<{ timeline: TimelineEvent[] }>(TIMELINE_QUERY, {}, { revalidate: 3600 })
+  return d.timeline ?? []
 })
 
 // The PHP /timeline index lists only events with a non-empty heading (map-only
