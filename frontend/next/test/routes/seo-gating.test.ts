@@ -45,7 +45,25 @@ test.describe('SSR access defaults open', () => {
     })
     expect(r.status()).toBe(200)
     expect(r.headers()['x-resolved-lang']).toBe('en')
+    expect(r.headers()['x-bom-render-mode']).toBe('ssr')
+    expect(r.headers()['x-bom-client-class']).toBe('unknown')
     expect(await r.text()).toContain('<h1')
+  })
+
+  test('a named crawler is identified without changing its SSR treatment', async ({ request }) => {
+    const r = await request.get('/lehites', { headers: bot })
+    expect(r.status()).toBe(200)
+    expect(r.headers()['x-bom-render-mode']).toBe('ssr')
+    expect(r.headers()['x-bom-client-class']).toBe('known-crawler')
+  })
+
+  test('SEO assets identify the asset rendering path', async ({ request }) => {
+    const r = await request.get('/robots.txt', {
+      headers: { 'user-agent': 'ResearchIndexer/1.0' },
+    })
+    expect(r.status()).toBe(200)
+    expect(r.headers()['x-bom-render-mode']).toBe('asset')
+    expect(r.headers()['x-bom-client-class']).toBe('unknown')
   })
 })
 

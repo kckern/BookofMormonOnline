@@ -1,0 +1,92 @@
+data_dir: /var/lib/vector
+
+sources:
+  docker:
+    type: docker_logs
+
+  bom_access_file:
+    type: file
+    include:
+      - /var/log/npm/bom-telemetry.log
+    read_from: end
+
+transforms:
+  bom_access:
+    type: remap
+    inputs:
+      - bom_access_file
+    source: |
+      . = parse_json!(.message)
+      .source_type = "bom_access"
+      .service = "bookofmormon-online"
+      .status = to_int!(.status)
+      .bytes = to_int!(.bytes)
+      .request_time = to_float!(.request_time)
+
+      if .ingress == "cloudflare" {
+        .client_ip = .cf_connecting_ip
+        .client_ip_trusted = true
+      } else if .ingress == "direct_alb" {
+        .client_ip = .alb_source
+        .client_ip_trusted = true
+      } else if .ingress == "direct_ec2" {
+        .client_ip = .socket_peer
+        .client_ip_trusted = true
+      } else {
+        .client_ip = null
+        .client_ip_trusted = false
+      }
+
+      ua = downcase(string!(.user_agent))
+      if match(ua, r'googlebot|google-inspectiontool|adsbot-google') {
+        .crawler_family = "google"
+      } else if match(ua, r'bingbot|adidxbot') {
+        .crawler_family = "bing"
+      } else if match(ua, r'facebookexternalhit|meta-externalagent|facebot') {
+        .crawler_family = "meta"
+      } else if match(ua, r'gptbot|chatgpt-user|oai-searchbot') {
+        .crawler_family = "openai"
+      } else if match(ua, r'screpy') {
+        .crawler_family = "screpy"
+      } else if match(ua, r'ahrefs|semrush|mj12bot|dotbot') {
+        .crawler_family = "seo-tool"
+      } else if match(ua, r'bot|crawl|spider|slurp|yeti|naver|daum|kakao|preview') {
+        .crawler_family = "other-crawler"
+      } else if .client_class == "browser" {
+        .crawler_family = "browser"
+      } else {
+        .crawler_family = "unknown"
+      }
+
+sinks:
+  vlogs:
+    type: elasticsearch
+    inputs:
+      - docker
+    endpoints:
+      - http://victorialogs:9428/insert/elasticsearch/
+    mode: bulk
+    api_version: v8
+    compression: gzip
+    healthcheck:
+      enabled: false
+    query:
+      _msg_field: message
+      _time_field: timestamp
+      _stream_fields: source_type,host,container_name
+
+  vlogs_bom_access:
+    type: elasticsearch
+    inputs:
+      - bom_access
+    endpoints:
+      - http://victorialogs:9428/insert/elasticsearch/
+    mode: bulk
+    api_version: v8
+    compression: gzip
+    healthcheck:
+      enabled: false
+    query:
+      _msg_field: uri
+      _time_field: timestamp
+      _stream_fields: source_type,service,host

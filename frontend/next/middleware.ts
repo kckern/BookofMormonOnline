@@ -23,6 +23,9 @@ const BROWSER_UA_RE = /mozilla\/5\.0.*(?:chrome|chromium|crios|firefox|fxios|saf
 
 const CRA_ORIGIN = 'http://localhost:8201'
 
+type RenderMode = 'ssr' | 'cra' | 'asset' | 'analytics'
+type ClientClass = 'browser' | 'known-crawler' | 'unknown'
+
 // fetch() decodes content encodings, while a browser applies any encoding
 // headers it receives.  Do not copy hop-by-hop or representation-length
 // headers from the CRA response: forwarding a stale content-length or
@@ -66,15 +69,28 @@ function isInteractiveBrowserNavigation(request: NextRequest, ua: string): boole
   return hasFetchMetadata || hasClientHints
 }
 
+function classifyClient(request: NextRequest, ua: string): ClientClass {
+  if (KNOWN_CRAWLER_RE.test(ua)) return 'known-crawler'
+  if (isInteractiveBrowserNavigation(request, ua)) return 'browser'
+  return 'unknown'
+}
+
+function markResponse<T extends Response>(response: T, clientClass: ClientClass, renderMode?: RenderMode): T {
+  response.headers.set('X-BOM-Client-Class', clientClass)
+  if (renderMode) response.headers.set('X-BOM-Render-Mode', renderMode)
+  return response
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname, hostname } = request.nextUrl
   const ua = request.headers.get('user-agent') ?? ''
+  const clientClass = classifyClient(request, ua)
 
   // --- Host redirect: www.* → bare domain ---
   if (hostname.startsWith('www.')) {
     const url = request.nextUrl.clone()
     url.hostname = hostname.slice(4)
-    return NextResponse.redirect(url, 301)
+    return markResponse(NextResponse.redirect(url, 301), clientClass)
   }
 
   // --- First-party analytics proxy (Clicky anti-adblock) ---
@@ -83,8 +99,12 @@ export async function middleware(request: NextRequest) {
   // and humans (the whole point of tracking) reach them without CRA proxying.
   const clickyJsPath = process.env.CLICKY_JS_PATH
   const clickyBeaconPath = process.env.CLICKY_BEACON_PATH
-  if (clickyJsPath && pathname === clickyJsPath) return proxyClickyJs()
-  if (clickyBeaconPath && pathname === clickyBeaconPath) return proxyClickyBeacon(request)
+  if (clickyJsPath && pathname === clickyJsPath) {
+    return markResponse(await proxyClickyJs(), clientClass, 'analytics')
+  }
+  if (clickyBeaconPath && pathname === clickyBeaconPath) {
+    return markResponse(await proxyClickyBeacon(request), clientClass, 'analytics')
+  }
 
   // --- Crawler/SEO assets: always served by Next, regardless of UA ---
   // robots.txt, sitemap.xml, and OG images are fetched by scrapers that may not
@@ -105,14 +125,14 @@ export async function middleware(request: NextRequest) {
     if (request.method === 'GET' && segs.length && LOCALE_SEGS.has(segs[0])) {
       const url = request.nextUrl.clone()
       url.pathname = '/' + segs.slice(1).join('/')
-      return NextResponse.redirect(url)
+      return markResponse(NextResponse.redirect(url), clientClass, 'cra')
     }
     const target = new URL(CRA_ORIGIN + pathname + request.nextUrl.search)
     const craRes = await fetch(target, { redirect: 'follow' })
-    return new Response(craRes.body, {
+    return markResponse(new Response(craRes.body, {
       status: craRes.status,
       headers: responseHeadersForClient(craRes.headers),
-    })
+    }), clientClass, 'cra')
   }
 
   // --- Bot/crawler: serve Next.js SSR with lang header ---
@@ -122,6 +142,7 @@ export async function middleware(request: NextRequest) {
   requestHeaders.set('x-lang', lang)
   const res = NextResponse.next({ request: { headers: requestHeaders } })
   res.headers.set('X-Resolved-Lang', lang)
+  markResponse(res, clientClass, isSeoAsset ? 'asset' : 'ssr')
   if (seoIntentForPath(pathname) === 'noindex') {
     res.headers.set('X-Robots-Tag', 'noindex, follow')
   }

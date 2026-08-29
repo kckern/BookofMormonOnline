@@ -1,0 +1,37 @@
+name: observability
+services:
+  victorialogs:
+    image: victoriametrics/victoria-logs:latest
+    container_name: victorialogs
+    restart: unless-stopped
+    command: ["-retentionPeriod=7d", "-storageDataPath=/vlogs"]
+    volumes: ["vlogs-data:/vlogs"]
+    ports: ["127.0.0.1:9428:9428"]
+    mem_limit: 512m
+    logging: { driver: json-file, options: { max-size: "10m", max-file: "3" } }
+  vector:
+    image: timberio/vector:latest-alpine
+    container_name: vector
+    restart: unless-stopped
+    depends_on: [victorialogs]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./vector.yaml:/etc/vector/vector.yaml:ro
+      - ./vector-data:/var/lib/vector
+      - /home/ubuntu/BoMDocker/config/proxy/logs:/var/log/npm:ro
+    mem_limit: 384m
+    logging: { driver: json-file, options: { max-size: "10m", max-file: "3" } }
+  watchtower:
+    image: nickfedor/watchtower:latest
+    container_name: watchtower
+    restart: unless-stopped
+    volumes: ["/var/run/docker.sock:/var/run/docker.sock"]
+    environment:
+      WATCHTOWER_LABEL_ENABLE: "true"
+      WATCHTOWER_CLEANUP: "true"
+      WATCHTOWER_POLL_INTERVAL: "300"
+      WATCHTOWER_INCLUDE_RESTARTING: "true"
+    mem_limit: 128m
+    logging: { driver: json-file, options: { max-size: "10m", max-file: "3" } }
+volumes:
+  vlogs-data:
