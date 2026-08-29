@@ -6,7 +6,8 @@ the implementation-state sections of
 
 ## Deployed application state
 
-- `origin/dev` and `origin/prod`: `871ee14f5449fde70cc0cc03d556881987f59e55`
+- deployed `origin/prod`: `871ee14f5449fde70cc0cc03d556881987f59e55`
+- current `origin/dev`: `f1187bffe6fbc19c48b55ccedf8f9174269d4ee9`
 - GitHub Actions production run: `33233537694`, successful
 - production image: `kckern/bookofmormon-online:prod`
 - application container: healthy after deployment
@@ -21,6 +22,11 @@ the implementation-state sections of
 - duplicate `bom_log` beacons: idempotent `INSERT IGNORE`
 - SSR loaders: upstream failures propagate instead of becoming empty pages or
   false 404s
+
+`dev` additionally contains the timeline correction, full-crawl tooling,
+atomic blue/green migration, production monitoring artifacts, and the Clicky
+referrer repair. Those changes are tested but are not represented in the
+currently deployed production image.
 
 ## Full production sitemap crawl
 
@@ -68,16 +74,25 @@ post-cutover baseline rather than recording defects already corrected in source.
 The application health gate works after a container starts: from the first
 healthy Docker probe onward, 2,552 sampled requests produced zero 5xx responses.
 However, telemetry proved that Watchtower still creates a stop-first outage for
-the single container. The last replacement produced 59 HTTP 502 responses between
-the old container stopping and the new container becoming healthy.
+the single container. The complete telemetry window for the most recent
+replacement contains 140 HTTP 502 responses, all between
+`2026-08-29T04:24:52Z` and `04:25:17Z`. There have been no subsequent 502s.
 
-A blue/green deployment implementation is staged in
+A blue/green deployment implementation is staged and tested in
 [`ops/production`](../../ops/production/README.md). It keeps a stable Nginx
 gateway, starts only the inactive application slot, waits for Docker health,
 gracefully switches upstreams, verifies ports 8200 and 5005, drains the old slot,
 and retains it stopped for one-deployment rollback. A systemd timer replaces
 Watchtower only for this application image. Watchtower can continue managing
 unrelated labeled containers.
+
+The one-time migration uses the exact existing Docker name
+`bookofmormon-online` for the stable gateway. It starts and verifies the blue
+slot before renaming the current container to the green rollback slot. NPM's
+existing workers retain the old container IP during that handoff; NPM reloads
+only after the gateway and both upstreams pass health checks. A pre-commit trap
+restores the original name and reloads NPM on any failure. This avoids the DNS
+alias collision found in the first draft.
 
 Installing this control plane on production is pending explicit approval because
 it creates persistent systemd units. Until installed, the remaining deployment
@@ -111,24 +126,52 @@ Current Korean state:
 - Cloudflare zone: `pending`
 - required nameservers: `nero.ns.cloudflare.com`, `phoenix.ns.cloudflare.com`
 - public delegation: still the four Route 53 nameservers
+- GoDaddy API update: accepted with HTTP 204 at `2026-08-29T05:12:33Z`, but
+  GoDaddy's subsequent read API and the `.kr` parent still showed Route 53; the
+  registrar/registry update is asynchronous and not yet complete
 - DNSSEC: must follow Cloudflare activation
 - Route 53 zone: retained as rollback until activation, strict TLS, and DNSSEC
   have been verified
 
+## Monitoring and alerting state
+
+The repaired `bom-health-checker` Lambda now validates a real GraphQL response
+through the public `/graphql` path every five minutes and publishes
+`BOM/Production APIHealthy`. Three consecutive failures transition
+`bom-production-api-unhealthy` to `ALARM`; that transition invokes the existing
+reboot Lambda directly through EventBridge. The disabled, unauthenticated API
+Gateway endpoint is no longer in the recovery path.
+
+The host metrics timer is installed, enabled, and publishing every five minutes.
+Observed samples at 05:00Z and 05:05Z reported Next at approximately 75 MiB,
+zero PM2 restart deltas, zero current-window 5xx, healthy Vector ingestion, and
+zero non-Cloudflare ingress after the temporary Korean-host exception. Eleven
+CloudWatch alarms cover API health, ALB health/5xx, Next memory, PM2 restarts,
+NPM 5xx, Vector health, non-Cloudflare ingress, root disk, and telemetry size and
+growth. Their SNS topic exists, but the email subscription for `kc@kckern.com`
+remains `PendingConfirmation`; alarm delivery is not accepted until that email
+link is confirmed.
+
 ## Remaining acceptance gates
 
-1. Approve and install the persistent blue/green systemd deployment control.
-2. Deploy the timeline fix without a stop-first outage and rerun the sitemap
-   regression.
-3. Start and monitor the fresh Screpy crawl (project limit is 5,000 pages).
-4. Confirm a sustained memory plateau, zero PM2 restarts, and zero steady-state
-   502s over several hours of crawler traffic.
-5. Complete Korean nameserver delegation; then enable Full (strict), DNSSEC, and
-   finally retire Route 53 after the rollback window.
-6. Split the ALB and EC2 security groups and enforce Cloudflare-only ingress.
-7. Add actionable alert delivery for NPM 5xx bursts, PM2 restarts, Next memory,
-   Vector failures, non-Cloudflare ingress, and disk/log growth. Existing
-   Prometheus currently scrapes only itself and there is no general alert
-   destination configured.
-8. Review VictoriaLogs and raw telemetry growth after a full 24-hour sample;
+1. Approve and install the persistent blue/green deployment control, perform
+   the health-gated initial gateway cutover, and disable Watchtower management
+   of the application slots.
+2. Promote `dev` to `prod`, including the timeline and Clicky referrer fixes,
+   without a stop-first outage.
+3. Verify a real externally referred browser visit is classified by Clicky as
+   search/link rather than direct; then rerun the full sitemap regression.
+4. Start and monitor the fresh Screpy crawl (project limit is 5,000 pages).
+5. Confirm a sustained memory plateau, zero PM2 restarts, and zero steady-state
+   502s over several hours of crawler traffic. The current container is healthy,
+   Next is approximately 75 MiB, and all restart counts are zero, but the newest
+   runtime sample is not yet several hours old.
+6. Wait for the accepted Korean nameserver change to reach the `.kr` registry;
+   then verify Cloudflare activation, enable Full (strict), enable DNSSEC, and
+   add the DS record at GoDaddy.
+7. Split the ALB and EC2 security groups and enforce Cloudflare-only ingress
+   after the Korean hostname is confirmed through Cloudflare.
+8. Confirm the AWS SNS subscription email so existing alarms can deliver.
+9. Retire the Korean Route 53 zone only after the agreed rollback window.
+10. Review VictoriaLogs and raw telemetry growth after a full 24-hour sample;
    seven-day retention remains in place while bot policy data is collected.
