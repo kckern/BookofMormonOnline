@@ -5,8 +5,8 @@ minimal GraphQL query to the public `/graphql` route, verifying the complete
 Cloudflare → ALB → NPM → Fastify path, then publishes
 `BOM/Production APIHealthy` with the production EC2 instance ID.
 
-The `bom-production-api-unhealthy` CloudWatch alarm requires three failed
-five-minute periods. Its transition into `ALARM` is matched by
+The `bom-production-api-unhealthy` CloudWatch alarm requires three failed or
+missing five-minute periods (`TreatMissingData=breaching`). Its transition into `ALARM` is matched by
 `bom-production-api-reboot`, which invokes the existing `admin-api-reboot`
 Lambda directly with a reboot request. EventBridge triggers only on the state
 transition, so it cannot reboot the instance every five minutes while an outage
