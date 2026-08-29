@@ -36,12 +36,14 @@ export async function withRenderSlot<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 // ── S3 write-back (fire-and-forget with bounded retry) ───────────────
-const s3 = new S3Client({});
+const s3 = new S3Client({ region: env.AWS_REGION });
 const contentType = (ext: 'jpg' | 'webp') => (ext === 'webp' ? 'image/webp' : 'image/jpeg');
 
 export function writeBack(key: string, body: Buffer, ext: 'jpg' | 'webp'): void {
   if (env.SANDBOX) return;   // sandbox must not touch S3 (matches s3.ts convention)
-  const bucket = process.env['FAX_S3_BUCKET'] || process.env['S3_BUCKET'];
+  // Keep fax storage independently opt-in. S3_BUCKET is scoped to profile
+  // images and its production role cannot write outside profiles/*.
+  const bucket = env.FAX_S3_BUCKET;
   if (!bucket) return;                       // unconfigured -> skip silently
   void (async () => {
     for (let attempt = 0; attempt < 3; attempt++) {

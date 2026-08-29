@@ -1,7 +1,12 @@
 import 'dotenv/config';
 import { z } from 'zod';
 
-const schema = z.object({
+const optionalNonEmptyString = z.preprocess(
+  (value) => (value === '' ? undefined : value),
+  z.string().min(1).optional(),
+);
+
+export const envSchema = z.object({
   PORT: z.coerce.number().default(5006),
   MYSQL_HOST: z.string().min(1),
   MYSQL_PORT: z.coerce.number().default(3306),
@@ -10,6 +15,13 @@ const schema = z.object({
   MYSQL_DB: z.string().default('bom_prd'),
   FAX_S3_BUCKET: z.string().optional(),
   FAX_S3_PUBLIC_URL: z.string().optional(),
+  // Profile images are written to S3 whenever sandboxing is disabled. Keep the
+  // clients explicitly regional even though EC2 instance metadata can currently
+  // resolve the region, so containers remain portable and deterministic.
+  S3_BUCKET: optionalNonEmptyString,
+  S3_PUBLIC_URL: z.string().url().default('https://assets.bookofmormon.online'),
+  CLOUDFRONT_DISTRIBUTION_ID: optionalNonEmptyString,
+  AWS_REGION: z.string().min(1).default('us-west-2'),
   SANDBOX: z
     .string()
     .default('1')
@@ -45,8 +57,16 @@ const schema = z.object({
   // Authentication provider. 'opaque' (default) delegates to the SessionStore
   // token table. 'jwt' and 'cognito' are reserved for future providers.
   AUTH_PROVIDER: z.enum(['opaque', 'jwt', 'cognito']).default('opaque'),
+}).superRefine((values, ctx) => {
+  if (!values.SANDBOX && !values.S3_BUCKET) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['S3_BUCKET'],
+      message: 'S3_BUCKET is required when SANDBOX=0',
+    });
+  }
 });
 
-export type Env = z.infer<typeof schema>;
+export type Env = z.infer<typeof envSchema>;
 
-export const env: Env = schema.parse(process.env);
+export const env: Env = envSchema.parse(process.env);

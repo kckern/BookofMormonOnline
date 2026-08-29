@@ -15,13 +15,29 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { CloudFrontClient, CreateInvalidationCommand } from '@aws-sdk/client-cloudfront';
 import sharp from 'sharp';
+import { env } from '../config/env.js';
 
-const s3Client = new S3Client({});
-const cloudFrontClient = new CloudFrontClient({});
+interface CommandSender<TCommand> {
+  send(command: TCommand): Promise<unknown>;
+}
 
-const PROFILE_IMAGE_BASE_URL = (
-  process.env['S3_PUBLIC_URL'] || 'https://assets.bookofmormon.online'
-).replace(/\/+$/, '');
+export interface ProfileImageStorageDependencies {
+  bucket?: string;
+  publicUrl: string;
+  distributionId?: string;
+  s3: CommandSender<PutObjectCommand>;
+  cloudFront: CommandSender<CreateInvalidationCommand>;
+}
+
+const runtimeDependencies: ProfileImageStorageDependencies = {
+  bucket: env.S3_BUCKET,
+  publicUrl: env.S3_PUBLIC_URL.replace(/\/+$/, ''),
+  distributionId: env.CLOUDFRONT_DISTRIBUTION_ID,
+  s3: new S3Client({ region: env.AWS_REGION }),
+  cloudFront: new CloudFrontClient({ region: env.AWS_REGION }),
+};
+
+const PROFILE_IMAGE_BASE_URL = runtimeDependencies.publicUrl;
 
 /** Derived public URL for a user's avatar (matches the frontend convention). */
 export function getProfileImageUrl(userHash: string): string {
@@ -33,7 +49,16 @@ export function getProfileImageUrl(userHash: string): string {
  * Throws on misconfiguration, invalid input, processing failure, or S3 failure.
  */
 export async function uploadProfileImage(base64Data: string, userHash: string): Promise<string> {
-  const bucket = process.env['S3_BUCKET'];
+  return uploadProfileImageWithDependencies(base64Data, userHash, runtimeDependencies);
+}
+
+/** Test seam for the storage adapter; production callers use uploadProfileImage. */
+export async function uploadProfileImageWithDependencies(
+  base64Data: string,
+  userHash: string,
+  dependencies: ProfileImageStorageDependencies,
+): Promise<string> {
+  const bucket = dependencies.bucket;
   if (!bucket) {
     throw new Error('Profile image storage not configured (S3_BUCKET unset)');
   }
@@ -46,6 +71,12 @@ export async function uploadProfileImage(base64Data: string, userHash: string): 
 
   const base64Clean = base64Data.replace(/^data:image\/\w+;base64,/, '');
   const imageBuffer = Buffer.from(base64Clean, 'base64');
+  const startedAt = Date.now();
+
+  console.info('[profile-image] upload start', {
+    hash: userHash,
+    inputBytes: imageBuffer.length,
+  });
 
   let processedImage: Buffer;
   try {
@@ -60,7 +91,7 @@ export async function uploadProfileImage(base64Data: string, userHash: string): 
   const key = `profiles/${userHash}.jpg`;
 
   try {
-    await s3Client.send(
+    await dependencies.s3.send(
       new PutObjectCommand({
         Bucket: bucket,
         Key: key,
@@ -76,10 +107,11 @@ export async function uploadProfileImage(base64Data: string, userHash: string): 
   }
 
   // Best-effort CDN invalidation — the upload already succeeded.
-  const distributionId = process.env['CLOUDFRONT_DISTRIBUTION_ID'];
+  const distributionId = dependencies.distributionId;
+  let invalidated = false;
   if (distributionId) {
     try {
-      await cloudFrontClient.send(
+      await dependencies.cloudFront.send(
         new CreateInvalidationCommand({
           DistributionId: distributionId,
           InvalidationBatch: {
@@ -88,10 +120,19 @@ export async function uploadProfileImage(base64Data: string, userHash: string): 
           },
         }),
       );
+      invalidated = true;
     } catch (err) {
       console.error('[s3] CloudFront invalidation failed (non-fatal):', err);
     }
   }
 
-  return `${PROFILE_IMAGE_BASE_URL}/${key}`;
+  console.info('[profile-image] upload success', {
+    hash: userHash,
+    key,
+    outputBytes: processedImage.length,
+    durationMs: Date.now() - startedAt,
+    invalidated,
+  });
+
+  return `${dependencies.publicUrl.replace(/\/+$/, '')}/${key}`;
 }
