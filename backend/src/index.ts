@@ -13,6 +13,9 @@ import { startBotScheduler } from './bots/scheduler.js';
 import { startRetentionJob } from './messaging/retention.js';
 import { faxRoutes } from './media/fax/route.js';
 import { isInternalLoopback } from './http/rateLimit.js';
+import { startEmailWorker } from './email/worker.js';
+import { startMailEventConsumer } from './mail/eventConsumer.js';
+import { startNotificationEmailScheduler } from './email/notificationScheduler.js';
 
 const app = Fastify({
   logger: { level: env.LOG_LEVEL },
@@ -144,6 +147,11 @@ app
     // Message retention (M-7). No-op unless MESSAGE_RETENTION_DAYS is set to a
     // positive integer. Hard-purges soft-deleted rows past the cutoff every 24h.
     startRetentionJob(db);
+    // Durable email delivery. The worker itself is fail-closed and does not
+    // claim a row unless MAIL_SENDING_ENABLED=true.
+    startEmailWorker(db);
+    startNotificationEmailScheduler(db);
+    await startMailEventConsumer(db);
   })
   .catch((err) => {
     app.log.error(err);

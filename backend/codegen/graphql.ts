@@ -162,6 +162,12 @@ export type DivisionProgressArgs = {
   token?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type EmailPreference = {
+  __typename?: 'EmailPreference';
+  category: Scalars['String']['output'];
+  enabled: Scalars['Boolean']['output'];
+};
+
 export type Event = {
   __typename?: 'Event';
   date?: Maybe<Scalars['String']['output']>;
@@ -723,6 +729,7 @@ export type Mutation = {
   ping?: Maybe<Scalars['Boolean']['output']>;
   processRequest?: Maybe<Scalars['Boolean']['output']>;
   removeBot?: Maybe<Scalars['Boolean']['output']>;
+  requestAccountRecovery?: Maybe<Scalars['Boolean']['output']>;
   requestPasswordReset?: Maybe<Scalars['Boolean']['output']>;
   requestToJoinGroup?: Maybe<JoinedGroup>;
   resetPassword?: Maybe<SignIn>;
@@ -730,6 +737,7 @@ export type Mutation = {
   signout?: Maybe<Scalars['Boolean']['output']>;
   signup?: Maybe<SignIn>;
   startReadingPlan?: Maybe<ReadingPlanResult>;
+  updateEmailPreference: EmailPreference;
   updateReadingPlan?: Maybe<ReadingPlanResult>;
   uploadProfileImage?: Maybe<Scalars['Boolean']['output']>;
   withdrawRequest?: Maybe<JoinedGroup>;
@@ -890,6 +898,11 @@ export type MutationRemoveBotArgs = {
 };
 
 
+export type MutationRequestAccountRecoveryArgs = {
+  email?: InputMaybe<Scalars['String']['input']>;
+};
+
+
 export type MutationRequestPasswordResetArgs = {
   email?: InputMaybe<Scalars['String']['input']>;
 };
@@ -930,6 +943,12 @@ export type MutationSignupArgs = {
 export type MutationStartReadingPlanArgs = {
   input: StartPlanInput;
   token: Scalars['String']['input'];
+};
+
+
+export type MutationUpdateEmailPreferenceArgs = {
+  category: Scalars['String']['input'];
+  enabled: Scalars['Boolean']['input'];
 };
 
 
@@ -1156,6 +1175,7 @@ export type Query = {
   closetab?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
   commentary?: Maybe<Array<Maybe<Commentary>>>;
   division?: Maybe<Array<Maybe<Division>>>;
+  emailPreferences: Array<EmailPreference>;
   fax?: Maybe<Array<Maybe<Fax>>>;
   faxIndex?: Maybe<FaxIndex>;
   /** Study page + section (title + slug) for each verse id — for fax verse deep links. */
@@ -2216,6 +2236,7 @@ export type ResolversTypes = {
   CrossRef: ResolverTypeWrapper<Partial<CrossRef>>;
   CrossRefSet: ResolverTypeWrapper<Partial<CrossRefSet>>;
   Division: ResolverTypeWrapper<Partial<Division>>;
+  EmailPreference: ResolverTypeWrapper<Partial<EmailPreference>>;
   Event: ResolverTypeWrapper<Partial<Event>>;
   EventGrid: ResolverTypeWrapper<Partial<EventGrid>>;
   Fax: ResolverTypeWrapper<Partial<Fax>>;
@@ -2344,6 +2365,7 @@ export type ResolversParentTypes = {
   CrossRef: Partial<CrossRef>;
   CrossRefSet: Partial<CrossRefSet>;
   Division: Partial<Division>;
+  EmailPreference: Partial<EmailPreference>;
   Event: Partial<Event>;
   EventGrid: Partial<EventGrid>;
   Fax: Partial<Fax>;
@@ -2589,6 +2611,12 @@ export type DivisionResolvers<ContextType = AppContext, ParentType extends Resol
   title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   titlepage?: Resolver<Maybe<ResolversTypes['Page']>, ParentType, ContextType>;
   weight?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type EmailPreferenceResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['EmailPreference'] = ResolversParentTypes['EmailPreference']> = {
+  category?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  enabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3114,6 +3142,7 @@ export type MutationResolvers<ContextType = AppContext, ParentType extends Resol
   ping?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationPingArgs>>;
   processRequest?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationProcessRequestArgs>>;
   removeBot?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationRemoveBotArgs>>;
+  requestAccountRecovery?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationRequestAccountRecoveryArgs>>;
   requestPasswordReset?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationRequestPasswordResetArgs>>;
   requestToJoinGroup?: Resolver<Maybe<ResolversTypes['JoinedGroup']>, ParentType, ContextType, Partial<MutationRequestToJoinGroupArgs>>;
   resetPassword?: Resolver<Maybe<ResolversTypes['SignIn']>, ParentType, ContextType, Partial<MutationResetPasswordArgs>>;
@@ -3121,6 +3150,7 @@ export type MutationResolvers<ContextType = AppContext, ParentType extends Resol
   signout?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationSignoutArgs>>;
   signup?: Resolver<Maybe<ResolversTypes['SignIn']>, ParentType, ContextType, Partial<MutationSignupArgs>>;
   startReadingPlan?: Resolver<Maybe<ResolversTypes['ReadingPlanResult']>, ParentType, ContextType, RequireFields<MutationStartReadingPlanArgs, 'input' | 'token'>>;
+  updateEmailPreference?: Resolver<ResolversTypes['EmailPreference'], ParentType, ContextType, RequireFields<MutationUpdateEmailPreferenceArgs, 'category' | 'enabled'>>;
   updateReadingPlan?: Resolver<Maybe<ResolversTypes['ReadingPlanResult']>, ParentType, ContextType, RequireFields<MutationUpdateReadingPlanArgs, 'input' | 'token'>>;
   uploadProfileImage?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<MutationUploadProfileImageArgs, 'imageData' | 'token'>>;
   withdrawRequest?: Resolver<Maybe<ResolversTypes['JoinedGroup']>, ParentType, ContextType, Partial<MutationWithdrawRequestArgs>>;
@@ -3321,6 +3351,7 @@ export type QueryResolvers<ContextType = AppContext, ParentType extends Resolver
   closetab?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType, Partial<QueryClosetabArgs>>;
   commentary?: Resolver<Maybe<Array<Maybe<ResolversTypes['Commentary']>>>, ParentType, ContextType, Partial<QueryCommentaryArgs>>;
   division?: Resolver<Maybe<Array<Maybe<ResolversTypes['Division']>>>, ParentType, ContextType, Partial<QueryDivisionArgs>>;
+  emailPreferences?: Resolver<Array<ResolversTypes['EmailPreference']>, ParentType, ContextType>;
   fax?: Resolver<Maybe<Array<Maybe<ResolversTypes['Fax']>>>, ParentType, ContextType, Partial<QueryFaxArgs>>;
   faxIndex?: Resolver<Maybe<ResolversTypes['FaxIndex']>, ParentType, ContextType, Partial<QueryFaxIndexArgs>>;
   faxVerseLocations?: Resolver<Maybe<Array<Maybe<ResolversTypes['FaxVerseLocation']>>>, ParentType, ContextType, RequireFields<QueryFaxVerseLocationsArgs, 'verseIds'>>;
@@ -3859,6 +3890,7 @@ export type Resolvers<ContextType = AppContext> = {
   CrossRef?: CrossRefResolvers<ContextType>;
   CrossRefSet?: CrossRefSetResolvers<ContextType>;
   Division?: DivisionResolvers<ContextType>;
+  EmailPreference?: EmailPreferenceResolvers<ContextType>;
   Event?: EventResolvers<ContextType>;
   EventGrid?: EventGridResolvers<ContextType>;
   Fax?: FaxResolvers<ContextType>;

@@ -21,7 +21,23 @@ const schema = z.object({
   // add e.g. 'sendgrid'). 'console' forces the log-only transport (staging).
   MAIL_PROVIDER: z.enum(['ses', 'console']).default('ses'),
   MAIL_FROM: z.string().optional(),
-  MAIL_REGION: z.string().default('us-east-1'),
+  MAIL_REGION: z.string().default('us-west-2'),
+  MAIL_CONFIGURATION_SET: z.string().default('bom-transactional'),
+  // Both switches are intentionally fail-closed. Deploying code or schema can
+  // never start sending mail without an explicit production configuration.
+  MAIL_SENDING_ENABLED: z.string().default('false').transform((v) => v === 'true'),
+  MAIL_SECURITY_ENABLED: z.string().default('false').transform((v) => v === 'true'),
+  MAIL_NOTIFICATIONS_ENABLED: z.string().default('false').transform((v) => v === 'true'),
+  MAIL_WORKER_INTERVAL_MS: z.coerce.number().int().min(250).default(1000),
+  MAIL_SENDS_PER_SECOND: z.coerce.number().int().min(1).max(14).default(10),
+  MAIL_MAX_TRANSACTIONAL_PER_RECIPIENT_HOUR: z.coerce.number().int().min(1).max(100).default(3),
+  MAIL_MAX_NOTIFICATIONS_PER_USER_HOUR: z.coerce.number().int().min(1).max(100).default(3),
+  MAIL_MAX_NOTIFICATIONS_PER_USER_DAY: z.coerce.number().int().min(1).max(100).default(8),
+  MAIL_NONPROD_ALLOWLIST: z.string().default(''),
+  MAIL_STAFF_USERS: z.string().default(''),
+  MAIL_EVENT_QUEUE_URL: z.string().optional(),
+  MAIL_UNSUBSCRIBE_SECRET: z.string().optional(),
+  MAIL_RATE_LIMIT_SECRET: z.string().optional(),
   APP_BASE_URL: z.string().default('https://bom.kckern.net'),
   SUPPORTED_LANGUAGES: z
     .string()

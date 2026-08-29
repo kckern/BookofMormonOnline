@@ -39,6 +39,7 @@ const Analysis = lazy(() => import("../views/Analysis/Analysis.js"));
 const Theology = lazy(() => import("../views/Theology/Theology.js"));
 const History = lazy(() => import("../views/History/History.js"));
 const Invitation = lazy(() => import("../views/User/Invitation.js"));
+const ResetPassword = lazy(() => import("../views/User/ResetPassword.js"));
 const MobileGroups = lazy(() => import("../views/_Common/Study/Mobile/MobileStudy.js"));
 const MobileMenu = lazy(() => import("../views/_Common/MobileMenu.js"));
 const Group = lazy(() => import("../views/_Common/Group.js"));
@@ -82,6 +83,10 @@ const routes = [
     exact: true,
     path: "/community",
     component: CommunityRedirect,
+  },
+  {
+    path: "/reset-password",
+    component: ResetPassword,
   },
   {
     path: "/groups",

@@ -17,9 +17,11 @@ import * as store from '../../auth/sessionStore.js';
 import { hashPassword } from '../../auth/password.js';
 import { cleanUsername } from '../../auth/identity.js';
 import { createResetToken, consumeResetToken } from '../../data/loaders/passwordreset.js';
-import { sendEmail } from '../../mail/mailer.js';
-import { passwordResetEmail } from '../../mail/templates.js';
+import { createHash } from 'node:crypto';
+import { enqueueEmail } from '../../email/outbox.js';
+import { renderTransactionalTemplate } from '../../email/templates.js';
 import { env } from '../../config/env.js';
+import { consumeEmailRateLimit } from '../../email/rateLimit.js';
 
 /**
  * UserAuth parent row type — passed as `parent` to User field resolvers.
@@ -159,6 +161,9 @@ export const userauthResolvers: Resolvers = {
       const email = (args.email ?? '').trim();
       if (!email) return true;
       try {
+        if (!(await consumeEmailRateLimit(ctx.db, {
+          scope: `ip:${ctx.ip}`, action: 'account-recovery', limit: 5,
+        }))) return true;
         const user = await ctx.db
           .selectFrom('bom_user')
           .select(['user', 'name', 'email'])
@@ -166,13 +171,80 @@ export const userauthResolvers: Resolvers = {
           .limit(1)
           .executeTakeFirst();
         if (user) {
+          if (!(await consumeEmailRateLimit(ctx.db, {
+            scope: `account:${user.user}`, action: 'account-recovery', limit: 3,
+          }))) return true;
+          const bucket = Math.floor(Date.now() / (15 * 60 * 1000));
+          const idempotencyKey = `password-reset:${createHash('sha256').update(`${user.user}:${bucket}`).digest('hex')}`;
+          const alreadyQueued = await ctx.db.selectFrom('bom_email_outbox').select('id')
+            .where('idempotency_key', '=', idempotencyKey).executeTakeFirst();
+          if (alreadyQueued) return true;
           const token = await createResetToken(ctx.db, user.user);
           const resetUrl = `${env.APP_BASE_URL}/reset-password?token=${token}`;
-          const { subject, html, text } = passwordResetEmail(resetUrl, user.name ?? undefined);
-          await sendEmail({ to: user.email ?? email, subject, html, text });
+          const rendered = await renderTransactionalTemplate(ctx.db, 'password-reset', ctx.lang, { resetUrl });
+          await enqueueEmail(ctx.db, {
+            kind: 'transactional',
+            category: 'security',
+            recipientEmail: user.email ?? email,
+            userId: user.user,
+            templateKey: rendered.templateKey,
+            templateVersion: rendered.templateVersion,
+            locale: rendered.lang,
+            variables: { resetUrl },
+            sensitive: true,
+            subject: rendered.subject,
+            html: rendered.html,
+            text: rendered.text,
+            idempotencyKey,
+          });
         }
       } catch (err) {
         console.error('requestPasswordReset error:', err);
+      }
+      return true;
+    },
+
+    /** Email the account name without disclosing whether the address exists. */
+    requestAccountRecovery: async (_root, args: { email?: string | null }, ctx: AppContext) => {
+      const email = (args.email ?? '').trim();
+      if (!email) return true;
+      try {
+        if (!(await consumeEmailRateLimit(ctx.db, {
+          scope: `ip:${ctx.ip}`, action: 'account-recovery', limit: 5,
+        }))) return true;
+        const user = await ctx.db.selectFrom('bom_user')
+          .select(['user', 'email'])
+          .where('email', '=', email)
+          .limit(1)
+          .executeTakeFirst();
+        if (user?.email) {
+          if (!(await consumeEmailRateLimit(ctx.db, {
+            scope: `account:${user.user}`, action: 'account-recovery', limit: 3,
+          }))) return true;
+          const signinUrl = new URL('/', env.APP_BASE_URL).toString();
+          const rendered = await renderTransactionalTemplate(ctx.db, 'account-recovery', ctx.lang, {
+            username: user.user,
+            signinUrl,
+          });
+          const bucket = Math.floor(Date.now() / (15 * 60 * 1000));
+          await enqueueEmail(ctx.db, {
+            kind: 'transactional',
+            category: 'security',
+            recipientEmail: user.email,
+            userId: user.user,
+            templateKey: rendered.templateKey,
+            templateVersion: rendered.templateVersion,
+            locale: rendered.lang,
+            variables: { username: user.user, signinUrl },
+            sensitive: true,
+            subject: rendered.subject,
+            html: rendered.html,
+            text: rendered.text,
+            idempotencyKey: `account-recovery:${createHash('sha256').update(`${user.user}:${bucket}`).digest('hex')}`,
+          });
+        }
+      } catch (err) {
+        console.error('requestAccountRecovery error:', err);
       }
       return true;
     },

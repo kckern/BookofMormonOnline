@@ -307,6 +307,137 @@ export interface BomNotification {
   dismissed_at: Date | null;
 }
 
+export interface BomEmailOutbox {
+  id: Generated<number>;
+  kind: string;
+  category: string;
+  user_id: string | null;
+  recipient_email: string;
+  template_key: string;
+  template_version: number;
+  locale: Generated<string>;
+  variables: Json;
+  scrub_after_send: Generated<number>;
+  rendered_subject: string;
+  rendered_html: string;
+  rendered_text: string;
+  idempotency_key: string;
+  status: Generated<string>;
+  attempt_count: Generated<number>;
+  max_attempts: Generated<number>;
+  scheduled_at: Generated<Date>;
+  lease_owner: string | null;
+  lease_expires_at: Date | null;
+  last_error: string | null;
+  provider_message_id: string | null;
+  sent_at: Date | null;
+  created_at: Generated<Date>;
+  updated_at: Generated<Date>;
+}
+
+export interface BomEmailTemplate {
+  template_key: string;
+  version: number;
+  lang: string;
+  subject_template: string;
+  preheader_template: string;
+  body_markdown: string;
+  cta_text: string | null;
+  cta_url_variable: string | null;
+  brand_name: string;
+  footer_text: string;
+  translation_status: Generated<string>;
+  reviewed_by: string | null;
+  published_at: Date | null;
+  active: Generated<number>;
+  created_at: Generated<Date>;
+  updated_at: Generated<Date>;
+}
+
+export interface BomEmailTemplateDefinition {
+  template_key: string;
+  version: number;
+  category: string;
+  required_variables: Json;
+  active: Generated<number>;
+  created_at: Generated<Date>;
+}
+
+export interface BomEmailNotificationState {
+  user_id: string;
+  category: string;
+  group_key: string;
+  recipient_email: string;
+  last_event_at: Date;
+  last_immediate_at: Date | null;
+  last_summary_at: Date | null;
+  hold_until: Date | null;
+  backoff_level: Generated<number>;
+  updated_at: Generated<Date>;
+}
+
+export interface BomEmailNotificationQueue {
+  id: Generated<number>;
+  notification_key: string;
+  user_id: string;
+  notification_user_id: string;
+  category: string;
+  group_key: string;
+  channel_url: string | null;
+  recipient_email: string;
+  lang: Generated<string>;
+  actor_name: string | null;
+  target_url: string;
+  event_at: Date;
+  eligible_at: Date;
+  status: Generated<string>;
+  outbox_id: number | null;
+  processed_at: Date | null;
+  created_at: Generated<Date>;
+}
+
+export interface BomEmailRateLimit {
+  scope_hash: string;
+  action: string;
+  window_start: Date;
+  request_count: Generated<number>;
+  updated_at: Generated<Date>;
+}
+
+export interface BomEmailPreference {
+  user_id: string;
+  category: string;
+  enabled: Generated<number>;
+  cadence: Generated<string>;
+  locale: string | null;
+  source: Generated<string>;
+  confirmed_at: Date | null;
+  unsubscribed_at: Date | null;
+  created_at: Generated<Date>;
+  updated_at: Generated<Date>;
+}
+
+export interface BomEmailSuppression {
+  email_normalized: string;
+  reason: string;
+  source: string;
+  detail: Json | null;
+  created_at: Generated<Date>;
+  expires_at: Date | null;
+}
+
+export interface BomEmailEvent {
+  id: Generated<number>;
+  provider_event_id: string;
+  provider_message_id: string | null;
+  outbox_id: number | null;
+  event_type: string;
+  recipient_email: string | null;
+  payload: Json;
+  occurred_at: Date;
+  created_at: Generated<Date>;
+}
+
 export interface BomPage {
   guid: string;
   parent: string;
@@ -1103,6 +1234,15 @@ export interface DB {
   bom_connection_bak_20260729: BomConnectionBak20260729;
   bom_data_bible: BomDataBible;
   bom_division: BomDivision;
+  bom_email_event: BomEmailEvent;
+  bom_email_notification_queue: BomEmailNotificationQueue;
+  bom_email_notification_state: BomEmailNotificationState;
+  bom_email_outbox: BomEmailOutbox;
+  bom_email_preference: BomEmailPreference;
+  bom_email_rate_limit: BomEmailRateLimit;
+  bom_email_suppression: BomEmailSuppression;
+  bom_email_template: BomEmailTemplate;
+  bom_email_template_definition: BomEmailTemplateDefinition;
   bom_index: BomIndex;
   bom_index_matter_bak_20260728: BomIndexMatterBak20260728;
   bom_label: BomLabel;

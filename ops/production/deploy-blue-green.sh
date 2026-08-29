@@ -4,6 +4,7 @@ set -eu
 IMAGE="${BOM_IMAGE:-kckern/bookofmormon-online:prod}"
 BASE_DIR="${BOM_DEPLOY_DIR:-/home/ubuntu/greenfield}"
 ENV_FILE="${BOM_ENV_FILE:-$BASE_DIR/.env}"
+MAIL_ENV_FILE="${BOM_MAIL_ENV_FILE:-$BASE_DIR/mail.env}"
 NETWORK="${BOM_DOCKER_NETWORK:-bomdocker_phpnetwork}"
 GATEWAY="${BOM_GATEWAY_CONTAINER:-bookofmormon-online}"
 GATEWAY_IMAGE="${BOM_GATEWAY_IMAGE:-nginx:stable-alpine}"
@@ -67,6 +68,7 @@ verify_gateway() {
 
 mkdir -p "$BASE_DIR" "$GATEWAY_DIR"
 [ -r "$ENV_FILE" ] || fail "missing environment file: $ENV_FILE"
+[ -r "$MAIL_ENV_FILE" ] || fail "missing mail environment file: $MAIL_ENV_FILE"
 [ -r "$TEMPLATE" ] || fail "missing gateway template: $TEMPLATE"
 
 exec 9>"$LOCK_FILE"
@@ -118,6 +120,7 @@ log "starting candidate $next"
 docker run -d \
   --name "$next" \
   --env-file "$ENV_FILE" \
+  --env-file "$MAIL_ENV_FILE" \
   --network "$NETWORK" \
   --restart always \
   --label com.centurylinklabs.watchtower.enable=false \

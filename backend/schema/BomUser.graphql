@@ -23,6 +23,7 @@ extend type Mutation {
   editProfile(token: String, name: String, email: String, zip: String): User
   uploadProfileImage(token: String!, imageData: String!): Boolean
   requestPasswordReset(email: String): Boolean
+  requestAccountRecovery(email: String): Boolean
   resetPassword(token: String, password: String): SignIn
 }
 

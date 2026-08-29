@@ -29,6 +29,7 @@ import {
   getUnreadNotificationCount,
   markNotificationRead,
   markAllNotificationsRead,
+  pushNotificationToUser,
 } from '../../messaging/notifications.js';
 import { getBus } from '../../realtime/RealtimeBus.js';
 import { isDuplicateKeyError } from '../../data/errors.js';
@@ -724,6 +725,11 @@ export const messengerResolvers: Resolvers = {
             .execute();
           anySuccess = true;
           getBus().emit('membership_changed', channelUrl, { channelUrl, userId, state: 'invited' });
+          void pushNotificationToUser(ctx.db, {
+            userId, type: 'invite', actorId: actingUserId,
+            dedupeKey: `invite:${channelUrl}`,
+            channelUrl, messageId: null, text: 'You received a study-group invitation',
+          });
         } catch (err) {
           // Duplicate-key (already a member/invited) is fine; a real failure must NOT
           // be masked as success.

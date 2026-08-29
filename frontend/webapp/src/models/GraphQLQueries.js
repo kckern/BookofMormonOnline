@@ -1267,6 +1267,47 @@ const queries = {
       query: `mutation signout{ signout( token: "${input.token}" ) } `,
     }
   },
+  requestPasswordReset: (input) => {
+    input = input.shift();
+    return {
+      type: "requestPasswordReset",
+      key: 0,
+      val: input,
+      query: `mutation { requestPasswordReset(email: ${JSON.stringify(input.email || "")}) }`,
+    }
+  },
+  emailPreferences: () => ({
+    type: "emailPreferences",
+    key: "category",
+    query: `emailPreferences { category enabled }`,
+  }),
+  updateEmailPreference: (input) => {
+    input = input.shift();
+    return {
+      type: "updateEmailPreference",
+      key: "category",
+      val: [input.category],
+      query: `mutation { updateEmailPreference(category: ${JSON.stringify(input.category)}, enabled: ${!!input.enabled}) { category enabled } }`,
+    }
+  },
+  requestAccountRecovery: (input) => {
+    input = input.shift();
+    return {
+      type: "requestAccountRecovery",
+      key: 0,
+      val: input,
+      query: `mutation { requestAccountRecovery(email: ${JSON.stringify(input.email || "")}) }`,
+    }
+  },
+  resetPassword: (input) => {
+    input = input.shift();
+    return {
+      type: "resetPassword",
+      key: 0,
+      val: input,
+      query: `mutation { resetPassword(token: ${JSON.stringify(input.token || "")}, password: ${JSON.stringify(input.password || "")}) { isSuccess msg } }`,
+    }
+  },
   signup: (input) => {
     input = input.shift();
     return {

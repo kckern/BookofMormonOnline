@@ -411,3 +411,36 @@ export async function pushNotificationForEvent(
     console.error('pushNotificationForEvent error:', err);
   }
 }
+
+/** Persist and push a notification when the recipient is already known. */
+export async function pushNotificationToUser(
+  db: Kysely<DB>,
+  params: {
+    userId: string;
+    type: 'mention' | 'invite' | 'direct_message';
+    actorId: string | null;
+    dedupeKey: string;
+    channelUrl: string | null;
+    messageId: string | null;
+    text: string;
+  },
+): Promise<void> {
+  try {
+    if (!params.userId || params.userId === params.actorId) return;
+    const actor = params.actorId ? await getUser(db, params.actorId) : null;
+    await notify(db, {
+      userId: params.userId,
+      type: params.type,
+      actorId: params.actorId,
+      dedupeKey: params.dedupeKey,
+      payload: {
+        text: params.text,
+        channel_url: params.channelUrl,
+        message_id: params.messageId,
+        actor,
+      },
+    });
+  } catch (err) {
+    console.error('pushNotificationToUser error:', err);
+  }
+}

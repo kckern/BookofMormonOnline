@@ -12,10 +12,12 @@ const TTL_MS = 30 * 60 * 1000;
 export async function createResetToken(db: Kysely<DB>, username: string): Promise<string> {
   const token = crypto.randomBytes(32).toString('hex'); // 64 hex chars (fits varchar(64))
   const expires = new Date(Date.now() + TTL_MS);
-  await db
-    .insertInto('bom_password_reset')
-    .values({ token, user: username, expires })
-    .execute();
+  await db.transaction().execute(async (trx) => {
+    // One live credential per account. A later legitimate request invalidates
+    // the earlier link instead of leaving multiple reset capabilities active.
+    await trx.deleteFrom('bom_password_reset').where('user', '=', username).execute();
+    await trx.insertInto('bom_password_reset').values({ token, user: username, expires }).execute();
+  });
   return token;
 }
 

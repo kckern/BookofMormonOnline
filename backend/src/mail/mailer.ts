@@ -11,71 +11,12 @@
  * Mirrors the getLlmGateway() factory pattern.
  */
 import { env } from '../config/env.js';
+import type { EmailMessage, Mailer, SendResult } from './types.js';
+import { ConsoleMailer } from './adapters/console.js';
+import { SesMailer } from './adapters/ses.js';
 
-export interface EmailMessage {
-  to: string;
-  subject: string;
-  html: string;
-  text: string;
-}
-
-export interface SendResult {
-  ok: boolean;
-  id?: string;
-  error?: string;
-}
-
-export interface Mailer {
-  send(msg: EmailMessage): Promise<SendResult>;
-}
-
-/** Fallback transport — logs the message. Used when SES is unconfigured / in tests. */
-export class ConsoleMailer implements Mailer {
-  async send(msg: EmailMessage): Promise<SendResult> {
-    console.info(
-      `[mailer:console] to=${msg.to} subject=${JSON.stringify(msg.subject)}\n${msg.text}`,
-    );
-    return { ok: true, id: 'console' };
-  }
-}
-
-/** Amazon SES transport. Lazily loads the SDK + client so the dep only loads when actually sending. */
-export class SesMailer implements Mailer {
-  #from: string;
-  #region: string;
-  #client: unknown | null = null;
-
-  constructor(from: string, region: string) {
-    this.#from = from;
-    this.#region = region;
-  }
-
-  async send(msg: EmailMessage): Promise<SendResult> {
-    try {
-      const { SESClient, SendEmailCommand } = await import('@aws-sdk/client-ses');
-      if (!this.#client) this.#client = new SESClient({ region: this.#region });
-      const client = this.#client as InstanceType<typeof SESClient>;
-      const out = await client.send(
-        new SendEmailCommand({
-          Source: this.#from,
-          Destination: { ToAddresses: [msg.to] },
-          Message: {
-            Subject: { Data: msg.subject, Charset: 'UTF-8' },
-            Body: {
-              Html: { Data: msg.html, Charset: 'UTF-8' },
-              Text: { Data: msg.text, Charset: 'UTF-8' },
-            },
-          },
-        }),
-      );
-      return { ok: true, id: out.MessageId };
-    } catch (err) {
-      const error = err instanceof Error ? err.message : String(err);
-      console.error(`[mailer:ses] send failed to=${msg.to}: ${error}`);
-      return { ok: false, error };
-    }
-  }
-}
+export type { EmailMessage, Mailer, SendResult } from './types.js';
+export { ConsoleMailer } from './adapters/console.js';
 
 let _instance: Mailer | null = null;
 
@@ -91,7 +32,7 @@ export function getMailer(): Mailer {
       _instance = new ConsoleMailer();
     } else {
       _instance = env.MAIL_FROM
-        ? new SesMailer(env.MAIL_FROM, env.MAIL_REGION)
+        ? new SesMailer(env.MAIL_FROM, env.MAIL_REGION, env.MAIL_CONFIGURATION_SET)
         : new ConsoleMailer();
     }
   }

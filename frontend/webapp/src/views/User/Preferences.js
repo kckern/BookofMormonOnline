@@ -28,6 +28,7 @@ export default function User() {
     useEffect(()=>document.title = label("preferences") + " | " + label("home_title"),[])
 
     const lang = appController.states.preferences.lang;
+    const userToken = appController.states.user.token;
 
     const [publications, setPublications] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -218,6 +219,7 @@ export default function User() {
                 </h5>
                 <hr />
                 </>}
+                {USE_MESSENGER && userToken && <EmailNotificationPreferences token={userToken} />}
                 <h5 className="title">
                     <Label className="dark_mode"><img src={darkmode} />
                         {label("dark_mode")}
@@ -285,6 +287,64 @@ export default function User() {
             </CardBody>
         </Card></>
 
+}
+
+const EMAIL_CATEGORIES = ["reply", "mention", "direct_message", "invite"];
+
+function EmailNotificationPreferences({ token }) {
+    const [values, setValues] = useState(null);
+    const [error, setError] = useState(false);
+
+    useEffect(() => {
+        let mounted = true;
+        BoMOnlineAPI({ emailPreferences: true }, { useCache: false, authToken: token })
+            .then(result => {
+                if (!mounted) return;
+                const rows = Array.isArray(result.emailPreferences) ? result.emailPreferences : [];
+                setValues(Object.fromEntries(EMAIL_CATEGORIES.map(category => [
+                    category,
+                    !!rows.find(row => row.category === category)?.enabled,
+                ])));
+            })
+            .catch(() => mounted && setError(true));
+        return () => { mounted = false; };
+    }, [token]);
+
+    const toggle = async category => {
+        const enabled = !values[category];
+        setValues(current => ({ ...current, [category]: enabled }));
+        setError(false);
+        try {
+            await BoMOnlineAPI(
+                { updateEmailPreference: { category, enabled } },
+                { useCache: false, authToken: token },
+            );
+        } catch (_error) {
+            setValues(current => ({ ...current, [category]: !enabled }));
+            setError(true);
+        }
+    };
+
+    if (!values) return null;
+    return <>
+        <hr />
+        <h5 className="title"><img src={chat} />{label("email_notifications")}</h5>
+        <p>{label("email_notifications_description")}</p>
+        {error && <Alert color="warning">{label("error")}</Alert>}
+        {EMAIL_CATEGORIES.map(category => <h5 className="title" key={category}>
+            <Label className={`email_notification_${category}`}>
+                {label(`email_notification_${category}`)}
+                <Switch
+                    onText={label("on")}
+                    offText={label("off")}
+                    onChange={() => toggle(category)}
+                    value={values[category]}
+                    onColor="default"
+                    offColor="default"
+                />
+            </Label>
+        </h5>)}
+    </>;
 }
 
 

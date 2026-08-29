@@ -1,0 +1,12 @@
+type EmailPreference {
+  category: String!
+  enabled: Boolean!
+}
+
+extend type Query {
+  emailPreferences: [EmailPreference!]!
+}
+
+extend type Mutation {
+  updateEmailPreference(category: String!, enabled: Boolean!): EmailPreference!
+}

@@ -4,6 +4,7 @@ import { getBus } from '../realtime/RealtimeBus.js';
 import { userRoom } from '../messaging/notifications.js';
 import { persistNotification, rowToDTO, type PersistNotificationInput } from './store.js';
 import { env } from '../config/env.js';
+import { queueNotificationEmail } from '../email/notificationScheduler.js';
 
 // Durable write + best-effort in-app push. Emits only when a NEW row was inserted,
 // so retries and double-fired socket handlers never double-notify.
@@ -27,4 +28,11 @@ export async function notify(
     read_at: null,
   });
   getBus().emit('notification_received', userRoom(input.userId), dto);
+  // Email is deliberately optional and opt-in. Failure here must never roll
+  // back or suppress the durable in-app notification.
+  try {
+    await queueNotificationEmail(db, input);
+  } catch (error) {
+    console.error('[notification-email] enqueue failed:', error);
+  }
 }

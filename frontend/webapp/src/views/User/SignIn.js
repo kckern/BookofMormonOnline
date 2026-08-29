@@ -20,6 +20,7 @@ import SocialSignIn from "./SocialSignIn";
 import "./SignIn.css"
 import { Spinner } from "../_Common/Loader";
 import { useAppController } from "src/contexts/AppControllerContext";
+import AccountRecovery from "./AccountRecovery";
 
 
 
@@ -32,6 +33,7 @@ export default function SignIn() {
   const [loadingButton, setLoadingButton] = useState(false);
   const [loading, setLoading] = useState(false);
   const [noSignUp, setNoSignUp] = useState(false);
+  const [recoveryMode, setRecoveryMode] = useState(null);
 
   const loginwithpassword = (setMessage, setBtnLoading) => {
 
@@ -58,6 +60,7 @@ export default function SignIn() {
   }
 
   if (signUp) return (<div className="signUpWrapper"><SignUp username={signUp} cancel={() => setSignUp(false)} /></div>)
+  if (recoveryMode) return <AccountRecovery mode={recoveryMode} cancel={() => setRecoveryMode(null)} />;
   if(loading) return <Spinner/>
   return <>
       <div className="loginGroup">
@@ -92,6 +95,10 @@ export default function SignIn() {
         <div className="Login">
           <Button className={"login"} onClick={() => loginwithpassword(setMessage, setLoadingButton)}>{label(loadingButton ? "logging_in" : "login")}</Button>
           <Button  className={"login"} onClick={e => setSignUp(document.getElementById("username").value || true)} >{label("signup")}</Button>
+        </div>
+        <div>
+          <Button color="link" onClick={() => setRecoveryMode("password")}>{label("forgot_password")}</Button>
+          <Button color="link" onClick={() => setRecoveryMode("username")}>{label("forgot_username")}</Button>
         </div>
         {message ? <Alert color="danger" fade={true}>⚠️ {label(message)}</Alert> : null}
       </div>

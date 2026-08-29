@@ -32,7 +32,7 @@ import {
 import { getBus } from '../RealtimeBus.js';
 import { maybeBotReply } from '../botResponder.js';
 import { isMemberMuted, getMembership } from '../../messaging/members.js';
-import { pushNotificationForEvent } from '../../messaging/notifications.js';
+import { pushNotificationForEvent, pushNotificationToUser } from '../../messaging/notifications.js';
 
 // ─── send_message ─────────────────────────────────────────────────────────────
 
@@ -129,6 +129,42 @@ export function register(socket: Socket, _io: Server): void {
             actorId: user.userId,
             sourceMessageId: msg.message_id,
           });
+        }
+
+        // Mentions are explicit recipient ids carried in the legacy SendBird
+        // data JSON. Message bodies are never copied into email payloads.
+        let mentionedUserIds: string[] = [];
+        try {
+          const data = payload.data ? JSON.parse(payload.data) as { mentionedUserIds?: unknown } : null;
+          if (Array.isArray(data?.mentionedUserIds)) {
+            mentionedUserIds = data.mentionedUserIds.filter((id): id is string => typeof id === 'string');
+          }
+        } catch { /* malformed optional metadata is ignored */ }
+        for (const recipientId of new Set(mentionedUserIds)) {
+          void pushNotificationToUser(db, {
+            userId: recipientId, type: 'mention', actorId: user.userId,
+            dedupeKey: `mention:${msg.message_id}:${recipientId}`,
+            channelUrl: payload.channelUrl, messageId: msg.message_id,
+            text: `${msg.user?.nickname ?? 'Someone'} mentioned you`,
+          });
+        }
+
+        // A DM notifies every other joined participant. Public/private study
+        // groups rely on replies and explicit mentions instead of mail blasts.
+        const channel = await db.selectFrom('messenger_channels').select('custom_type')
+          .where('channel_url', '=', payload.channelUrl).executeTakeFirst();
+        if (channel?.custom_type === 'DM') {
+          const recipients = await db.selectFrom('messenger_members').select('user_id')
+            .where('channel_url', '=', payload.channelUrl).where('state', '=', 'joined')
+            .where('user_id', '!=', user.userId).execute();
+          for (const recipient of recipients) {
+            void pushNotificationToUser(db, {
+              userId: recipient.user_id, type: 'direct_message', actorId: user.userId,
+              dedupeKey: `direct_message:${msg.message_id}:${recipient.user_id}`,
+              channelUrl: payload.channelUrl, messageId: msg.message_id,
+              text: `${msg.user?.nickname ?? 'Someone'} sent you a message`,
+            });
+          }
         }
 
         ack?.({ success: true, message: msg });
