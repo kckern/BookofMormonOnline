@@ -31,14 +31,16 @@ in the production baseline.
 ## Full production sitemap crawl
 
 The controlled regression crawler ran against the live sitemap with a bot user
-agent and concurrency 4. Raw results are retained locally at
-`/tmp/bom-production-seo-audit.json`; the repeatable crawler is
+agent and concurrency 4. After the timeline correction was promoted, the full
+post-cutover crawl was repeated against all 2,584 sitemap URLs. Raw results are
+retained locally at `/private/tmp/bom-production-seo-audit-post-cutover.json`;
+the repeatable crawler is
 [`scripts/audit-production-sitemap.mjs`](../../scripts/audit-production-sitemap.mjs).
 
 | Check | Result |
 |---|---:|
-| Sitemap URLs requested | 2,592 |
-| HTTP 200 HTML | 2,592 |
+| Sitemap URLs requested | 2,584 |
+| HTTP 200 HTML | 2,584 |
 | 4xx / 5xx | 0 / 0 |
 | Missing or invalid canonical | 0 |
 | Canonical mismatch | 0 |
@@ -46,8 +48,9 @@ agent and concurrency 4. Raw results are retained locally at
 | Missing expected hreflang | 0 |
 | Invalid JSON-LD | 0 |
 | Fetch errors | 0 |
-| p50 / p95 / p99 | 213 / 553 / 781 ms |
-| Maximum response time | 1,223 ms |
+| Missing render-mode header | 0 |
+| p50 / p95 / p99 | 140 / 350 / 745 ms |
+| Maximum response time | 1,720 ms |
 
 Six otherwise complete SSR documents were served from Cloudflare cache entries
 created before `X-BOM-Render-Mode` was introduced. Cache-busted requests proved
@@ -67,8 +70,8 @@ row. The deployed correction now:
 
 Focused Playwright coverage passes all five timeline cases. Live validation now
 returns 200 for `/timeline/land-of-nephi`, 404 for `/timeline/east`, and excludes
-the marker-only route from the sitemap. The paid Screpy crawl can now provide a
-clean post-cutover baseline.
+the marker-only route from the sitemap. The complete post-cutover crawl produced
+zero findings. The paid Screpy crawl can now provide an independent baseline.
 
 ## Runtime and deployment acceptance
 
@@ -200,18 +203,17 @@ and compressed size remain a required 24-hour acceptance check.
 
 ## Remaining acceptance gates
 
-1. Rerun the full sitemap regression against the promoted timeline/CSP baseline.
-2. Start and monitor the fresh Screpy crawl (project limit is 5,000 pages).
-3. Confirm a sustained memory plateau, zero PM2 restarts, and zero steady-state
+1. Start and monitor the fresh Screpy crawl (project limit is 5,000 pages).
+2. Confirm a sustained memory plateau, zero PM2 restarts, and zero steady-state
    502s over several hours of crawler traffic. The current container is healthy,
    Next is approximately 75 MiB, and all restart counts are zero, but the newest
    runtime sample is not yet several hours old.
-4. Wait for the accepted Korean nameserver change to reach the `.kr` registry;
+3. Wait for the accepted Korean nameserver change to reach the `.kr` registry;
    then verify Cloudflare activation, enable Full (strict), enable DNSSEC, and
    add the DS record at GoDaddy.
-5. Split the ALB and EC2 security groups and enforce Cloudflare-only ingress
+4. Split the ALB and EC2 security groups and enforce Cloudflare-only ingress
    after the Korean hostname is confirmed through Cloudflare.
-6. Confirm the AWS SNS subscription email so existing alarms can deliver.
-7. Retire the Korean Route 53 zone only after the agreed rollback window.
-8. Review VictoriaLogs and raw telemetry growth after a full 24-hour sample;
+5. Confirm the AWS SNS subscription email so existing alarms can deliver.
+6. Retire the Korean Route 53 zone only after the agreed rollback window.
+7. Review VictoriaLogs and raw telemetry growth after a full 24-hour sample;
    seven-day retention remains in place while bot policy data is collected.
