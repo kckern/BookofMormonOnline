@@ -1,0 +1,15 @@
+[Unit]
+Description=Book of Mormon Online health-gated deployment
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=docker
+ExecStart=/home/ubuntu/greenfield/deploy-blue-green.sh
+TimeoutStartSec=8min
+
+[Install]
+WantedBy=multi-user.target

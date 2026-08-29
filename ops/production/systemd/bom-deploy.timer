@@ -1,0 +1,12 @@
+[Unit]
+Description=Poll for a new Book of Mormon Online production image
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+RandomizedDelaySec=30s
+Persistent=true
+Unit=bom-deploy.service
+
+[Install]
+WantedBy=timers.target

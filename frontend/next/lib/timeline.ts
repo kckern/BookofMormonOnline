@@ -49,15 +49,15 @@ export function timelineIndex(events: TimelineEvent[]): TimelineIndexItem[] {
   return out
 }
 
-// Detail selection: the PHP box does `WHERE slug=? LIMIT 1` with no ORDER BY,
-// which on this PK-by-`id` table returns the lowest-`id` row for the slug. Some
-// slugs repeat (zarahemla×3, land-northward×3, desolation×2, …); we mirror that
-// exact pick by sorting matches by id and taking the first. Unlike the index,
-// the detail page uses the row's OWN date — no carry-forward.
+// Detail selection must not turn a map-only coordinate row into an indexable
+// empty page. Some slugs repeat and `land-of-nephi`, for example, has both an
+// empty marker and a real event. Prefer rows with an actual heading, then keep
+// the legacy lowest-id selection among those content rows. A slug made only of
+// map markers is not a detail page and resolves to 404.
 export const getTimelineEvent = cache(
   async (slug: string): Promise<TimelineEvent | null> => {
     const events = await getTimeline()
-    const matches = events.filter((e) => e.slug === slug)
+    const matches = events.filter((e) => e.slug === slug && (e.heading ?? '').trim())
     if (!matches.length) return null
     matches.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
     return matches[0]

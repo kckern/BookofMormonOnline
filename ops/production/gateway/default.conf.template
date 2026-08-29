@@ -1,0 +1,53 @@
+map $http_upgrade $bom_connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
+upstream bom_frontend {
+    server __ACTIVE_SLOT__:8200;
+    keepalive 64;
+}
+
+upstream bom_backend {
+    server __ACTIVE_SLOT__:5005;
+    keepalive 32;
+}
+
+server {
+    listen 8200;
+    server_name _;
+
+    location / {
+        proxy_pass http://bom_frontend;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $http_x_real_ip;
+        proxy_set_header X-Forwarded-For $http_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $bom_connection_upgrade;
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 120s;
+        proxy_send_timeout 120s;
+    }
+}
+
+server {
+    listen 5005;
+    server_name _;
+    client_max_body_size 100m;
+
+    location / {
+        proxy_pass http://bom_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $http_x_real_ip;
+        proxy_set_header X-Forwarded-For $http_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $bom_connection_upgrade;
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 120s;
+        proxy_send_timeout 120s;
+    }
+}

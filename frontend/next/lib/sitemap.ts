@@ -127,10 +127,15 @@ function scriptureUrls(): SitemapUrl[] {
 // box's own conventions: index/list pages 0.7, detail items 0.5, static info 0.5.
 // (Art & commentary are intentionally NOT enumerated — link-only, reachable only
 // from the text items that embed them.)
-const TIMELINE_QUERY = `query SitemapTimeline { timeline { slug } }`
+const TIMELINE_QUERY = `query SitemapTimeline { timeline { slug heading } }`
 async function timelineUrls(): Promise<SitemapUrl[]> {
-  const d = await gql<{ timeline: { slug: string }[] }>(TIMELINE_QUERY, {}, { revalidate: 3600, lang: 'en' })
-  const slugs = new Set((d.timeline ?? []).map((t) => t.slug).filter(Boolean))
+  const d = await gql<{ timeline: { slug: string; heading: string | null }[] }>(TIMELINE_QUERY, {}, { revalidate: 3600, lang: 'en' })
+  const slugs = new Set(
+    (d.timeline ?? [])
+      .filter((t) => (t.heading ?? '').trim())
+      .map((t) => t.slug)
+      .filter(Boolean),
+  )
   return [...slugs].map((slug) => ({ path: `/timeline/${slug}`, priority: '0.5' }))
 }
 
