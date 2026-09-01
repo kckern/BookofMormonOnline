@@ -10,7 +10,7 @@ import {
   md5,
   type UserAuthRow,
 } from '../../data/loaders/userauth.js';
-import { resolveSigninAvatar } from '../../messaging/users.js';
+import { resolveSigninAvatar, messengerRowForUsername } from '../../messaging/users.js';
 import { sendbird } from '../../auth/sendbirdShim.js';
 import { runWrite } from '../../data/writes.js';
 import * as store from '../../auth/sessionStore.js';
@@ -86,11 +86,7 @@ export const userauthResolvers: Resolvers = {
       // profile_url stays NULL — generated avatars are never persisted; the read
       // path (getUser → avatarAssets) derives and verifies on demand, so an S3
       // upload or social refresh wins automatically.
-      const hasMessengerRow = await ctx.db
-        .selectFrom('messenger_users')
-        .select('user_id')
-        .where('user_id', '=', hashed_id)
-        .executeTakeFirst();
+      const hasMessengerRow = await messengerRowForUsername(ctx.db, user.user).executeTakeFirst();
       if (!hasMessengerRow) {
         await runWrite(
           ctx,

@@ -15,6 +15,7 @@
 
 import { createHash } from 'node:crypto';
 import { generateAvatarUrl, isDeadAvatarHost, resolveDerivedAvatars } from './avatarAssets.js';
+import { md5 } from '../auth/identity.js';
 import type { Kysely } from 'kysely';
 import type { DB } from '../../codegen/db.js';
 import type { UserDTO } from './dto.js';
@@ -126,6 +127,18 @@ export function toUserDTO(row: RawUser, online = false): UserDTO {
 // Public API
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * The one messenger row for a bom_user username. Under I1 that is exactly the
+ * md5-keyed row, so callers provisioning on sign-in look here and nowhere else.
+ * Returns the query so callers pick execute/executeTakeFirst.
+ */
+export function messengerRowForUsername(db: Kysely<DB>, username: string) {
+  return db
+    .selectFrom('messenger_users')
+    .select('user_id')
+    .where('user_id', '=', md5(username));
+}
+
 /** Get a single user by user_id (MD5 of bom_user.user). Returns null if not found. */
 export async function getUser(
   db: Kysely<DB>,
@@ -217,6 +230,12 @@ export async function upsertUser(
     is_bot?: boolean;
   },
 ): Promise<UserDTO> {
+  // I1: a linked human row is keyed by md5(username), one row per person.
+  // The 2026-09-02 merge made this true for existing data; refuse to write a
+  // row that would split someone's identity again.
+  if (data.bom_user_id && userId !== md5(data.bom_user_id)) {
+    throw new Error('messenger user_id must be md5(bom_user_id)');
+  }
   const metadataValue =
     data.metadata !== undefined
       ? (data.metadata === null ? null : JSON.stringify(data.metadata))
