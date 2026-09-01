@@ -1,19 +1,16 @@
-# Auto-deploy — build the prod image on push to `prod`, push to Docker Hub.
-# The EC2 box redeploys itself via Watchtower (watches the moving `:prod` tag),
-# so nothing here touches the box directly — pull-based, no inbound access.
+# CI/CD — build the prod image on push to `prod`, push to Docker Hub,
+# then SSH into the EC2 box and run deploy-blue-green.sh for a zero-downtime
+# blue-green swap.
 #
 # Runs on GitHub's free hosted runners (public repo = unlimited minutes), so the
-# 3.8 GB prod box never carries the build.
+# EC2 box never carries the build load.
 #
-# STATUS: scaffold. Goes live once BOTH:
-#   1. the greenfield Dockerfile exists (today the only one is _deprecated/Dockerfile), and
-#   2. this file is present on the `prod` branch.
-#
-# Secrets used:
-#   secrets.DOCKERHUB_TOKEN — Docker Hub access token for `kckern` (already set)
-#   When the greenfield Dockerfile takes build args (e.g. the Clicky obfuscated
-#   paths REACT_APP_CLICKY_*), add them as secrets and pass via build-args below,
-#   so those values are injected at build time and never committed to the repo.
+# Required GitHub Actions secrets:
+#   DOCKERHUB_TOKEN        — Docker Hub access token for `kckern`
+#   EC2_HOST               — public IP or hostname of the prod EC2 box
+#   EC2_SSH_KEY            — PEM private key for ubuntu@ on that box
+#   CLICKY_JS_PATH         — obfuscated path for the Clicky JS proxy
+#   CLICKY_BEACON_PATH     — obfuscated path for the Clicky beacon proxy
 
 name: deploy-prod
 
@@ -23,7 +20,7 @@ on:
   workflow_dispatch: {}
 
 jobs:
-  build-push:
+  build-push-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -52,3 +49,13 @@ jobs:
             REACT_APP_CLICKY_JS_PATH=${{ secrets.CLICKY_JS_PATH }}
             CLICKY_JS_PATH=${{ secrets.CLICKY_JS_PATH }}
             CLICKY_BEACON_PATH=${{ secrets.CLICKY_BEACON_PATH }}
+
+      - name: Deploy via blue-green swap
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/ubuntu/greenfield
+            bash deploy-blue-green.sh
