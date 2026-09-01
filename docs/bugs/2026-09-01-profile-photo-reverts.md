@@ -1,7 +1,7 @@
 # Profile photo saves, then reverts on reload
 
 **Date:** 2026-09-01
-**Status:** Fixed (code); data repair staged, not yet applied
+**Status:** Fixed and deployed to production 2026-09-01; data repair applied
 **Reported by:** a user, over email, after the 2026-08-29 upload fix (`307b5530`)
 
 ## Symptom
@@ -124,6 +124,9 @@ candidate is probed with a 1-byte ranged GET (the CDN 403s `HEAD`); a probe
 failure is treated as "no upload" so a network blip can never wipe a stored
 avatar. The new value uses the object's `Last-Modified` as the version, which
 makes re-runs idempotent. Dry run by default, `--apply` to write.
+
+Applied 2026-09-01: 78 candidates examined, 4 rewritten, 0 remaining. Fetching
+the resulting stored URL returns the reporter's 2026-08-31 upload.
 
 ## Regression tests
 
