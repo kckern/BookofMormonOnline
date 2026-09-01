@@ -1,16 +1,14 @@
-# CI/CD — build the prod image on push to `prod`, push to Docker Hub,
-# then SSH into the EC2 box and run deploy-blue-green.sh for a zero-downtime
-# blue-green swap.
-#
-# Runs on GitHub's free hosted runners (public repo = unlimited minutes), so the
-# EC2 box never carries the build load.
+# CI/CD — on push to `prod`, build the Docker image on GitHub's hosted runners
+# (free for public repos), push to Docker Hub, then trigger the blue-green deploy
+# on the EC2 box via a self-hosted runner (outbound HTTPS only — no open SSH port).
 #
 # Required GitHub Actions secrets:
 #   DOCKERHUB_TOKEN        — Docker Hub access token for `kckern`
-#   EC2_HOST               — public IP or hostname of the prod EC2 box
-#   EC2_SSH_KEY            — PEM private key for ubuntu@ on that box
 #   CLICKY_JS_PATH         — obfuscated path for the Clicky JS proxy
 #   CLICKY_BEACON_PATH     — obfuscated path for the Clicky beacon proxy
+#
+# Self-hosted runner: installed on the prod EC2 box at ~/actions-runner,
+# labelled 'prod'. Connects to GitHub outbound (port 443) — no inbound SSH needed.
 
 name: deploy-prod
 
@@ -20,7 +18,7 @@ on:
   workflow_dispatch: {}
 
 jobs:
-  build-push-deploy:
+  build-push:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -50,12 +48,11 @@ jobs:
             CLICKY_JS_PATH=${{ secrets.CLICKY_JS_PATH }}
             CLICKY_BEACON_PATH=${{ secrets.CLICKY_BEACON_PATH }}
 
-      - name: Deploy via blue-green swap
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            cd /home/ubuntu/greenfield
-            bash deploy-blue-green.sh
+  deploy:
+    needs: build-push
+    runs-on: [self-hosted, prod]
+    steps:
+      - name: Blue-green deploy
+        run: |
+          cd /home/ubuntu/greenfield
+          bash deploy-blue-green.sh
