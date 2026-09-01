@@ -282,6 +282,39 @@ export async function updateUserProfileUrl(
   return Number(result.numUpdatedRows) > 0;
 }
 
+/**
+ * Build the write that makes an uploaded avatar the user's stored profile_url.
+ *
+ * toUserDTO resolves `row.profile_url || deriveProfileUrl(row)`, so a stored
+ * URL always beats the derived S3 key. Users who inherited a gravatar or
+ * provider avatar at migration time therefore kept seeing the old face after
+ * every upload — the S3 object changed, the read path never looked at it.
+ * uploadProfileImage now claims the row so the upload is what gets served.
+ *
+ * Sendbird-migrated accounts own several rows (the md5 id plus legacy
+ * handle-style ids) that all carry the same bom_user_id, and member lists read
+ * whichever row a channel references, so claim by either key.
+ *
+ * Returns the query rather than executing it so callers route it through
+ * runWrite and stay sandbox-safe. See
+ * docs/bugs/2026-09-01-profile-photo-reverts.md.
+ */
+export function claimUploadedProfileUrl(
+  db: Kysely<DB>,
+  args: { userId: string; bomUserId: string; profileUrl: string },
+) {
+  const query = db
+    .updateTable('messenger_users')
+    .set({ profile_url: args.profileUrl });
+
+  // An empty bom_user_id would match every thin row that never got linked.
+  if (!args.bomUserId) return query.where('user_id', '=', args.userId);
+
+  return query.where((eb) =>
+    eb.or([eb('user_id', '=', args.userId), eb('bom_user_id', '=', args.bomUserId)]),
+  );
+}
+
 /** Merge incoming keys into the existing metadata (shallow merge). Returns true if a row was matched. */
 export async function updateUserMetadata(
   db: Kysely<DB>,

@@ -14,7 +14,7 @@ import { runWrite } from '../../data/writes.js';
 import { getUserByToken } from '../../data/loaders/userprofile.js';
 import { uploadProfileImage as uploadProfileImageToS3 } from '../../media/s3.js';
 import { primeAvatarAsset } from '../../messaging/avatarAssets.js';
-import { PROFILE_IMAGE_BASE } from '../../messaging/users.js';
+import { PROFILE_IMAGE_BASE, claimUploadedProfileUrl } from '../../messaging/users.js';
 
 export const userprofileResolvers: Resolvers = {
   Mutation: {
@@ -111,7 +111,8 @@ export const userprofileResolvers: Resolvers = {
      *   2. Resizes to 256×256 JPEG via sharp
      *   3. Puts to S3 at profiles/<hash>.jpg  (S3_BUCKET env required)
      *   4. Optionally invalidates CLOUDFRONT_DISTRIBUTION_ID path
-     *   Returns CDN URL (resolver discards it and returns Boolean true).
+     *   Returns the version-busted CDN URL, which we persist as the user's
+     *   messenger_users.profile_url before returning Boolean true.
      *
      * The real image sink (src/library/s3.ts) requires AWS credentials + sharp.
      * To activate in the green-field backend, port src/library/s3.ts into
@@ -154,14 +155,39 @@ export const userprofileResolvers: Resolvers = {
       }
 
       // Real upload: sharp resize 256² JPEG → S3 profiles/<hash>.jpg (+ CDN invalidation).
-      // The avatar is served by convention at {S3_PUBLIC_URL}/profiles/<hash>.jpg, so no
-      // DB write is needed — overwriting the key updates the image everywhere.
       try {
-        await uploadProfileImageToS3(imageData, userHash);
+        const uploadedUrl = await uploadProfileImageToS3(imageData, userHash);
         // The existence cache may hold a negative entry from before the
         // upload — mark the conventional URL as live so the avatar shows
         // immediately instead of after the negative TTL.
         primeAvatarAsset(`${PROFILE_IMAGE_BASE}/profiles/${userHash}.jpg`);
+        // Writing S3 alone is NOT enough: the read path prefers a stored
+        // messenger_users.profile_url over the derived key, so users carrying
+        // a migrated gravatar/provider avatar saw the upload succeed and then
+        // "revert" on reload. Claim the row (with the version-busted URL, so
+        // caches can't serve the previous photo).
+        // docs/bugs/2026-09-01-profile-photo-reverts.md
+        try {
+          await runWrite(
+            ctx,
+            claimUploadedProfileUrl(ctx.db, {
+              userId: userHash,
+              bomUserId: userRow.user,
+              profileUrl: uploadedUrl,
+            }) as Parameters<typeof runWrite>[1],
+          );
+        } catch (err) {
+          // The object IS stored; only the pointer write failed. Report failure
+          // rather than a false success — the user would otherwise see the old
+          // photo come back — but keep the DB error out of the response.
+          console.error('[profile-image] claim failed after upload', {
+            hash: userHash,
+            error: err instanceof Error ? err.message : String(err),
+          });
+          throw new GraphQLError('Profile image upload failed', {
+            extensions: { code: 'PROFILE_IMAGE_UPLOAD_FAILED' },
+          });
+        }
         return true;
       } catch (err) {
         throw new GraphQLError(err instanceof Error ? err.message : 'Profile image upload failed', {

@@ -22,8 +22,10 @@ const KNOWN_CRAWLER_RE = /bot|crawl|spider|slurp|google|bing|baidu|yandex|duckdu
 const BROWSER_UA_RE = /mozilla\/5\.0.*(?:chrome|chromium|crios|firefox|fxios|safari|edg|opr)\//i
 
 const CRA_ORIGIN = 'http://localhost:8201'
+const BACKEND_ORIGIN = 'http://localhost:5005'
 const CRA_ASSET_PATHS = new Set(['/sw.js', '/asset-manifest.json', '/manifest.json'])
 const CRA_ASSET_PREFIXES = ['/static/', '/font/', '/icons/', '/img/', '/md/', '/screenshots/', '/tinymce/']
+const FAX_BACKEND_PREFIXES = ['/fax/boxes/', '/fax/render/', '/fax/text/']
 
 type RenderMode = 'ssr' | 'cra' | 'asset' | 'analytics'
 type ClientClass = 'browser' | 'known-crawler' | 'unknown'
@@ -123,6 +125,13 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.hostname = hostname.slice(4)
     return markResponse(NextResponse.redirect(url, 301), clientClass)
+  }
+
+  // The desktop viewer is a CRA route, but these dynamic Facsimiles resources
+  // are Fastify endpoints. Route them before the browser/CRA fallback so the
+  // client receives box JSON (rather than the SPA HTML shell) in every deploy.
+  if (FAX_BACKEND_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+    return NextResponse.rewrite(new URL(pathname + request.nextUrl.search, BACKEND_ORIGIN))
   }
 
   // --- First-party analytics proxy (Clicky anti-adblock) ---

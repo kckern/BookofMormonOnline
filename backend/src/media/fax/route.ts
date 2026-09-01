@@ -159,6 +159,9 @@ export async function faxRoutes(app: FastifyInstance): Promise<void> {
     const [boxes, meta] = await Promise.all([verseIdsToBoxes(version, ids), imageScanMeta(version)]);
     const out = boxes.map((b) => ({
       verseId: b.verseId,
+      // Geometry records use the edition's source-page numbering. Convert to
+      // the scan image-file number used by leaf.pageNumInt before the viewer
+      // groups boxes onto a rendered page (e.g. 1830 box 25 → scan 20).
       imagePage: b.page + meta.offset,
       x: b.x, y: b.y, w: b.w, h: b.h,
       tlw: b.tlw, tlh: b.tlh, brw: b.brw, brh: b.brh,

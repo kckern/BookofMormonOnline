@@ -50,6 +50,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   const committingRef = useRef(false);  // true only while the flip commits its OWN nav
   const flipTimerRef = useRef(null);   // parent-level hard-clear backstop
   const settleTimerRef = useRef(null); // cross-fade teardown timer
+  const settlePendingRef = useRef(null); // destination full scans awaited after a flip lands
   const prefersReducedMotion = typeof window !== 'undefined'
     && typeof window.matchMedia === 'function'
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -60,10 +61,29 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   const cancelFlip = useCallback(() => {
     if (flipTimerRef.current) { clearTimeout(flipTimerRef.current); flipTimerRef.current = null; }
     if (settleTimerRef.current) { clearTimeout(settleTimerRef.current); settleTimerRef.current = null; }
+    settlePendingRef.current = null;
     flipRef.current = null;
     setSettling(false);
     setFlip(null);
   }, []);
+
+  // Do not reveal PageImage's thumbnail/loading-label state between the curl
+  // and the destination scan. Browser-cached images are covered too: PageImage
+  // reports ready from its state effect as well as its native load handler.
+  const beginFlipSettle = useCallback(() => {
+    setSettling(true);
+    if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
+    settleTimerRef.current = setTimeout(() => cancelFlip(), FAX_SETTLE_MS);
+  }, [cancelFlip]);
+
+  const handleSettlingPageReady = useCallback((src) => {
+    const pending = settlePendingRef.current;
+    if (!pending || !pending.delete(src)) return;
+    if (pending.size === 0) {
+      settlePendingRef.current = null;
+      beginFlipSettle();
+    }
+  }, [beginFlipSettle]);
 
   // Never leave a timer running past unmount.
   useEffect(() => () => {
@@ -424,6 +444,11 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
           leafFrontUrl: faceUrl(base),             // current left (front of leaf)
           leafBackUrl: faceUrl(targetLeft + 1),    // destination right (back of leaf)
         };
+    // These are the real PageImage sources, not the thumbnail/full-res choice
+    // used by the animation itself. They gate the post-landing reveal.
+    payload.destinationPageUrls = [leafIndex[targetLeft], leafIndex[targetLeft + 1]]
+      .map((leaf) => leaf?.pageAssetUrl)
+      .filter(Boolean);
     committedRef.current = false;
     flipRef.current = payload;
     setFlip(payload);
@@ -543,13 +568,12 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     committingRef.current = true;
     handlePageChange(p.target);
     committingRef.current = false;
-    // Two-phase teardown: the leaf has landed flat on the new spread, which is
-    // now committed underneath. Cross-fade the overlay out (rather than the
-    // instant unmount below) so the compositing-layer handoff doesn't snap.
-    setSettling(true);
-    if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
-    settleTimerRef.current = setTimeout(() => cancelFlip(), FAX_SETTLE_MS);
-  }, [handlePageChange, item.slug, cancelFlip]);
+    // Keep the landed leaf opaque until the real destination scans have
+    // settled underneath. This prevents the blurred thumbnail + reference
+    // label from flashing through during the handoff.
+    settlePendingRef.current = new Set(p.destinationPageUrls || []);
+    if (settlePendingRef.current.size === 0) beginFlipSettle();
+  }, [handlePageChange, item.slug, cancelFlip, beginFlipSettle]);
 
   // Tear the overlay down once the live spread has actually moved — whether that
   // was our own landing commit (adjustedPageIndex -> target) or any external nav
@@ -731,6 +755,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
           reference={page.pageReference}
           alt={`Page ${page.faxPageSlug}`}
           onClick={onClick}
+          onReady={handleSettlingPageReady}
           className={isLastPage ? "last-page" : ""}
           style={{
             aspectRatio: aspectRatio ? `${aspectRatio}` : undefined,

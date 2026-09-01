@@ -28,14 +28,15 @@ describe('profile-image S3 adapter', () => {
 
     const url = await uploadProfileImageWithDependencies(PNG, HASH, deps);
 
-    expect(url).toBe(`https://assets.bookofmormon.online/profiles/${HASH}.jpg`);
+    expect(url).toMatch(
+      new RegExp(`^https://assets\\.bookofmormon\\.online/profiles/${HASH}\\.jpg\\?v=\\d+$`),
+    );
     const put = vi.mocked(deps.s3.send).mock.calls[0]?.[0];
     expect(put).toBeInstanceOf(PutObjectCommand);
     expect((put as PutObjectCommand).input).toMatchObject({
       Bucket: 'bomonline-media-assets',
       Key: `profiles/${HASH}.jpg`,
       ContentType: 'image/jpeg',
-      CacheControl: 'max-age=31536000',
     });
     const metadata = await sharp((put as PutObjectCommand).input.Body as Buffer).metadata();
     expect(metadata).toMatchObject({ format: 'jpeg', width: 256, height: 256 });
@@ -46,6 +47,27 @@ describe('profile-image S3 adapter', () => {
       DistributionId: 'E1XB8MGKO3V6SW',
       InvalidationBatch: { Paths: { Items: [`/profiles/${HASH}.jpg`] } },
     });
+  });
+
+  /**
+   * The avatar key is stable (`profiles/<hash>.jpg`) and gets overwritten in
+   * place, so declaring it immutable for a year meant a browser that had ever
+   * loaded the old photo kept serving it after a re-upload — a CloudFront
+   * invalidation clears the edge but never a client cache. The returned URL
+   * carries the upload timestamp so consumers fetch a key they have never
+   * seen, and the object itself revalidates in minutes rather than a year.
+   * (docs/bugs/2026-09-01-profile-photo-reverts.md)
+   */
+  it('does not declare a mutable key immutable', async () => {
+    const deps = dependencies();
+
+    const url = await uploadProfileImageWithDependencies(PNG, HASH, deps);
+
+    const put = vi.mocked(deps.s3.send).mock.calls[0]?.[0] as PutObjectCommand;
+    expect(put.input.CacheControl).toBe('public, max-age=300');
+    const version = Number(new URL(url).searchParams.get('v'));
+    expect(version).toBeGreaterThan(0);
+    expect(version).toBeLessThanOrEqual(Date.now());
   });
 
   it('rejects missing storage configuration before attempting a write', async () => {
@@ -73,8 +95,8 @@ describe('profile-image S3 adapter', () => {
     });
     const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
-    await expect(uploadProfileImageWithDependencies(PNG, HASH, deps)).resolves.toBe(
-      `https://assets.bookofmormon.online/profiles/${HASH}.jpg`,
+    await expect(uploadProfileImageWithDependencies(PNG, HASH, deps)).resolves.toContain(
+      `https://assets.bookofmormon.online/profiles/${HASH}.jpg?v=`,
     );
     expect(error).toHaveBeenCalledWith(
       '[s3] CloudFront invalidation failed (non-fatal):',
