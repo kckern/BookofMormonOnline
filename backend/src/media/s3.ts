@@ -45,7 +45,15 @@ export function getProfileImageUrl(userHash: string): string {
 }
 
 /**
- * Upload a base64 image as the user's profile avatar. Returns the public URL.
+ * Upload a base64 image as the user's profile avatar. Returns the public URL,
+ * version-busted with the upload timestamp (`…/profiles/<hash>.jpg?v=<ms>`).
+ *
+ * The key is stable and overwritten in place, so the bare URL is a mutable
+ * resource: a client that has already loaded the previous photo keeps serving
+ * it from its own cache, and a CloudFront invalidation cannot reach that.
+ * Callers persist the returned URL so every consumer fetches a key it has
+ * never seen. See docs/bugs/2026-09-01-profile-photo-reverts.md.
+ *
  * Throws on misconfiguration, invalid input, processing failure, or S3 failure.
  */
 export async function uploadProfileImage(base64Data: string, userHash: string): Promise<string> {
@@ -97,7 +105,12 @@ export async function uploadProfileImageWithDependencies(
         Key: key,
         Body: processedImage,
         ContentType: 'image/jpeg',
-        CacheControl: 'max-age=31536000',
+        // Short and revalidating: this key is mutable (a re-upload overwrites
+        // it), so a year-long lifetime made stale avatars effectively
+        // permanent for anyone who had already loaded one. Fresh reads are
+        // guaranteed by the ?v= version on the returned URL; this bound just
+        // keeps the bare URL (frontend fallback path) from going stale.
+        CacheControl: 'public, max-age=300',
       }),
     );
   } catch (error) {
@@ -134,5 +147,5 @@ export async function uploadProfileImageWithDependencies(
     invalidated,
   });
 
-  return `${dependencies.publicUrl.replace(/\/+$/, '')}/${key}`;
+  return `${dependencies.publicUrl.replace(/\/+$/, '')}/${key}?v=${startedAt}`;
 }
