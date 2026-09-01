@@ -71,3 +71,6 @@ docs/audits/data-backups/
 # Schema migration DDL is source (not data dumps) — keep it tracked
 !backend/migrations/
 !backend/migrations/*.sql
+
+# data-migration dumps (contain user rows)
+backend/migrations/out/

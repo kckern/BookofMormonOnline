@@ -187,6 +187,21 @@ After Task 0.1's snapshot exists: `node backend/migrations/2026-09-02-merge-lega
 
 Commit the doc note.
 
+### Phase 1 applied — 2026-09-01
+
+Backup: `BoMOnlineWorkspace/infra/backups/2026-09-02-messenger-pre-merge.sql.gz` (row counts verified equal to live: 3009 / 5536 / 486 / 755 / 0). `--apply` output, all post-checks green:
+
+```
+plan   moves 121 → 81 targets · orphans 3 (test_*) · leftAlone 0
+before i1Violations 121 · legacyRows 124 · messages 5536 · reactions 486 · members 755
+       legacyMessages 1910 · legacyReactions 264 · reactionCollisions 1 · createdByChannels 70
+       recentLegacyReactions 0 · notificationRowsWithLegacy 0
+after  i1Violations 0 · legacyRows 0 · messages 5535 · reactions 485 · members 755
+       createdByChannels 0 · orphanedMessages 0 · failures []
+```
+
+Spot-check: the reporter's account is now one row — 567 messages (52 + 494 + 21) and 91 reactions (9 + 82) under the md5 id. 65 non-md5 rows remain; all are bots. Legacy rows were dumped to `backend/migrations/out/` (gitignored) before deletion.
+
 ### Task 1.3: Guard the invariant on the write side
 
 **Files:**
