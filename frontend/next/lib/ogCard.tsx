@@ -14,7 +14,9 @@ import { BomOgCard } from '@/app/og/BomOgCard'
 const fontsDir = join(process.cwd(), 'public', 'fonts')
 const robotoCondensedBold = readFileSync(join(fontsDir, 'RobotoCondensed-Bold.ttf'))
 const robotoCondensedLight = readFileSync(join(fontsDir, 'RobotoCondensed-Light.ttf'))
-const ibmPlexSansKR = readFileSync(join(fontsDir, 'IBMPlexSansKR-Regular.ttf'))
+const ibmPlexSansKRBold = readFileSync(join(fontsDir, 'IBMPlexSansKR-Bold.ttf'))
+const ibmPlexSansKRRegular = readFileSync(join(fontsDir, 'IBMPlexSansKR-Regular.ttf'))
+const ibmPlexSansKRLight = readFileSync(join(fontsDir, 'IBMPlexSansKR-Light.ttf'))
 
 // The gold stacked-plates mark, embedded as a data URI (satori <img> needs a
 // data URI or absolute URL; a data URI is deterministic and offline-safe).
@@ -82,6 +84,13 @@ export async function renderOgCard(input: OgCardInput): Promise<ImageResponse> {
       artUrl,
       logoUrl: platesDataUri,
       siteTitle: SITE_TITLE[lang] ?? SITE_TITLE.en,
+      // Korean cards render entirely in IBM Plex Sans KR (it carries Latin too,
+      // for "KR"/numerals); Latin cards use RobotoCondensed. Registering the KR
+      // font under the SAME name as RobotoCondensed did NOT work — satori keeps
+      // the first font at a given weight (the Latin Bold, which lacks Korean
+      // glyphs) and then falls back to a default face. A distinct family + a
+      // fontFamily switch is what actually applies the right face.
+      fontFamily: isKorean ? 'IBMPlexSansKR' : 'RobotoCondensed',
     }),
     {
       width: 1200,
@@ -89,17 +98,12 @@ export async function renderOgCard(input: OgCardInput): Promise<ImageResponse> {
       fonts: [
         { name: 'RobotoCondensed', data: robotoCondensedBold, weight: 700, style: 'normal' },
         { name: 'RobotoCondensed', data: robotoCondensedLight, weight: 300, style: 'normal' },
-        // Korean has no Latin bold/light face — register IBMPlexSansKR at EVERY
-        // weight the card uses (700 wordmark/title, 400 desc, 300) so all Korean
-        // text renders in one face instead of the bold weights falling back to a
-        // different (non-KR) font than the description.
         ...(isKorean
-          ? ([700, 400, 300] as const).map((weight) => ({
-              name: 'RobotoCondensed',
-              data: ibmPlexSansKR,
-              weight,
-              style: 'normal' as const,
-            }))
+          ? [
+              { name: 'IBMPlexSansKR', data: ibmPlexSansKRBold, weight: 700 as const, style: 'normal' as const },
+              { name: 'IBMPlexSansKR', data: ibmPlexSansKRRegular, weight: 400 as const, style: 'normal' as const },
+              { name: 'IBMPlexSansKR', data: ibmPlexSansKRLight, weight: 300 as const, style: 'normal' as const },
+            ]
           : []),
       ],
     },

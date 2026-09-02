@@ -12,6 +12,8 @@ interface BomOgCardProps {
   logoUrl: string
   /** Localized wordmark, e.g. "Book of Mormon Online". */
   siteTitle: string
+  /** Registered font family to render in (RobotoCondensed, or IBMPlexSansKR for ko). */
+  fontFamily: string
 }
 
 const BLUE = '#323b4d'
@@ -28,7 +30,7 @@ function titleSize(t: string): number {
   return 32
 }
 
-export function BomOgCard({ title, sub, desc, artUrl, logoUrl, siteTitle }: BomOgCardProps) {
+export function BomOgCard({ title, sub, desc, artUrl, logoUrl, siteTitle, fontFamily }: BomOgCardProps) {
   const colWidth = artUrl ? 720 : 1000
   return (
     <div
@@ -38,7 +40,7 @@ export function BomOgCard({ title, sub, desc, artUrl, logoUrl, siteTitle }: BomO
         display: 'flex',
         position: 'relative',
         backgroundColor: BLUE,
-        fontFamily: 'RobotoCondensed',
+        fontFamily,
       }}
     >
       {/* Header: gold plates mark + wordmark */}
@@ -107,6 +109,7 @@ export function BomOgCard({ title, sub, desc, artUrl, logoUrl, siteTitle }: BomO
             <div
               style={{
                 fontSize: 18,
+                fontWeight: 300,
                 lineHeight: 1.5,
                 color: GREY,
                 textAlign: 'center',
