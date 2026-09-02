@@ -73,6 +73,18 @@ export function isAuthorizedHost(host: string | null | undefined): boolean {
   return bare in HOST_LANG || bare in EN_EDITION_HOSTS
 }
 
+// Validate a client-influenced Host / x-forwarded-host for use in canonical/og:url.
+// Only trust registered hosts (+ localhost for dev/harness); anything else falls
+// back to the apex so a crafted request can't inject an arbitrary canonical/og:url.
+// Preserves the original host string (incl. :port) for trusted hosts. Shares one
+// definition of "authorized" with the middleware allowlist (isAuthorizedHost).
+export function safeHost(candidate: string | null | undefined): string {
+  const host = (candidate ?? '').split(',')[0].trim()
+  const bare = host.split(':')[0].toLowerCase()
+  const ok = isAuthorizedHost(bare) || bare === 'localhost'
+  return ok ? host : CANONICAL_EN_HOST
+}
+
 // True for infra/local requests that must never be redirected (health checks,
 // dev, IP literals, single-label internal names, hostless internal requests).
 // Fails SAFE: an unrecognized internal host serves rather than 301s the site.

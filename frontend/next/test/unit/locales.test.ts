@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { langForHost, bcp47, isAuthorizedHost, isInfraHost, CANONICAL_EN_HOST, normalizeHost } from '../../lib/locales'
+import { langForHost, bcp47, isAuthorizedHost, isInfraHost, CANONICAL_EN_HOST, normalizeHost, safeHost } from '../../lib/locales'
 
 test.describe('langForHost', () => {
   test('apex → en', () => { expect(langForHost('bookofmormon.online')).toBe('en') })
@@ -75,5 +75,25 @@ test.describe('normalizeHost', () => {
     expect(normalizeHost('SWE.bookofmormon.online:443')).toBe('swe.bookofmormon.online')
     expect(normalizeHost(null)).toBe('')
     expect(normalizeHost('')).toBe('')
+  })
+})
+
+test.describe('safeHost', () => {
+  test('authorized hosts pass through (port preserved)', () => {
+    expect(safeHost('bookofmormon.online')).toBe('bookofmormon.online')
+    expect(safeHost('swe.bookofmormon.online')).toBe('swe.bookofmormon.online')
+    expect(safeHost('xn--289a67xla.kr')).toBe('xn--289a67xla.kr')
+    expect(safeHost('bookofmormon.online:443')).toBe('bookofmormon.online:443') // port kept in output
+  })
+  test('localhost still allowed for dev/harness', () => {
+    expect(safeHost('localhost')).toBe('localhost')
+  })
+  test('unregistered *.bookofmormon.online falls back to apex', () => {
+    expect(safeHost('new.bookofmormon.online')).toBe('bookofmormon.online')
+    expect(safeHost('ko.bookofmormon.online')).toBe('bookofmormon.online')
+  })
+  test('unrelated + empty fall back to apex', () => {
+    expect(safeHost('evil.example.com')).toBe('bookofmormon.online')
+    expect(safeHost(null)).toBe('bookofmormon.online')
   })
 })

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { cache } from 'react'
 import { headers } from 'next/headers'
-import { HOST_LANG, LANG_HOST, bcp47 } from './locales'
+import { LANG_HOST, bcp47, safeHost } from './locales'
 import { seoIntentForPath } from './features'
 import { getLabels } from './labels'
 
@@ -104,17 +104,6 @@ interface SeoInput {
   /** Language override for the og-card lang param + naver tag (defaults to the x-lang
    *  header). /read passes 'en' because its content is English on every host. */
   lang?: string
-}
-
-// x-forwarded-host is client-influenced; only trust our own domain (+ localhost
-// for dev/harness). Anything else falls back to the apex, so a crafted request
-// can't inject an arbitrary canonical/og:url. Handles a comma-joined forwarded
-// list and an optional :port.
-function safeHost(candidate: string | null): string {
-  const host = (candidate ?? '').split(',')[0].trim()
-  const bare = host.split(':')[0].toLowerCase()
-  const ok = bare === SITE_DOMAIN || bare.endsWith('.' + SITE_DOMAIN) || bare === 'localhost' || bare in HOST_LANG
-  return ok ? host : SITE_DOMAIN
 }
 
 // Absolute URL for the current request host (self-referential, like the canonical).
