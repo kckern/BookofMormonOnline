@@ -165,6 +165,7 @@ test.describe('force-SSR mirror hosts serve SSR to real browsers', () => {
     expect(r.headers()['x-bom-render-mode']).toBe('ssr')
     expect(r.headers()['x-bom-client-class']).toBe('browser')
     expect(r.headers()['x-resolved-lang']).toBe('en')
+    expect((r.headers()['x-robots-tag'] || '').toLowerCase()).toContain('noindex') // mirror never indexed
     const html = await r.text()
     expect(html).toMatch(/rel="canonical" href="https:\/\/bookofmormon\.online\//)
     expect(html).not.toContain('ssr.bookofmormon.online')

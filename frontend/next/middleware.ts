@@ -260,7 +260,10 @@ export async function middleware(request: NextRequest) {
     res.headers.set('Vary', ssrVary ? `${ssrVary}, User-Agent` : 'User-Agent')
     res.headers.set('Cache-Control', 'private, no-cache')
   }
-  if (seoIntentForPath(pathname) === 'noindex') {
+  if (forceSsr || seoIntentForPath(pathname) === 'noindex') {
+    // The ssr.* mirror hosts are a QA preview of the SSR render — never let a
+    // crawler index them (canonical already points at the real host; this is
+    // belt-and-suspenders so the mirror can't surface in search).
     res.headers.set('X-Robots-Tag', 'noindex, follow')
   }
   return res
