@@ -118,6 +118,7 @@ test.describe('classify — crawlers get SSR with a family', () => {
     gptbot: ['Mozilla/5.0 (compatible; GPTBot/1.1; +https://openai.com/gptbot)', 'openai'],
     ahrefs: ['Mozilla/5.0 (compatible; AhrefsBot/7.0; +http://ahrefs.com/robot/)', 'seo-tool'],
     yeti: ['Mozilla/5.0 (compatible; Yeti/1.1; +http://naver.me/spd)', 'other-crawler'],
+    daumoa: ['Mozilla/5.0 (compatible; Daumoa/4.0; +http://cs.daum.net/faq/15/4118.html)', 'other-crawler'],
     'kakaotalk-scrap': ['facebookexternalhit/1.1; kakaotalk-scrap/1.0; +https://devtalk.kakao.com/', 'meta'],
     'spoofed-scraper': ['Mozilla/5.0 (compatible; SemrushBot/7~bl; +http://www.semrush.com/bot.html)', 'seo-tool'],
   }
@@ -356,19 +357,31 @@ test.describe('HTML responses vary by User-Agent (cache safety)', () => {
 })
 ```
 
+- [ ] **Step 1b: Update two pre-existing assertions that isbot now reclassifies**
+
+isbot flags `ResearchIndexer/1.0` as a bot (verified), so it becomes `known-crawler`, not `unknown`. In `test/routes/seo-gating.test.ts`, in BOTH the `'an unrecognized indexer gets SSR…'` test and the `'SEO assets identify the asset rendering path'` test, change:
+```ts
+    expect(r.headers()['x-bom-client-class']).toBe('unknown')
+```
+to:
+```ts
+    expect(r.headers()['x-bom-client-class']).toBe('known-crawler')
+```
+(The render-mode assertions — `ssr`/`asset` — are unchanged and still hold; only the class label changes. The genuine `unknown→ssr` path is covered by the empty-UA case in `classify.test.ts`.)
+
 - [ ] **Step 2: Run the new tests to verify they fail**
 
 Run:
 ```bash
 npx playwright test test/routes/seo-gating.test.ts -g "in-app WebViews|headless clients|vary by User-Agent" --reporter=line
 ```
-Expected: FAIL — WebView cases return `ssr` (no `applewebkit` yet), and `Vary` is absent.
+Expected: FAIL, in three groups — (a) the in-app-WebView cases return `ssr` today (KakaoTalk hits `kakao` in the old `KNOWN_CRAWLER_RE`; FB-iOS lacks a `Safari/` token so the old `BROWSER_UA_RE` misses it); (b) the HeadlessChrome case returns `cra`/`browser` today (old `BROWSER_UA_RE` matches `Chrome/`, old crawler regex doesn't match `HeadlessChrome`); (c) both `Vary` cases fail (header absent).
 
 - [ ] **Step 3: Replace the middleware's inline classification with `classify()`**
 
 In `frontend/next/middleware.ts`:
 
-3a. Replace the import block and the crawler/browser constants. Change lines 1–4 to add the classify import, and DELETE lines 12–22 (the `Korean bots …` comment through `BROWSER_UA_RE`). New top:
+3a. Replace the import block and the crawler/browser constants. Change lines 1–4 to add the classify import, and DELETE lines 12–22 — that is BOTH comment blocks (the `Crawlers and social-preview fetchers…` block AND the `Korean bots…` block) plus BOTH regex constants (`KNOWN_CRAWLER_RE` and `BROWSER_UA_RE`). Leave nothing of the old gate behind. New top:
 ```ts
 import { NextRequest, NextResponse } from 'next/server'
 import { LANG_PREFIXES, LOCALE_SEGS, langForHost, isAuthorizedHost, isInfraHost, CANONICAL_EN_HOST } from '@/lib/locales'
@@ -457,7 +470,8 @@ function logRenderDecision(
       // The HTML shell is UA-routed. Cloudflare ignores Vary, so Cache-Control is
       // the real guard against a shared cache serving the wrong app; Vary covers
       // well-behaved caches. Hashed static assets keep their own long-lived caching.
-      craResponse.headers.set('Vary', 'User-Agent')
+      const craVary = craResponse.headers.get('Vary')
+      craResponse.headers.set('Vary', craVary ? `${craVary}, User-Agent` : 'User-Agent')
       craResponse.headers.set('Cache-Control', 'private, no-cache')
     }
     return craResponse
@@ -469,7 +483,9 @@ function logRenderDecision(
   if (!isSeoAsset) logRenderDecision(request, decision, ssrMode, pathname)
   markResponse(res, clientClass, ssrMode)
   if (!isSeoAsset) {
-    res.headers.set('Vary', 'User-Agent')
+    // Merge, not clobber: the app-router may set its own Vary (RSC/Next-Router-*).
+    const ssrVary = res.headers.get('Vary')
+    res.headers.set('Vary', ssrVary ? `${ssrVary}, User-Agent` : 'User-Agent')
     res.headers.set('Cache-Control', 'private, no-cache')
   }
 ```
@@ -534,17 +550,25 @@ In `ops/telemetry/vector.yaml`, replace the `crawler_family` cascade (lines 40�
 ```
 The single change: the `.client_class == "browser"` branch moves to the TOP. Now the app's classification wins, so a KakaoTalk/Naver in-app WebView (which the app now classifies `browser`) is tagged `browser` on the access stream instead of `other-crawler`. The `naver|daum|kakao` tokens remain only as a fallback for genuine non-browser clients.
 
-- [ ] **Step 2: Validate the Vector config still parses (if the `vector` binary is available)**
+- [ ] **Step 2: Validate the reordered VRL with the real Vector binary (skip only if Docker is absent)**
 
-Run (in `frontend/next`):
+Run (in `frontend/next`) — this separates "Docker missing" (skip) from "validate failed" (a real error that must NOT be swallowed):
 ```bash
-docker run --rm -v "$PWD/../../ops/telemetry/vector.yaml:/etc/vector/vector.yaml:ro" timberio/vector:latest-alpine validate --no-environment /etc/vector/vector.yaml || echo "vector binary unavailable — skip; YAML validity is also covered by the js-yaml load in the drift test"
+if command -v docker >/dev/null; then
+  docker run --rm -v "$PWD/../../ops/telemetry/vector.yaml:/etc/vector/vector.yaml:ro" timberio/vector:latest-alpine validate --no-environment /etc/vector/vector.yaml
+else
+  echo "docker unavailable — skipping VRL validation (js-yaml load in the drift test still checks YAML shape)"
+fi
 ```
-Expected: `Validated` — or the skip message if Docker/the image isn't present locally.
+Expected: `Validated` (config OK) if Docker is present; a non-zero exit here means the reordered VRL is broken — fix it before continuing. The skip line only prints when Docker is genuinely absent.
 
-- [ ] **Step 3: Write the drift guard test**
+- [ ] **Step 3: Add js-yaml types, then write the drift guard test**
 
-Create `frontend/next/test/unit/vector-taxonomy-drift.test.ts`:
+The drift test imports `js-yaml`, which ships no types and has no `@types` installed — under `strict` + `tsc` that is a TS7016 error. Install the types first (in `frontend/next`):
+```bash
+npm install -D @types/js-yaml
+```
+Then create `frontend/next/test/unit/vector-taxonomy-drift.test.ts`:
 ```ts
 import { test, expect } from '@playwright/test'
 import { readFileSync } from 'fs'
@@ -600,13 +624,14 @@ test.describe('classify() families agree with ops/telemetry/vector.yaml', () => 
 })
 ```
 
-- [ ] **Step 4: Run the drift test to verify it passes**
+- [ ] **Step 4: Run the drift test to verify it passes, and typecheck**
 
 Run:
 ```bash
 npx playwright test test/unit/vector-taxonomy-drift.test.ts --reporter=line
+npx tsc --noEmit
 ```
-Expected: PASS (both tests).
+Expected: PASS (both tests); `tsc` clean (this confirms `@types/js-yaml` resolved the `import yaml from 'js-yaml'` typing).
 
 - [ ] **Step 5: Prove the guard actually bites (mutation check)**
 
@@ -623,7 +648,7 @@ Expected: FAIL then PASS — the guard detects drift.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add ops/telemetry/vector.yaml frontend/next/test/unit/vector-taxonomy-drift.test.ts
+git add ops/telemetry/vector.yaml frontend/next/test/unit/vector-taxonomy-drift.test.ts frontend/next/package.json frontend/next/package-lock.json
 git commit -m "fix(telemetry): trust app client_class first in crawler_family; add drift test"
 ```
 
@@ -684,9 +709,11 @@ path drives the decision.
 ## 8. Bot→CRA leak proxy — on the NPM ACCESS stream (has client IPs)
 `leak` in the render-decision log is a structural invariant (always false): a
 scraper spoofing a clean Chrome UA is undetectable from UA alone. Its signal is
-IP-based, on the `bom_access` stream:
+IP-based, on the `bom_access` stream. That stream is parsed AT INGEST
+(`parse_json!(.message)` in vector.yaml), so `client_class`/`client_ip`/`crawler_family`
+are already first-class fields — do NOT `unpack_json` here (its `_msg` is a URI):
 
-    _stream:{source_type="bom_access"} | unpack_json from _msg | filter client_class:browser | stats by (client_ip) count() n | sort by (n desc) | limit 50
+    _stream:{source_type="bom_access"} | filter client_class:browser | stats by (client_ip) count() n | sort by (n desc) | limit 50
 Cross-reference high-volume IPs against known datacenter ASNs.
 ```
 
@@ -806,7 +833,18 @@ curl -s http://localhost:9428/select/logsql/query --data-urlencode 'query=_strea
 ```
 Expected: rows like `{"render":"cra","n":"…"}` and `{"render":"ssr","n":"…"}` with non-zero counts.
 
-- [ ] **Step 6: Update the deploy note**
+- [ ] **Step 6: Sync the reordered `vector.yaml` to the prod box (separate from the app deploy)**
+
+The app image ships via CI, but `vector` runs as its own container reading
+`/home/ubuntu/observability/vector.yaml` on the prod EC2 — the app deploy does NOT
+update it, so the access-stream taxonomy fix (in-app WebViews tagged `browser`)
+does not ship until this is done. Confirm whether the running copy matches the repo
+copy; if not, copy `ops/telemetry/vector.yaml` to the box and reload Vector
+(`docker kill -s HUP vector` or restart the `vector` container). Requires prod
+access (Infisical `ba310d37` / SSH). If prod access is unavailable in this session,
+STOP and hand this step to the operator with the diff — do not skip silently.
+
+- [ ] **Step 7: Update the deploy note**
 
 If a running deploy/ops note exists, record this rollout. Otherwise no action.
 
@@ -814,7 +852,7 @@ If a running deploy/ops note exists, record this rollout. Otherwise no action.
 
 ## Self-review checklist (completed by plan author)
 
-- **Spec coverage:** classifier→T2; in-app WebView `applewebkit`→T2/T3; drop KR supplement (isbot only)→T2; Vary/Cache-Control→T3; isNav-gated + enriched logging (isbotHit/browserUa/signal/crawlerFamily/isMobile)→T3; suspect/leak semantics→T2; vector.yaml alignment + drift test→T4; LogsQL query set→T5; test runner (Playwright test/unit)→T2/T4; isbot bundling check→T6; rollout + post-deploy LogsQL verification→T7. All spec sections mapped.
+- **Spec coverage:** classifier→T2; in-app WebView `applewebkit`→T2/T3; drop KR supplement (isbot only)→T2; Vary/Cache-Control (merge-not-clobber)→T3; isNav-gated + enriched logging (isbotHit/browserUa/signal/crawlerFamily/isMobile)→T3; suspect/leak semantics→T2; two pre-existing seo-gating assertions updated for isbot→T3 Step 1b; vector.yaml alignment + `@types/js-yaml` + drift test + VRL validate→T4; LogsQL query set (access-stream query un-`unpack_json`'d)→T5; prod vector.yaml sync caveat→T7 Step 6; test runner (Playwright test/unit)→T2/T4; isbot bundling check→T6; rollout + post-deploy LogsQL verification→T7. All spec sections mapped.
 - **Placeholder scan:** none — every code/step shows full content and exact commands.
 - **Type consistency:** `Decision`/`RenderMode`/`ClientClass`/`CrawlerFamily` defined in T2 `classify.ts`, imported unchanged in T3 middleware; `classify()` signature `{ method, ua, secChUaMobile? }` used identically in tests, drift test, and middleware; log field names (`crawlerFamily`, `isbotHit`, `browserUa`, `signal`, `suspect`, `leak`) match between `logRenderDecision` (T3) and the LogsQL queries (T5).
 ```
