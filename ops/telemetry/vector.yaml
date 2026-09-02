@@ -38,7 +38,9 @@ transforms:
       }
 
       ua = downcase(string!(.user_agent))
-      if match(ua, r'googlebot|google-inspectiontool|adsbot-google') {
+      if .client_class == "browser" {
+        .crawler_family = "browser"
+      } else if match(ua, r'googlebot|google-inspectiontool|adsbot-google') {
         .crawler_family = "google"
       } else if match(ua, r'bingbot|adidxbot') {
         .crawler_family = "bing"
@@ -52,8 +54,6 @@ transforms:
         .crawler_family = "seo-tool"
       } else if match(ua, r'bot|crawl|spider|slurp|yeti|naver|daum|kakao|preview') {
         .crawler_family = "other-crawler"
-      } else if .client_class == "browser" {
-        .crawler_family = "browser"
       } else {
         .crawler_family = "unknown"
       }
