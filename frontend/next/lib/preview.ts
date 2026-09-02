@@ -6,7 +6,7 @@ import { getPlace } from '@/lib/places'
 import { getArt } from '@/lib/art'
 import { getCommentary } from '@/lib/commentary'
 import { stripMarkup } from '@/lib/seo'
-import { wikiToText } from '@/lib/entity'
+import { wikiToText, superscript } from '@/lib/entity'
 import { LOCALE_SEGS } from '@/lib/locales'
 import type { OgCardInput } from '@/lib/ogCard'
 
@@ -62,14 +62,14 @@ export async function gatherPreview(rawSlug: string, lang: string): Promise<OgCa
   if (first === 'people' || first === 'person') {
     const person = await getPerson(leaf).catch(() => null)
     if (person) {
-      return { title: person.name, sub: person.title ?? undefined, desc: stripMarkup(wikiToText(person.description ?? '')), img: person.slug, imgType: 'people', lang }
+      return { title: superscript(person.name), sub: superscript(person.title ?? '') || undefined, desc: stripMarkup(wikiToText(person.description ?? '')), img: person.slug, imgType: 'people', lang }
     }
     return { title: 'People', sub: SITE_TITLE, img: fallbackArt('people'), lang }
   }
   if (first === 'place' || first === 'map') {
     const place = await getPlace(leaf).catch(() => null)
     if (place) {
-      return { title: place.name, sub: place.info ?? undefined, desc: stripMarkup(wikiToText(place.description ?? '')), img: place.slug, imgType: 'places', lang }
+      return { title: superscript(place.name), sub: place.info ?? undefined, desc: stripMarkup(wikiToText(place.description ?? '')), img: place.slug, imgType: 'places', lang }
     }
     return { title: 'Places', sub: SITE_TITLE, img: fallbackArt('places'), lang }
   }

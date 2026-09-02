@@ -1,132 +1,148 @@
-// Satori JSX — no React DOM. Inline styles only.
+// Satori JSX — no React DOM, inline styles only. Matches the legacy PHP GD card
+// (render.php): gold plates logo + wordmark header on a blue field, a light
+// content card holding a centered title / blue subtitle / gold rule / grey
+// description, and a gold-framed square thumbnail on the right.
 
 interface BomOgCardProps {
   title: string
   sub?: string
   desc?: string
   artUrl?: string
+  /** data: URI of the gold stacked-plates mark. */
+  logoUrl: string
+  /** Localized wordmark, e.g. "Book of Mormon Online". */
+  siteTitle: string
 }
 
-export function BomOgCard({ title, sub, desc, artUrl }: BomOgCardProps) {
+const BLUE = '#323b4d'
+const GOLD = '#fbc658'
+const CARD = '#d6d8db'
+const GREY = '#646464'
+
+// GD auto-shrank the title to fit ~680px; approximate by length.
+function titleSize(t: string): number {
+  const n = t.length
+  if (n <= 16) return 54
+  if (n <= 24) return 46
+  if (n <= 34) return 38
+  return 32
+}
+
+export function BomOgCard({ title, sub, desc, artUrl, logoUrl, siteTitle }: BomOgCardProps) {
+  const colWidth = artUrl ? 720 : 1000
   return (
     <div
       style={{
-        display: 'flex',
         width: 1200,
         height: 630,
-        background: '#32394d',
-        fontFamily: 'RobotoCondensed',
+        display: 'flex',
         position: 'relative',
-        overflow: 'hidden',
+        backgroundColor: BLUE,
+        fontFamily: 'RobotoCondensed',
       }}
     >
-      {/* Gold accent frame — top-right corner */}
+      {/* Header: gold plates mark + wordmark */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={logoUrl} width={132} height={132} alt="" style={{ position: 'absolute', left: 60, top: 34 }} />
+      <div style={{ position: 'absolute', left: 208, top: 46, fontSize: 66, fontWeight: 700, color: '#ffffff' }}>
+        {siteTitle}
+      </div>
+
+      {/* Light content card */}
       <div
         style={{
           position: 'absolute',
-          top: 0,
-          right: 0,
-          width: 340,
-          height: 340,
-          border: '6px solid #fbc658',
-          borderRadius: 4,
-          transform: 'translate(80px, -80px) rotate(15deg)',
-        }}
-      />
-
-      {/* Art image area */}
-      {artUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={artUrl}
-          alt=""
-          width={260}
-          height={260}
-          style={{
-            position: 'absolute',
-            right: 30,
-            top: 30,
-            width: 260,
-            height: 260,
-            objectFit: 'cover',
-            borderRadius: 4,
-          }}
-        />
-      )}
-
-      {/* White semi-transparent content card */}
-      <div
-        style={{
+          left: 60,
+          top: 205,
+          width: 1080,
+          height: 345,
+          backgroundColor: CARD,
           display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          position: 'absolute',
-          left: 40,
-          bottom: 40,
-          right: artUrl ? 320 : 60,
-          top: 40,
-          background: 'rgba(255,255,255,0.08)',
-          borderRadius: 8,
-          padding: '32px 40px',
         }}
       >
-        {sub && (
-          <div
-            style={{
-              fontSize: 22,
-              color: '#fbc658',
-              fontWeight: 700,
-              marginBottom: 12,
-              letterSpacing: 1,
-              textTransform: 'uppercase',
-            }}
-          >
-            {sub}
-          </div>
-        )}
-
         <div
           style={{
-            fontSize: title.length > 40 ? 44 : 56,
-            fontWeight: 700,
-            color: '#ffffff',
-            lineHeight: 1.15,
-            marginBottom: desc ? 20 : 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            width: colWidth,
+            paddingTop: 30,
+            paddingLeft: 24,
+            paddingRight: 24,
           }}
         >
-          {title}
-        </div>
-
-        {desc && (
           <div
             style={{
-              fontSize: 24,
-              color: 'rgba(255,255,255,0.80)',
-              lineHeight: 1.5,
-              display: '-webkit-box',
-              WebkitLineClamp: 3,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
+              fontSize: titleSize(title),
+              fontWeight: 700,
+              color: '#000000',
+              textAlign: 'center',
+              lineHeight: 1.1,
+              maxWidth: colWidth - 60,
             }}
           >
-            {desc}
+            {title}
           </div>
-        )}
 
-        {/* Wordmark */}
+          {sub && (
+            <div
+              style={{
+                fontSize: 26,
+                fontWeight: 700,
+                color: BLUE,
+                textAlign: 'center',
+                lineHeight: 1.2,
+                marginTop: 8,
+                maxWidth: colWidth - 60,
+              }}
+            >
+              {sub}
+            </div>
+          )}
+
+          <div style={{ width: Math.min(680, colWidth - 40), height: 5, backgroundColor: GOLD, marginTop: 16 }} />
+
+          {desc && (
+            <div
+              style={{
+                fontSize: 18,
+                lineHeight: 1.5,
+                color: GREY,
+                textAlign: 'center',
+                marginTop: 16,
+                maxWidth: colWidth - 60,
+                display: '-webkit-box',
+                WebkitLineClamp: 6,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+              }}
+            >
+              {desc}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Gold-framed square thumbnail */}
+      {artUrl && (
         <div
           style={{
             position: 'absolute',
-            bottom: 24,
-            right: 32,
-            fontSize: 16,
-            color: 'rgba(255,255,255,0.4)',
-            letterSpacing: 2,
+            left: 820,
+            top: 225,
+            width: 305,
+            height: 300,
+            backgroundColor: GOLD,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
-          BOOKOFMORMON.ONLINE
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={artUrl} width={281} height={280} alt="" style={{ objectFit: 'cover' }} />
         </div>
-      </div>
+      )}
     </div>
   )
 }
