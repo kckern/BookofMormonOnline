@@ -223,6 +223,11 @@ export async function middleware(request: NextRequest) {
       const craVary = craResponse.headers.get('Vary')
       craResponse.headers.set('Vary', craVary ? `${craVary}, User-Agent` : 'User-Agent')
       craResponse.headers.set('Cache-Control', 'private, no-cache')
+    } else if (pathname === '/sw.js') {
+      // The service-worker script must NOT be edge/browser cached, or a SW update
+      // (and the client fixes it carries — e.g. evicting a poisoned cache) won't
+      // reach clients until the cache TTL expires. Force revalidation every time.
+      craResponse.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate')
     }
     return craResponse
   }

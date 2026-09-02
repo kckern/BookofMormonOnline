@@ -151,6 +151,10 @@ test.describe('HTML responses vary by User-Agent (cache safety)', () => {
     // own `no-store` — but both forbid shared-cache storage, which is what matters.
     expect(cc).toMatch(/no-store|no-cache/)
   })
+  test('/sw.js is served no-store so SW updates propagate immediately', async ({ request }) => {
+    const r = await request.get('/sw.js')
+    expect((r.headers()['cache-control'] || '').toLowerCase()).toContain('no-store')
+  })
 })
 
 test.describe('canonical is host-aware', () => {
