@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { LANG_PREFIXES, LOCALE_SEGS, langForHost, isAuthorizedHost, isInfraHost, CANONICAL_EN_HOST } from '@/lib/locales'
 import { seoIntentForPath } from '@/lib/features'
 import { proxyClickyJs, proxyClickyBeacon } from '@/lib/clicky'
+import { ANDROID_ASSET_LINKS, PWA_MANIFEST } from '@/lib/android'
 
 // The CRA uses bare routes (/timeline, not /en/timeline) — language is by
 // subdomain, not URL path. So a locale-prefixed path must have that prefix
@@ -23,7 +24,7 @@ const BROWSER_UA_RE = /mozilla\/5\.0.*(?:chrome|chromium|crios|firefox|fxios|saf
 
 const CRA_ORIGIN = 'http://localhost:8201'
 const BACKEND_ORIGIN = 'http://localhost:5005'
-const CRA_ASSET_PATHS = new Set(['/sw.js', '/asset-manifest.json', '/manifest.json'])
+const CRA_ASSET_PATHS = new Set(['/sw.js', '/asset-manifest.json'])
 const CRA_ASSET_PREFIXES = ['/static/', '/font/', '/icons/', '/img/', '/md/', '/screenshots/', '/tinymce/']
 const FAX_BACKEND_PREFIXES = ['/fax/boxes/', '/fax/render/', '/fax/text/']
 
@@ -184,6 +185,18 @@ export async function middleware(request: NextRequest) {
     // off x-forwarded-proto risks emitting an http:// Location (extra upgrade hop).
     const target = `https://${CANONICAL_EN_HOST}${pathname}${request.nextUrl.search}`
     return markResponse(NextResponse.redirect(target, 301), clientClass)
+  }
+
+  // These platform-association resources must never fall through to the CRA
+  // HTML shell. Android and PWABuilder fetch them without browser-navigation
+  // headers, and the TWA contract requires exact JSON at these exact paths.
+  if (pathname === '/manifest.json') {
+    const response = NextResponse.json(PWA_MANIFEST)
+    response.headers.set('Content-Type', 'application/manifest+json; charset=utf-8')
+    return markResponse(response, clientClass, 'asset')
+  }
+  if (pathname === '/.well-known/assetlinks.json') {
+    return markResponse(NextResponse.json(ANDROID_ASSET_LINKS), clientClass, 'asset')
   }
 
   // The desktop viewer is a CRA route, but these dynamic Facsimiles resources
