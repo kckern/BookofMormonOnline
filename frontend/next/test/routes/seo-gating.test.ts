@@ -74,7 +74,7 @@ test.describe('SSR access defaults open', () => {
     expect(r.status()).toBe(200)
     expect(r.headers()['x-resolved-lang']).toBe('en')
     expect(r.headers()['x-bom-render-mode']).toBe('ssr')
-    expect(r.headers()['x-bom-client-class']).toBe('unknown')
+    expect(r.headers()['x-bom-client-class']).toBe('known-crawler')
     expect(await r.text()).toContain('<h1')
   })
 
@@ -91,7 +91,7 @@ test.describe('SSR access defaults open', () => {
     })
     expect(r.status()).toBe(200)
     expect(r.headers()['x-bom-render-mode']).toBe('asset')
-    expect(r.headers()['x-bom-client-class']).toBe('unknown')
+    expect(r.headers()['x-bom-client-class']).toBe('known-crawler')
   })
 })
 
@@ -109,6 +109,47 @@ test.describe('history is noindex for bots', () => {
   test('crawl pages have no noindex header', async ({ request }) => {
     const r = await request.get('/people', { headers: bot })
     expect(r.headers()['x-robots-tag']).toBeUndefined()
+  })
+})
+
+test.describe('in-app WebViews reach the CRA', () => {
+  const webviews: Record<string, string> = {
+    'facebook-ios': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 [FBAN/FBIOS;FBAV/443.0]',
+    'kakaotalk-android': 'Mozilla/5.0 (Linux; Android 13; SM-S911N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Mobile Safari/537.36;KAKAOTALK 2510020',
+  }
+  for (const [name, ua] of Object.entries(webviews)) {
+    test(`${name} → CRA`, async ({ request }) => {
+      const r = await request.get('/', { headers: { 'user-agent': ua } })
+      expect(r.headers()['x-bom-render-mode'], name).toBe('cra')
+      expect(r.headers()['x-bom-client-class'], name).toBe('browser')
+    })
+  }
+})
+
+test.describe('headless clients stay on SSR', () => {
+  test('HeadlessChrome → SSR', async ({ request }) => {
+    const ua = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/119.0.0.0 Safari/537.36'
+    const r = await request.get('/lehites', { headers: { 'user-agent': ua } })
+    expect(r.headers()['x-bom-render-mode']).toBe('ssr')
+    expect(r.headers()['x-bom-client-class']).toBe('known-crawler')
+  })
+})
+
+test.describe('HTML responses vary by User-Agent (cache safety)', () => {
+  test('SSR page sets Vary: User-Agent', async ({ request }) => {
+    const r = await request.get('/lehites', { headers: { 'user-agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' } })
+    expect((r.headers()['vary'] || '').toLowerCase()).toContain('user-agent')
+  })
+  test('CRA page sets Vary: User-Agent', async ({ request }) => {
+    const r = await request.get('/', { headers: { 'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15' } })
+    expect((r.headers()['vary'] || '').toLowerCase()).toContain('user-agent')
+  })
+  test('SSR page sets Cache-Control no-store (app-router default)', async ({ request }) => {
+    const r = await request.get('/lehites', { headers: { 'user-agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' } })
+    const cc = (r.headers()['cache-control'] || '').toLowerCase()
+    // Next.js app-router overrides the middleware's `private, no-cache` with its
+    // own `no-store` — but both forbid shared-cache storage, which is what matters.
+    expect(cc).toMatch(/no-store|no-cache/)
   })
 })
 

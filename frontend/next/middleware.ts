@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { LANG_PREFIXES, LOCALE_SEGS, langForHost, isAuthorizedHost, isInfraHost, CANONICAL_EN_HOST } from '@/lib/locales'
 import { seoIntentForPath } from '@/lib/features'
 import { proxyClickyJs, proxyClickyBeacon } from '@/lib/clicky'
+import { classify, type Decision, type ClientClass, type RenderMode } from '@/lib/classify'
 
 // The CRA uses bare routes (/timeline, not /en/timeline) — language is by
 // subdomain, not URL path. So a locale-prefixed path must have that prefix
@@ -9,26 +10,11 @@ import { proxyClickyJs, proxyClickyBeacon } from '@/lib/clicky'
 // page (e.g. the timeline) never mounts. 'en' included (it's the default and
 // not in LANG_PREFIXES, but /en/* URLs still occur).
 
-// Crawlers and social-preview fetchers get SSR HTML.
-// Only requests that positively identify themselves as interactive browser
-// navigations get proxied to the React app (CRA) on port 8201. Unknown clients
-// default to SSR: crawler access must not depend on keeping a bot-name allowlist
-// current.
-// Korean bots matter for this site (ko content + sharing): Naver's crawler is
-// "Yeti" (UA: naver.me/bot), Daum's is "Daumoa", and KakaoTalk/KakaoStory link
-// previews send "kakaotalk-scrap"/"kakaostory-og-reader" — none reliably carry
-// "bot"/"crawl", so they're matched explicitly by yeti|naver|daum|kakao.
-const KNOWN_CRAWLER_RE = /bot|crawl|spider|slurp|google|bing|baidu|yandex|duckduck|facebook|twitter|linkedin|whatsapp|telegram|slack|discord|preview|curl|python-requests|yeti|naver|daum|kakao/i
-const BROWSER_UA_RE = /mozilla\/5\.0.*(?:chrome|chromium|crios|firefox|fxios|safari|edg|opr)\//i
-
 const CRA_ORIGIN = 'http://localhost:8201'
 const BACKEND_ORIGIN = 'http://localhost:5005'
 const CRA_ASSET_PATHS = new Set(['/sw.js', '/asset-manifest.json', '/manifest.json'])
 const CRA_ASSET_PREFIXES = ['/static/', '/font/', '/icons/', '/img/', '/md/', '/screenshots/', '/tinymce/']
 const FAX_BACKEND_PREFIXES = ['/fax/boxes/', '/fax/render/', '/fax/text/']
-
-type RenderMode = 'ssr' | 'cra' | 'asset' | 'analytics'
-type ClientClass = 'browser' | 'known-crawler' | 'unknown'
 
 const SECURITY_HEADERS: Record<string, string> = {
   'Strict-Transport-Security': 'max-age=31536000',
@@ -81,63 +67,44 @@ function responseHeadersForClient(source: Headers): Headers {
   return headers
 }
 
-function isInteractiveBrowserNavigation(request: NextRequest, ua: string): boolean {
-  // Only GET/HEAD page navigations are candidates for the CRA. (The GraphQL API
-  // is POSTed to /{lang} and must fall through to the SSR-side rewrite.)
-  if (request.method !== 'GET' && request.method !== 'HEAD') return false
-
-  // Gate on User-Agent alone: a real browser engine, and not a known crawler.
-  //
-  // We previously ALSO required a positive Sec-Fetch (fetch-metadata) or
-  // Sec-CH-UA (client-hint) header. But those headers only exist on
-  // Chromium and Gecko — WebKit sends NEITHER — so Safari (desktop) and EVERY
-  // iOS browser (Safari, Chrome/CriOS, Firefox/FxiOS), plus any Firefox with
-  // those headers stripped, were misclassified as non-browsers and served SSR
-  // instead of the React app. The requirement punished exactly the users who
-  // cannot send those signals. Unknown clients (CLIs, feed readers, scrapers)
-  // still default to SSR because they don't carry a full browser UA
-  // (BROWSER_UA_RE requires "Mozilla/5.0 … <engine>/"), and named crawlers are
-  // excluded outright. These were never security boundaries — they only select
-  // the presentation layer. The suspect flag in logRenderDecision now tracks
-  // any browser-UA client that still lands on SSR as a regression tripwire.
-  return !KNOWN_CRAWLER_RE.test(ua) && BROWSER_UA_RE.test(ua)
-}
-
-function classifyClient(request: NextRequest, ua: string): ClientClass {
-  if (KNOWN_CRAWLER_RE.test(ua)) return 'known-crawler'
-  if (isInteractiveBrowserNavigation(request, ua)) return 'browser'
-  return 'unknown'
-}
-
-// Structured one-line log of the SSR-vs-CRA routing decision for a page
-// navigation, emitted to the Next process stdout (pm2 logs next). Purpose:
-// surface clients that got MISCATEGORIZED — a real browser served SSR because
-// it sent neither Sec-Fetch metadata nor Sec-CH-UA (Safari desktop + every
-// iOS browser, and Firefox with those headers stripped). Filter the stream
-// with `pm2 logs next | grep '"suspect":true'`. Headers only — no IP/PII.
-// Assets/redirects are skipped by the callers so this stays to real
-// navigations. Disable entirely with BOM_LOG_RENDER_DECISION=0.
+// Structured one-line log of the SSR-vs-CRA routing decision, per NAVIGATION,
+// to the Next process stdout → Vector → VictoriaLogs. Purpose: make both
+// misroute directions queryable (see docs/reference/render-decision-logsql.md).
+// `suspect` = a browser served SSR (human→SSR). Headers only — no IP/PII.
+// Non-navigations (POST/etc.), CRA assets, and SEO assets are skipped by the
+// callers / this guard. Disable entirely with BOM_LOG_RENDER_DECISION=0.
 function logRenderDecision(
   request: NextRequest,
-  ua: string,
-  clientClass: ClientClass,
-  renderMode: RenderMode,
+  decision: Decision,
+  servedMode: RenderMode,
   pathname: string,
 ): void {
   if (process.env.BOM_LOG_RENDER_DECISION === '0') return
+  if (!decision.isNav) return
   const h = request.headers
-  // A browser-looking UA (not a known crawler) that did NOT get the CRA is the
-  // exact failure we are hunting; everything else is expected traffic.
-  const suspect = renderMode === 'ssr' && !KNOWN_CRAWLER_RE.test(ua) && BROWSER_UA_RE.test(ua)
+  // Serve-time tripwires — computed against the ACTUAL served mode (only the
+  // middleware knows it; classify() only recommends). suspect = a browser
+  // navigation that still landed on SSR (human→SSR regression); leak = a crawler
+  // that reached the CRA (bot→CRA regression). Both should be ~0; a non-zero
+  // count is a routing regression to investigate (see the LogsQL query set).
+  const suspect = servedMode === 'ssr' && decision.browserUa && !decision.isbotHit
+  const leak = servedMode === 'cra' && decision.isbotHit
   console.log(JSON.stringify({
     tag: 'render-decision',
     suspect,
-    render: renderMode,
-    class: clientClass,
+    leak,
+    render: servedMode,
+    class: decision.clientClass,
+    crawlerFamily: decision.crawlerFamily,
+    isMobile: decision.isMobile,
+    isNav: decision.isNav,
+    isbotHit: decision.isbotHit,
+    browserUa: decision.browserUa,
+    signal: decision.signal,
     host: h.get('x-forwarded-host') ?? h.get('host') ?? null,
     path: pathname,
     method: request.method,
-    ua,
+    ua: h.get('user-agent') ?? '',
     secFetchMode: h.get('sec-fetch-mode'),
     secFetchDest: h.get('sec-fetch-dest'),
     secFetchSite: h.get('sec-fetch-site'),
@@ -164,7 +131,8 @@ function markResponse<T extends Response>(response: T, clientClass: ClientClass,
 export async function middleware(request: NextRequest) {
   const { pathname, hostname } = request.nextUrl
   const ua = request.headers.get('user-agent') ?? ''
-  const clientClass = classifyClient(request, ua)
+  const decision = classify({ method: request.method, ua, secChUaMobile: request.headers.get('sec-ch-ua-mobile') })
+  const clientClass = decision.clientClass
 
   // --- Host redirect: www.* → bare domain ---
   if (hostname.startsWith('www.')) {
@@ -213,7 +181,7 @@ export async function middleware(request: NextRequest) {
     pathname === '/robots.txt' || pathname === '/sitemap.xml' || pathname === '/og' || pathname.startsWith('/og/')
 
   // --- Human visitor: proxy transparently to CRA ---
-  if (!isSeoAsset && (isCraAsset(pathname) || isInteractiveBrowserNavigation(request, ua))) {
+  if (!isSeoAsset && (isCraAsset(pathname) || decision.renderMode === 'cra')) {
     const segs = pathname.split('/').filter(Boolean)
     // The CRA routes are bare (language is by subdomain). A locale-prefixed page
     // URL must be REDIRECTED to the bare path — a transparent rewrite keeps the
@@ -228,13 +196,22 @@ export async function middleware(request: NextRequest) {
       return markResponse(NextResponse.redirect(url), clientClass, 'cra')
     }
     // Log real page navigations only — not CRA static assets (/static/, fonts…).
-    if (!isCraAsset(pathname)) logRenderDecision(request, ua, clientClass, 'cra', pathname)
+    if (!isCraAsset(pathname)) logRenderDecision(request, decision, 'cra', pathname)
     const target = new URL(CRA_ORIGIN + pathname + request.nextUrl.search)
     const craRes = await fetch(target, { redirect: 'follow' })
-    return markResponse(new Response(craRes.body, {
+    const craResponse = markResponse(new Response(craRes.body, {
       status: craRes.status,
       headers: responseHeadersForClient(craRes.headers),
     }), clientClass, 'cra')
+    if (!isCraAsset(pathname)) {
+      // The HTML shell is UA-routed. Cloudflare ignores Vary, so Cache-Control is
+      // the real guard against a shared cache serving the wrong app; Vary covers
+      // well-behaved caches. Hashed static assets keep their own long-lived caching.
+      const craVary = craResponse.headers.get('Vary')
+      craResponse.headers.set('Vary', craVary ? `${craVary}, User-Agent` : 'User-Agent')
+      craResponse.headers.set('Cache-Control', 'private, no-cache')
+    }
+    return craResponse
   }
 
   // --- Bot/crawler: serve Next.js SSR with lang header ---
@@ -245,8 +222,17 @@ export async function middleware(request: NextRequest) {
   const res = NextResponse.next({ request: { headers: requestHeaders } })
   res.headers.set('X-Resolved-Lang', lang)
   const ssrMode: RenderMode = isSeoAsset ? 'asset' : 'ssr'
-  logRenderDecision(request, ua, clientClass, ssrMode, pathname)
+  if (!isSeoAsset) logRenderDecision(request, decision, ssrMode, pathname)
   markResponse(res, clientClass, ssrMode)
+  // Only real page NAVIGATIONS are UA-varied HTML. Gate on decision.isNav too so
+  // non-nav requests that fall through to SSR (e.g. an API POST to /{lang}) don't
+  // get a spurious `Vary: User-Agent` on a non-HTML response.
+  if (!isSeoAsset && decision.isNav) {
+    // Merge, not clobber: the app-router may set its own Vary (RSC/Next-Router-*).
+    const ssrVary = res.headers.get('Vary')
+    res.headers.set('Vary', ssrVary ? `${ssrVary}, User-Agent` : 'User-Agent')
+    res.headers.set('Cache-Control', 'private, no-cache')
+  }
   if (seoIntentForPath(pathname) === 'noindex') {
     res.headers.set('X-Robots-Tag', 'noindex, follow')
   }
