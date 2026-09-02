@@ -51,3 +51,37 @@ export function langForHost(host: string | null | undefined): string {
 export function bcp47(code: string): string {
   return BCP47_MAP[code] ?? code
 }
+
+// Canonical English home — the redirect target for unauthorized hosts.
+export const CANONICAL_EN_HOST = 'bookofmormon.online'
+
+// Authorized English editions / brand-partner hosts. Empty for now.
+// Future entries are hard-coded here, e.g. 'cofc.bookofmormon.online': 'en'.
+// A host may SERVE only if it appears in HOST_LANG or here. (The value is a lang
+// code for future use; langForHost still resolves these to 'en' until wired.)
+export const EN_EDITION_HOSTS: Record<string, string> = {}
+
+// Normalize a Host / x-forwarded-host value: first entry of a forwarded chain,
+// no port, lowercased. Matches the stripping already done in langForHost/safeHost.
+export function normalizeHost(host: string | null | undefined): string {
+  return (host ?? '').split(',')[0].trim().split(':')[0].toLowerCase()
+}
+
+// True only for explicitly-registered public site hosts.
+export function isAuthorizedHost(host: string | null | undefined): boolean {
+  const bare = normalizeHost(host)
+  return bare in HOST_LANG || bare in EN_EDITION_HOSTS
+}
+
+// True for infra/local requests that must never be redirected (health checks,
+// dev, IP literals, single-label internal names, hostless internal requests).
+// Fails SAFE: an unrecognized internal host serves rather than 301s the site.
+export function isInfraHost(host: string | null | undefined): boolean {
+  const bare = normalizeHost(host)
+  if (!bare) return true                                 // hostless / empty
+  if (bare === 'localhost' || bare.endsWith('.local')) return true
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(bare)) return true   // IPv4 literal
+  if (bare.startsWith('[')) return true                   // IPv6 literal, e.g. [::1]:port
+  if (!bare.includes('.')) return true                    // single-label service name
+  return false
+}
