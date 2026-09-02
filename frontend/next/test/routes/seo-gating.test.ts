@@ -85,17 +85,19 @@ test.describe('history is noindex for bots', () => {
 })
 
 test.describe('canonical is host-aware', () => {
-  test('canonical uses x-forwarded-host + proto', async ({ request }) => {
+  test('canonical uses x-forwarded-host + proto (authorized host)', async ({ request }) => {
     const r = await request.get('/people', {
-      headers: { ...bot, 'x-forwarded-host': 'ko.bookofmormon.online', 'x-forwarded-proto': 'https' },
+      headers: { ...bot, 'x-forwarded-host': 'xn--289a67xla.kr', 'x-forwarded-proto': 'https' },
     })
     const html = await r.text()
-    expect(html).toContain('rel="canonical" href="https://ko.bookofmormon.online/people"')
+    expect(html).toContain('rel="canonical" href="https://xn--289a67xla.kr/people"')
   })
-  test('untrusted x-forwarded-host falls back to apex canonical', async ({ request }) => {
+  test('unauthorized x-forwarded-host is redirected to canonical (not served)', async ({ request }) => {
     const r = await request.get('/people', {
       headers: { ...bot, 'x-forwarded-host': 'evil.example.com', 'x-forwarded-proto': 'https' },
+      maxRedirects: 0,
     })
-    expect(await r.text()).toContain('rel="canonical" href="https://bookofmormon.online/people"')
+    expect(r.status()).toBe(301)
+    expect(r.headers()['location']).toBe('https://bookofmormon.online/people')
   })
 })

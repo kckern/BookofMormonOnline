@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { LANG_PREFIXES, LOCALE_SEGS, langForHost } from '@/lib/locales'
+import { LANG_PREFIXES, LOCALE_SEGS, langForHost, isAuthorizedHost, isInfraHost, CANONICAL_EN_HOST } from '@/lib/locales'
 import { seoIntentForPath } from '@/lib/features'
 import { proxyClickyJs, proxyClickyBeacon } from '@/lib/clicky'
 
@@ -125,6 +125,19 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.hostname = hostname.slice(4)
     return markResponse(NextResponse.redirect(url, 301), clientClass)
+  }
+
+  // --- Host allowlist: unauthorized hosts → canonical English (path preserved) ---
+  // Fires before the SSR/CRA branch, so crawlers AND browsers are forwarded.
+  // Infra/local hosts (health checks, dev, IP literals, single-label names) pass
+  // through. Keyed off x-forwarded-host because behind ALB→NPM the public host
+  // arrives there, not in nextUrl.hostname (same reason langForHost reads it).
+  const forwardedHost = request.headers.get('x-forwarded-host') ?? request.headers.get('host')
+  if (!isInfraHost(forwardedHost) && !isAuthorizedHost(forwardedHost)) {
+    // Hardcode https — the site is HTTPS-only and markResponse sets HSTS; keying
+    // off x-forwarded-proto risks emitting an http:// Location (extra upgrade hop).
+    const target = `https://${CANONICAL_EN_HOST}${pathname}${request.nextUrl.search}`
+    return markResponse(NextResponse.redirect(target, 301), clientClass)
   }
 
   // The desktop viewer is a CRA route, but these dynamic Facsimiles resources

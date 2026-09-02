@@ -48,9 +48,13 @@ test.describe('self-on-host canonical', () => {
     const html = await (await request.get('/people/nephi1', { headers: ko })).text()
     expect(getCanonical(html)).toBe('https://xn--289a67xla.kr/people/nephi1')
   })
-  test('untrusted host still falls back to apex', async ({ request }) => {
-    const html = await (await request.get('/people/nephi1', { headers: { ...bot, 'x-forwarded-host': 'evil.example.com' } })).text()
-    expect(getCanonical(html)!).toContain('bookofmormon.online/people/nephi1')
+  test('untrusted host is redirected to canonical (not served)', async ({ request }) => {
+    const r = await request.get('/people/nephi1', {
+      headers: { ...bot, 'x-forwarded-host': 'evil.example.com' },
+      maxRedirects: 0,
+    })
+    expect(r.status()).toBe(301)
+    expect(r.headers()['location']).toBe('https://bookofmormon.online/people/nephi1')
   })
 })
 
