@@ -82,24 +82,70 @@ function responseHeadersForClient(source: Headers): Headers {
 }
 
 function isInteractiveBrowserNavigation(request: NextRequest, ua: string): boolean {
+  // Only GET/HEAD page navigations are candidates for the CRA. (The GraphQL API
+  // is POSTed to /{lang} and must fall through to the SSR-side rewrite.)
   if (request.method !== 'GET' && request.method !== 'HEAD') return false
-  if (KNOWN_CRAWLER_RE.test(ua) || !BROWSER_UA_RE.test(ua)) return false
 
-  // Real modern browsers send Fetch Metadata and/or Client Hint headers.
-  // Requiring a positive browser signal keeps an unknown crawler, CLI, feed
-  // reader, or social service on the SSR path by default. These headers are not
-  // security boundaries; they only select the presentation layer.
-  const fetchMode = request.headers.get('sec-fetch-mode')
-  const fetchDest = request.headers.get('sec-fetch-dest')
-  const hasFetchMetadata = fetchMode === 'navigate' && (fetchDest === 'document' || fetchDest === 'empty')
-  const hasClientHints = request.headers.has('sec-ch-ua')
-  return hasFetchMetadata || hasClientHints
+  // Gate on User-Agent alone: a real browser engine, and not a known crawler.
+  //
+  // We previously ALSO required a positive Sec-Fetch (fetch-metadata) or
+  // Sec-CH-UA (client-hint) header. But those headers only exist on
+  // Chromium and Gecko — WebKit sends NEITHER — so Safari (desktop) and EVERY
+  // iOS browser (Safari, Chrome/CriOS, Firefox/FxiOS), plus any Firefox with
+  // those headers stripped, were misclassified as non-browsers and served SSR
+  // instead of the React app. The requirement punished exactly the users who
+  // cannot send those signals. Unknown clients (CLIs, feed readers, scrapers)
+  // still default to SSR because they don't carry a full browser UA
+  // (BROWSER_UA_RE requires "Mozilla/5.0 … <engine>/"), and named crawlers are
+  // excluded outright. These were never security boundaries — they only select
+  // the presentation layer. The suspect flag in logRenderDecision now tracks
+  // any browser-UA client that still lands on SSR as a regression tripwire.
+  return !KNOWN_CRAWLER_RE.test(ua) && BROWSER_UA_RE.test(ua)
 }
 
 function classifyClient(request: NextRequest, ua: string): ClientClass {
   if (KNOWN_CRAWLER_RE.test(ua)) return 'known-crawler'
   if (isInteractiveBrowserNavigation(request, ua)) return 'browser'
   return 'unknown'
+}
+
+// Structured one-line log of the SSR-vs-CRA routing decision for a page
+// navigation, emitted to the Next process stdout (pm2 logs next). Purpose:
+// surface clients that got MISCATEGORIZED — a real browser served SSR because
+// it sent neither Sec-Fetch metadata nor Sec-CH-UA (Safari desktop + every
+// iOS browser, and Firefox with those headers stripped). Filter the stream
+// with `pm2 logs next | grep '"suspect":true'`. Headers only — no IP/PII.
+// Assets/redirects are skipped by the callers so this stays to real
+// navigations. Disable entirely with BOM_LOG_RENDER_DECISION=0.
+function logRenderDecision(
+  request: NextRequest,
+  ua: string,
+  clientClass: ClientClass,
+  renderMode: RenderMode,
+  pathname: string,
+): void {
+  if (process.env.BOM_LOG_RENDER_DECISION === '0') return
+  const h = request.headers
+  // A browser-looking UA (not a known crawler) that did NOT get the CRA is the
+  // exact failure we are hunting; everything else is expected traffic.
+  const suspect = renderMode === 'ssr' && !KNOWN_CRAWLER_RE.test(ua) && BROWSER_UA_RE.test(ua)
+  console.log(JSON.stringify({
+    tag: 'render-decision',
+    suspect,
+    render: renderMode,
+    class: clientClass,
+    host: h.get('x-forwarded-host') ?? h.get('host') ?? null,
+    path: pathname,
+    method: request.method,
+    ua,
+    secFetchMode: h.get('sec-fetch-mode'),
+    secFetchDest: h.get('sec-fetch-dest'),
+    secFetchSite: h.get('sec-fetch-site'),
+    secFetchUser: h.get('sec-fetch-user'),
+    secChUa: h.get('sec-ch-ua'),
+    secChUaMobile: h.get('sec-ch-ua-mobile'),
+    secChUaPlatform: h.get('sec-ch-ua-platform'),
+  }))
 }
 
 function isCraAsset(pathname: string): boolean {
@@ -181,6 +227,8 @@ export async function middleware(request: NextRequest) {
       url.pathname = '/' + segs.slice(1).join('/')
       return markResponse(NextResponse.redirect(url), clientClass, 'cra')
     }
+    // Log real page navigations only — not CRA static assets (/static/, fonts…).
+    if (!isCraAsset(pathname)) logRenderDecision(request, ua, clientClass, 'cra', pathname)
     const target = new URL(CRA_ORIGIN + pathname + request.nextUrl.search)
     const craRes = await fetch(target, { redirect: 'follow' })
     return markResponse(new Response(craRes.body, {
@@ -196,7 +244,9 @@ export async function middleware(request: NextRequest) {
   requestHeaders.set('x-lang', lang)
   const res = NextResponse.next({ request: { headers: requestHeaders } })
   res.headers.set('X-Resolved-Lang', lang)
-  markResponse(res, clientClass, isSeoAsset ? 'asset' : 'ssr')
+  const ssrMode: RenderMode = isSeoAsset ? 'asset' : 'ssr'
+  logRenderDecision(request, ua, clientClass, ssrMode, pathname)
+  markResponse(res, clientClass, ssrMode)
   if (seoIntentForPath(pathname) === 'noindex') {
     res.headers.set('X-Robots-Tag', 'noindex, follow')
   }

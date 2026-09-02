@@ -38,6 +38,34 @@ test.describe('default shell does not link noindexed sections', () => {
   })
 })
 
+// Regression guard for the WebKit/mobile misrouting bug: real browsers that
+// send NEITHER Sec-Fetch nor Sec-CH-UA (Safari desktop + every iOS browser,
+// and Firefox with those headers stripped) were served SSR instead of the CRA.
+// The gate is now User-Agent based, so a browser UA on a GET nav gets the CRA
+// with no fetch-metadata/client-hint headers at all.
+test.describe('real browsers reach the CRA without Sec-Fetch / Sec-CH-UA', () => {
+  const browsers: Record<string, string> = {
+    'Safari (desktop)':
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15',
+    'iOS Safari':
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1',
+    'Firefox iOS':
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) FxiOS/121.0 Mobile/15E148 Safari/605.1.15',
+    'Firefox (no Sec-Fetch)':
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+    'Chrome (headers stripped)':
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  }
+  for (const [name, uaString] of Object.entries(browsers)) {
+    test(`${name} → CRA`, async ({ request }) => {
+      // No sec-fetch-* or sec-ch-ua headers on purpose — WebKit never sends them.
+      const r = await request.get('/', { headers: { 'user-agent': uaString } })
+      expect(r.headers()['x-bom-render-mode'], name).toBe('cra')
+      expect(r.headers()['x-bom-client-class'], name).toBe('browser')
+    })
+  }
+})
+
 test.describe('SSR access defaults open', () => {
   test('an unrecognized indexer gets SSR without being named in a bot allowlist', async ({ request }) => {
     const r = await request.get('/lehites', {
