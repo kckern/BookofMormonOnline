@@ -172,7 +172,6 @@ export const userprofileResolvers: Resolvers = {
             ctx,
             claimUploadedProfileUrl(ctx.db, {
               userId: userHash,
-              bomUserId: userRow.user,
               profileUrl: uploadedUrl,
             }) as Parameters<typeof runWrite>[1],
           );

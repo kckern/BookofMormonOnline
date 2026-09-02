@@ -13,7 +13,6 @@
  * is_bot is a TINYINT(1); mysql2 may deliver 0/1 as a number — coerce to boolean.
  */
 
-import { createHash } from 'node:crypto';
 import { generateAvatarUrl, isDeadAvatarHost, resolveDerivedAvatars } from './avatarAssets.js';
 import { md5 } from '../auth/identity.js';
 import type { Kysely } from 'kysely';
@@ -35,28 +34,21 @@ type RawUser = {
   // joined from bom_user when the participant is a human (bom_user_id set).
   // Thin human rows store nickname/profile_url NULL — display is coalesced from here.
   bom_name?: string | null;
-  // bom_user_id IS the bom_user.user username; md5(username) keys the profile image.
+  // bom_user_id IS the bom_user.user username; user_id is its md5 (I1).
   bom_user_id?: string | null;
 };
 
-// Profile images live at {base}/profiles/{md5(bom_user.user)}.jpg (the
-// Sendbird→S3 migration target). Modern human rows have user_id === that md5,
-// but SendBird-migrated legacy rows carry handle-style ids, so for linked rows
-// derive from md5(bom_user_id) — bom_user_id IS the username. Humans'
-// messenger_users.profile_url is NULL, so derive it; the frontend UserAvatar
-// falls back to a generated avatar on 404.
+// Profile images live at {base}/profiles/{user_id}.jpg. Under invariant I1
+// (docs/plans/2026-09-01-identity-avatar-consolidation.md) every human row's
+// user_id IS md5(bom_user.user), so the row key is the image key. A NULL
+// profile_url means "derive"; the frontend UserAvatar falls back to a
+// generated avatar on 404.
 export const PROFILE_IMAGE_BASE = (
   process.env['PROFILE_IMAGE_BASE_URL'] || 'https://assets.bookofmormon.online'
 ).replace(/\/+$/, '');
 
-function deriveProfileKey(row: Pick<RawUser, 'user_id' | 'bom_user_id'>): string {
-  return row.bom_user_id
-    ? createHash('md5').update(row.bom_user_id).digest('hex')
-    : row.user_id;
-}
-
-function deriveProfileUrl(row: Pick<RawUser, 'user_id' | 'bom_user_id'>): string {
-  return `${PROFILE_IMAGE_BASE}/profiles/${deriveProfileKey(row)}.jpg`;
+function deriveProfileUrl(row: Pick<RawUser, 'user_id'>): string {
+  return `${PROFILE_IMAGE_BASE}/profiles/${row.user_id}.jpg`;
 }
 
 /**
@@ -70,7 +62,7 @@ async function verifyDerivedAvatars(rows: RawUser[], dtos: UserDTO[]): Promise<v
   rows.forEach((row, i) => {
     const dto = dtos[i];
     if (!row.profile_url && dto?.profile_url) {
-      derived.push({ url: dto.profile_url, seedKey: deriveProfileKey(row) });
+      derived.push({ url: dto.profile_url, seedKey: row.user_id });
     }
   });
   if (derived.length === 0) return;
@@ -308,30 +300,21 @@ export async function updateUserProfileUrl(
  * URL always beats the derived S3 key. Users who inherited a gravatar or
  * provider avatar at migration time therefore kept seeing the old face after
  * every upload — the S3 object changed, the read path never looked at it.
- * uploadProfileImage now claims the row so the upload is what gets served.
+ * uploadProfileImage claims the row so the upload is what gets served.
  *
- * Sendbird-migrated accounts own several rows (the md5 id plus legacy
- * handle-style ids) that all carry the same bom_user_id, and member lists read
- * whichever row a channel references, so claim by either key.
- *
- * Returns the query rather than executing it so callers route it through
- * runWrite and stay sandbox-safe. See
- * docs/bugs/2026-09-01-profile-photo-reverts.md.
+ * Under I1 a person owns exactly the md5-keyed row, so that is the only row
+ * to claim. Returns the query rather than executing it so callers route it
+ * through runWrite and stay sandbox-safe.
+ * docs/bugs/2026-09-01-profile-photo-reverts.md
  */
 export function claimUploadedProfileUrl(
   db: Kysely<DB>,
-  args: { userId: string; bomUserId: string; profileUrl: string },
+  args: { userId: string; profileUrl: string },
 ) {
-  const query = db
+  return db
     .updateTable('messenger_users')
-    .set({ profile_url: args.profileUrl });
-
-  // An empty bom_user_id would match every thin row that never got linked.
-  if (!args.bomUserId) return query.where('user_id', '=', args.userId);
-
-  return query.where((eb) =>
-    eb.or([eb('user_id', '=', args.userId), eb('bom_user_id', '=', args.bomUserId)]),
-  );
+    .set({ profile_url: args.profileUrl })
+    .where('user_id', '=', args.userId);
 }
 
 /** Merge incoming keys into the existing metadata (shallow merge). Returns true if a row was matched. */

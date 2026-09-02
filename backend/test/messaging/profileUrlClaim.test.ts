@@ -8,10 +8,10 @@
  * or provider avatar inherited at migration time — shadowed the uploaded
  * object forever and the photo "reverted" on the next page load.
  *
- * Sendbird-migrated users own several messenger_users rows (the md5 id plus
- * legacy handle ids) that all carry the same bom_user_id, so claiming only
- * the md5 row leaves the member lists stale. Compiled against a driverless
- * Kysely so the shape of the write is asserted without touching the DB.
+ * Since the 2026-09-02 merge (invariant I1) a person owns exactly one
+ * messenger row, keyed by md5(username), so the claim targets that row and
+ * nothing else. Compiled against a driverless Kysely so the shape of the
+ * write is asserted without touching the DB.
  */
 import {
   DummyDriver,
@@ -34,34 +34,16 @@ const db = new Kysely<DB>({
 });
 
 const USER_ID = '9b4291984af9d3c3baaae5af3ece9962';
-const BOM_USER_ID = 'caspianrex';
 const URL = `https://assets.bookofmormon.online/profiles/${USER_ID}.jpg?v=1756742000000`;
 
 describe('claimUploadedProfileUrl', () => {
-  it('claims the md5 row and every legacy row sharing the bom user id', () => {
-    const compiled = claimUploadedProfileUrl(db, {
-      userId: USER_ID,
-      bomUserId: BOM_USER_ID,
-      profileUrl: URL,
-    }).compile();
+  it('claims exactly the md5-keyed row', () => {
+    const compiled = claimUploadedProfileUrl(db, { userId: USER_ID, profileUrl: URL }).compile();
 
     expect(compiled.sql).toContain('update `messenger_users`');
     expect(compiled.sql).toContain('set `profile_url` = ?');
-    expect(compiled.sql).toContain('`user_id` = ?');
-    expect(compiled.sql).toContain('`bom_user_id` = ?');
-    expect(compiled.sql).toMatch(/or/);
-    expect(compiled.parameters).toEqual([URL, USER_ID, BOM_USER_ID]);
-  });
-
-  it('does not fall back to a bare bom_user_id match when the user has no username', () => {
-    const compiled = claimUploadedProfileUrl(db, {
-      userId: USER_ID,
-      bomUserId: '',
-      profileUrl: URL,
-    }).compile();
-
-    expect(compiled.sql).toContain('`user_id` = ?');
-    expect(compiled.sql).not.toContain('`bom_user_id` = ?');
+    expect(compiled.sql).toContain('where `user_id` = ?');
+    expect(compiled.sql).not.toContain('bom_user_id');
     expect(compiled.parameters).toEqual([URL, USER_ID]);
   });
 });

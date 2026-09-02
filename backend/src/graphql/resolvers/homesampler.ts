@@ -13,6 +13,7 @@ import { generateReference, lookupReference } from 'scripture-guide';
 import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 import { findUserByToken } from '../../data/loaders/userauth.js';
+import { md5 } from '../../auth/identity.js';
 import { parseVerseIdFromNote } from '../../data/loaders/matters.js';
 import { canonicalSelector } from '../../media/fax/canonical.js';
 import { imageScanMeta } from '../../media/fax/resolve.js';
@@ -743,24 +744,24 @@ const samplers: Record<string, (ctx: AppContext, seed: number) => Promise<unknow
   placesCount: countRows('bom_places'),
 };
 
-// The current user's most recent bookmark (recent reading position). Users can
-// have several messenger_users rows; pick the bookmark with the max timestamp.
+// The current user's most recent bookmark (recent reading position). Under
+// invariant I1 a person owns exactly one messenger row, keyed by md5(username).
 const myBookmark = async (ctx: AppContext, token: string | null) => {
   if (!token) return null;
   const user = await findUserByToken(ctx.db, token);
   if (!user?.user) return null;
-  const rows = await ctx.db
+  const row = await ctx.db
     .selectFrom('messenger_users')
     .select('metadata')
-    .where('bom_user_id', '=', user.user)
-    .execute();
+    .where('user_id', '=', md5(user.user))
+    .executeTakeFirst();
   let best: { slug?: string; pagetitle?: string; heading?: string; latest?: number } | null = null;
-  for (const row of rows) {
+  if (row) {
     try {
       const meta = typeof row.metadata === 'string' ? JSON.parse(row.metadata) : (row.metadata as Record<string, unknown> | null);
       const rawBm = meta?.['bookmark'];
       const bm = typeof rawBm === 'string' ? JSON.parse(rawBm) : rawBm;
-      if (bm?.slug && (!best || (bm.latest || 0) > (best.latest || 0))) best = bm;
+      if (bm?.slug) best = bm;
     } catch { /* skip malformed */ }
   }
   if (!best?.slug) return null;
