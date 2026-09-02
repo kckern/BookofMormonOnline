@@ -88,16 +88,29 @@ export function isAuthorizedHost(host: string | null | undefined): boolean {
 }
 
 // True for infra/local requests that must never be redirected
-// (health checks, dev, IP-literal hosts, hostless internal requests).
+// (health checks, dev, IP-literal hosts, single-label internal names,
+// hostless internal requests).
 export function isInfraHost(host: string | null | undefined): boolean {
   const bare = normalizeHost(host)
   if (!bare) return true                                  // hostless
   if (bare === 'localhost' || bare.endsWith('.local')) return true
   if (/^\d{1,3}(\.\d{1,3}){3}$/.test(bare)) return true    // IPv4 literal
-  if (bare.startsWith('[') || bare === '::1') return true  // IPv6 literal
+  if (bare.startsWith('[')) return true                    // IPv6 literal ([::1]:port)
+  // Single-label host (no dot) = an internal/service name (e.g. `bom-app`),
+  // never a public site. Treating it as infra FAILS SAFE: if the proxy ever
+  // delivers a dot-less Host with no x-forwarded-host, we serve rather than
+  // 301 every request (including language hosts) to canonical English.
+  if (!bare.includes('.')) return true
   return false
 }
 ```
+
+**Pre-ship verification (blocking):** before enabling, confirm what the prod
+proxy chain (ALB → NPM) actually forwards — specifically whether
+`x-forwarded-host` is always present and whether `Host` is preserved or rewritten
+to an internal name. `langForHost` working in prod today proves only that *one* of
+the two headers carries the public host, not which — so the allowlist must be
+validated against the real header shape, not assumed.
 
 `normalizeHost` already matches the stripping logic in `langForHost` and
 `safeHost` (forwarded-chain first value, drop port, lowercase); those can be
@@ -114,11 +127,27 @@ Insert a block immediately after the existing `www.* → bare` redirect (around
 // forwarded. Infra/local hosts (health checks, dev, IP literals) pass through.
 const rawHost = request.headers.get('x-forwarded-host') ?? request.headers.get('host')
 if (!isInfraHost(rawHost) && !isAuthorizedHost(rawHost)) {
-  const proto = request.headers.get('x-forwarded-proto') ?? 'https'
-  const target = `${proto}://${CANONICAL_EN_HOST}${pathname}${request.nextUrl.search}`
+  // Hardcode https — the site is HTTPS-only and markResponse sets HSTS; keying
+  // off x-forwarded-proto risks emitting an http:// Location (extra upgrade hop).
+  const target = `https://${CANONICAL_EN_HOST}${pathname}${request.nextUrl.search}`
   return markResponse(NextResponse.redirect(target, 301), clientClass)
 }
 ```
+
+**301 vs. non-GET:** a 301 downgrades a browser `POST` to `GET`. The middleware
+sends GraphQL as `POST /{lang}` (`middleware.ts:163-165`), so a stale SPA left
+open on an alias host would fail its next API POST. That is **intended** — the
+point is to evict traffic from unauthorized hosts; a cross-origin replay to
+canonical would hit CORS regardless. We accept 301 (cache-friendly canonicalization,
+consistent with the existing `www` redirect) rather than 308.
+
+**301 caching:** browsers and Cloudflare cache 301s aggressively (dev edge TTL is
+4h per CLAUDE.md; browsers effectively forever). Consequence: if a host is later
+promoted into `EN_EDITION_HOSTS`, previously-issued 301s keep firing for returning
+visitors until caches expire. **Promotion runbook:** add the host to the registry,
+then purge Cloudflare for that host; accept a tail of cached stragglers. (We do not
+set a short `Cache-Control` on the redirect — long-lived canonicalization is the
+desired default for the permanent alias case.)
 
 **Why key off `x-forwarded-host`, not `request.nextUrl.hostname`:** behind
 ALB → NPM the real public host arrives in `x-forwarded-host`; `nextUrl.hostname`
@@ -143,9 +172,10 @@ the seam and keeps a single definition of "authorized."
 
 ```
 request
+  ├─ www.* (keyed off nextUrl.hostname) ... 301 → bare (existing, unchanged)
+  │
   │  host = x-forwarded-host ?? host
-  ├─ www.* ................................ 301 → bare (existing)
-  ├─ isInfraHost(host) ................... pass through (health/dev/IP)
+  ├─ isInfraHost(host) ................... pass through (health / dev / IP / single-label)
   ├─ !isAuthorizedHost(host) ............. 301 → https://bookofmormon.online<path><query>   ◀ NEW
   └─ authorized ......................... existing Facsimiles / Clicky / SEO / CRA / SSR flow
 ```
@@ -160,15 +190,39 @@ request
 - **A totally unrelated domain** pointed at the app → redirects to canonical English
   (allowlist default; correct).
 - **Authorized language host** (e.g. `swe.…`) → unaffected, serves normally.
+- **`www.<language-host>`** (e.g. `www.swe.bookofmormon.online`) → if the pre-existing
+  `www` redirect keys off `nextUrl.hostname` and that carries the internal origin in
+  prod, the `www` strip won't fire and the new block sends the user to canonical
+  **English**, not `swe.`. Rare; a real fix requires the `www` redirect to also read
+  `x-forwarded-host` (out of scope, but the pre-ship verification above will reveal
+  whether this is a live problem). Bonus: in that same scenario the new block
+  correctly backstops bare `www.bookofmormon.online` (not in `HOST_LANG`) → apex.
 
 ## Testing
 
-Add middleware/unit tests (mirroring existing `frontend/next/` test harnesses):
+**Existing tests that WILL break and must be rewritten (blocking):**
+
+- `frontend/next/test/routes/korean.test.ts:51` — "untrusted host still falls back
+  to apex" sends `x-forwarded-host: evil.example.com` and asserts **200** with apex
+  canonical. Under the new block this becomes a **301**. Rewrite to assert the 301 →
+  `https://bookofmormon.online…`.
+- `frontend/next/test/routes/seo-gating.test.ts:88` — uses `ko.bookofmormon.online`,
+  which is **not** in `HOST_LANG` (Korean hosts are `몰몬경.kr` / punycode). It passes
+  today only because of the `safeHost` `*.bookofmormon.online` wildcard we're removing.
+  Rewrite to either use a real `HOST_LANG` Korean host or assert the 301. Check for
+  other tests leaning on that wildcard too.
+- **All redirect assertions must set `maxRedirects: 0`** (Playwright `request.get`
+  follows redirects by default — otherwise a failed assertion chases `Location` out to
+  the live production site).
+
+**New tests** (mirroring existing `frontend/next/` harnesses — Playwright against
+`next dev` with injected `x-forwarded-host`, unit tests in `test/unit/locales.test.ts`
+style):
 
 1. `isAuthorizedHost` — true for every `HOST_LANG` key and `EN_EDITION_HOSTS` key;
    false for `new.`, `opengraph.`, `sugardoodle.`, and a random external domain.
-2. `isInfraHost` — true for `localhost`, `127.0.0.1`, `::1`, `10.0.1.12`, `''`;
-   false for real public hosts.
+2. `isInfraHost` — true for `localhost`, `127.0.0.1`, `10.0.1.12`, `[::1]:8200`,
+   `bom-app` (single-label), `''`; false for real public multi-label hosts.
 3. Middleware:
    - `new.bookofmormon.online/reign-of-judges/94?x=1` → 301,
      `Location: https://bookofmormon.online/reign-of-judges/94?x=1` (path + query preserved).
@@ -188,4 +242,8 @@ Add middleware/unit tests (mirroring existing `frontend/next/` test harnesses):
       other code change.
 - [ ] Health checks / localhost / IP-literal hosts are never redirected.
 - [ ] `safeHost()` no longer validates unregistered `*.bookofmormon.online`.
-- [ ] Tests above pass.
+- [ ] Pre-ship: prod ALB→NPM header shape verified (`x-forwarded-host` present / `Host`
+      handling known) before the block is enabled.
+- [ ] Existing `korean.test.ts` / `seo-gating.test.ts` host-fallback cases rewritten to
+      expect 301, all with `maxRedirects: 0`.
+- [ ] New tests above pass.
