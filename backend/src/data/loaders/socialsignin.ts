@@ -13,7 +13,7 @@ import axios from 'axios';
 import type { DB } from '../../../codegen/db.js';
 import { md5, cleanUsername, genUserAvatar } from '../../auth/identity.js';
 import { avatarAssetExists, shouldRefreshStoredAvatar } from '../../messaging/avatarAssets.js';
-import { PROFILE_IMAGE_BASE } from '../../messaging/users.js';
+import { profileImageUrl } from '../../media/profileImage.js';
 import { hashPassword } from '../../auth/password.js';
 import { sendbird } from '../../auth/sendbirdShim.js';
 import { runWrite } from '../writes.js';
@@ -113,7 +113,7 @@ async function refreshMessengerAvatar(ctx: Ctx, username: string, freshUrl: stri
     .where('user_id', '=', userId)
     .executeTakeFirst();
   if (!row) return;
-  const s3Exists = await avatarAssetExists(`${PROFILE_IMAGE_BASE}/profiles/${userId}.jpg`);
+  const s3Exists = await avatarAssetExists(profileImageUrl(userId));
   if (!shouldRefreshStoredAvatar({ fresh: freshUrl, stored: row.profile_url, s3Exists })) return;
   await runWrite(
     ctx,

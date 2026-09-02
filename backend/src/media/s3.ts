@@ -1,10 +1,10 @@
 /**
  * media/s3.ts — profile-image storage (port of legacy src/library/s3.ts).
  *
- * Resizes an uploaded image to a 256×256 JPEG and PUTs it to S3 at
- * `profiles/<md5(username)>.jpg` — the same key the frontend derives avatars from
- * ({S3_PUBLIC_URL}/profiles/<hash>.jpg, dicebear fallback on 404). Best-effort
- * CloudFront invalidation when a distribution id is configured.
+ * Resizes an uploaded image to a 256×256 JPEG and PUTs it to S3 under the key
+ * from media/profileImage.ts (`profiles/<md5(username)>.jpg`, the same key the
+ * read side derives; dicebear fallback on 404). Best-effort CloudFront
+ * invalidation when a distribution id is configured.
  *
  * Credentials come from the standard AWS provider chain (env / instance role).
  * Env: S3_BUCKET (required), S3_PUBLIC_URL (default assets.bookofmormon.online),
@@ -16,6 +16,7 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { CloudFrontClient, CreateInvalidationCommand } from '@aws-sdk/client-cloudfront';
 import sharp from 'sharp';
 import { env } from '../config/env.js';
+import { profileImageKey } from './profileImage.js';
 
 interface CommandSender<TCommand> {
   send(command: TCommand): Promise<unknown>;
@@ -36,13 +37,6 @@ const runtimeDependencies: ProfileImageStorageDependencies = {
   s3: new S3Client({ region: env.AWS_REGION }),
   cloudFront: new CloudFrontClient({ region: env.AWS_REGION }),
 };
-
-const PROFILE_IMAGE_BASE_URL = runtimeDependencies.publicUrl;
-
-/** Derived public URL for a user's avatar (matches the frontend convention). */
-export function getProfileImageUrl(userHash: string): string {
-  return `${PROFILE_IMAGE_BASE_URL}/profiles/${userHash}.jpg`;
-}
 
 /**
  * Upload a base64 image as the user's profile avatar. Returns the public URL,
@@ -96,7 +90,7 @@ export async function uploadProfileImageWithDependencies(
     throw new Error('Could not process image data');
   }
 
-  const key = `profiles/${userHash}.jpg`;
+  const key = profileImageKey(userHash);
 
   try {
     await dependencies.s3.send(

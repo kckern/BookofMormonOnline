@@ -15,6 +15,7 @@
 
 import { generateAvatarUrl, isDeadAvatarHost, resolveDerivedAvatars } from './avatarAssets.js';
 import { md5 } from '../auth/identity.js';
+import { profileImageUrl } from '../media/profileImage.js';
 import type { Kysely } from 'kysely';
 import type { DB } from '../../codegen/db.js';
 import type { UserDTO } from './dto.js';
@@ -38,17 +39,12 @@ type RawUser = {
   bom_user_id?: string | null;
 };
 
-// Profile images live at {base}/profiles/{user_id}.jpg. Under invariant I1
-// (docs/plans/2026-09-01-identity-avatar-consolidation.md) every human row's
-// user_id IS md5(bom_user.user), so the row key is the image key. A NULL
-// profile_url means "derive"; the frontend UserAvatar falls back to a
-// generated avatar on 404.
-export const PROFILE_IMAGE_BASE = (
-  process.env['PROFILE_IMAGE_BASE_URL'] || 'https://assets.bookofmormon.online'
-).replace(/\/+$/, '');
-
+// Under invariant I1 (docs/plans/2026-09-01-identity-avatar-consolidation.md)
+// every human row's user_id IS md5(bom_user.user), so the row key is the image
+// key. A NULL profile_url means "derive"; the frontend UserAvatar falls back to
+// a generated avatar on 404.
 function deriveProfileUrl(row: Pick<RawUser, 'user_id'>): string {
-  return `${PROFILE_IMAGE_BASE}/profiles/${row.user_id}.jpg`;
+  return profileImageUrl(row.user_id);
 }
 
 /**

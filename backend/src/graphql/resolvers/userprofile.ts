@@ -14,7 +14,8 @@ import { runWrite } from '../../data/writes.js';
 import { getUserByToken } from '../../data/loaders/userprofile.js';
 import { uploadProfileImage as uploadProfileImageToS3 } from '../../media/s3.js';
 import { primeAvatarAsset } from '../../messaging/avatarAssets.js';
-import { PROFILE_IMAGE_BASE, claimUploadedProfileUrl } from '../../messaging/users.js';
+import { claimUploadedProfileUrl } from '../../messaging/users.js';
+import { profileImageUrl } from '../../media/profileImage.js';
 
 export const userprofileResolvers: Resolvers = {
   Mutation: {
@@ -160,7 +161,7 @@ export const userprofileResolvers: Resolvers = {
         // The existence cache may hold a negative entry from before the
         // upload — mark the conventional URL as live so the avatar shows
         // immediately instead of after the negative TTL.
-        primeAvatarAsset(`${PROFILE_IMAGE_BASE}/profiles/${userHash}.jpg`);
+        primeAvatarAsset(profileImageUrl(userHash));
         // Writing S3 alone is NOT enough: the read path prefers a stored
         // messenger_users.profile_url over the derived key, so users carrying
         // a migrated gravatar/provider avatar saw the upload succeed and then
