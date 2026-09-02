@@ -53,9 +53,17 @@ export const FORCE_SSR_HOSTS: Record<string, string> = {
   'ssr-kr.bookofmormon.online': 'ko',
 }
 
+// Legacy preview-image hosts: img.* served a path-based social card from the old
+// PHP GD service; now rewritten to /preview by the middleware. Value = lang code
+// (so img-kr renders Korean cards).
+export const PREVIEW_HOSTS: Record<string, string> = {
+  'img.bookofmormon.online': 'en',
+  'img-kr.bookofmormon.online': 'ko',
+}
+
 export function langForHost(host: string | null | undefined): string {
   const bare = (host ?? '').split(',')[0].trim().split(':')[0].toLowerCase()
-  return HOST_LANG[bare] ?? FORCE_SSR_HOSTS[bare] ?? 'en'
+  return HOST_LANG[bare] ?? FORCE_SSR_HOSTS[bare] ?? PREVIEW_HOSTS[bare] ?? 'en'
 }
 
 export function bcp47(code: string): string {
@@ -80,6 +88,11 @@ export function normalizeHost(host: string | null | undefined): string {
 // True for the force-SSR mirror hosts (ssr.* — serve SSR to every client).
 export function isForceSsrHost(host: string | null | undefined): boolean {
   return normalizeHost(host) in FORCE_SSR_HOSTS
+}
+
+// True for the legacy preview-image hosts (img.* — rewritten to /preview).
+export function isPreviewHost(host: string | null | undefined): boolean {
+  return normalizeHost(host) in PREVIEW_HOSTS
 }
 
 // True only for explicitly-registered public site hosts (incl. the SSR mirrors).

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { LANG_PREFIXES, LOCALE_SEGS, langForHost, isAuthorizedHost, isInfraHost, isForceSsrHost, CANONICAL_EN_HOST } from '@/lib/locales'
+import { LANG_PREFIXES, LOCALE_SEGS, langForHost, isAuthorizedHost, isInfraHost, isForceSsrHost, isPreviewHost, CANONICAL_EN_HOST } from '@/lib/locales'
 import { seoIntentForPath } from '@/lib/features'
 import { proxyClickyJs, proxyClickyBeacon } from '@/lib/clicky'
 import { classify, type Decision, type ClientClass, type RenderMode } from '@/lib/classify'
@@ -155,6 +155,24 @@ export async function middleware(request: NextRequest) {
   // included) so crawler output can be inspected in a normal browser. They are
   // authorized (below), and force the SSR branch (further down) regardless of UA.
   const forceSsr = isForceSsrHost(forwardedHost)
+
+  // --- Legacy preview-image host: img.* → path-based social card (/preview) ---
+  // The old PHP GD service (img.bookofmormon.online/<slug>) is ported to the
+  // /preview route; rewrite any path on these hosts to it, with the host's lang.
+  if (isPreviewHost(forwardedHost)) {
+    const lang = langForHost(forwardedHost)
+    const url = request.nextUrl.clone()
+    url.pathname = '/preview'
+    url.search = ''
+    // Pass the slug + lang via HEADERS, not query: a route handler sees the
+    // ORIGINAL request.url after a rewrite, so rewritten query params are lost.
+    // x-lang also drives the /preview data queries (gql reads it).
+    const requestHeaders = new Headers(request.headers)
+    requestHeaders.set('x-lang', lang)
+    requestHeaders.set('x-preview-q', pathname.replace(/^\/+/, ''))
+    return NextResponse.rewrite(url, { request: { headers: requestHeaders } })
+  }
+
   if (!isInfraHost(forwardedHost) && !isAuthorizedHost(forwardedHost)) {
     // Hardcode https — the site is HTTPS-only and markResponse sets HSTS; keying
     // off x-forwarded-proto risks emitting an http:// Location (extra upgrade hop).

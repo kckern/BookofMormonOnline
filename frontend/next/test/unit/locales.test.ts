@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { langForHost, bcp47, isAuthorizedHost, isInfraHost, isForceSsrHost, CANONICAL_EN_HOST, normalizeHost, safeHost } from '../../lib/locales'
+import { langForHost, bcp47, isAuthorizedHost, isInfraHost, isForceSsrHost, isPreviewHost, CANONICAL_EN_HOST, normalizeHost, safeHost } from '../../lib/locales'
 
 test.describe('langForHost', () => {
   test('apex → en', () => { expect(langForHost('bookofmormon.online')).toBe('en') })
@@ -38,6 +38,19 @@ test.describe('force-SSR mirror hosts (ssr.*)', () => {
   test('canonical/og host maps to the REAL production host, never ssr.*', () => {
     expect(safeHost('ssr.bookofmormon.online')).toBe('bookofmormon.online')
     expect(safeHost('ssr-kr.bookofmormon.online')).toBe('xn--289a67xla.kr')
+  })
+})
+
+test.describe('preview-image hosts (img.*)', () => {
+  test('isPreviewHost only for the img.* hosts', () => {
+    expect(isPreviewHost('img.bookofmormon.online')).toBe(true)
+    expect(isPreviewHost('img-kr.bookofmormon.online')).toBe(true)
+    expect(isPreviewHost('IMG.BOOKOFMORMON.ONLINE:443')).toBe(true)
+    expect(isPreviewHost('bookofmormon.online')).toBe(false)
+  })
+  test('lang resolves img→en, img-kr→ko', () => {
+    expect(langForHost('img.bookofmormon.online')).toBe('en')
+    expect(langForHost('img-kr.bookofmormon.online')).toBe('ko')
   })
 })
 
