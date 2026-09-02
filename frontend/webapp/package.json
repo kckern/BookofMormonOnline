@@ -107,6 +107,7 @@
     "prebuild": "node scripts/gen-features.js",
     "start": "react-app-rewired start",
     "build": "react-app-rewired build",
+    "postbuild": "node scripts/stamp-sw-version.js",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "compile-sass": "node-sass ./src/assets/scss/paper-dashboard.scss src/assets/css/paper-dashboard.css",

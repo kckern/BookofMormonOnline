@@ -1,12 +1,18 @@
-// Cache versioning - update this on each deployment
-const BUILD_VERSION = '{{BUILD_VERSION}}'; // This should be replaced during build
-const CACHE_VERSION = BUILD_VERSION || new Date().getTime();
+// Cache versioning - {{BUILD_VERSION}} is replaced at build time by
+// scripts/stamp-sw-version.js, so every deploy gets a UNIQUE cache name and the
+// activate handler evicts the previous deploy's cache. If the placeholder is
+// somehow not replaced, fall back to a per-parse timestamp (still fresh, just
+// less cache-efficient) — never reuse a constant name across deploys.
+const BUILD_VERSION = '{{BUILD_VERSION}}';
+const CACHE_VERSION = BUILD_VERSION.indexOf('{{') === -1 ? BUILD_VERSION : String(Date.now());
 const CACHE_NAME = `bom-online-v${CACHE_VERSION}`;
 const urlsToCache = [
-  '/',
   '/font/scripture.woff2',
   '/manifest.json'
-  // Note: Don't pre-cache JS/CSS files with hashes - let them be cached on-demand
+  // NEVER precache HTML ('/' etc.): a navigation fetch can return the SSR shell
+  // (the front door serves SSR to non-browser/crawler-classified installs), which
+  // would then be served as the app forever. Navigations are network-first below.
+  // Also don't pre-cache hashed JS/CSS — let them be cached on-demand.
 ];
 
 // Install event - cache resources
@@ -31,7 +37,21 @@ self.addEventListener('fetch', (event) => {
     // Don't intercept audio requests - let them go directly to the network
     return;
   }
-  
+
+  // Top-level navigations (HTML documents) are NETWORK-FIRST: always fetch the
+  // live app HTML from the front door, falling back to a cached copy only when
+  // the network fails (offline). Never serve a stale (possibly SSR) shell while
+  // online, and never write HTML into the cache. This is what prevents a browser
+  // that once received SSR from being stuck on it. See docs/bugs/2026-09-02-*.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() =>
+        caches.match(event.request).then((cached) => cached || caches.match('/'))
+      )
+    );
+    return;
+  }
+
   // Handle images from media.bookofmormon.online with longer cache
   if (event.request.url.includes('media.bookofmormon.online')) {
     event.respondWith(
