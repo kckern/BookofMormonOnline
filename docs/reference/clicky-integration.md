@@ -64,6 +64,24 @@ An explicit pageview also fires at `views/Page/Narration.js:749` (`analytics.pag
 
 ## Verification
 
+### Read-only traffic CLI
+
+`scripts/traffic.cli.mjs` calls Clicky's official JSON Analytics API for summaries, pages, sources, goals, visitors, actions, online visitors, or an arbitrary requested data type. It automatically loads the repository root's gitignored `.env`; explicitly exported values take precedence. The API sitekey is accepted only through the environment so it is not exposed in shell history or process listings.
+
+```bash
+CLICKY_SITE_ID=66488278 CLICKY_SITEKEY='…' \
+  node scripts/traffic.cli.mjs summary --date last-7-days --daily
+
+CLICKY_SITE_ID=66488278 CLICKY_SITEKEY='…' \
+  node scripts/traffic.cli.mjs pages --limit 20
+
+CLICKY_SITE_ID=66488278 CLICKY_SITEKEY='…' \
+  node scripts/traffic.cli.mjs query --type actions-list \
+    --param action_type=pageview --param href=/home/feed
+```
+
+Output is JSON and can be piped directly to `jq`. Run `node scripts/traffic.cli.mjs --help` for the full command list. `CLICKY_SITEKEY` is the Analytics API sitekey from Clicky site preferences; it is not `CLICKY_BEACON_PATH` or the retired `clickySiteAdmin` tracking key.
+
 Proxy endpoints (work on any host, incl. dev):
 
 ```bash
