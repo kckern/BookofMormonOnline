@@ -157,6 +157,28 @@ test.describe('HTML responses vary by User-Agent (cache safety)', () => {
   })
 })
 
+test.describe('force-SSR mirror hosts serve SSR to real browsers', () => {
+  const BROWSER = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15'
+  test('ssr. host: a browser gets SSR (not CRA); canonical → real host, never ssr.*', async ({ request }) => {
+    const r = await request.get('/lehites', { headers: { 'user-agent': BROWSER, 'x-forwarded-host': 'ssr.bookofmormon.online', 'x-forwarded-proto': 'https' } })
+    expect(r.status()).toBe(200)
+    expect(r.headers()['x-bom-render-mode']).toBe('ssr')
+    expect(r.headers()['x-bom-client-class']).toBe('browser')
+    expect(r.headers()['x-resolved-lang']).toBe('en')
+    const html = await r.text()
+    expect(html).toMatch(/rel="canonical" href="https:\/\/bookofmormon\.online\//)
+    expect(html).not.toContain('ssr.bookofmormon.online')
+  })
+  test('ssr-kr host: a browser gets Korean SSR; canonical → ko host', async ({ request }) => {
+    const r = await request.get('/lehites', { headers: { 'user-agent': BROWSER, 'x-forwarded-host': 'ssr-kr.bookofmormon.online', 'x-forwarded-proto': 'https' } })
+    expect(r.status()).toBe(200)
+    expect(r.headers()['x-bom-render-mode']).toBe('ssr')
+    expect(r.headers()['x-resolved-lang']).toBe('ko')
+    const html = await r.text()
+    expect(html).toMatch(/rel="canonical" href="https:\/\/xn--289a67xla\.kr\//)
+  })
+})
+
 test.describe('canonical is host-aware', () => {
   test('canonical uses x-forwarded-host + proto (authorized host)', async ({ request }) => {
     const r = await request.get('/people', {

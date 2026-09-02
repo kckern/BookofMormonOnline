@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { LANG_PREFIXES, LOCALE_SEGS, langForHost, isAuthorizedHost, isInfraHost, CANONICAL_EN_HOST } from '@/lib/locales'
+import { LANG_PREFIXES, LOCALE_SEGS, langForHost, isAuthorizedHost, isInfraHost, isForceSsrHost, CANONICAL_EN_HOST } from '@/lib/locales'
 import { seoIntentForPath } from '@/lib/features'
 import { proxyClickyJs, proxyClickyBeacon } from '@/lib/clicky'
 import { classify, type Decision, type ClientClass, type RenderMode } from '@/lib/classify'
@@ -88,7 +88,10 @@ function logRenderDecision(
   // navigation that still landed on SSR (human→SSR regression); leak = a crawler
   // that reached the CRA (bot→CRA regression). Both should be ~0; a non-zero
   // count is a routing regression to investigate (see the LogsQL query set).
+  // Exclude the ssr.* mirror hosts from `suspect`: a browser served SSR there is
+  // intentional (force-SSR), not a misroute.
   const suspect = servedMode === 'ssr' && decision.browserUa && !decision.isbotHit
+    && !isForceSsrHost(h.get('x-forwarded-host') ?? h.get('host'))
   const leak = servedMode === 'cra' && decision.isbotHit
   console.log(JSON.stringify({
     tag: 'render-decision',
@@ -148,6 +151,10 @@ export async function middleware(request: NextRequest) {
   // through. Keyed off x-forwarded-host because behind ALB→NPM the public host
   // arrives there, not in nextUrl.hostname (same reason langForHost reads it).
   const forwardedHost = request.headers.get('x-forwarded-host') ?? request.headers.get('host')
+  // The ssr.* mirror hosts serve the SSR render to EVERY client (browsers
+  // included) so crawler output can be inspected in a normal browser. They are
+  // authorized (below), and force the SSR branch (further down) regardless of UA.
+  const forceSsr = isForceSsrHost(forwardedHost)
   if (!isInfraHost(forwardedHost) && !isAuthorizedHost(forwardedHost)) {
     // Hardcode https — the site is HTTPS-only and markResponse sets HSTS; keying
     // off x-forwarded-proto risks emitting an http:// Location (extra upgrade hop).
@@ -194,7 +201,9 @@ export async function middleware(request: NextRequest) {
     pathname === '/robots.txt' || pathname === '/sitemap.xml' || pathname === '/og' || pathname.startsWith('/og/')
 
   // --- Human visitor: proxy transparently to CRA ---
-  if (!isSeoAsset && (isCraAsset(pathname) || decision.renderMode === 'cra')) {
+  // On a force-SSR host, page navigations skip the CRA and fall through to the
+  // SSR branch (CRA static assets are still served so nothing 404s).
+  if (!isSeoAsset && (isCraAsset(pathname) || (decision.renderMode === 'cra' && !forceSsr))) {
     const segs = pathname.split('/').filter(Boolean)
     // The CRA routes are bare (language is by subdomain). A locale-prefixed page
     // URL must be REDIRECTED to the bare path — a transparent rewrite keeps the

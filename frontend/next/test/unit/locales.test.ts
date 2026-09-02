@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { langForHost, bcp47, isAuthorizedHost, isInfraHost, CANONICAL_EN_HOST, normalizeHost, safeHost } from '../../lib/locales'
+import { langForHost, bcp47, isAuthorizedHost, isInfraHost, isForceSsrHost, CANONICAL_EN_HOST, normalizeHost, safeHost } from '../../lib/locales'
 
 test.describe('langForHost', () => {
   test('apex → en', () => { expect(langForHost('bookofmormon.online')).toBe('en') })
@@ -17,6 +17,28 @@ test.describe('langForHost', () => {
 })
 test.describe('bcp47', () => {
   test('maps internal→tag', () => { expect(bcp47('swe')).toBe('sv'); expect(bcp47('vn')).toBe('vi'); expect(bcp47('ko')).toBe('ko') })
+})
+
+test.describe('force-SSR mirror hosts (ssr.*)', () => {
+  test('isForceSsrHost only for the ssr.* hosts', () => {
+    expect(isForceSsrHost('ssr.bookofmormon.online')).toBe(true)
+    expect(isForceSsrHost('ssr-kr.bookofmormon.online')).toBe(true)
+    expect(isForceSsrHost('SSR.BOOKOFMORMON.ONLINE:443')).toBe(true)
+    expect(isForceSsrHost('bookofmormon.online')).toBe(false)
+    expect(isForceSsrHost('ssr.evil.com')).toBe(false)
+  })
+  test('are authorized to serve (no 301)', () => {
+    expect(isAuthorizedHost('ssr.bookofmormon.online')).toBe(true)
+    expect(isAuthorizedHost('ssr-kr.bookofmormon.online')).toBe(true)
+  })
+  test('lang resolves per mirror: ssr→en, ssr-kr→ko', () => {
+    expect(langForHost('ssr.bookofmormon.online')).toBe('en')
+    expect(langForHost('ssr-kr.bookofmormon.online')).toBe('ko')
+  })
+  test('canonical/og host maps to the REAL production host, never ssr.*', () => {
+    expect(safeHost('ssr.bookofmormon.online')).toBe('bookofmormon.online')
+    expect(safeHost('ssr-kr.bookofmormon.online')).toBe('xn--289a67xla.kr')
+  })
 })
 
 test.describe('CANONICAL_EN_HOST', () => {

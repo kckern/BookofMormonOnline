@@ -43,9 +43,19 @@ export const LANG_HOST: Record<string, string> = {
 // Internal code → BCP47 tag for <html lang>. Identity unless listed.
 const BCP47_MAP: Record<string, string> = { swe: 'sv', jp: 'ja', jpn: 'ja', vn: 'vi', tgl: 'tl', slv: 'sl' }
 
+// Force-SSR mirror hosts: serve the SSR render to EVERY client (incl. real
+// browsers) so crawler output can be inspected in a normal browser. Value =
+// internal lang code (so ssr-kr renders Korean). Authorized to serve, but their
+// canonical/og:url resolve to the real production host (see safeHost) so the
+// mirror is never indexed as a duplicate of the live site.
+export const FORCE_SSR_HOSTS: Record<string, string> = {
+  'ssr.bookofmormon.online': 'en',
+  'ssr-kr.bookofmormon.online': 'ko',
+}
+
 export function langForHost(host: string | null | undefined): string {
   const bare = (host ?? '').split(',')[0].trim().split(':')[0].toLowerCase()
-  return HOST_LANG[bare] ?? 'en'
+  return HOST_LANG[bare] ?? FORCE_SSR_HOSTS[bare] ?? 'en'
 }
 
 export function bcp47(code: string): string {
@@ -67,10 +77,15 @@ export function normalizeHost(host: string | null | undefined): string {
   return (host ?? '').split(',')[0].trim().split(':')[0].toLowerCase()
 }
 
-// True only for explicitly-registered public site hosts.
+// True for the force-SSR mirror hosts (ssr.* — serve SSR to every client).
+export function isForceSsrHost(host: string | null | undefined): boolean {
+  return normalizeHost(host) in FORCE_SSR_HOSTS
+}
+
+// True only for explicitly-registered public site hosts (incl. the SSR mirrors).
 export function isAuthorizedHost(host: string | null | undefined): boolean {
   const bare = normalizeHost(host)
-  return bare in HOST_LANG || bare in EN_EDITION_HOSTS
+  return bare in HOST_LANG || bare in EN_EDITION_HOSTS || bare in FORCE_SSR_HOSTS
 }
 
 // Validate a client-influenced Host / x-forwarded-host for use in canonical/og:url.
@@ -81,6 +96,10 @@ export function isAuthorizedHost(host: string | null | undefined): boolean {
 export function safeHost(candidate: string | null | undefined): string {
   const host = (candidate ?? '').split(',')[0].trim()
   const bare = host.split(':')[0].toLowerCase()
+  // Force-SSR mirror hosts serve real content but must present the PRODUCTION
+  // host in canonical/og:url — never ssr.* — so search engines consolidate to
+  // the real site instead of indexing the test mirror.
+  if (bare in FORCE_SSR_HOSTS) return LANG_HOST[FORCE_SSR_HOSTS[bare]] ?? CANONICAL_EN_HOST
   const ok = isAuthorizedHost(bare) || bare === 'localhost'
   return ok ? host : CANONICAL_EN_HOST
 }
