@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { langForHost, bcp47, isAuthorizedHost, isInfraHost, CANONICAL_EN_HOST } from '../../lib/locales'
+import { langForHost, bcp47, isAuthorizedHost, isInfraHost, CANONICAL_EN_HOST, normalizeHost } from '../../lib/locales'
 
 test.describe('langForHost', () => {
   test('apex → en', () => { expect(langForHost('bookofmormon.online')).toBe('en') })
@@ -37,7 +37,7 @@ test.describe('isAuthorizedHost', () => {
     expect(isAuthorizedHost('SWE.BOOKOFMORMON.ONLINE:443')).toBe(true)
     expect(isAuthorizedHost('buchmormon.de, proxy.internal')).toBe(true)
   })
-  test('english aliases are NOT authorized', () => {
+  test('unknown subdomains are NOT authorized', () => {
     expect(isAuthorizedHost('new.bookofmormon.online')).toBe(false)
     expect(isAuthorizedHost('opengraph.bookofmormon.online')).toBe(false)
     expect(isAuthorizedHost('sugardoodle.bookofmormon.online')).toBe(false)
@@ -66,5 +66,14 @@ test.describe('isInfraHost', () => {
     expect(isInfraHost('new.bookofmormon.online')).toBe(false)
     expect(isInfraHost('bookofmormon.online')).toBe(false)
     expect(isInfraHost('evil.example.com')).toBe(false)
+  })
+})
+
+test.describe('normalizeHost', () => {
+  test('takes first forwarded entry, strips port, lowercases', () => {
+    expect(normalizeHost('Buchmormon.DE, proxy.internal')).toBe('buchmormon.de')
+    expect(normalizeHost('SWE.bookofmormon.online:443')).toBe('swe.bookofmormon.online')
+    expect(normalizeHost(null)).toBe('')
+    expect(normalizeHost('')).toBe('')
   })
 })

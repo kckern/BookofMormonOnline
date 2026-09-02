@@ -81,7 +81,8 @@ export function isInfraHost(host: string | null | undefined): boolean {
   if (!bare) return true                                 // hostless / empty
   if (bare === 'localhost' || bare.endsWith('.local')) return true
   if (/^\d{1,3}(\.\d{1,3}){3}$/.test(bare)) return true   // IPv4 literal
-  if (bare.startsWith('[')) return true                   // IPv6 literal, e.g. [::1]:port
+  // IPv6 bracketed literal: normalizeHost splits on ':', so bare is '[' or '[<prefix>' here.
+  if (bare.startsWith('[')) return true
   if (!bare.includes('.')) return true                    // single-label service name
   return false
 }
