@@ -8,6 +8,24 @@
 // and treat unstamped commentary as stale. Bump on the next commentary shape change.
 export const COMMENTARY_SHAPE_V = 2;
 
+// The GraphQL response key for a query string: an explicit alias
+// ("alias: field") wins, otherwise the bare field name, after skipping any
+// leading query/mutation operation keyword. Consumers (structureResults,
+// prepareCacheObject) look results up BY NAME (not by position) so a server
+// that omits a field entirely — e.g. `page` returns nothing for a
+// section-level slug — can't shift every subsequent field onto the wrong
+// query. See docs/bugs/2026-09-01-section-links-bounce-to-contents.md.
+export function responseKeyOf(queryString) {
+    const s = String(queryString || "")
+        .trim()
+        .replace(/^(?:query|mutation)\b\s*\w*\s*\{?/, "")
+        .trim();
+    const alias = s.match(/^([A-Za-z_]\w*)\s*:/);
+    if (alias) return alias[1];
+    const field = s.match(/^([A-Za-z_]\w*)/);
+    return field ? field[1] : undefined;
+}
+
 export async function getCache(input) {
     let db = await loadDBRequest();
     var itemObjectStore = db.transaction("items", "readwrite").objectStore("items");
@@ -65,11 +83,14 @@ export function normalizeVal(val) {
 
 export function prepareCacheObject(queries, apiResults, useCache) {
     let cacheObj = {};
-    let resultKeys = Object.keys(apiResults);
     for (let i in queries) {
-        if(Array.isArray(useCache)) if(!useCache.includes(resultKeys[i])) continue;
         let query = queries[i];
-        let results = apiResults[resultKeys[i]];
+        // Look results up BY NAME (not by position) so an omitted/reordered
+        // response field can't be cached under the wrong query — the same
+        // fragility fixed in structureResults.
+        let responseKey = responseKeyOf(query.query);
+        if(Array.isArray(useCache)) if(!useCache.includes(responseKey)) continue;
+        let results = apiResults[responseKey];
         if (!Array.isArray(results)) results = [results];
         if (!query.val) {
             cacheObj[query.type] = results

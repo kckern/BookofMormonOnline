@@ -1,5 +1,5 @@
 import { mergeResults, structureResults } from "../BoMOnlineAPI";
-import { prepareCacheObject } from "../Cache";
+import { prepareCacheObject, responseKeyOf } from "../Cache";
 import { prepareQueries } from "../GraphQLQueries";
 
 // Regression tests for two shared-cache-layer bugs surfaced by the Bible
@@ -58,6 +58,58 @@ describe("structureResults — versehighlights keyed by row ids (bug 2: mis-keye
     expect(structured.versehighlights["300,3"].bom_highlight).toEqual(["c"]);
     // and must NOT be mis-keyed onto the dropped/first input pair
     expect(structured.versehighlights["100,1"]).toBeUndefined();
+  });
+});
+
+// Regression tests for docs/bugs/2026-09-01-section-links-bounce-to-contents.md:
+// the backend omits a field entirely when a query resolves nothing (e.g. `page`
+// for a section-level slug). structureResults/prepareCacheObject used to map
+// results by POSITION, so an omitted field shifted every later field onto the
+// wrong query — the pageprogress row landed on `page`, giving a truthy but
+// section-less object that made Page.js redirect to /contents.
+describe("responseKeyOf — GraphQL response key from a query string", () => {
+  test("bare field name", () => {
+    expect(responseKeyOf(`division (slug: ["x"]) { slug }`)).toBe("division");
+  });
+  test("alias wins over the underlying field", () => {
+    expect(responseKeyOf(`personList: person (slug: []) { slug }`)).toBe("personList");
+  });
+  test("tolerates leading whitespace", () => {
+    expect(responseKeyOf(`  pageprogress(token:"t") { count }`)).toBe("pageprogress");
+  });
+  test("named mutation", () => {
+    expect(responseKeyOf(`mutation shortlink{shortlink(string:"a"){hash}}`)).toBe("shortlink");
+  });
+  test("anonymous mutation", () => {
+    expect(responseKeyOf(`mutation { requestPasswordReset(email: "a") }`)).toBe("requestPasswordReset");
+  });
+});
+
+describe("structureResults — name-based mapping (section links bounce)", () => {
+  test("does not shift a later field onto a query whose field the server omitted", () => {
+    const queries = [
+      {
+        type: "page",
+        key: "slug",
+        val: ["lehites/lehis-dream"],
+        query: `page (slug: "lehites/lehis-dream") { slug sections { slug } }`,
+      },
+      {
+        type: "pageprogress",
+        key: 0,
+        val: { token: "t", slug: ["lehites/lehis-dream"] },
+        query: ` pageprogress(token:"t",slug:["lehites/lehis-dream"]) { count completed started }`,
+      },
+    ];
+    // Server resolves nothing for the section-level slug → the `page` field is
+    // ABSENT from the response (only pageprogress comes back).
+    const apiResults = { pageprogress: [{ count: 0, completed: 0, started: 0 }] };
+    const structured = structureResults(queries, apiResults);
+    // page must be null for the missing slug — NOT the mis-mapped pageprogress
+    // object (which is what triggered the redirect to /contents).
+    expect(structured.page["lehites/lehis-dream"]).toBeNull();
+    expect(structured.pageprogress).toBeDefined();
+    expect(structured.pageprogress.count).toBe(0);
   });
 });
 

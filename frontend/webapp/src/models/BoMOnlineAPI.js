@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getCache, setCache, prepareCacheObject } from './Cache'
+import { getCache, setCache, prepareCacheObject, responseKeyOf } from './Cache'
 import { prepareQueries } from './GraphQLQueries'
 import { determineLanguage } from "./Utils.js";
 
@@ -127,10 +127,9 @@ export function mergeResults(structuredResults, found) {
 
 export function structureResults(queries, apiResults) {
     let resultObj = {};
-    let resultKeys = Object.keys(apiResults);
     for (let i in queries) {
         let query = queries[i];
-        let results = apiResults[resultKeys[i]];
+        let results = apiResults[responseKeyOf(query.query)];
         if (!Array.isArray(results)) results = [results];
         if (!query.val) {
             resultObj[query.type] = results

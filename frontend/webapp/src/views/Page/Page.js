@@ -436,23 +436,26 @@ export default function Page() {
 
     //Update Page via Controller
     let index = pageSlug;
-    let keys = Object.keys(response?.page || {});
 
-    if (!response.page[index]) {
-      if (keys.includes(pageSlug))
-        return getPageDataFromAPI(
-          pageSlug
-            .split("/")
-            .slice(0, -1)
-            .join("/"),
-          textId,
-        );
+    // A section-leaf slug (e.g. "lehites/lehis-dream") can't be resolved as a
+    // page by the backend, so it comes back with no usable page data — either
+    // missing entirely or, because structureResults maps results positionally,
+    // as a truthy-but-sectionless object mis-mapped from another field. In both
+    // cases climb to the parent page and let the scroll-spy focus the section
+    // leaf (match.url still carries it). Only fall through to the fuzzy match /
+    // table-of-contents redirect once there is no parent left to try.
+    if (!response.page[index] || !response.page[index].sections) {
+      const parentSlug = pageSlug
+        .split("/")
+        .slice(0, -1)
+        .join("/");
+      if (parentSlug) return getPageDataFromAPI(parentSlug, textId);
       index = Object.keys(response.page)
         .filter((a) => RegExp(pageSlug).test(a))
         .shift();
     }
 
-    if (!response.page[index].sections) {
+    if (!response.page[index]?.sections) {
       return history.push("/contents");
     }
 
