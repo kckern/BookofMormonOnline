@@ -30,8 +30,8 @@ const MEDIA_PATH: Record<string, (id: string) => string> = {
 }
 
 // Localized wordmark (PHP used the home_title label). English default; Korean
-// site name for ko. Other languages fall back to English until wired.
-const SITE_TITLE: Record<string, string> = { en: 'Book of Mormon Online', ko: '몰몬경' }
+// site name + edition tag for ko. Other languages fall back to English.
+const SITE_TITLE: Record<string, string> = { en: 'Book of Mormon Online', ko: '몰몬경·KR' }
 
 export interface OgCardInput {
   title: string
@@ -89,8 +89,17 @@ export async function renderOgCard(input: OgCardInput): Promise<ImageResponse> {
       fonts: [
         { name: 'RobotoCondensed', data: robotoCondensedBold, weight: 700, style: 'normal' },
         { name: 'RobotoCondensed', data: robotoCondensedLight, weight: 300, style: 'normal' },
+        // Korean has no Latin bold/light face — register IBMPlexSansKR at EVERY
+        // weight the card uses (700 wordmark/title, 400 desc, 300) so all Korean
+        // text renders in one face instead of the bold weights falling back to a
+        // different (non-KR) font than the description.
         ...(isKorean
-          ? [{ name: 'RobotoCondensed', data: ibmPlexSansKR, weight: 400 as const, style: 'normal' as const }]
+          ? ([700, 400, 300] as const).map((weight) => ({
+              name: 'RobotoCondensed',
+              data: ibmPlexSansKR,
+              weight,
+              style: 'normal' as const,
+            }))
           : []),
       ],
     },
