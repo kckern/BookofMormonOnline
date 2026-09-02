@@ -48,7 +48,12 @@ import { timeAgoString } from "../../models/Utils.js";
 
 // True when the matched URL is a community route, whether nested under the
 // unified Home (/home/community/...) or the legacy top-level (/community/...).
-export const isCommunityPath = (url) => /(^|\/)community(\/|$)/.test(url || "");
+export const isCommunityPath = (url) => /(^|\/)(community|feed)(\/|$)/.test(url || "");
+
+export const communityHref = (channel, message) => {
+  const beta = typeof window !== "undefined" && /^\/home\/feed(?:\/|$)/.test(window.location.pathname);
+  return `${beta ? "/home/feed" : "/home/community"}${channel ? `/${channel}` : ""}${message ? `/${message}` : ""}`;
+};
 
 const privateStyle = (nickname) => {
   if (!/[█]/gu.test(nickname)) return {};
@@ -66,7 +71,7 @@ const privateStyle = (nickname) => {
   };
 };
 
-function Community() {
+function Community({ unlistedBeta = false }) {
   const match = useRouteMatch();
   const params = match.params;
   const isCommunity = isCommunityPath(match.url);
@@ -87,19 +92,17 @@ function Community() {
   useEffect(() => (document.title = label("community")), []);
 
   return false ? null : (
-    <div className="home container">
-      <div className="leftPanelScroll noselect">
-        <GroupBrowser
-          activeGroup={activeGroup}
-          setActiveGroup={setActiveGroup}
-        />
-      </div>
+    <div className={`home container${unlistedBeta ? " unlistedBeta" : ""}`}>
+      {!unlistedBeta && <div className="leftPanelScroll noselect">
+        <GroupBrowser activeGroup={activeGroup} setActiveGroup={setActiveGroup} />
+      </div>}
       <div className="rightPanelScroll">
         <HomeFeed
           activeGroup={activeGroup}
           messageId={activeMessage}
           setActiveGroup={setActiveGroup}
           setActiveMessage={setActiveMessage}
+          unlistedBeta={unlistedBeta}
         />
       </div>
     </div>
@@ -440,7 +443,7 @@ function GroupCard({ groupData, activeGroup, setActiveGroup }) {
       data-tip={cardTipHtml}
       data-for={"card-tip"}
     >
-      <Link to={`/home/community/${groupData.url}`}>
+      <Link to={communityHref(groupData.url)}>
         <div className="groupContent" onClick={() => ReactTooltip.hide()}>
           <div className="groupImage">
             <img src={groupData.picture} alt={groupData.name || ""} />
@@ -539,6 +542,9 @@ export function GroupCallToAction({ groupData, joinlabel }) {
         </div>
       </Link>
     );
+
+  // Signed-in outsiders may comment but may not join fixed-membership groups.
+  if (groupData.membership_policy === "fixed" && !amMember) return null;
 
   const handleClick = (e) => {
     e.preventDefault();

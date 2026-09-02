@@ -11,8 +11,11 @@ import type { DB } from '../../codegen/db.js';
 import { getDb } from '../data/db.js';
 import { getRedis } from '../config/redis.js';
 import { getBus } from '../realtime/RealtimeBus.js';
-import { postMessage, getThread } from '../messaging/messages.js';
+import { postMessage, getMessage, getThread } from '../messaging/messages.js';
 import { generateBotReply, type BotTurn } from './generate.js';
+import { hasLlmProvider } from './mastra/model.js';
+import { emitPublicChannelEvent } from '../messaging/policy.js';
+import { nanoid } from 'nanoid';
 
 const TICK_MS = 60_000;
 let timer: ReturnType<typeof setInterval> | null = null;
@@ -37,6 +40,20 @@ function parseBotConfig(metadata: unknown): BotChannelConfig | null {
 const rand = (n: number) => Math.floor(Math.random() * n);
 const randInt = (min: number, max: number) => min + rand(Math.max(0, max - min) + 1);
 
+function nextLocalOccurrence(timeZone: string, localTime: string): Date {
+  const [wantedHour = '08', wantedMinute = '00'] = localTime.split(':');
+  const format = new Intl.DateTimeFormat('en-US', {
+    timeZone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  });
+  let candidate = new Date(Math.ceil((Date.now() + 60_000) / 60_000) * 60_000);
+  for (let i = 0; i < 60 * 48; i++) {
+    const parts = Object.fromEntries(format.formatToParts(candidate).map((part) => [part.type, part.value]));
+    if (parts['hour'] === wantedHour.padStart(2, '0') && parts['minute'] === wantedMinute.padStart(2, '0')) return candidate;
+    candidate = new Date(candidate.getTime() + 60_000);
+  }
+  throw new Error(`could not resolve ${localTime} in ${timeZone}`);
+}
+
 function fillPlaceholders(s: string, prompt: { reference: string | null; prompt: string | null }): string {
   return s
     .replace('[[scripture]]', prompt.reference ?? '')
@@ -49,7 +66,7 @@ function fillPlaceholders(s: string, prompt: { reference: string | null; prompt:
  * the channel's bots comment. Exported so it can be triggered directly (tests,
  * admin) as well as by the scheduler. Returns a small summary.
  */
-export async function runNewPrompt(db: Kysely<DB>, channelUrl: string): Promise<{ posted: number; reason?: string; promptGuid?: string }> {
+async function runLegacyNewPrompt(db: Kysely<DB>, channelUrl: string): Promise<{ posted: number; reason?: string; promptGuid?: string }> {
   const ch = await db.selectFrom('messenger_channels').select(['metadata', 'lang']).where('channel_url', '=', channelUrl).executeTakeFirst();
   if (!ch) return { posted: 0, reason: 'no-channel' };
   const cfg = parseBotConfig(ch.metadata);
@@ -109,19 +126,287 @@ export async function runNewPrompt(db: Kysely<DB>, channelUrl: string): Promise<
   return { posted, promptGuid: prompt.guid };
 }
 
+function shuffled<T>(values: T[]): T[] {
+  const copy = [...values];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = rand(i + 1);
+    [copy[i], copy[j]] = [copy[j]!, copy[i]!];
+  }
+  return copy;
+}
+
+function stringList(value: unknown): string[] {
+  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === 'string');
+  if (typeof value !== 'string') return [];
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : [];
+  } catch { return []; }
+}
+
+function weightedPick<T extends { response_weight: number }>(values: T[], random = Math.random): T | undefined {
+  const total = values.reduce((sum, value) => sum + Math.max(0, Number(value.response_weight)), 0);
+  if (!total) return undefined;
+  let cursor = random() * total;
+  for (const value of values) {
+    cursor -= Math.max(0, Number(value.response_weight));
+    if (cursor < 0) return value;
+  }
+  return values.at(-1);
+}
+
+export function chooseAudienceRespondent<T extends { response_weight: number; topic_triggers: unknown }>(
+  candidates: T[],
+  topicText: string,
+  chancePercent: number,
+  random = Math.random,
+): T | undefined {
+  if (random() * 100 >= chancePercent) return undefined;
+  const normalizedTopic = topicText.toLocaleLowerCase();
+  const matching = candidates.filter((candidate) => stringList(candidate.topic_triggers)
+    .some((trigger) => normalizedTopic.includes(trigger.toLocaleLowerCase())));
+  return weightedPick(matching, random);
+}
+
+function managedTurnInstructions(promptTemplate: string, responseGuardrails: string): string {
+  return [promptTemplate, responseGuardrails].filter(Boolean).join('\n\n');
+}
+
+/** Start a durable, staggered AI discussion from DB-owned configuration. */
+async function runManagedDiscussion(
+  db: Kysely<DB>,
+  channelUrl: string,
+): Promise<{ posted: number; reason?: string; promptGuid?: string }> {
+  if (!hasLlmProvider()) return { posted: 0, reason: 'no-model-provider' };
+  const config = await db.selectFrom('bom_ai_discussion_config').selectAll()
+    .where('channel_url', '=', channelUrl).where('enabled', '=', 1).executeTakeFirst();
+  if (!config) return { posted: 0, reason: 'no-managed-config' };
+
+  const kind = rand(100) < config.discursive_weight ? 'discursive' : 'narrative';
+  let topic = await db.selectFrom('bom_ai_topic').selectAll()
+    .where('channel_url', '=', channelUrl).where('enabled', '=', 1)
+    .where('passage_kind', '=', kind).orderBy('last_used_at', 'asc').orderBy('use_count', 'asc')
+    .limit(1).executeTakeFirst();
+  if (!topic) {
+    topic = await db.selectFrom('bom_ai_topic').selectAll()
+      .where('channel_url', '=', channelUrl).where('enabled', '=', 1)
+      .orderBy('last_used_at', 'asc').orderBy('use_count', 'asc').limit(1).executeTakeFirst();
+  }
+  if (!topic) return { posted: 0, reason: 'no-topics' };
+
+  const bots = await db.selectFrom('messenger_members as member')
+    .innerJoin('messenger_users as user', 'user.user_id', 'member.user_id')
+    .innerJoin('bom_bot as bot', 'bot.bot_id', 'member.user_id')
+    .select(['bot.bot_id', 'bot.display_name', 'bot.persona', 'bot.model'])
+    .where('member.channel_url', '=', channelUrl).where('member.state', '=', 'joined')
+    .where('user.is_bot', '=', 1).where('bot.enabled', '=', 1)
+    .where('bot.bot_class', '=', 'study').execute();
+  const configured = bots.filter((bot) => bot.display_name?.trim() && bot.persona?.trim() && bot.model?.trim());
+  if (configured.length < config.min_bot_voices) return { posted: 0, reason: 'insufficient-configured-bots' };
+
+  const previous = await db.selectFrom('messenger_messages').select('user_id')
+    .where('channel_url', '=', channelUrl).where('custom_type', '=', 'bot_prompt')
+    .where((eb) => eb.or([eb('is_deleted', 'is', null), eb('is_deleted', '=', 0)]))
+    .orderBy('created_at', 'desc').limit(1).executeTakeFirst();
+  const openerPool = configured.filter((bot) => bot.bot_id !== previous?.user_id);
+  const opener = (openerPool.length ? openerPool : configured)[rand(openerPool.length || configured.length)]!;
+  const voiceCount = Math.min(configured.length, randInt(config.min_bot_voices, config.max_bot_voices));
+  const voices = [opener, ...shuffled(configured.filter((bot) => bot.bot_id !== opener.bot_id)).slice(0, voiceCount - 1)];
+  const audienceCandidates = await db.selectFrom('bom_ai_audience_bot as audience')
+    .innerJoin('messenger_users as user', 'user.user_id', 'audience.bot_id')
+    .innerJoin('bom_bot as bot', 'bot.bot_id', 'audience.bot_id')
+    .select([
+      'bot.bot_id', 'bot.display_name', 'bot.persona', 'bot.model',
+      'audience.response_weight', 'audience.topic_triggers',
+    ])
+    .where('audience.channel_url', '=', channelUrl).where('audience.enabled', '=', 1)
+    .where('user.is_bot', '=', 1).where('bot.enabled', '=', 1)
+    .where('bot.bot_class', '=', 'study').execute();
+  const configuredAudience = audienceCandidates.filter((bot) => bot.display_name?.trim()
+    && bot.persona?.trim() && bot.model?.trim());
+  const topicText = `${topic.topic_id} ${topic.passage_ref} ${topic.question}`;
+  const audience = chooseAudienceRespondent(
+    configuredAudience, topicText, config.audience_response_chance,
+  );
+  const instructions = managedTurnInstructions(config.prompt_template, config.response_guardrails);
+  const opening = await generateBotReply(db, opener.bot_id, [
+    { role: 'user', content: instructions },
+    {
+      role: 'user',
+      content: `Passage: ${topic.passage_ref}\nEditorial topic brief: ${topic.question}`,
+    },
+  ]);
+  if (!opening) return { posted: 0, reason: 'opener-generation-failed' };
+  const promptText = `${topic.passage_ref}\n\n${opening}`.trim();
+  const root = await postMessage(db, {
+    channelUrl,
+    userId: opener.bot_id,
+    message: promptText,
+    customType: 'bot_prompt',
+    data: JSON.stringify({
+      aiDiscussion: true,
+      topicId: topic.topic_id,
+      passageKind: topic.passage_kind,
+      passageSlug: topic.passage_slug,
+      editorialQuestion: topic.question,
+    }),
+  });
+  emitPublicChannelEvent('message_received', channelUrl, root);
+
+  const now = new Date();
+  await db.transaction().execute(async (trx) => {
+    await trx.insertInto('messenger_thread_state').values({
+      root_message_id: root.message_id, channel_url: channelUrl, status: 'active', bot_message_count: 1,
+    }).execute();
+    let dueAt = now.getTime();
+    const scheduledVoices = [...voices.slice(1), ...(audience ? [audience] : [])];
+    for (const [index, bot] of scheduledVoices.entries()) {
+      dueAt += randInt(config.min_delay_minutes, config.max_delay_minutes) * 60_000;
+      await trx.insertInto('bom_ai_discussion_turn').values({
+        root_message_id: root.message_id,
+        bot_id: bot.bot_id,
+        ordinal: index + 1,
+        due_at: new Date(dueAt),
+        status: 'pending',
+      }).execute();
+    }
+    await trx.updateTable('bom_ai_topic').set({
+      last_used_at: now,
+      use_count: sql<number>`use_count + 1`,
+    }).where('topic_id', '=', topic.topic_id).execute();
+  });
+  return { posted: 1, promptGuid: topic.topic_id };
+}
+
+export async function runNewPrompt(
+  db: Kysely<DB>,
+  channelUrl: string,
+): Promise<{ posted: number; reason?: string; promptGuid?: string }> {
+  try {
+    const managed = await db.selectFrom('bom_ai_discussion_config').select('enabled')
+      .where('channel_url', '=', channelUrl).executeTakeFirst();
+    if (managed) return runManagedDiscussion(db, channelUrl);
+  } catch {
+    // Rolling-deploy compatibility: use the legacy path until migration lands.
+  }
+  return runLegacyNewPrompt(db, channelUrl);
+}
+
+async function processDueTurns(db: Kysely<DB>): Promise<void> {
+  // Recover work abandoned by a crashed scheduler before selecting due turns.
+  await db.updateTable('bom_ai_discussion_turn').set({
+    status: 'pending', lease_owner: null, lease_expires_at: null,
+  }).where('status', '=', 'leased').where('lease_expires_at', '<=', new Date()).execute();
+
+  const turns = await db.selectFrom('bom_ai_discussion_turn as turn')
+    .innerJoin('messenger_thread_state as thread', 'thread.root_message_id', 'turn.root_message_id')
+    .innerJoin('bom_ai_discussion_config as config', 'config.channel_url', 'thread.channel_url')
+    .select([
+      'turn.id', 'turn.root_message_id', 'turn.bot_id', 'thread.channel_url',
+      'thread.bot_message_count', 'thread.created_at', 'thread.status',
+      'config.max_bot_messages', 'config.bot_window_hours', 'config.prompt_template',
+      'config.response_guardrails',
+    ])
+    .where('turn.status', '=', 'pending').where('turn.due_at', '<=', new Date())
+    .where('thread.status', '=', 'active').where('config.enabled', '=', 1)
+    .orderBy('turn.due_at', 'asc').limit(10).execute();
+
+  for (const turn of turns) {
+    const leaseOwner = `scheduler:${process.pid}:${nanoid(8)}`;
+    const claim = await db.updateTable('bom_ai_discussion_turn').set({
+      status: 'leased', lease_owner: leaseOwner, lease_expires_at: new Date(Date.now() + 5 * 60_000),
+    }).where('id', '=', turn.id).where('status', '=', 'pending').executeTakeFirst();
+    if (Number(claim.numUpdatedRows) !== 1) continue;
+
+    try {
+      const expired = Date.now() - new Date(turn.created_at).getTime() >= turn.bot_window_hours * 60 * 60_000;
+      if (expired || turn.bot_message_count >= turn.max_bot_messages) {
+        await db.updateTable('bom_ai_discussion_turn').set({ status: 'skipped', lease_owner: null, lease_expires_at: null })
+          .where('id', '=', turn.id).execute();
+        await db.updateTable('messenger_thread_state').set({ status: 'bot_complete', bot_complete_at: new Date() })
+          .where('root_message_id', '=', turn.root_message_id).execute();
+        continue;
+      }
+
+      const root = await getMessage(db, turn.channel_url, turn.root_message_id);
+      if (!root) throw new Error('discussion root missing');
+      const replies = await getThread(db, turn.root_message_id);
+      const instructions = managedTurnInstructions(turn.prompt_template, turn.response_guardrails);
+      let editorialQuestion = '';
+      try {
+        const data = JSON.parse(root.data) as Record<string, unknown>;
+        editorialQuestion = typeof data['editorialQuestion'] === 'string' ? data['editorialQuestion'] : '';
+      } catch { /* old managed roots may not carry the editorial brief */ }
+      const conversation: BotTurn[] = [
+        { role: 'user', content: instructions },
+        ...(editorialQuestion
+          ? [{ role: 'user' as const, content: `Editorial topic brief: ${editorialQuestion}` }]
+          : []),
+        { role: 'user', content: root.message },
+        ...replies.map((reply) => ({
+          role: reply.user?.user_id === turn.bot_id ? 'assistant' as const : 'user' as const,
+          content: `${reply.user?.nickname || 'Participant'}: ${reply.message}`,
+        })),
+      ];
+      const text = await generateBotReply(db, turn.bot_id, conversation);
+      if (!text) throw new Error('bot generation returned no text');
+      const audience = await db.selectFrom('bom_ai_audience_bot').select('bot_id')
+        .where('channel_url', '=', turn.channel_url).where('bot_id', '=', turn.bot_id)
+        .where('enabled', '=', 1).executeTakeFirst();
+      const message = await postMessage(db, {
+        channelUrl: turn.channel_url, userId: turn.bot_id, message: text,
+        parentMessageId: turn.root_message_id, customType: 'bot_comment',
+        metadata: audience ? { participantRole: 'audience' } : undefined,
+      });
+      emitPublicChannelEvent('message_received', turn.channel_url, message);
+      await db.transaction().execute(async (trx) => {
+        await trx.updateTable('bom_ai_discussion_turn').set({
+          status: 'posted', message_id: message.message_id, lease_owner: null, lease_expires_at: null,
+        }).where('id', '=', turn.id).execute();
+        await trx.updateTable('messenger_thread_state').set({
+          bot_message_count: sql<number>`bot_message_count + 1`,
+        }).where('root_message_id', '=', turn.root_message_id).execute();
+        const remaining = await trx.selectFrom('bom_ai_discussion_turn').select(({ fn }) => fn.count<number>('id').as('count'))
+          .where('root_message_id', '=', turn.root_message_id).where('status', 'in', ['pending', 'leased']).executeTakeFirst();
+        if (Number(remaining?.count ?? 0) === 0) {
+          await trx.updateTable('messenger_thread_state').set({ status: 'bot_complete', bot_complete_at: new Date() })
+            .where('root_message_id', '=', turn.root_message_id).execute();
+        }
+      });
+    } catch (error) {
+      await db.updateTable('bom_ai_discussion_turn').set({
+        status: 'failed', failure_reason: (error as Error).message.slice(0, 1000),
+        lease_owner: null, lease_expires_at: null,
+      }).where('id', '=', turn.id).execute();
+      const remaining = await db.selectFrom('bom_ai_discussion_turn')
+        .select(({ fn }) => fn.count<number>('id').as('count'))
+        .where('root_message_id', '=', turn.root_message_id)
+        .where('status', 'in', ['pending', 'leased']).executeTakeFirst();
+      if (Number(remaining?.count ?? 0) === 0) {
+        await db.updateTable('messenger_thread_state').set({
+          status: 'bot_complete', bot_complete_at: new Date(),
+        }).where('root_message_id', '=', turn.root_message_id).execute();
+      }
+    }
+  }
+}
+
 async function tick(): Promise<void> {
   if (ticking) return;
   ticking = true;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let redis: any = null;
   try {
-    redis = getRedis();
+    redis = await getRedis();
     if (redis) {
       const ok = await redis.set('bots:scheduler:lock', '1', { NX: true, EX: 50 });
       if (!ok) return; // another instance owns this tick
     }
     const db = getDb();
     const now = new Date();
+    try { await processDueTurns(db); } catch (error) {
+      console.error('[bots] due-turn processing failed:', (error as Error).message);
+    }
     const due = await db
       .selectFrom('bom_bot_schedule')
       .selectAll()
@@ -129,16 +414,34 @@ async function tick(): Promise<void> {
       .where((eb) => eb.or([eb('next_run_at', 'is', null), eb('next_run_at', '<=', now)]))
       .execute();
     for (const row of due) {
+      // `next_run_at` doubles as a short DB lease. This closes the duplicate-
+      // prompt window when blue/green instances overlap, even without Redis.
+      const leaseUntil = new Date(now.getTime() + 15 * 60_000);
+      const claim = await db.updateTable('bom_bot_schedule').set({ next_run_at: leaseUntil })
+        .where('id', '=', row.id)
+        .where((eb) => eb.or([eb('next_run_at', 'is', null), eb('next_run_at', '<=', now)]))
+        .executeTakeFirst();
+      if (Number(claim.numUpdatedRows) !== 1) continue;
+      let succeeded = false;
       try {
         if (row.action === 'new_prompt') await runNewPrompt(db, row.channel_url);
+        succeeded = true;
       } catch (e) {
         console.error('[bots] schedule', row.id, 'failed:', (e as Error).message);
       }
-      const minutes = row.cadence_minutes ?? 1440;
+      const managed = await db.selectFrom('bom_ai_discussion_config')
+        .select(['timezone', 'local_start_time']).where('channel_url', '=', row.channel_url)
+        .where('enabled', '=', 1).executeTakeFirst();
+      const nextRun = succeeded && managed
+        ? nextLocalOccurrence(managed.timezone, String(managed.local_start_time))
+        : succeeded
+          ? new Date(Date.now() + (row.cadence_minutes ?? 1440) * 60_000)
+          : new Date(Date.now() + 15 * 60_000);
       await db
         .updateTable('bom_bot_schedule')
-        .set({ last_run_at: now, next_run_at: new Date(Date.now() + minutes * 60_000) })
+        .set({ last_run_at: succeeded ? now : row.last_run_at, next_run_at: nextRun })
         .where('id', '=', row.id)
+        .where('next_run_at', '=', leaseUntil)
         .execute();
     }
   } catch (e) {
@@ -151,6 +454,10 @@ async function tick(): Promise<void> {
 
 export function startBotScheduler(): void {
   if (timer) return;
+  if (!hasLlmProvider()) {
+    console.warn('[bots] scheduler not started: no model provider configured');
+    return;
+  }
   timer = setInterval(() => { void tick(); }, TICK_MS);
   if (typeof timer.unref === 'function') timer.unref();
   console.info('[bots] scheduler started (60s tick)');

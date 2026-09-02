@@ -44,16 +44,19 @@ import publicIcon from "src/views/_Common/Study/svg/public.svg";
 import openIcon from "src/views/_Common/Study/svg/open.svg";
 import ReactTooltip from "react-tooltip";
 import trophy from "src/views/User/svg/trophy.svg";
-import { GroupCallToAction, GroupLeaderBoard } from "./Community.js";
+import { GroupCallToAction, GroupLeaderBoard, communityHref } from "./Community.js";
 import { md5 } from "../../models/Utils.js";
 import { useAppController } from "src/contexts/AppControllerContext";
+import { useMessenger } from "src/contexts/MessengerContext";
 
 export function HomeFeed({
   activeGroup,
   messageId,
   setActiveGroup,
+  unlistedBeta = false,
 }) {
   const appController = useAppController();
+  const messenger = useMessenger();
   const [homeItems, setHomeItems] = useState([]);
   const [homeGroups, setHomeGroups] = useState([]);
   const [loader, setLoader] = useState(null);
@@ -63,6 +66,22 @@ export function HomeFeed({
   // VisibilitySensor; this just caps how many cards exist at once.
   const FEED_PAGE_SIZE = 20;
   const [visibleCount, setVisibleCount] = useState(FEED_PAGE_SIZE);
+
+  useEffect(() => {
+    const removeDeleted = (event) => {
+      const { channelUrl, messageId: deletedId } = event.detail || {};
+      setHomeItems((items) => items.filter((item) => item.id !== deletedId || item.channel_url !== channelUrl));
+    };
+    window.addEventListener("messengerMessageDeleted", removeDeleted);
+    return () => window.removeEventListener("messengerMessageDeleted", removeDeleted);
+  }, []);
+
+  useEffect(() => {
+    if (!unlistedBeta) return undefined;
+    const urls = homeGroups.map((group) => group.url).filter(Boolean);
+    urls.forEach((url) => messenger.subscribePublicChannel?.(url));
+    return () => urls.forEach((url) => messenger.unsubscribePublicChannel?.(url));
+  }, [homeGroups, messenger, unlistedBeta]);
 
   useEffect(() => {
     // Guard against setState after unmount / stale activeGroup change: an
@@ -79,7 +98,7 @@ export function HomeFeed({
       let token = appController.states.user.token;
       setLoader(null);
       let r = await BoMOnlineAPI(
-        { homefeed: { token, channel: activeGroup, message: messageId } },
+        { homefeed: { token, channel: activeGroup, message: messageId, unlisted: unlistedBeta } },
         { useCache: false },
       );
       if (cancelled) return;
@@ -109,7 +128,7 @@ export function HomeFeed({
     return () => {
       cancelled = true;
     };
-  }, [activeGroup]);
+  }, [activeGroup, messageId, unlistedBeta]);
 
   if (loader) return loader;
   let bannerGroup = activeGroup
@@ -213,7 +232,7 @@ function HomeFeedBanner({ bannerGroup, setActiveGroup }) {
         <div className="homeBannerText">
           <h3>
             {bannerGroup.name}
-            <Link to={"/home"} onClick={() => setActiveGroup(null)}>
+            <Link to={communityHref()} onClick={() => setActiveGroup(null)}>
               ×
             </Link>
           </h3>
@@ -235,6 +254,7 @@ function HomeFeedItem({
   setActiveGroup,
 }) {
   const appController = useAppController();
+  const messenger = useMessenger();
   const typeIcons = {
     public: publicIcon,
     private: privateIcon,
@@ -246,6 +266,7 @@ function HomeFeedItem({
     appController.states.studyGroup?.groupList.map((g) => g.url) || [];
   const [comments, fetchComments] = useState([]);
   const [fetching, setFetching] = useState(false);
+  const [publicChannel, setPublicChannel] = useState(null);
   // Track mount so the post-await setState in loadCommentsFromAPI can't fire
   // after the feed item scrolls out / the feed reloads (unmounted-setState warn).
   const isMounted = useRef(true);
@@ -265,7 +286,7 @@ function HomeFeedItem({
 
   const iAmInGroup = myGroups.includes(item.channel_url);
 
-  const sbChannel = iAmInGroup
+  const memberChannel = iAmInGroup
     ? appController.states.studyGroup?.groupList
         .filter((g) => g.url === item.channel_url)
         .shift()
@@ -273,6 +294,19 @@ function HomeFeedItem({
 
   let group =
     homeGroups?.filter((g) => g.url === item.channel_url).shift() || {};
+  const outsiderMayReply = group.membership_policy === "fixed" && group.reply_policy === "authenticated";
+  useEffect(() => {
+    let cancelled = false;
+    if (!iAmInGroup && outsiderMayReply && appController.states.user.user) {
+      messenger.sb?.groupChannel?.getChannel(item.channel_url)
+        .then((channel) => { if (!cancelled) setPublicChannel(channel); })
+        .catch(() => { if (!cancelled) setPublicChannel(null); });
+    } else {
+      setPublicChannel(null);
+    }
+    return () => { cancelled = true; };
+  }, [appController.states.user.user, iAmInGroup, item.channel_url, messenger, outsiderMayReply]);
+  const sbChannel = memberChannel || publicChannel;
   let timeAgo = timeAgoString(item.timestamp / 1000);
 
   let privacyIcon = typeIcons[group.privacy];
@@ -342,7 +376,15 @@ function HomeFeedItem({
       fetchComments((prev) => (Array.isArray(prev) ? [...prev, shaped] : [shaped]));
     };
     window.addEventListener(eventName, onLiveReply, false);
-    return () => window.removeEventListener(eventName, onLiveReply, false);
+    const removeDeletedReply = (event) => {
+      if (event.detail?.channelUrl !== item.channel_url) return;
+      fetchComments((current) => current.filter((comment) => comment.id !== event.detail?.messageId));
+    };
+    window.addEventListener("messengerMessageDeleted", removeDeletedReply, false);
+    return () => {
+      window.removeEventListener(eventName, onLiveReply, false);
+      window.removeEventListener("messengerMessageDeleted", removeDeletedReply, false);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.id]);
   let finished = item.user.finished;
@@ -371,7 +413,7 @@ function HomeFeedItem({
           </div>
 
           <div className="timestamp">
-            <Link to={`/home/community/${group.url}/${item.id}`}>{timeAgo}</Link>
+            <Link to={communityHref(group.url, item.id)}>{timeAgo}</Link>
           </div>
         </CardHeader>
         <CardHeader className="homeFeedHeader noselect">
@@ -755,6 +797,9 @@ function Comment({ comment }) {
   let finished = comment.user.finished;
   const isBot = comment.user.nickname === "StudyBuddy" || comment.user.isBot;
   const botBadge = isBot ? <span className="botBadge">BOT</span> : null;
+  const audienceBadge = comment.participant_role === "audience" ? (
+    <span className="audienceBadge">Audience</span>
+  ) : null;
   const trophyImg = finished ? (
     <img className="trophy" src={trophy} alt={label("finished") || "Finished"} />
   ) : null;
@@ -779,10 +824,10 @@ function Comment({ comment }) {
       </div>
       <div className="textbox">
         <div className="namerow noselect">
-          {comment.user.nickname} {botBadge}{" "}
+          {comment.user.nickname} {botBadge} {audienceBadge}{" "}
           <span>
             •{" "}
-            <Link to={`/home/community/${comment.channel_url}/${comment.id}`}>
+            <Link to={communityHref(comment.channel_url, comment.id)}>
               {timeAgo}
             </Link>
           </span>

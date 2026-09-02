@@ -1,5 +1,5 @@
 import crypto from "crypto-browserify";
-import { isMessengerEnabled } from '../../../models/featureFlags';
+import { isMessengerNavigationEnabled } from '../../../models/featureFlags';
 import React, { useEffect, useState } from "react";
 import {
   Form,
@@ -49,7 +49,7 @@ import { useAppController } from "src/contexts/AppControllerContext";
 import { useMessenger } from "src/contexts/MessengerContext";
 
 // Messenger feature flag
-const USE_MESSENGER = isMessengerEnabled();
+const USE_MESSENGER = isMessengerNavigationEnabled();
 
 moment.locale(label("moment_locale"), {
   relativeTime: {

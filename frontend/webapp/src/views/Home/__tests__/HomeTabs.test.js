@@ -45,5 +45,6 @@ describe("HomeTabs", () => {
 describe("activeTabFor", () => {
   test("deep user path → user", () => expect(activeTabFor("/home/user/history")).toBe("user"));
   test("deep community path → community", () => expect(activeTabFor("/home/community/abc/5")).toBe("community"));
+  test("unlisted feed path → community", () => expect(activeTabFor("/home/feed/abc/5")).toBe("community"));
   test("bare /home → explore", () => expect(activeTabFor("/home")).toBe("explore"));
 });

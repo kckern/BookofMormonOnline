@@ -20,9 +20,10 @@
 import type { Server, Socket } from 'socket.io';
 import { getDb } from '../../data/db.js';
 import { addReaction, removeReaction, getReactions } from '../../messaging/reactions.js';
-import { getMembership } from '../../messaging/members.js';
-import { getBus } from '../RealtimeBus.js';
 import { pushNotificationForEvent } from '../../messaging/notifications.js';
+import { allowsRealtimeClientWrite, emitPublicChannelEvent, getChannelAccess } from '../../messaging/policy.js';
+import { getMessage } from '../../messaging/messages.js';
+import { consumeRealtimeRateLimit } from '../rateLimit.js';
 
 // ─── Shared payload type ──────────────────────────────────────────────────────
 
@@ -39,7 +40,7 @@ type Ack = (response: Record<string, unknown>) => void;
 async function broadcastReactionChanged(channelUrl: string, messageId: string): Promise<void> {
   const db = getDb();
   const reactions = await getReactions(db, messageId);
-  getBus().emit('reaction_changed', channelUrl, { channelUrl, messageId, reactions });
+  emitPublicChannelEvent('reaction_changed', channelUrl, { channelUrl, messageId, reactions });
 }
 
 // ─── register ─────────────────────────────────────────────────────────────────
@@ -60,9 +61,22 @@ export function register(socket: Socket, _io: Server): void {
       }
 
       const db = getDb();
-      const membership = await getMembership(db, payload.channelUrl, user.userId);
-      if (!membership || membership.state !== 'joined') {
-        ack?.({ success: false, error: 'not a joined member of this channel' });
+      if (!payload?.channelUrl || !payload.messageId || !payload.reactionKey || payload.reactionKey.length > 64) {
+        ack?.({ success: false, error: 'invalid reaction' });
+        return;
+      }
+      if (!(await consumeRealtimeRateLimit(user.userId, 'reaction', 30, 60))) {
+        ack?.({ success: false, error: 'rate limit exceeded' });
+        return;
+      }
+      const access = await getChannelAccess(db, payload.channelUrl, user.userId);
+      if (!allowsRealtimeClientWrite(access, user.bomUserId === null)) {
+        ack?.({ success: false, error: 'non-member bots may react only through managed orchestration' });
+        return;
+      }
+      const target = await getMessage(db, payload.channelUrl, payload.messageId);
+      if (!access.canReact || !target) {
+        ack?.({ success: false, error: 'reactions are not allowed' });
         return;
       }
 
@@ -97,9 +111,22 @@ export function register(socket: Socket, _io: Server): void {
       }
 
       const db = getDb();
-      const membership = await getMembership(db, payload.channelUrl, user.userId);
-      if (!membership || membership.state !== 'joined') {
-        ack?.({ success: false, error: 'not a joined member of this channel' });
+      if (!payload?.channelUrl || !payload.messageId || !payload.reactionKey || payload.reactionKey.length > 64) {
+        ack?.({ success: false, error: 'invalid reaction' });
+        return;
+      }
+      if (!(await consumeRealtimeRateLimit(user.userId, 'reaction', 30, 60))) {
+        ack?.({ success: false, error: 'rate limit exceeded' });
+        return;
+      }
+      const access = await getChannelAccess(db, payload.channelUrl, user.userId);
+      if (!allowsRealtimeClientWrite(access, user.bomUserId === null)) {
+        ack?.({ success: false, error: 'non-member bots may react only through managed orchestration' });
+        return;
+      }
+      const target = await getMessage(db, payload.channelUrl, payload.messageId);
+      if (!access.canReact || !target) {
+        ack?.({ success: false, error: 'reactions are not allowed' });
         return;
       }
 

@@ -63,6 +63,99 @@ export interface BomBotSchedule {
   updated_at: Generated<Date>;
 }
 
+export interface BomAiBotCorpus {
+  bot_id: string;
+  corpus_id: string;
+  enabled: Generated<number>;
+  retrieval_weight: Generated<Decimal>;
+}
+
+export interface BomAiAudienceBot {
+  bot_id: string;
+  channel_url: string;
+  created_at: Generated<Date>;
+  enabled: Generated<number>;
+  response_weight: Generated<number>;
+  topic_triggers: Json;
+  updated_at: Generated<Date>;
+}
+
+export interface BomAiCorpus {
+  author_key: string;
+  corpus_id: string;
+  created_at: Generated<Date>;
+  edition: string | null;
+  enabled: Generated<number>;
+  ingested_at: Date | null;
+  rights_class: "blocked" | "citation_eligible" | "inference_only";
+  rights_note: string;
+  source_sha256: string | null;
+  source_uri: string;
+  title: string;
+  updated_at: Generated<Date>;
+}
+
+export interface BomAiDiscussionConfig {
+  audience_response_chance: Generated<number>;
+  bot_window_hours: Generated<number>;
+  channel_url: string;
+  created_at: Generated<Date>;
+  discursive_weight: Generated<number>;
+  enabled: Generated<number>;
+  local_start_time: Generated<string>;
+  max_bot_messages: Generated<number>;
+  max_bot_voices: Generated<number>;
+  max_delay_minutes: Generated<number>;
+  min_bot_voices: Generated<number>;
+  min_delay_minutes: Generated<number>;
+  narrative_weight: Generated<number>;
+  prompt_template: string;
+  response_guardrails: string;
+  timezone: Generated<string>;
+  updated_at: Generated<Date>;
+}
+
+export interface BomAiDiscussionTurn {
+  bot_id: string;
+  created_at: Generated<Date>;
+  due_at: Date;
+  failure_reason: string | null;
+  id: Generated<number>;
+  lease_expires_at: Date | null;
+  lease_owner: string | null;
+  message_id: string | null;
+  ordinal: number;
+  root_message_id: string;
+  status: Generated<"failed" | "leased" | "pending" | "posted" | "skipped">;
+  updated_at: Generated<Date>;
+}
+
+export interface BomAiEvidence {
+  bot_id: string;
+  claim_kind: Generated<"exact_quote" | "paraphrase">;
+  corpus_id: string;
+  created_at: Generated<Date>;
+  evidence_id: string;
+  locator: string;
+  message_id: string;
+  verification_status: Generated<"pending" | "rejected" | "verified">;
+}
+
+export interface BomAiTopic {
+  channel_url: string;
+  context_note: string | null;
+  created_at: Generated<Date>;
+  enabled: Generated<number>;
+  last_used_at: Date | null;
+  passage_kind: "discursive" | "narrative";
+  passage_ref: string;
+  passage_slug: string | null;
+  question: string;
+  topic_id: string;
+  updated_at: Generated<Date>;
+  use_count: Generated<number>;
+}
+
 export interface BomCache {
   content: Json;
   hash: string;
@@ -1096,6 +1189,33 @@ export interface MessengerChannels {
   updated_at: Generated<Date | null>;
 }
 
+export interface MessengerChannelPolicy {
+  channel_url: string;
+  created_at: Generated<Date>;
+  enabled: Generated<number>;
+  listed: Generated<number>;
+  membership_policy: Generated<"fixed" | "open" | "request">;
+  outsider_comments_live: Generated<number>;
+  owner_user_id: string | null;
+  reaction_policy: Generated<"authenticated" | "members" | "nobody">;
+  reply_policy: Generated<"authenticated" | "members" | "nobody">;
+  root_post_policy: Generated<"authenticated" | "members" | "nobody">;
+  updated_at: Generated<Date>;
+  visibility: Generated<"private" | "public" | "unlisted">;
+}
+
+export interface MessengerContentReport {
+  created_at: Generated<Date>;
+  detail: string | null;
+  id: Generated<number>;
+  message_id: string;
+  reason: string;
+  reporter_user_id: string;
+  resolved_at: Date | null;
+  resolved_by: string | null;
+  status: Generated<"dismissed" | "open" | "resolved" | "reviewing">;
+}
+
 export interface MessengerFiles {
   created_at: Generated<Date | null>;
   /**
@@ -1186,6 +1306,18 @@ export interface MessengerMessages {
   user_id: string;
 }
 
+export interface MessengerThreadState {
+  bot_complete_at: Date | null;
+  bot_message_count: Generated<number>;
+  channel_url: string;
+  created_at: Generated<Date>;
+  lock_reason: string | null;
+  locked_at: Date | null;
+  root_message_id: string;
+  status: Generated<"active" | "bot_complete" | "locked">;
+  updated_at: Generated<Date>;
+}
+
 export interface MessengerReactions {
   created_at: Generated<Date | null>;
   message_id: string;
@@ -1225,6 +1357,13 @@ export interface SocialPosts {
 }
 
 export interface DB {
+  bom_ai_audience_bot: BomAiAudienceBot;
+  bom_ai_bot_corpus: BomAiBotCorpus;
+  bom_ai_corpus: BomAiCorpus;
+  bom_ai_discussion_config: BomAiDiscussionConfig;
+  bom_ai_discussion_turn: BomAiDiscussionTurn;
+  bom_ai_evidence: BomAiEvidence;
+  bom_ai_topic: BomAiTopic;
   bom_bot: BomBot;
   bom_bot_rag: BomBotRag;
   bom_bot_schedule: BomBotSchedule;
@@ -1314,10 +1453,13 @@ export interface DB {
   lds_scriptures_verses: LdsScripturesVerses;
   lds_scriptures_volumes: LdsScripturesVolumes;
   messenger_channels: MessengerChannels;
+  messenger_channel_policy: MessengerChannelPolicy;
+  messenger_content_report: MessengerContentReport;
   messenger_files: MessengerFiles;
   messenger_highlights: MessengerHighlights;
   messenger_members: MessengerMembers;
   messenger_messages: MessengerMessages;
+  messenger_thread_state: MessengerThreadState;
   messenger_reactions: MessengerReactions;
   messenger_users: MessengerUsers;
   social_posts: SocialPosts;

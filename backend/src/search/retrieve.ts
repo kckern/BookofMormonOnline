@@ -11,6 +11,7 @@ export function buildFilter(args: SearchContentArgs): any | undefined {
   if (args.types?.length) must.push({ key: 'type', match: { any: args.types } });
   if (args.lang) must.push({ key: 'lang', match: { value: args.lang } });
   if (args.version?.length) must.push({ key: 'version', match: { any: args.version } });
+  if (args.corpusIds?.length) must.push({ key: 'corpus_id', match: { any: args.corpusIds } });
   return must.length ? { must } : undefined;
 }
 
@@ -58,6 +59,9 @@ export async function queryWithVectors(vectors: QueryVectors, args: SearchConten
     ref: (p.payload?.ref ?? null) as string | null,
     slug: (p.payload?.slug ?? null) as string | null,
     version: (p.payload?.version ?? null) as string | null,
+    corpus_id: (p.payload?.corpus_id ?? null) as string | null,
+    locator: (p.payload?.locator ?? null) as string | null,
+    rights_class: (p.payload?.rights_class ?? null) as SearchHit['rights_class'],
   }));
 }
 

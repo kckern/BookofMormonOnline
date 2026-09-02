@@ -18,6 +18,9 @@
  */
 
 import type { Server, Socket } from 'socket.io';
+import { getDb } from '../../data/db.js';
+import { getChannelAccess } from '../../messaging/policy.js';
+import { consumeRealtimeRateLimit } from '../rateLimit.js';
 
 interface TypingPayload {
   channelUrl: string;
@@ -33,8 +36,10 @@ export function register(socket: Socket, _io: Server): void {
   const user = socket.data['user'] as { userId: string; bomUserId: string | null } | undefined;
 
   // ── typing_start ──────────────────────────────────────────────────────────
-  socket.on('typing_start', (payload: TypingPayload) => {
+  socket.on('typing_start', async (payload: TypingPayload) => {
     if (!user || !payload?.channelUrl) return;
+    const access = await getChannelAccess(getDb(), payload.channelUrl, user.userId);
+    if (!access.joined || !(await consumeRealtimeRateLimit(user.userId, 'typing', 60, 60))) return;
 
     // Exclude sender — they already know they're typing.
     socket.to(payload.channelUrl).emit('typing', {
@@ -45,8 +50,9 @@ export function register(socket: Socket, _io: Server): void {
   });
 
   // ── typing_stop ───────────────────────────────────────────────────────────
-  socket.on('typing_stop', (payload: TypingPayload) => {
+  socket.on('typing_stop', async (payload: TypingPayload) => {
     if (!user || !payload?.channelUrl) return;
+    if (!(await getChannelAccess(getDb(), payload.channelUrl, user.userId)).joined) return;
 
     socket.to(payload.channelUrl).emit('typing', {
       channelUrl: payload.channelUrl,

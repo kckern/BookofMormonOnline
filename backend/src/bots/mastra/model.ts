@@ -10,7 +10,7 @@
 import { openai } from '@ai-sdk/openai';
 import { MockLanguageModelV3 } from 'ai/test';
 
-const DEFAULT_MODEL = process.env['BOT_LLM_MODEL'] || 'gpt-4o-mini';
+const DEFAULT_MODEL = process.env['BOT_LLM_MODEL'] || 'gpt-5-mini';
 
 /** A model (real or mock) is available. */
 export function hasLlmProvider(): boolean {
@@ -21,7 +21,8 @@ export function hasLlmProvider(): boolean {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function resolveBotModel(modelId?: string | null, opts?: { mockVoice?: string }): any {
   if (process.env['BOT_LLM_MOCK']) {
-    const voice = opts?.mockVoice || 'a reformer';
+    if (!opts?.mockVoice?.trim()) return null;
+    const voice = opts.mockVoice;
     return new MockLanguageModelV3({
       doGenerate: async () => ({
         finishReason: 'stop',

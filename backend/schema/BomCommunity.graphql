@@ -1,7 +1,7 @@
 extend type Query {
   studygrouphistory(token: String, studyGroupID: String): StudyGroupHistory
   loadGroupsFromHash(hash: [String]): [StudyGroup]
-  homefeed(token: String, channel: [String], message: [String]): HomeFeed
+  homefeed(token: String, channel: [String], message: [String], unlisted: Boolean): HomeFeed
   homethread(token: String, channel: String, message: String): [HomeFeedItem]
   homegroups(token: String, grouping: String): [HomeGroup]
   postcomments(token: String, message: Int): [HomeFeedItem]
@@ -102,6 +102,7 @@ type HomeFeedItem {
   id: Float
   timestamp: Float
   msg: String
+  participant_role: String
   user: HomeUser
   mentioned_users: [HomeUser]
   likes: [String]
@@ -147,6 +148,8 @@ type HomeGroup {
   latest: HomeFeedItem
   requests: [String]
   members: [HomeUser]
+  membership_policy: String
+  root_post_policy: String
+  reply_policy: String
+  reaction_policy: String
 }
-
-

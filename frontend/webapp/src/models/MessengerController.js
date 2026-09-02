@@ -75,6 +75,7 @@ export default class MessengerController {
     this.token = token;
     this.appController = appController;
     this.channels = new Map();
+    this.publicSubscriptions = new Set();
     // Synchronous stub so `sb.currentUser` is never null during the boot race:
     // connect() populates the real profile via a GraphQL roundtrip, but
     // getStudyGroups()->setStudyGroups() can resolve first, and
@@ -126,6 +127,9 @@ export default class MessengerController {
     // Connection events
     this.socket.on('connect', () => {
       console.log('Messenger: Connected via Socket.io');
+      this.publicSubscriptions.forEach((channelUrl) => {
+        this.socket.emit('subscribe_public_channel', { channelUrl });
+      });
     });
     
     this.socket.on('disconnect', (reason) => {
@@ -148,8 +152,10 @@ export default class MessengerController {
 
     // Message deleted
     this.socket.on('message_deleted', ({ channelUrl, messageId }) => {
-      // Currently a no-op in SendbirdController, kept for compatibility
-      console.log('Messenger: Message deleted', messageId);
+      const event = new CustomEvent('messengerMessageDeleted', {
+        detail: { channelUrl, messageId },
+      });
+      window.dispatchEvent(event);
     });
 
     // Typing indicator
@@ -433,6 +439,21 @@ export default class MessengerController {
     clearTimeout(this._unreadRefreshTimer);
     this.socket.disconnect();
     this._currentUser = null;
+  }
+
+  subscribePublicChannel(channelUrl) {
+    if (!channelUrl) return Promise.resolve(false);
+    this.publicSubscriptions.add(channelUrl);
+    return new Promise((resolve) => {
+      this.socket.emit('subscribe_public_channel', { channelUrl }, (result) => resolve(!!result?.success));
+    });
+  }
+
+  unsubscribePublicChannel(channelUrl) {
+    this.publicSubscriptions.delete(channelUrl);
+    return new Promise((resolve) => {
+      this.socket.emit('unsubscribe_public_channel', { channelUrl }, (result) => resolve(!!result?.success));
+    });
   }
 
   getCurrentUser() {

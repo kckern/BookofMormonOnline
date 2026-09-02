@@ -1,5 +1,5 @@
 import chat from './svg/chat.svg'
-import { isMessengerEnabled } from '../../models/featureFlags'
+import { isMessengerNavigationEnabled } from '../../models/featureFlags'
 import { resolveBottomSelection } from './bottomNavSelection'
 import group_icon from './svg/group_icon.svg'
 import { label } from 'src/models/Utils'
@@ -12,7 +12,7 @@ import StudyIcon from './Icons/StudyIcon'
 import { useAppController } from "src/contexts/AppControllerContext";
 
 // Feature flag - messaging disabled until Phase 5 data migration
-const USE_MESSENGER = isMessengerEnabled();
+const USE_MESSENGER = isMessengerNavigationEnabled();
 
 export function BottomMenu() {
   const appController = useAppController();

@@ -15,7 +15,7 @@ const exploreLabel = () => {
 // anything else under /home → explore.
 export const activeTabFor = (pathname) => {
   if (/^\/home\/user/.test(pathname)) return "user";
-  if (/^\/home\/community/.test(pathname)) return "community";
+  if (/^\/home\/(community|feed)/.test(pathname)) return "community";
   return "explore";
 };
 

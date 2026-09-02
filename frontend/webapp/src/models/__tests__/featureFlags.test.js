@@ -1,13 +1,24 @@
-import { isMessengerEnabled } from "../featureFlags";
+import { isMessengerEnabled, isMessengerNavigationEnabled, isUnlistedMessengerPath } from "../featureFlags";
 
 const setHost = (host) => {
   delete window.location;
-  window.location = { host };
+  window.location = { host, pathname: "/" };
 };
 
 afterEach(() => {
   delete window.location;
-  window.location = { host: "localhost" };
+  window.location = { host: "localhost", pathname: "/" };
+});
+
+test("production apex enables messenger only on the exact unlisted beta path", () => {
+  delete window.location;
+  window.location = { host: "bookofmormon.online", pathname: "/home/feed" };
+  expect(isUnlistedMessengerPath()).toBe(true);
+  expect(isMessengerEnabled()).toBe(true);
+  expect(isMessengerNavigationEnabled()).toBe(false);
+  window.location.pathname = "/home/feedback";
+  expect(isUnlistedMessengerPath()).toBe(false);
+  expect(isMessengerEnabled()).toBe(false);
 });
 
 describe("isMessengerEnabled host matching", () => {
@@ -22,6 +33,7 @@ describe("isMessengerEnabled host matching", () => {
   ])("on for local/private host %s", (host) => {
     setHost(host);
     expect(isMessengerEnabled()).toBe(true);
+    expect(isMessengerNavigationEnabled()).toBe(true);
   });
 
   test.each([

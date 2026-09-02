@@ -29,10 +29,16 @@ import {
   deleteMessage,
   getMessage,
 } from '../../messaging/messages.js';
-import { getBus } from '../RealtimeBus.js';
 import { maybeBotReply } from '../botResponder.js';
 import { isMemberMuted, getMembership } from '../../messaging/members.js';
 import { pushNotificationForEvent, pushNotificationToUser } from '../../messaging/notifications.js';
+import {
+  allowsRealtimeClientWrite,
+  emitPublicChannelEvent,
+  getChannelAccess,
+  isThreadLocked,
+} from '../../messaging/policy.js';
+import { consumeRealtimeRateLimit } from '../rateLimit.js';
 
 // ─── send_message ─────────────────────────────────────────────────────────────
 
@@ -88,14 +94,38 @@ export function register(socket: Socket, _io: Server): void {
 
         const db = getDb();
 
+        if (!payload?.channelUrl || !payload.message?.trim()) {
+          ack?.({ success: false, error: 'channel and message are required' });
+          return;
+        }
+        if (!(await consumeRealtimeRateLimit(user.userId, 'message', 8, 60))) {
+          ack?.({ success: false, error: 'rate limit exceeded' });
+          return;
+        }
+
+        const access = await getChannelAccess(db, payload.channelUrl, user.userId);
         const membership = await getMembership(db, payload.channelUrl, user.userId);
-        if (!membership || membership.state !== 'joined') {
-          ack?.({ success: false, error: 'not a joined member of this channel' });
+        if (!allowsRealtimeClientWrite(access, user.bomUserId === null)) {
+          ack?.({ success: false, error: 'non-member bots may reply only through managed orchestration' });
+          return;
+        }
+        if (payload.parentMessageId) {
+          const parent = await getMessage(db, payload.channelUrl, payload.parentMessageId);
+          if (!parent || parent.parent_message_id) {
+            ack?.({ success: false, error: 'invalid thread parent for this channel' });
+            return;
+          }
+          if (!access.canReply || await isThreadLocked(db, payload.channelUrl, payload.parentMessageId)) {
+            ack?.({ success: false, error: 'replies are not allowed' });
+            return;
+          }
+        } else if (!access.canPostRoot) {
+          ack?.({ success: false, error: 'root posts are restricted to group members' });
           return;
         }
 
         // Muted members can't post.
-        if (await isMemberMuted(db, payload.channelUrl, user.userId)) {
+        if (membership?.state === 'joined' && await isMemberMuted(db, payload.channelUrl, user.userId)) {
           ack?.({ success: false, error: 'You are muted in this channel' });
           return;
         }
@@ -108,17 +138,20 @@ export function register(socket: Socket, _io: Server): void {
           link: payload.link,
           highlights: payload.highlights,
           data: payload.data,
+          metadata: payload.parentMessageId && !access.joined
+            ? { participantRole: 'audience' }
+            : undefined,
           parentMessageId: payload.parentMessageId,
         });
 
         // Broadcast to channel room (including sender — legacy behaviour).
-        getBus().emit('message_received', payload.channelUrl, msg);
+        emitPublicChannelEvent('message_received', payload.channelUrl, msg);
 
         // Notify all channel members that unread counts may have changed.
-        getBus().emit('unread_count_changed', payload.channelUrl, { channelUrl: payload.channelUrl });
+        emitPublicChannelEvent('unread_count_changed', payload.channelUrl, { channelUrl: payload.channelUrl });
 
         // Fire-and-forget bot reply (no await — must not block the ack).
-        void maybeBotReply(db, payload.channelUrl, msg);
+        if (!access.explicit) void maybeBotReply(db, payload.channelUrl, msg);
 
         // A reply notifies the parent message's author (per-user push, in-place
         // bell patch). Fire-and-forget; self-replies are filtered downstream.
@@ -188,13 +221,14 @@ export function register(socket: Socket, _io: Server): void {
 
         const db = getDb();
         const membership = await getMembership(db, payload.channelUrl, user.userId);
-        if (!membership || membership.state !== 'joined') {
-          ack?.({ success: false, error: 'not a joined member of this channel' });
+        const access = await getChannelAccess(db, payload.channelUrl, user.userId);
+        if (!allowsRealtimeClientWrite(access, user.bomUserId === null)) {
+          ack?.({ success: false, error: 'non-member bots may edit only through managed orchestration' });
           return;
         }
         const existing = await getMessage(db, payload.channelUrl, payload.messageId);
         if (!existing) { ack?.({ success: false, error: 'message not found' }); return; }
-        if (existing.user?.user_id !== user.userId) {
+        if (existing.user?.user_id !== user.userId || (!access.joined && !access.canReply)) {
           ack?.({ success: false, error: 'not the author' });
           return;
         }
@@ -209,7 +243,7 @@ export function register(socket: Socket, _io: Server): void {
           return;
         }
 
-        getBus().emit('message_updated', payload.channelUrl, updated);
+        emitPublicChannelEvent('message_updated', payload.channelUrl, updated);
 
         ack?.({ success: true, message: updated });
       } catch (err: unknown) {
@@ -232,13 +266,16 @@ export function register(socket: Socket, _io: Server): void {
 
         const db = getDb();
         const membership = await getMembership(db, payload.channelUrl, user.userId);
-        if (!membership || membership.state !== 'joined') {
-          ack?.({ success: false, error: 'not a joined member of this channel' });
+        const access = await getChannelAccess(db, payload.channelUrl, user.userId);
+        if (!allowsRealtimeClientWrite(access, user.bomUserId === null)) {
+          ack?.({ success: false, error: 'non-member bots may delete only through managed orchestration' });
           return;
         }
         const existing = await getMessage(db, payload.channelUrl, payload.messageId);
         if (!existing) { ack?.({ success: false, error: 'message not found' }); return; }
-        if (existing.user?.user_id !== user.userId && membership.role !== 'operator') {
+        const ownsEditableReply = existing.user?.user_id === user.userId && !!existing.parent_message_id && access.canReply;
+        const memberMayDelete = access.joined && existing.user?.user_id === user.userId;
+        if (!ownsEditableReply && !memberMayDelete && membership?.role !== 'operator') {
           ack?.({ success: false, error: 'not the author or an operator' });
           return;
         }
@@ -250,7 +287,7 @@ export function register(socket: Socket, _io: Server): void {
           return;
         }
 
-        getBus().emit('message_deleted', payload.channelUrl, {
+        emitPublicChannelEvent('message_deleted', payload.channelUrl, {
           channelUrl: payload.channelUrl,
           messageId: payload.messageId,
         });

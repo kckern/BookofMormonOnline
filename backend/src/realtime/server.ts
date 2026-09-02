@@ -38,6 +38,7 @@ import * as reactionHandlers from './handlers/reaction.js';
 import * as typingHandlers from './handlers/typing.js';
 import * as readHandlers from './handlers/read.js';
 import * as actionHandlers from './handlers/action.js';
+import { getChannelAccess, publicChannelRoom } from '../messaging/policy.js';
 
 // ─── Token verification ───────────────────────────────────────────────────────
 
@@ -225,6 +226,26 @@ export async function initRealtime(httpServer: HttpServer): Promise<Server> {
     typingHandlers.register(socket, io);
     readHandlers.register(socket, io);
     actionHandlers.register(socket, io); // study-group sync: fire_action/update_state
+
+    socket.on('subscribe_public_channel', async (
+      payload: { channelUrl?: string },
+      ack?: (result: { success: boolean; error?: string }) => void,
+    ) => {
+      const channelUrl = payload?.channelUrl;
+      if (!channelUrl) return ack?.({ success: false, error: 'channel required' });
+      const access = await getChannelAccess(getDb(), channelUrl, userId);
+      if (!access.canRead) return ack?.({ success: false, error: 'channel not readable' });
+      await socket.join(publicChannelRoom(channelUrl));
+      return ack?.({ success: true });
+    });
+
+    socket.on('unsubscribe_public_channel', async (
+      payload: { channelUrl?: string },
+      ack?: (result: { success: boolean }) => void,
+    ) => {
+      if (payload?.channelUrl) await socket.leave(publicChannelRoom(payload.channelUrl));
+      ack?.({ success: true });
+    });
 
     try {
       // Join all of the user's channel rooms.

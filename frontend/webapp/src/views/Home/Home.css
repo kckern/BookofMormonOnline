@@ -25,6 +25,11 @@
     flex-direction: column;
 }
 
+.container.home.unlistedBeta .rightPanelScroll {
+    width: 100%;
+    padding-left: 1em;
+}
+
 .homeFeed .card-body 
 {
     padding:0;
@@ -961,6 +966,19 @@ img.groupAvatar
   border: 1px solid #0006;
   position: relative;
   bottom: 2px;
+}
+
+.audienceBadge {
+  display: inline-block;
+  margin-left: 0.25rem;
+  padding: 0.08rem 0.38rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.68em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  opacity: 0.72;
+  vertical-align: 0.08em;
 }
 
 .commentThreadItem .textbox .mesg

@@ -1999,7 +1999,7 @@ const queries = {
       key: "token",
       val: false,
       query:
-      `homefeed(token:"${input.token}" `+((input.channel) ? `, channel: "${input.channel}"` : '')+((input.message) ? `, message: "${input.message}"` : '')+` ) `+
+      `homefeed(token:"${input.token}" `+((input.channel) ? `, channel: "${input.channel}"` : '')+((input.message) ? `, message: "${input.message}"` : '')+((input.unlisted) ? `, unlisted: true` : '')+` ) `+
         `{    groups {
           url
           name
@@ -2008,6 +2008,10 @@ const queries = {
           grouping
           picture
           requests
+          membership_policy
+          root_post_policy
+          reply_policy
+          reaction_policy
           members{
               user_id
               nickname
@@ -2026,6 +2030,7 @@ const queries = {
           id
           timestamp
           msg
+          participant_role
           user {
             user_id
             nickname
@@ -2123,6 +2128,7 @@ const queries = {
           id
           timestamp
           msg
+          participant_role
           user {
             user_id
             nickname

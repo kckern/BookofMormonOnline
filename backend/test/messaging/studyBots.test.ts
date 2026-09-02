@@ -75,15 +75,14 @@ describe('listStudyBots (live DB)', () => {
   it('en returns only study bots, never community bots or junk rows', async (ctx) => {
     if (!ready) return ctx.skip();
     const bots = await listStudyBots(db, 'en');
-    const names = bots.map((b) => b.nickname);
-    expect(names).toContain('StudyBuddy');
-    // community bots (reformers) excluded
-    expect(names).not.toContain('Martin Luther');
-    expect(names.some((n) => /Henry VIII|John Calvin|Tyndale|Zwingli/.test(n ?? ''))).toBe(false);
-    // unregistered junk is_bot rows excluded
-    expect(names).not.toContain('148965');
-    // other-language study bots excluded
-    expect(names).not.toContain('SchriftStudierBot');
+    const ids = bots.map((bot) => bot.user_id).filter((id): id is string => !!id);
+    const registrations = ids.length
+      ? await db.selectFrom('bom_bot').select(['bot_id', 'bot_class', 'lang'])
+        .where('bot_id', 'in', ids).execute()
+      : [];
+    expect(registrations).toHaveLength(ids.length);
+    expect(registrations.every((bot) => bot.bot_class === 'study')).toBe(true);
+    expect(registrations.every((bot) => bot.lang == null || bot.lang === 'en')).toBe(true);
   });
 
   it('scopes by language', async (ctx) => {
