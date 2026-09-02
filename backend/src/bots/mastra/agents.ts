@@ -23,19 +23,21 @@ export async function getBotAgent(db: Kysely<DB>, botId: string): Promise<any | 
 
   const row = await db
     .selectFrom('bom_bot')
-    .select(['display_name', 'persona', 'model'])
+    .select(['display_name', 'persona', 'model', 'enabled'])
     .where('bot_id', '=', botId)
     .executeTakeFirst();
-  if (!row) return null;
+  if (!row || row.enabled !== 1 || !row.display_name?.trim() || !row.persona?.trim() || !row.model?.trim()) {
+    return null;
+  }
 
-  const model = resolveBotModel(row.model, { mockVoice: row.display_name || 'a reformer' });
+  const model = resolveBotModel(row.model, { mockVoice: row.display_name });
   if (!model) return null;
 
   // Cast: Mastra's AgentConfig generics are very strict about tool/model shapes;
   // the runtime accepts this config (verified by the smoke test).
   const agent = new Agent({
-    name: row.display_name || botId,
-    instructions: row.persona || 'You are a thoughtful participant in a scripture study group. Keep replies to one short paragraph.',
+    name: row.display_name,
+    instructions: row.persona,
     model,
     tools: { bot_rag: createBotRagTool(db, botId) },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

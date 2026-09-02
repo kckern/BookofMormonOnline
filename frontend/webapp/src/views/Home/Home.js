@@ -15,7 +15,9 @@ import User from "../User/User";
 export default function Home() {
   const useMessenger = isMessengerEnabled();
   const mobile = isMobile();
-  const activeTab = activeTabFor(useLocation().pathname);
+  const location = useLocation();
+  const activeTab = activeTabFor(location.pathname);
+  const unlistedBeta = location.pathname === "/home/feed" || location.pathname.startsWith("/home/feed/");
 
   const shellClass =
     "home-shell" +
@@ -32,13 +34,35 @@ export default function Home() {
     return () => document.body.classList.remove("community-view");
   }, [mobile, activeTab]);
 
+  useEffect(() => {
+    if (!unlistedBeta) return undefined;
+    let robots = document.querySelector('meta[name="robots"]');
+    const created = !robots;
+    const previous = robots?.getAttribute('content');
+    if (!robots) {
+      robots = document.createElement('meta');
+      robots.setAttribute('name', 'robots');
+      document.head.appendChild(robots);
+    }
+    robots.setAttribute('content', 'noindex,nofollow,noarchive');
+    return () => {
+      if (created) robots.remove();
+      else if (previous == null) robots.removeAttribute('content');
+      else robots.setAttribute('content', previous);
+    };
+  }, [unlistedBeta]);
+
   return (
     // `--tabs` modifier (desktop only) lets the stylesheet own the fixed-header
     // clearance + tab-bar offset without affecting the mobile layout.
     <div className={shellClass}>
-      {!mobile && <HomeTabs />}
+      {!mobile && !unlistedBeta && <HomeTabs />}
       <Switch>
         <Route path="/home/user/:value?"><User /></Route>
+
+        <Route path="/home/feed/:channelId/:messageId(\d+)"><Community unlistedBeta /></Route>
+        <Route path="/home/feed/:channelId"><Community unlistedBeta /></Route>
+        <Route exact path="/home/feed"><Community unlistedBeta /></Route>
 
         {useMessenger ? (
           <Route path="/home/community/:channelId/:messageId(\d+)"><Community /></Route>

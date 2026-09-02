@@ -52,6 +52,13 @@ describe("Home shell routing", () => {
     renderAt("/home/community/chan/456");
     expect(screen.getByText("COMMUNITY")).toBeInTheDocument();
   });
+  test("/home/feed renders the unlisted Community without a tab link", () => {
+    isMessengerEnabled.mockReturnValue(false);
+    renderAt("/home/feed");
+    expect(screen.getByText("COMMUNITY")).toBeInTheDocument();
+    expect(screen.queryByText("TABS")).not.toBeInTheDocument();
+    expect(document.querySelector('meta[name="robots"]')).toHaveAttribute("content", "noindex,nofollow,noarchive");
+  });
   test("/home/user renders User", () => {
     renderAt("/home/user");
     expect(screen.getByText("USER")).toBeInTheDocument();

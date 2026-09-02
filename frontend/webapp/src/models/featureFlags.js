@@ -36,9 +36,16 @@ const MESSENGER_HOSTS = (process.env.REACT_APP_MESSENGER_HOSTS || 'staging,bom,l
 // needing a hostname or build-flag override.
 const PRIVATE_HOST = /^(localhost$|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|::1$)/;
 
+/** Exact, deliberately unlinked production entry point for the messenger beta. */
+export function isUnlistedMessengerPath() {
+  const path = (typeof window !== 'undefined' && window.location && window.location.pathname) || '';
+  return path === '/home/feed' || path.startsWith('/home/feed/');
+}
+
 /** Runtime decision: build flag OR a hostname match. Safe outside the browser (SSR → false). */
 export function isMessengerEnabled() {
   if (BUILD_FLAG) return true;
+  if (isUnlistedMessengerPath()) return true;
   const rawHost = (typeof window !== 'undefined' && window.location && window.location.host) || '';
   if (!rawHost) return false;
   const host = rawHost.startsWith('[')
@@ -55,6 +62,15 @@ export function isMessengerEnabled() {
       host === h ||
       host.startsWith(`${h}.`),
   );
+}
+
+/**
+ * The path-only production beta may run the messenger runtime, but must not
+ * advertise messenger destinations in global navigation. Staging/dev and a
+ * force-enabled build retain the normal navigation.
+ */
+export function isMessengerNavigationEnabled() {
+  return isMessengerEnabled() && !isUnlistedMessengerPath();
 }
 
 /**

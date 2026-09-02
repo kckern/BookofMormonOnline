@@ -19,6 +19,7 @@
 import type { Server, Socket } from 'socket.io';
 import { getDb } from '../../data/db.js';
 import { markChannelAsRead, getUnreadCount } from '../../messaging/readstate.js';
+import { getChannelAccess } from '../../messaging/policy.js';
 
 interface MarkReadPayload {
   channelUrl: string;
@@ -43,6 +44,10 @@ export function register(socket: Socket, _io: Server): void {
       }
 
       const db = getDb();
+      if (!payload?.channelUrl || !(await getChannelAccess(db, payload.channelUrl, user.userId)).joined) {
+        ack?.({ success: false, error: 'channel membership required' });
+        return;
+      }
 
       await markChannelAsRead(db, payload.channelUrl, user.userId);
 

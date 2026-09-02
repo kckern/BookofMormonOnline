@@ -18,6 +18,13 @@
     "rootDir": ".",
     "types": ["node"]
   },
-  "include": ["src/**/*.ts", "codegen/**/*.ts", "codegen/**/*.d.ts"],
+  "include": [
+    "src/**/*.ts",
+    "codegen/**/*.ts",
+    "codegen/**/*.d.ts",
+    "scripts/apply-study-group-migration.ts",
+    "scripts/configure-study-group.ts",
+    "scripts/ingest-ai-corpus.ts"
+  ],
   "exclude": ["node_modules", "dist", "test"]
 }

@@ -146,7 +146,7 @@ describe('OpenAiAdapter', () => {
 
     const adapter = new OpenAiAdapter(capturingClient as never);
     await adapter.generate({
-      system: 'You are Martin Luther.',
+      system: 'You are a configured historical participant.',
       messages: [
         { role: 'user', content: 'What do you think of justification?' },
         { role: 'assistant', content: 'Sola fide!' },
@@ -156,7 +156,7 @@ describe('OpenAiAdapter', () => {
 
     expect(capturedOpts).toMatchObject({
       messages: [
-        { role: 'system', content: 'You are Martin Luther.' },
+        { role: 'system', content: 'You are a configured historical participant.' },
         { role: 'user', content: 'What do you think of justification?' },
         { role: 'assistant', content: 'Sola fide!' },
         { role: 'user', content: 'Elaborate.' },
@@ -297,7 +297,7 @@ describe('getPersona()', () => {
 
     // Probe DB connectivity with a lightweight query.
     try {
-      await db.selectFrom('bom_virtualgroup_prompts').select('guid').limit(1).execute();
+      await db.selectFrom('bom_bot').select('bot_id').limit(1).execute();
       canRead = true;
     } catch {
       canRead = false;
@@ -316,37 +316,34 @@ describe('getPersona()', () => {
 
     // Fetch the first real bot_id from the table so the test is DB-driven.
     const [firstRow] = await db!
-      .selectFrom('bom_virtualgroup_prompts')
-      .select(['bot_id', 'lang'])
-      .where('bot_id', 'is not', null)
-      .where('prompt', 'is not', null)
+      .selectFrom('bom_bot')
+      .select(['bot_id', 'persona'])
+      .where('persona', 'is not', null)
       .limit(1)
       .execute();
 
     if (!firstRow?.bot_id) {
-      console.warn('BLOCKED: no bot rows in bom_virtualgroup_prompts — skipping');
+      console.warn('BLOCKED: no configured bot personas — skipping');
       return;
     }
 
-    const persona = await getPersona(db!, firstRow.bot_id, firstRow.lang ?? 'en');
+    const persona = await getPersona(db!, firstRow.bot_id, 'en');
     expect(persona).not.toBeNull();
     expect(typeof persona!.system).toBe('string');
     expect(persona!.system.trim().length).toBeGreaterThan(0);
   });
 
-  it('falls back to English prompt when requested lang has no row', async () => {
+  it('uses the DB persona independent of the reserved language argument', async () => {
     if (!canRead) {
       console.warn('BLOCKED: DB unreachable — skipping lang-fallback test');
       return;
     }
 
-    // Find a bot that has an 'en' row but (almost certainly) no 'xx' row.
+    // Language-specific personas are not yet modeled; the bot row is authoritative.
     const [enRow] = await db!
-      .selectFrom('bom_virtualgroup_prompts')
-      .select(['bot_id', 'prompt'])
-      .where('bot_id', 'is not', null)
-      .where('lang', '=', 'en')
-      .where('prompt', 'is not', null)
+      .selectFrom('bom_bot')
+      .select(['bot_id', 'persona'])
+      .where('persona', 'is not', null)
       .limit(1)
       .execute();
 
@@ -358,36 +355,24 @@ describe('getPersona()', () => {
     const persona = await getPersona(db!, enRow.bot_id, 'xx_nonexistent_lang');
     expect(persona).not.toBeNull();
     // Should have fallen back to the 'en' prompt.
-    expect(persona!.system).toBe(enRow.prompt!.trim());
+    expect(persona!.system).toBe(enRow.persona!.trim());
   });
 
-  it('returns a Persona from seed constants for known bot_id not in DB', async () => {
-    if (!canRead) {
-      console.warn('BLOCKED: DB unreachable — using null-db fallback path instead');
-    }
-    const dbToUse = db ?? buildNullDb();
-    // Martin Luther's hardcoded bot_id from virtualgroup.ts
-    const martinLutherId = '13b1c4fc58a87a68d4da51beb22a0ecd';
-
-    // Delete any real DB row temporarily? No — we can't write.
-    // Instead, if the DB has a row for this bot, the DB path runs (also fine).
-    // If no row, the seed fallback runs.  Either way a non-null Persona is returned.
-    const persona = await getPersona(dbToUse, martinLutherId, 'en');
-    expect(persona).not.toBeNull();
-    expect(typeof persona!.system).toBe('string');
-    expect(persona!.system.length).toBeGreaterThan(10);
+  it('fails closed instead of using a hardcoded seed when DB/config is unavailable', async () => {
+    const dbToUse = canRead ? db! : buildNullDb();
+    const persona = await getPersona(dbToUse, 'not_a_configured_bot', 'en');
+    expect(persona).toBeNull();
+    if (!canRead) await dbToUse.destroy();
   });
 
-  it('returns a Persona with the default prompt for a completely unknown bot_id', async () => {
+  it('returns null for a completely unknown bot_id', async () => {
     if (!canRead) {
       console.warn('BLOCKED: DB unreachable — skipping unknown-bot test');
       return;
     }
 
     const persona = await getPersona(db!, 'totally_unknown_bot_id_zzz', 'en');
-    expect(persona).not.toBeNull();
-    expect(typeof persona!.system).toBe('string');
-    expect(persona!.system.length).toBeGreaterThan(0);
+    expect(persona).toBeNull();
   });
 
   it('returns null gracefully when the DB throws (broken connection)', async () => {
@@ -419,7 +404,7 @@ function buildBrokenDb(): Kysely<DB> {
   });
 }
 
-/** A null-safe DB stand-in used in the Martin Luther seed-fallback test when DB is unavailable. */
+/** A DB stand-in used to prove missing configuration fails closed. */
 function buildNullDb(): Kysely<DB> {
   return buildBrokenDb();
 }

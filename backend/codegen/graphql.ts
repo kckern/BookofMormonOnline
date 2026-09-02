@@ -341,6 +341,7 @@ export type HomeFeedItem = {
   link?: Maybe<ContentLink>;
   mentioned_users?: Maybe<Array<Maybe<HomeUser>>>;
   msg?: Maybe<Scalars['String']['output']>;
+  participant_role?: Maybe<Scalars['String']['output']>;
   repliers?: Maybe<Array<Maybe<HomeUser>>>;
   replycount?: Maybe<Scalars['Int']['output']>;
   timestamp?: Maybe<Scalars['Float']['output']>;
@@ -353,10 +354,14 @@ export type HomeGroup = {
   grouping?: Maybe<Scalars['String']['output']>;
   latest?: Maybe<HomeFeedItem>;
   members?: Maybe<Array<Maybe<HomeUser>>>;
+  membership_policy?: Maybe<Scalars['String']['output']>;
   name?: Maybe<Scalars['String']['output']>;
   picture?: Maybe<Scalars['String']['output']>;
   privacy?: Maybe<Scalars['String']['output']>;
+  reaction_policy?: Maybe<Scalars['String']['output']>;
+  reply_policy?: Maybe<Scalars['String']['output']>;
   requests?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
+  root_post_policy?: Maybe<Scalars['String']['output']>;
   url?: Maybe<Scalars['String']['output']>;
 };
 
@@ -716,11 +721,14 @@ export type Mutation = {
   markNotificationRead?: Maybe<Scalars['Boolean']['output']>;
   messengerAcceptInvitation?: Maybe<Scalars['Boolean']['output']>;
   messengerBanMember?: Maybe<Scalars['Boolean']['output']>;
+  messengerConfigureStudyGroup?: Maybe<Scalars['Boolean']['output']>;
   messengerCreateChannel?: Maybe<MessengerChannel>;
   messengerDeclineInvitation?: Maybe<Scalars['Boolean']['output']>;
   messengerInviteMembers?: Maybe<Scalars['Boolean']['output']>;
   messengerRemoveMember?: Maybe<Scalars['Boolean']['output']>;
+  messengerReportMessage?: Maybe<Scalars['Boolean']['output']>;
   messengerSetMute?: Maybe<Scalars['Boolean']['output']>;
+  messengerSetThreadLocked?: Maybe<Scalars['Boolean']['output']>;
   messengerUnbanMember?: Maybe<Scalars['Boolean']['output']>;
   messengerUpdateChannel?: Maybe<MessengerChannel>;
   messengerUpdateMemberRole?: Maybe<Scalars['Boolean']['output']>;
@@ -807,6 +815,13 @@ export type MutationMessengerBanMemberArgs = {
 };
 
 
+export type MutationMessengerConfigureStudyGroupArgs = {
+  channelUrl: Scalars['String']['input'];
+  discussion?: InputMaybe<Scalars['JSON']['input']>;
+  policy: Scalars['JSON']['input'];
+};
+
+
 export type MutationMessengerCreateChannelArgs = {
   channelUrl?: InputMaybe<Scalars['String']['input']>;
   coverUrl?: InputMaybe<Scalars['String']['input']>;
@@ -837,10 +852,24 @@ export type MutationMessengerRemoveMemberArgs = {
 };
 
 
+export type MutationMessengerReportMessageArgs = {
+  detail?: InputMaybe<Scalars['String']['input']>;
+  messageId: Scalars['String']['input'];
+  reason: Scalars['String']['input'];
+};
+
+
 export type MutationMessengerSetMuteArgs = {
   channelUrl?: InputMaybe<Scalars['String']['input']>;
   muted?: InputMaybe<Scalars['Boolean']['input']>;
   userId?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationMessengerSetThreadLockedArgs = {
+  locked: Scalars['Boolean']['input'];
+  reason?: InputMaybe<Scalars['String']['input']>;
+  rootMessageId: Scalars['String']['input'];
 };
 
 
@@ -1328,6 +1357,7 @@ export type QueryHomefeedArgs = {
   channel?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
   message?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
   token?: InputMaybe<Scalars['String']['input']>;
+  unlisted?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 
@@ -2776,6 +2806,7 @@ export type HomeFeedItemResolvers<ContextType = AppContext, ParentType extends R
   link?: Resolver<Maybe<ResolversTypes['ContentLink']>, ParentType, ContextType>;
   mentioned_users?: Resolver<Maybe<Array<Maybe<ResolversTypes['HomeUser']>>>, ParentType, ContextType>;
   msg?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  participant_role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   repliers?: Resolver<Maybe<Array<Maybe<ResolversTypes['HomeUser']>>>, ParentType, ContextType>;
   replycount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   timestamp?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
@@ -2788,10 +2819,14 @@ export type HomeGroupResolvers<ContextType = AppContext, ParentType extends Reso
   grouping?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   latest?: Resolver<Maybe<ResolversTypes['HomeFeedItem']>, ParentType, ContextType>;
   members?: Resolver<Maybe<Array<Maybe<ResolversTypes['HomeUser']>>>, ParentType, ContextType>;
+  membership_policy?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   picture?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   privacy?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  reaction_policy?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  reply_policy?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   requests?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
+  root_post_policy?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -3129,11 +3164,14 @@ export type MutationResolvers<ContextType = AppContext, ParentType extends Resol
   markNotificationRead?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationMarkNotificationReadArgs>>;
   messengerAcceptInvitation?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationMessengerAcceptInvitationArgs>>;
   messengerBanMember?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationMessengerBanMemberArgs>>;
+  messengerConfigureStudyGroup?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<MutationMessengerConfigureStudyGroupArgs, 'channelUrl' | 'policy'>>;
   messengerCreateChannel?: Resolver<Maybe<ResolversTypes['MessengerChannel']>, ParentType, ContextType, Partial<MutationMessengerCreateChannelArgs>>;
   messengerDeclineInvitation?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationMessengerDeclineInvitationArgs>>;
   messengerInviteMembers?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationMessengerInviteMembersArgs>>;
   messengerRemoveMember?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationMessengerRemoveMemberArgs>>;
+  messengerReportMessage?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<MutationMessengerReportMessageArgs, 'messageId' | 'reason'>>;
   messengerSetMute?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationMessengerSetMuteArgs>>;
+  messengerSetThreadLocked?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<MutationMessengerSetThreadLockedArgs, 'locked' | 'rootMessageId'>>;
   messengerUnbanMember?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationMessengerUnbanMemberArgs>>;
   messengerUpdateChannel?: Resolver<Maybe<ResolversTypes['MessengerChannel']>, ParentType, ContextType, Partial<MutationMessengerUpdateChannelArgs>>;
   messengerUpdateMemberRole?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<MutationMessengerUpdateMemberRoleArgs>>;

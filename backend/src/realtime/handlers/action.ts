@@ -23,6 +23,7 @@
 import type { Server, Socket } from 'socket.io';
 import { getDb } from '../../data/db.js';
 import { updateUserMetadata } from '../../messaging/users.js';
+import { getChannelAccess } from '../../messaging/policy.js';
 
 interface ActionPayload {
   channelUrl: string;
@@ -35,8 +36,9 @@ export function register(socket: Socket, _io: Server): void {
   // fire_action → channel_action (study-group nav/scroll sync). Pure broadcast,
   // sender excluded (they fired it). Timestamp passed in via args at emit time
   // would break resume; use a monotonic-free fixed shape (client ignores exact ts).
-  socket.on('fire_action', (payload: ActionPayload) => {
+  socket.on('fire_action', async (payload: ActionPayload) => {
     if (!user || !payload?.channelUrl) return;
+    if (!(await getChannelAccess(getDb(), payload.channelUrl, user.userId)).joined) return;
     socket.to(payload.channelUrl).emit('channel_action', {
       channelUrl: payload.channelUrl,
       userId: user.userId,

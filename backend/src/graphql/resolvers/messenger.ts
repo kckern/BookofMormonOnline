@@ -34,6 +34,7 @@ import {
 import { getBus } from '../../realtime/RealtimeBus.js';
 import { isDuplicateKeyError } from '../../data/errors.js';
 import type { MessageDTO } from '../../messaging/dto.js';
+import { getChannelAccess, projectChannelForViewer, publicChannelRoom } from '../../messaging/policy.js';
 
 // ─── Auth helper ──────────────────────────────────────────────────────────────
 
@@ -55,8 +56,22 @@ async function requireOperator(ctx: AppContext, channelUrl: string): Promise<str
   const actingUserId = await resolveActingUserId(ctx);
   if (!actingUserId) return null;
   const members = await getChannelMembers(ctx.db, channelUrl);
-  const isOperator = members.some((m) => m.user_id === actingUserId && m.role === 'operator');
+  const isOperator = members.some(
+    (m) => m.user_id === actingUserId && m.role === 'operator' && m.state === 'joined',
+  );
   return isOperator ? actingUserId : null;
+}
+
+async function channelOwner(ctx: AppContext, channelUrl: string): Promise<string | null> {
+  try {
+    const row = await ctx.db.selectFrom('messenger_channel_policy').select('owner_user_id')
+      .where('channel_url', '=', channelUrl).executeTakeFirst();
+    return row?.owner_user_id ?? null;
+  } catch (error) {
+    const candidate = error as { code?: string; errno?: number };
+    if (candidate?.code === 'ER_NO_SUCH_TABLE' || candidate?.errno === 1146) return null;
+    throw error;
+  }
 }
 
 /**
@@ -70,6 +85,23 @@ async function requireSelf(ctx: AppContext, argUserId?: string | null): Promise<
   if (!actingUserId) return null;
   if (argUserId != null && argUserId !== actingUserId) return null;
   return actingUserId;
+}
+
+async function visibleMessengerUserIds(
+  ctx: AppContext,
+  actingUserId: string,
+  requested: string[],
+): Promise<Set<string>> {
+  const wanted = [...new Set(requested.filter(Boolean))];
+  if (!wanted.length) return new Set();
+  const bots = await ctx.db.selectFrom('messenger_users').select('user_id')
+    .where('user_id', 'in', wanted).where('is_bot', '=', 1).execute();
+  const shared = await ctx.db.selectFrom('messenger_members as mine')
+    .innerJoin('messenger_members as theirs', 'theirs.channel_url', 'mine.channel_url')
+    .select('theirs.user_id')
+    .where('mine.user_id', '=', actingUserId).where('mine.state', '=', 'joined')
+    .where('theirs.user_id', 'in', wanted).where('theirs.state', '=', 'joined').execute();
+  return new Set([actingUserId, ...bots.map((row) => row.user_id), ...shared.map((row) => row.user_id)]);
 }
 
 // ─── link_type / link_target extraction from data JSON ───────────────────────
@@ -125,8 +157,11 @@ export const messengerResolvers: Resolvers = {
      * Falls back to the acting user (from bearer token) when userId is not provided.
      */
     messengerUser: async (_root, args, ctx: AppContext) => {
-      const userId = args.userId ?? (await resolveActingUserId(ctx));
+      const actingUserId = await resolveActingUserId(ctx);
+      if (!actingUserId) return null;
+      const userId = args.userId ?? actingUserId;
       if (!userId) return null;
+      if (!(await visibleMessengerUserIds(ctx, actingUserId, [userId])).has(userId)) return null;
       return getUser(ctx.db, userId);
     },
 
@@ -136,9 +171,12 @@ export const messengerResolvers: Resolvers = {
      * presence roster on the frontend).
      */
     messengerUsers: async (_root, args, ctx: AppContext) => {
+      const actingUserId = await resolveActingUserId(ctx);
+      if (!actingUserId) return [];
       const userIds = (args.userIds ?? []).filter((id): id is string => typeof id === 'string' && id.length > 0);
       if (!userIds.length) return [];
-      return getUsers(ctx.db, userIds);
+      const visible = await visibleMessengerUserIds(ctx, actingUserId, userIds);
+      return getUsers(ctx.db, userIds.filter((id) => visible.has(id)));
     },
 
     /**
@@ -161,7 +199,10 @@ export const messengerResolvers: Resolvers = {
     messengerChannel: async (_root, args, ctx: AppContext) => {
       if (!args.channelUrl) return null;
       const viewerUserId = await resolveActingUserId(ctx);
-      return getChannel(ctx.db, args.channelUrl, viewerUserId ?? undefined);
+      const access = await getChannelAccess(ctx.db, args.channelUrl, viewerUserId);
+      if (!access.canRead) return null;
+      const channel = await getChannel(ctx.db, args.channelUrl, viewerUserId ?? undefined);
+      return channel ? projectChannelForViewer(channel, access) : null;
     },
 
     /**
@@ -170,8 +211,11 @@ export const messengerResolvers: Resolvers = {
      */
     messengerChannelOperators: async (_root, args, ctx: AppContext) => {
       if (!args.channelUrl) return [];
+      const viewerUserId = await resolveActingUserId(ctx);
+      const access = await getChannelAccess(ctx.db, args.channelUrl, viewerUserId);
+      if (!access.joined) return [];
       const members = await getChannelMembers(ctx.db, args.channelUrl);
-      return members.filter((m) => m.role === 'operator');
+      return members.filter((m) => m.role === 'operator' && m.state === 'joined');
     },
 
     /**
@@ -194,19 +238,9 @@ export const messengerResolvers: Resolvers = {
      */
     messengerMessages: async (_root, args, ctx: AppContext) => {
       if (!args.channelUrl) return [];
-      // Read authz: public/open channels are readable by anyone; private/DM
-      // require a joined membership.
-      const ch = await ctx.db
-        .selectFrom('messenger_channels')
-        .select('custom_type')
-        .where('channel_url', '=', args.channelUrl)
-        .executeTakeFirst();
-      const isPublic = ch != null && (ch.custom_type === 'public' || ch.custom_type === 'open');
-      if (!isPublic) {
-        const actingUserId = await resolveActingUserId(ctx);
-        const m = actingUserId ? await getMembership(ctx.db, args.channelUrl, actingUserId) : null;
-        if (!m || m.state !== 'joined') return [];
-      }
+      const actingUserId = await resolveActingUserId(ctx);
+      const access = await getChannelAccess(ctx.db, args.channelUrl, actingUserId);
+      if (!access.canRead) return [];
       const customTypes = (args.customTypes ?? []).filter(
         (t): t is string => typeof t === 'string' && t.length > 0,
       );
@@ -233,6 +267,8 @@ export const messengerResolvers: Resolvers = {
         .where((eb) => eb.or([eb('is_deleted', 'is', null), eb('is_deleted', '=', 0)]))
         .executeTakeFirst();
       if (!row) return null;
+      const actingUserId = await resolveActingUserId(ctx);
+      if (!(await getChannelAccess(ctx.db, row.channel_url, actingUserId)).canRead) return null;
       return getMessage(ctx.db, row.channel_url, args.messageId);
     },
 
@@ -241,6 +277,13 @@ export const messengerResolvers: Resolvers = {
      */
     messengerThreadMessages: async (_root, args, ctx: AppContext) => {
       if (!args.parentMessageId) return [];
+      const parent = await ctx.db.selectFrom('messenger_messages').select('channel_url')
+        .where('message_id', '=', args.parentMessageId)
+        .where((eb) => eb.or([eb('is_deleted', 'is', null), eb('is_deleted', '=', 0)]))
+        .executeTakeFirst();
+      if (!parent) return [];
+      const actingUserId = await resolveActingUserId(ctx);
+      if (!(await getChannelAccess(ctx.db, parent.channel_url, actingUserId)).canRead) return [];
       return getThread(ctx.db, args.parentMessageId);
     },
 
@@ -275,6 +318,8 @@ export const messengerResolvers: Resolvers = {
      */
     pagecomments: async (_root, args, ctx: AppContext) => {
       if (!args.channelUrl || !args.pageSlug) return null;
+      const actingUserId = await resolveActingUserId(ctx);
+      if (!(await getChannelAccess(ctx.db, args.channelUrl, actingUserId)).canRead) return null;
       return getPageComments(ctx.db, args.channelUrl, args.pageSlug);
     },
 
@@ -544,6 +589,7 @@ export const messengerResolvers: Resolvers = {
       if (!validRoles.includes(role as typeof validRoles[number])) return false;
       // Operator-only: only an operator may promote/demote members.
       if (!(await requireOperator(ctx, channelUrl))) return false;
+      if (userId === await channelOwner(ctx, channelUrl) && role !== 'operator') return false;
 
       try {
         const result = await ctx.db
@@ -577,6 +623,7 @@ export const messengerResolvers: Resolvers = {
       };
       if (!channelUrl || !userId) return false;
       if (!(await requireOperator(ctx, channelUrl))) return false;
+      if (userId === await channelOwner(ctx, channelUrl)) return false;
 
       try {
         const ok = await setMemberMuted(ctx.db, channelUrl, userId, !!muted);
@@ -612,6 +659,7 @@ export const messengerResolvers: Resolvers = {
       if (!actingUserId) return false;
       const isSelf = actingUserId === userId;
       if (!isSelf && !(await requireOperator(ctx, channelUrl))) return false;
+      if (userId === await channelOwner(ctx, channelUrl)) return false;
 
       try {
         const removed = isSelf
@@ -624,6 +672,7 @@ export const messengerResolvers: Resolvers = {
           getBus().emit('membership_changed', channelUrl, { channelUrl, userId });
           getBus().emit('user_left', channelUrl, { channelUrl, user: userId });
           getBus().leaveRoom(userId, channelUrl);
+          getBus().leaveRoom(userId, publicChannelRoom(channelUrl));
         }
         return removed;
       } catch (err) {
@@ -647,6 +696,7 @@ export const messengerResolvers: Resolvers = {
       };
       if (!channelUrl || !userId) return false;
       if (!(await requireOperator(ctx, channelUrl))) return false;
+      if (userId === await channelOwner(ctx, channelUrl)) return false;
 
       try {
         const banned = await banUserFromChannel(ctx.db, channelUrl, userId);
@@ -657,6 +707,7 @@ export const messengerResolvers: Resolvers = {
           // then evict them from the room — a banned user must not keep
           // receiving the channel's live traffic for the rest of their session.
           getBus().leaveRoom(userId, channelUrl);
+          getBus().leaveRoom(userId, publicChannelRoom(channelUrl));
         }
         return banned;
       } catch (err) {
@@ -709,6 +760,8 @@ export const messengerResolvers: Resolvers = {
       const actingUserId = await resolveActingUserId(ctx);
       if (!actingUserId) return false;
       if (!(await canUserInvite(ctx.db, channelUrl, actingUserId))) return false;
+      const inviteAccess = await getChannelAccess(ctx.db, channelUrl, actingUserId);
+      if (inviteAccess.explicit && inviteAccess.membershipPolicy === 'fixed' && !inviteAccess.operator) return false;
 
       let anySuccess = false;
       for (const userId of userIds) {
@@ -832,6 +885,129 @@ export const messengerResolvers: Resolvers = {
       } catch (err) {
         console.error('markAllNotificationsRead error:', err);
         return false;
+      }
+    },
+
+    /** Operator-only configuration API. Persona/profile/model data remains in DB. */
+    messengerConfigureStudyGroup: async (_root, args, ctx: AppContext) => {
+      const { channelUrl, policy, discussion } = args as {
+        channelUrl: string;
+        policy: Record<string, unknown>;
+        discussion?: Record<string, unknown> | null;
+      };
+      const actor = await requireOperator(ctx, channelUrl);
+      if (!actor || !policy || typeof policy !== 'object') return false;
+      const oneOf = <T extends string>(value: unknown, values: readonly T[]): T | null =>
+        typeof value === 'string' && values.includes(value as T) ? value as T : null;
+      const visibility = oneOf(policy['visibility'], ['private', 'public', 'unlisted'] as const);
+      const membership = oneOf(policy['membershipPolicy'], ['open', 'request', 'fixed'] as const);
+      const root = oneOf(policy['rootPostPolicy'], ['members', 'authenticated', 'nobody'] as const);
+      const reply = oneOf(policy['replyPolicy'], ['members', 'authenticated', 'nobody'] as const);
+      const reaction = oneOf(policy['reactionPolicy'], ['members', 'authenticated', 'nobody'] as const);
+      const ownerUserId = typeof policy['ownerUserId'] === 'string' ? policy['ownerUserId'] : actor;
+      if (!visibility || !membership || !root || !reply || !reaction) return false;
+      const existingOwner = await channelOwner(ctx, channelUrl);
+      if (existingOwner && ownerUserId !== existingOwner && actor !== existingOwner) return false;
+      const ownerMembership = await getMembership(ctx.db, channelUrl, ownerUserId);
+      if (ownerMembership?.state !== 'joined' || ownerMembership.role !== 'operator') return false;
+
+      try {
+        await ctx.db.transaction().execute(async (trx) => {
+          await trx.insertInto('messenger_channel_policy').values({
+            channel_url: channelUrl,
+            owner_user_id: ownerUserId,
+            visibility,
+            membership_policy: membership,
+            root_post_policy: root,
+            reply_policy: reply,
+            reaction_policy: reaction,
+            outsider_comments_live: policy['outsiderCommentsLive'] === true ? 1 : 0,
+            listed: policy['listed'] === true ? 1 : 0,
+            enabled: policy['enabled'] === true ? 1 : 0,
+          }).onDuplicateKeyUpdate({
+            owner_user_id: ownerUserId,
+            visibility,
+            membership_policy: membership,
+            root_post_policy: root,
+            reply_policy: reply,
+            reaction_policy: reaction,
+            outsider_comments_live: policy['outsiderCommentsLive'] === true ? 1 : 0,
+            listed: policy['listed'] === true ? 1 : 0,
+            enabled: policy['enabled'] === true ? 1 : 0,
+          }).execute();
+
+          if (discussion) {
+            const number = (key: string, fallback: number) => {
+              const value = discussion[key];
+              return typeof value === 'number' && Number.isFinite(value) ? Math.floor(value) : fallback;
+            };
+            const promptTemplate = String(discussion['promptTemplate'] ?? '').trim();
+            const responseGuardrails = String(discussion['responseGuardrails'] ?? '').trim();
+            if (!promptTemplate || !responseGuardrails) throw new Error('discussion prompts are required');
+            const values = {
+              channel_url: channelUrl,
+              enabled: discussion['enabled'] === true ? 1 : 0,
+              timezone: String(discussion['timezone'] ?? 'America/Denver'),
+              local_start_time: String(discussion['localStartTime'] ?? '08:00:00'),
+              discursive_weight: number('discursiveWeight', 80),
+              narrative_weight: number('narrativeWeight', 20),
+              min_bot_voices: number('minBotVoices', 3),
+              max_bot_voices: number('maxBotVoices', 5),
+              max_bot_messages: number('maxBotMessages', 12),
+              bot_window_hours: number('botWindowHours', 72),
+              min_delay_minutes: number('minDelayMinutes', 45),
+              max_delay_minutes: number('maxDelayMinutes', 240),
+              prompt_template: promptTemplate,
+              response_guardrails: responseGuardrails,
+            };
+            if (values.discursive_weight + values.narrative_weight !== 100) throw new Error('topic weights must total 100');
+            await trx.insertInto('bom_ai_discussion_config').values(values)
+              .onDuplicateKeyUpdate(values).execute();
+          }
+        });
+        return true;
+      } catch (error) {
+        console.error('messengerConfigureStudyGroup error:', error);
+        return false;
+      }
+    },
+
+    messengerSetThreadLocked: async (_root, args, ctx: AppContext) => {
+      const root = await ctx.db.selectFrom('messenger_messages').select('channel_url')
+        .where('message_id', '=', args.rootMessageId).where('parent_message_id', 'is', null)
+        .executeTakeFirst();
+      if (!root || !(await requireOperator(ctx, root.channel_url))) return false;
+      const locked = args.locked === true;
+      await ctx.db.insertInto('messenger_thread_state').values({
+        root_message_id: args.rootMessageId,
+        channel_url: root.channel_url,
+        status: locked ? 'locked' : 'active',
+        locked_at: locked ? new Date() : null,
+        lock_reason: locked ? args.reason ?? 'operator' : null,
+      }).onDuplicateKeyUpdate({
+        status: locked ? 'locked' : 'active',
+        locked_at: locked ? new Date() : null,
+        lock_reason: locked ? args.reason ?? 'operator' : null,
+      }).execute();
+      return true;
+    },
+
+    messengerReportMessage: async (_root, args, ctx: AppContext) => {
+      const actor = await resolveActingUserId(ctx);
+      if (!actor || !args.reason?.trim()) return false;
+      const message = await ctx.db.selectFrom('messenger_messages').select('channel_url')
+        .where('message_id', '=', args.messageId).executeTakeFirst();
+      if (!message || !(await getChannelAccess(ctx.db, message.channel_url, actor)).canRead) return false;
+      try {
+        await ctx.db.insertInto('messenger_content_report').values({
+          message_id: args.messageId,
+          reporter_user_id: actor,
+          reason: args.reason.trim().slice(0, 64),
+          detail: args.detail?.trim().slice(0, 1000) || null,
+        }).execute();
+        return true;
+      } catch (error) {
+        return isDuplicateKeyError(error);
       }
     },
   },

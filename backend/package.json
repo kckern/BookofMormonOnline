@@ -14,7 +14,10 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "codegen:db": "kysely-codegen --dialect mysql --out-file codegen/db.d.ts",
-    "codegen:graphql": "graphql-codegen --config codegen.ts"
+    "codegen:graphql": "graphql-codegen --config codegen.ts",
+    "corpus:ingest": "tsx scripts/ingest-ai-corpus.ts",
+    "study-group:migrate": "tsx scripts/apply-study-group-migration.ts",
+    "study-group:configure": "tsx scripts/configure-study-group.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.69",
@@ -44,7 +47,7 @@
     "openai": "^6.42.0",
     "pino": "^9.5.0",
     "redis": "^6.0.0",
-    "scripture-guide": "^1.0.93",
+    "scripture-guide": "^1.0.97",
     "sharp": "^0.33.5",
     "socket.io": "^4.8.3",
     "uuid": "^14.0.0",

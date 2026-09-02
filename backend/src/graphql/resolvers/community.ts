@@ -19,13 +19,14 @@ import { md5, genUserAvatar } from '../../auth/identity.js';
 import { resolveUsername as resolveUsernameByToken } from '../../auth/sessionStore.js';
 import { getChannel, getMyStudyGroups, getPublicChannels } from '../../messaging/channels.js';
 import { getChannelMembers, addUserToChannel, deleteMembershipRowInState, getPublicUserIds, isUserBanned } from '../../messaging/members.js';
-import { getMessages, getMessagesForChannels, getThread } from '../../messaging/messages.js';
+import { getMessage, getMessages, getMessagesForChannels, getThread } from '../../messaging/messages.js';
 import { getUser, getUsers, listStudyBots } from '../../messaging/users.js';
 import { addBotToChannel, removeBotFromChannel } from '../../messaging/bots/registry.js';
 import type { ChannelDTO, MessageDTO, UserDTO } from '../../messaging/dto.js';
 import { getBus } from '../../realtime/RealtimeBus.js';
 import { isDuplicateKeyError } from '../../data/errors.js';
 import { loadReadingPlan } from '../../messaging/readingplan.js';
+import { getChannelAccess, projectChannelForViewer } from '../../messaging/policy.js';
 
 // ─── Token → messenger user_id ───────────────────────────────────────────────
 
@@ -205,7 +206,7 @@ function assembleHomeFeedItem(msg: MessageDTO): Record<string, unknown> {
   const user = userDto ? maskUserPrivacy(assembleHomeUser(userDto)) : null;
 
   const pageSlug = msg.custom_type;
-  let data: { links?: Record<string, unknown>; highlights?: string[] } = {};
+  let data: { links?: Record<string, unknown>; highlights?: string[]; participantRole?: string } = {};
   try {
     data = JSON.parse(msg.data) as typeof data;
   } catch { /* ignore */ }
@@ -231,6 +232,7 @@ function assembleHomeFeedItem(msg: MessageDTO): Record<string, unknown> {
     id: msg.message_id,
     timestamp: msg.created_at,
     msg: msg.message,
+    participant_role: data.participantRole ?? null,
     user,
     mentioned_users: [],
     likes,
@@ -256,6 +258,7 @@ async function assembleHomeGroup(
   grouping: string,
   viewerUserId: string | null = null,
 ): Promise<Record<string, unknown>> {
+  const access = await getChannelAccess(ctx.db, channel.channel_url, viewerUserId);
   let description: string | null = channel.data || null;
   let requests: string[] = [];
   try {
@@ -267,8 +270,9 @@ async function assembleHomeGroup(
   // Pending join-requester ids are operator-only: don't broadcast who asked to
   // join to every viewer of a (featured) group. Only an operator of THIS channel
   // sees the request list; everyone else gets []. (Legacy shipped these to all.)
-  const isOperator =
-    !!viewerUserId && channel.members.some((m) => m.user_id === viewerUserId && m.role === 'operator');
+  const isOperator = !!viewerUserId && channel.members.some(
+    (m) => m.user_id === viewerUserId && m.role === 'operator' && m.state === 'joined',
+  );
   if (!isOperator) requests = [];
 
   const latest = channel.last_message ? assembleHomeFeedItem(channel.last_message) : null;
@@ -285,6 +289,10 @@ async function assembleHomeGroup(
     latest,
     requests,
     members,
+    membership_policy: access.membershipPolicy,
+    root_post_policy: access.rootPostPolicy,
+    reply_policy: access.replyPolicy,
+    reaction_policy: access.reactionPolicy,
   };
 }
 
@@ -332,14 +340,43 @@ function feedAlgorithm(
  */
 async function getFeaturedChannels(ctx: AppContext, lang: string | null, limit = 20): Promise<ChannelDTO[]> {
   const effectiveLang = (!lang || lang === 'dev') ? 'en' : lang;
-  const channels = await getPublicChannels(ctx.db, {
+  let channels = await getPublicChannels(ctx.db, {
     lang: effectiveLang,
     limit,
   });
   if (channels.length === 0 && effectiveLang !== 'en') {
-    return getPublicChannels(ctx.db, { lang: 'en', limit: 50 });
+    channels = await getPublicChannels(ctx.db, { lang: 'en', limit: 50 });
   }
-  return channels;
+  if (!channels.length) return [];
+  const policies = await ctx.db.selectFrom('messenger_channel_policy')
+    .select(['channel_url', 'listed', 'enabled'])
+    .where('channel_url', 'in', channels.map((channel) => channel.channel_url))
+    .execute();
+  const hidden = new Set(
+    policies.filter((policy) => policy.enabled !== 1 || policy.listed !== 1)
+      .map((policy) => policy.channel_url),
+  );
+  return channels.filter((channel) => !hidden.has(channel.channel_url));
+}
+
+/** Only explicit, enabled, unlisted channels are exposed by /home/feed. */
+async function getUnlistedChannels(
+  ctx: AppContext,
+  viewerUserId: string | null,
+): Promise<ChannelDTO[]> {
+  const rows = await ctx.db.selectFrom('messenger_channel_policy')
+    .select('channel_url')
+    .where('enabled', '=', 1)
+    .where('listed', '=', 0)
+    .where('visibility', '=', 'unlisted')
+    .execute();
+  const channels = await Promise.all(rows.map(async ({ channel_url }) => {
+    const access = await getChannelAccess(ctx.db, channel_url, viewerUserId);
+    if (!access.canRead) return null;
+    const channel = await getChannel(ctx.db, channel_url, viewerUserId ?? undefined);
+    return channel ? projectChannelForViewer(channel, access) : null;
+  }));
+  return channels.filter((channel): channel is ChannelDTO => channel !== null);
 }
 
 // ─── Resolvers ────────────────────────────────────────────────────────────────
@@ -524,14 +561,14 @@ export const communityResolvers: Resolvers = {
           const channel = await getChannel(ctx.db, channelUrl, myUserId ?? undefined);
           if (!channel) return asGql({ groups: [], feed: [] });
 
-          // Gate private channels on membership
-          if (channel.custom_type === 'private' || channel.custom_type === 'DM') {
-            if (!myUserId) return asGql({ groups: [], feed: [] });
-            const isMember = channel.members.some((m) => m.user_id === myUserId);
-            if (!isMember) return asGql({ groups: [], feed: [] });
-          }
+          const access = await getChannelAccess(ctx.db, channelUrl, myUserId);
+          if (!access.canRead) return asGql({ groups: [], feed: [] });
+          if (args.unlisted === true && (
+            !access.explicit || !access.enabled || access.listed || access.visibility !== 'unlisted'
+          )) return asGql({ groups: [], feed: [] });
+          const visibleChannel = projectChannelForViewer(channel, access);
 
-          const groupObj = await assembleHomeGroup(ctx, channel, 'feed', myUserId);
+          const groupObj = await assembleHomeGroup(ctx, visibleChannel, 'feed', myUserId);
 
           if (messageId) {
             // Specific-message mode: find the root message then return it
@@ -552,11 +589,13 @@ export const communityResolvers: Resolvers = {
         }
 
         // Multi-channel mode: featured + user's own channels
-        const featuredChannels = await getFeaturedChannels(ctx, lang);
+        const featuredChannels = args.unlisted === true
+          ? await getUnlistedChannels(ctx, myUserId)
+          : await getFeaturedChannels(ctx, lang);
         const featuredUrls = new Set(featuredChannels.map((c) => c.channel_url));
 
         let myChannels: ChannelDTO[] = [];
-        if (myUserId) {
+        if (myUserId && args.unlisted !== true) {
           // Study groups only — DM messages don't belong in the home feed.
           myChannels = await getMyStudyGroups(ctx.db, myUserId);
         }
@@ -596,13 +635,14 @@ export const communityResolvers: Resolvers = {
         const channel = await getChannel(ctx.db, channelUrl);
         if (!channel) return asGql([]);
 
-        // Gate private channels
-        if (channel.custom_type === 'private' || channel.custom_type === 'DM') {
-          const myUserId = await resolveMessengerUserId(ctx, args.token as string | null | undefined);
-          if (!myUserId) return asGql([]);
-          const isMember = channel.members.some((m) => m.user_id === myUserId);
-          if (!isMember) return asGql([]);
-        }
+        const myUserId = await resolveMessengerUserId(ctx, args.token as string | null | undefined);
+        if (!(await getChannelAccess(ctx.db, channelUrl, myUserId)).canRead) return asGql([]);
+
+        // Bind the object ID to the authorized channel before querying by
+        // parent_message_id; otherwise a readable channel URL could be paired
+        // with a private channel's root ID.
+        const root = await getMessage(ctx.db, channelUrl, messageId);
+        if (!root || root.parent_message_id) return asGql([]);
 
         const replies = await getThread(ctx.db, messageId);
         return asGql(replies.map(assembleHomeFeedItem));
@@ -676,7 +716,7 @@ export const communityResolvers: Resolvers = {
 
         // Gate: viewer must be an operator
         const isOperator = members.some(
-          (m) => m.user_id === myUserId && m.role === 'operator',
+          (m) => m.user_id === myUserId && m.role === 'operator' && m.state === 'joined',
         );
         if (!isOperator) return asGql([]);
 
@@ -711,7 +751,7 @@ export const communityResolvers: Resolvers = {
       // enumerable by unauthenticated callers. Gate on ctx.bearerToken (set from
       // the Authorization header) — if no bearer is present the caller is
       // unauthenticated and we return an empty list.
-      if (!ctx.bearerToken) return asGql([]);
+      if (!ctx.auth) return asGql([]);
       try {
         const bots = await listStudyBots(ctx.db, ctx.lang);
 
@@ -779,6 +819,10 @@ export const communityResolvers: Resolvers = {
         if (channel.custom_type !== 'open') {
           return asGql({ isSuccess: false, msg: 'Group is not open enrollment', channel: null, user: null });
         }
+        const access = await getChannelAccess(ctx.db, channelUrl, myUserId);
+        if (!access.canJoin) {
+          return asGql({ isSuccess: false, msg: 'Group has fixed membership', channel: null, user: null });
+        }
 
         const success = await addUserToChannel(ctx.db, channelUrl, myUserId, 'member');
         if (!success) return asGql({ isSuccess: false, msg: 'Already a member', channel: channelUrl, user: myUserId });
@@ -818,6 +862,9 @@ export const communityResolvers: Resolvers = {
         const channel = await getChannel(ctx.db, url);
         if (!channel) return asGql({ isSuccess: false, msg: 'Group not found', channel: null, user: null });
         if (channel.custom_type !== 'open') return asGql({ isSuccess: false, msg: 'Group is not open enrollment', channel: null, user: null });
+        if (!(await getChannelAccess(ctx.db, url, myUserId)).canJoin) {
+          return asGql({ isSuccess: false, msg: 'Group has fixed membership', channel: null, user: null });
+        }
 
         const success = await addUserToChannel(ctx.db, url, myUserId, 'member');
         if (!success) return asGql({ isSuccess: false, msg: 'Already a member', channel: url, user: myUserId });
@@ -856,6 +903,9 @@ export const communityResolvers: Resolvers = {
         const channel = await getChannel(ctx.db, url);
         if (!channel) return asGql({ isSuccess: false, msg: 'Group not found', channel: null, user: null });
         if (channel.custom_type !== 'public') return asGql({ isSuccess: false, msg: 'Group is not public', channel: null, user: null });
+        if (!(await getChannelAccess(ctx.db, url, myUserId)).canRequestMembership) {
+          return asGql({ isSuccess: false, msg: 'Group has fixed membership', channel: null, user: null });
+        }
 
         // Re-entry guard (spec §2): a banned row would dup-key below and be
         // masked as success — refuse explicitly instead.
@@ -952,7 +1002,7 @@ export const communityResolvers: Resolvers = {
 
         // Gate: caller must be an operator
         const isOperator = members.some(
-          (m) => m.user_id === myUserId && m.role === 'operator',
+          (m) => m.user_id === myUserId && m.role === 'operator' && m.state === 'joined',
         );
         if (!isOperator) return false;
 
@@ -1009,7 +1059,7 @@ export const communityResolvers: Resolvers = {
         // Gate: acting user must be an operator of the channel.
         const members = await getChannelMembers(ctx.db, channelArg);
         const isOperator = members.some(
-          (m) => m.user_id === myUserId && m.role === 'operator',
+          (m) => m.user_id === myUserId && m.role === 'operator' && m.state === 'joined',
         );
         if (!isOperator) return false;
 
@@ -1053,7 +1103,7 @@ export const communityResolvers: Resolvers = {
         // Gate: acting user must be an operator of the channel.
         const members = await getChannelMembers(ctx.db, channelArg);
         const isOperator = members.some(
-          (m) => m.user_id === myUserId && m.role === 'operator',
+          (m) => m.user_id === myUserId && m.role === 'operator' && m.state === 'joined',
         );
         if (!isOperator) return false;
 

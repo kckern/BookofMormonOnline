@@ -1,10 +1,10 @@
 import { lazy } from "react";
-import { isMessengerEnabled } from './featureFlags';
+import { isMessengerNavigationEnabled } from './featureFlags';
 import { determineLanguage } from "./Utils.js";
 import { Redirect, useParams } from "react-router-dom";
 
 // Feature flag - messaging disabled until Phase 5 data migration
-const USE_MESSENGER = isMessengerEnabled();
+const USE_MESSENGER = isMessengerNavigationEnabled();
 
 // Redirect component for disabled routes
 const DisabledRedirect = () => <Redirect to="/" />;

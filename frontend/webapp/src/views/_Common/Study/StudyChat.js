@@ -1275,6 +1275,11 @@ function BaseMessage({
   const isBot = !!message?.sender?.metaData?.isBot;
 
   const botBadge = isBot ? <span className="botBadge">BOT</span> : null;
+  let messageData = {};
+  try { messageData = JSON.parse(message?.data || "{}"); } catch (_) { /* optional metadata */ }
+  const audienceBadge = messageData.participantRole === "audience" ? (
+    <span className="audienceBadge">Audience</span>
+  ) : null;
 
   return (
     <div
@@ -1287,7 +1292,7 @@ function BaseMessage({
       {image}
       <div className={"messageContent"}>
         <span className="senderName">
-          {message?.sender?.nickname} {botBadge}
+          {message?.sender?.nickname} {botBadge} {audienceBadge}
         </span>
         <span className="timeStamp">
           {" "}

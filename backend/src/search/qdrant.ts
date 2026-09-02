@@ -16,14 +16,21 @@ export function getQdrant(): QdrantClient {
 export async function ensureCollection(): Promise<void> {
   const q = getQdrant();
   const existing = await q.getCollections();
-  if (existing.collections.some((c) => c.name === COLLECTION)) return;
-
-  await q.createCollection(COLLECTION, {
-    vectors: { dense: { size: DENSE_SIZE, distance: 'Cosine' } },
-    sparse_vectors: { keywords: {} },
-  });
-  for (const field of ['type', 'lang', 'version'] as const) {
-    await q.createPayloadIndex(COLLECTION, { field_name: field, field_schema: 'keyword' });
+  if (!existing.collections.some((c) => c.name === COLLECTION)) {
+    await q.createCollection(COLLECTION, {
+      vectors: { dense: { size: DENSE_SIZE, distance: 'Cosine' } },
+      sparse_vectors: { keywords: {} },
+    });
+  }
+  // Keep indexes additive for existing collections as new content types gain
+  // filter dimensions. Qdrant treats repeated index creation as idempotent.
+  for (const field of ['type', 'lang', 'version', 'corpus_id', 'rights_class'] as const) {
+    try {
+      await q.createPayloadIndex(COLLECTION, { field_name: field, field_schema: 'keyword' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!/already exists|already indexed/i.test(message)) throw error;
+    }
   }
 }
 

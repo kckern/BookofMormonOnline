@@ -1,5 +1,5 @@
 /** Entity kinds indexed in the shared `bom_content` collection. Phase 1 uses 'verse'. */
-export type ContentType = 'verse' | 'person' | 'place' | 'page' | 'narration' | 'commentary' | 'event' | 'matter';
+export type ContentType = 'verse' | 'person' | 'place' | 'page' | 'narration' | 'commentary' | 'event' | 'matter' | 'corpus';
 
 /** One Qdrant point to upsert. */
 export interface IndexPoint {
@@ -13,6 +13,9 @@ export interface IndexPoint {
   slug: string | null;
   lang: string;
   version: string | null;
+  corpus_id?: string | null;
+  locator?: string | null;
+  rights_class?: 'citation_eligible' | 'inference_only' | 'blocked' | null;
   dense: number[];       // embedding vector
   sparse: { indices: number[]; values: number[] }; // keyword sparse vector
 }
@@ -27,6 +30,9 @@ export interface SearchHit {
   ref: string | null;
   slug: string | null;
   version: string | null;
+  corpus_id?: string | null;
+  locator?: string | null;
+  rights_class?: 'citation_eligible' | 'inference_only' | 'blocked' | null;
 }
 
 /** Arguments to the shared retrieval seam. */
@@ -35,5 +41,6 @@ export interface SearchContentArgs {
   types?: ContentType[];
   lang?: string;
   version?: string[];
+  corpusIds?: string[];
   limit?: number;
 }

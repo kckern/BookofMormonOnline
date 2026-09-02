@@ -1,6 +1,6 @@
 
 import { Alert, Button, Card, CardBody, CardFooter, CardHeader, Label } from "reactstrap"
-import { isMessengerEnabled } from '../../models/featureFlags';
+import { isMessengerNavigationEnabled } from '../../models/featureFlags';
 import { label } from "src/models/Utils"
 import Switch from "react-bootstrap-switch";
 import { useEffect, useState } from "react";
@@ -19,7 +19,7 @@ import facsimiles from "src/views/_Common/svg/fax.svg"
 import { useAppController } from "src/contexts/AppControllerContext";
 
 // Feature flag - messaging disabled until Phase 5 data migration
-const USE_MESSENGER = isMessengerEnabled();
+const USE_MESSENGER = isMessengerNavigationEnabled();
 
 
 export default function User() {

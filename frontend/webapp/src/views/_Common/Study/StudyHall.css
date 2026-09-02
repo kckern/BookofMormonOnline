@@ -454,6 +454,19 @@
   bottom: 2px;
 }
 
+.audienceBadge {
+  display: inline-block;
+  margin-left: 0.25rem;
+  padding: 0.08rem 0.38rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.68em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  opacity: 0.72;
+  vertical-align: 0.08em;
+}
+
 .messageContainer .timeStamp a,
 .messageContainer .edit,
 .messageContainer .delete,

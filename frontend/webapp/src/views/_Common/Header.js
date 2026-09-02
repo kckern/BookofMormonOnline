@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { isMessengerEnabled, HIDE_HOME_NAV } from '../../models/featureFlags';
+import { isMessengerNavigationEnabled, HIDE_HOME_NAV } from '../../models/featureFlags';
 import { Link } from "react-router-dom";
 import { assetUrl } from "models/BoMOnlineAPI";
 import { isMobile, label, tokenImage } from "models/Utils.js";
@@ -17,7 +17,7 @@ import green from "src/views/User/svg/green.svg";
 import yellow from "src/views/User/svg/yellow.svg";
 
 // Feature flag - messaging disabled until Phase 5 data migration
-const USE_MESSENGER = isMessengerEnabled();
+const USE_MESSENGER = isMessengerNavigationEnabled();
 
 function Header({ isReady }) {
   const appController = useAppController();

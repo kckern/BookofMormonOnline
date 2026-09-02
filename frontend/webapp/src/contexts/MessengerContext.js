@@ -30,6 +30,8 @@ export const noopController = (userId) => ({
   loadUnreadDMs: () => Promise.resolve({}),
   loadNotifications: () => Promise.resolve([]),
   loadNotificationUnreadCount: () => Promise.resolve(0),
+  subscribePublicChannel: () => Promise.resolve(false),
+  unsubscribePublicChannel: () => Promise.resolve(false),
   markNotificationRead: () => Promise.resolve(null),
   markAllNotificationsRead: () => Promise.resolve(null),
   disconnect: () => {},

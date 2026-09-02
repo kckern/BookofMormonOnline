@@ -857,6 +857,9 @@ function SingleComment({
   // Guard: socket-normalized messages can arrive without sender.metaData;
   // an unguarded destructure here threw a pageerror.
   const { isBot } = message?.sender?.metaData || {};
+  const audienceBadge = data?.participantRole === "audience" ? (
+    <span className="audienceBadge">Audience</span>
+  ) : null;
 
   return (
     <div
@@ -889,7 +892,7 @@ function SingleComment({
         <div className="commentcontainer">
           <div className="commentcontent">
             <div className="name">
-              {message?.sender?.nickname} {isBot && <span>BOT</span>}
+              {message?.sender?.nickname} {isBot && <span>BOT</span>} {audienceBadge}
             </div>
             {highlightTags}
             {content}

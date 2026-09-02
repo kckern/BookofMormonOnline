@@ -29,6 +29,9 @@ extend type Mutation {
   messengerDeclineInvitation(channelUrl: String, userId: String): Boolean
   markNotificationRead(notificationId: String): Boolean
   markAllNotificationsRead: Boolean
+  messengerConfigureStudyGroup(channelUrl: String!, policy: JSON!, discussion: JSON): Boolean
+  messengerSetThreadLocked(rootMessageId: String!, locked: Boolean!, reason: String): Boolean
+  messengerReportMessage(messageId: String!, reason: String!, detail: String): Boolean
 }
 
 type MessengerUser {
