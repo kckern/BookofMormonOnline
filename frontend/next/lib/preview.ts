@@ -1,7 +1,12 @@
 import { getPageContent } from '@/lib/pages'
 import { getTextBlock } from '@/lib/text'
 import { getSection } from '@/lib/section'
+import { getPerson } from '@/lib/people'
+import { getPlace } from '@/lib/places'
+import { getArt } from '@/lib/art'
+import { getCommentary } from '@/lib/commentary'
 import { stripMarkup } from '@/lib/seo'
+import { wikiToText } from '@/lib/entity'
 import { LOCALE_SEGS } from '@/lib/locales'
 import type { OgCardInput } from '@/lib/ogCard'
 
@@ -49,6 +54,39 @@ export async function gatherPreview(rawSlug: string, lang: string): Promise<OgCa
     return { title: 'Table of Contents', sub: SITE_TITLE, img: fallbackArt('contents'), lang }
   }
 
+  // --- Entity routes (prefix-based, like the PHP router). leaf = last segment. ---
+  const segs0 = slug.split('/')
+  const first = segs0[0]
+  const leaf = segs0[segs0.length - 1]
+
+  if (first === 'people' || first === 'person') {
+    const person = await getPerson(leaf).catch(() => null)
+    if (person) {
+      return { title: person.name, sub: person.title ?? undefined, desc: stripMarkup(wikiToText(person.description ?? '')), img: person.slug, imgType: 'people', lang }
+    }
+    return { title: 'People', sub: SITE_TITLE, img: fallbackArt('people'), lang }
+  }
+  if (first === 'place' || first === 'map') {
+    const place = await getPlace(leaf).catch(() => null)
+    if (place) {
+      return { title: place.name, sub: place.info ?? undefined, desc: stripMarkup(wikiToText(place.description ?? '')), img: place.slug, imgType: 'places', lang }
+    }
+    return { title: 'Places', sub: SITE_TITLE, img: fallbackArt('places'), lang }
+  }
+  if (first === 'art') {
+    const art = await getArt(leaf).catch(() => null)
+    if (art) {
+      const desc = [art.artist, art.descText].filter(Boolean).join(' • ')
+      return { title: art.title, sub: art.artist || undefined, desc, img: art.id, imgType: 'art', lang }
+    }
+  }
+  if (first === 'commentary') {
+    const c = await getCommentary(leaf).catch(() => null)
+    if (c) {
+      return { title: c.title, sub: `Commentary on ${c.ref}`, desc: `${c.publication.source_name}: ${stripMarkup(c.text)}`, img: fallbackArt(slug), lang }
+    }
+  }
+
   // text block: "<pageSlug>/<n>"  (numeric segment, optionally trailed by /fax)
   const textMatch = slug.match(/^(.+?)\/(\d+)(?:\/fax.*)?$/)
   if (textMatch) {
@@ -84,7 +122,8 @@ export async function gatherPreview(rawSlug: string, lang: string): Promise<OgCa
     return { title: page.title, desc, img: fallbackArt(slug), lang }
   }
 
-  // Not a content page (people/place/art/map/commentary/… — not yet ported):
-  // a clean title card keyed off the slug leaf, so the endpoint never 500s.
+  // Unrecognized route (history/timeline/tgc/ig/invite/studyedition/about/… —
+  // niche types not individually ported): a clean title card keyed off the slug
+  // leaf, so the endpoint always returns a valid image and never 500s.
   return { title: titleFromSlug(slug), sub: SITE_TITLE, img: fallbackArt(slug), lang }
 }
