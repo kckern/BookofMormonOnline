@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { cache } from 'react'
 import { headers } from 'next/headers'
-import { LANG_HOST, bcp47, safeHost } from './locales'
+import { LANG_HOST, bcp47, safeHost, CANONICAL_EN_HOST } from './locales'
 import { seoIntentForPath } from './features'
 import { getLabels } from './labels'
 
@@ -52,7 +52,6 @@ export const DEFAULT_NAV: ReadonlyArray<{ href: string; label: string }> = [
 const KEYWORDS = 'Mormon, Book of Mormon, Book of Mormon Study, Read the Book of Mormon'
 const TWITTER_SITE = '@BkMormonOnline'
 const FB_APP_ID = '806253479718989'
-const SITE_DOMAIN = 'bookofmormon.online'
 
 // The PHP box truncates every description to a hard 159 chars + '…' (no word
 // boundary). Verified across root/page/textblock/people/place/about: len == 160.
@@ -182,7 +181,7 @@ export async function buildMetadata(input: SeoInput): Promise<Metadata> {
     },
     other: {
       'fb:app_id': FB_APP_ID,
-      'twitter:domain': SITE_DOMAIN,
+      'twitter:domain': CANONICAL_EN_HOST,
       ...(lang === 'ko' ? { 'naver-site-verification': '2e4aebbde9e85f415075e53c9ebcad129e3a83e4' } : {}),
     },
   }
