@@ -2,6 +2,7 @@ import { ImageResponse } from 'next/og'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 import { createElement } from 'react'
+import * as opentype from 'opentype.js'
 import { BomOgCard } from '@/app/og/BomOgCard'
 
 // Shared 1200×630 social-card renderer — the greenfield replacement for the
@@ -23,6 +24,79 @@ const ibmPlexSansKRLight = readFileSync(join(fontsDir, 'IBMPlexSansKR-Light.ttf'
 const platesDataUri =
   'data:image/png;base64,' +
   readFileSync(join(process.cwd(), 'public', 'og', 'plates.png')).toString('base64')
+
+// Parse the BOLD title fonts for text measurement (satori can't shrink-to-fit).
+function toArrayBuffer(b: Buffer): ArrayBuffer {
+  return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer
+}
+const robotoBoldOtf = opentype.parse(toArrayBuffer(robotoCondensedBold))
+const krBoldOtf = opentype.parse(toArrayBuffer(ibmPlexSansKRBold))
+
+function textWidth(font: opentype.Font, text: string, size: number): number {
+  try {
+    return font.getAdvanceWidth(text, size)
+  } catch {
+    return text.length * size * 0.6 // conservative fallback if a glyph is missing
+  }
+}
+
+// Balanced 2-line split: prefer breaking on spaces, else any character; pick the
+// break that minimizes the WIDER line — avoids a lone trailing word/char (widow).
+function balancedSplit(font: opentype.Font, text: string, size: number): [string, string] {
+  const spaceBreaks: number[] = []
+  for (let i = 1; i < text.length; i++) if (text[i - 1] === ' ') spaceBreaks.push(i)
+  const breaks = spaceBreaks.length ? spaceBreaks : Array.from({ length: text.length - 1 }, (_, i) => i + 1)
+  let best: [string, string] = [text, '']
+  let bestMax = Infinity
+  for (const p of breaks) {
+    const a = text.slice(0, p).trim()
+    const b = text.slice(p).trim()
+    if (!a || !b) continue
+    const m = Math.max(textWidth(font, a, size), textWidth(font, b, size))
+    if (m < bestMax) {
+      bestMax = m
+      best = [a, b]
+    }
+  }
+  return best
+}
+
+// Shrink the title to fit ONE line down to minSize; if it still overflows at
+// minSize, wrap to two balanced lines and size back up to the largest that fits.
+function fitTitle(
+  font: opentype.Font,
+  text: string,
+  maxWidth: number,
+  minSize = 30,
+  maxSize = 54,
+): { size: number; lines: string[] } {
+  let lo = minSize
+  let hi = maxSize
+  let oneLine = 0
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1
+    if (textWidth(font, text, mid) <= maxWidth) {
+      oneLine = mid
+      lo = mid + 1
+    } else hi = mid - 1
+  }
+  if (oneLine >= minSize) return { size: oneLine, lines: [text] }
+
+  lo = minSize
+  hi = maxSize
+  let size = minSize
+  let lines = balancedSplit(font, text, minSize)
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1
+    const [a, b] = balancedSplit(font, text, mid)
+    if (Math.max(textWidth(font, a, mid), textWidth(font, b, mid)) <= maxWidth) {
+      size = mid
+      lines = [a, b]
+      lo = mid + 1
+    } else hi = mid - 1
+  }
+  return { size, lines }
+}
 
 const MEDIA = 'https://media.bookofmormon.online'
 const MEDIA_PATH: Record<string, (id: string) => string> = {
@@ -76,9 +150,17 @@ export async function renderOgCard(input: OgCardInput): Promise<ImageResponse> {
   const artUrl = await resolveArtUrl(input.img, input.imgType ?? 'art')
   const lang = input.lang ?? 'en'
   const isKorean = lang === 'ko'
+  // Fit the title: shrink to one line, else two balanced lines (no widow).
+  // The content column is 720px (art) / 1000px (no art) minus padding.
+  const titleFit = fitTitle(
+    isKorean ? krBoldOtf : robotoBoldOtf,
+    input.title,
+    artUrl ? 640 : 900,
+  )
   return new ImageResponse(
     createElement(BomOgCard, {
-      title: input.title,
+      titleLines: titleFit.lines,
+      titleFontSize: titleFit.size,
       sub: input.sub,
       desc: clampDesc(input.desc),
       artUrl,

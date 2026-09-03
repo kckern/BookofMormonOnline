@@ -4,7 +4,10 @@
 // description, and a gold-framed square thumbnail on the right.
 
 interface BomOgCardProps {
-  title: string
+  /** Pre-fitted title line(s) — one line if it fits, else two balanced lines. */
+  titleLines: string[]
+  /** Font size chosen by the fitter (lib/ogCard) for the title. */
+  titleFontSize: number
   sub?: string
   desc?: string
   artUrl?: string
@@ -21,16 +24,7 @@ const GOLD = '#fbc658'
 const CARD = '#d6d8db'
 const GREY = '#646464'
 
-// GD auto-shrank the title to fit ~680px; approximate by length.
-function titleSize(t: string): number {
-  const n = t.length
-  if (n <= 16) return 54
-  if (n <= 24) return 46
-  if (n <= 34) return 38
-  return 32
-}
-
-export function BomOgCard({ title, sub, desc, artUrl, logoUrl, siteTitle, fontFamily }: BomOgCardProps) {
+export function BomOgCard({ titleLines, titleFontSize, sub, desc, artUrl, logoUrl, siteTitle, fontFamily }: BomOgCardProps) {
   const colWidth = artUrl ? 720 : 1000
   return (
     <div
@@ -76,15 +70,26 @@ export function BomOgCard({ title, sub, desc, artUrl, logoUrl, siteTitle, fontFa
         >
           <div
             style={{
-              fontSize: titleSize(title),
-              fontWeight: 700,
-              color: '#000000',
-              textAlign: 'center',
-              lineHeight: 1.1,
-              maxWidth: colWidth - 60,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              maxWidth: colWidth - 40,
             }}
           >
-            {title}
+            {titleLines.map((ln, i) => (
+              <div
+                key={i}
+                style={{
+                  fontSize: titleFontSize,
+                  fontWeight: 700,
+                  color: '#000000',
+                  textAlign: 'center',
+                  lineHeight: 1.12,
+                }}
+              >
+                {ln}
+              </div>
+            ))}
           </div>
 
           {sub && (
