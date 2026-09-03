@@ -61,9 +61,11 @@ export function BomOgCard({ titleLines, titleFontSize, sub, desc, artUrl, logoUr
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'flex-start',
+            justifyContent: 'center',
             width: colWidth,
-            paddingTop: 30,
+            height: 345,
+            paddingTop: 24,
+            paddingBottom: 24,
             paddingLeft: 24,
             paddingRight: 24,
           }}
