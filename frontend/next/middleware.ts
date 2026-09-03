@@ -173,7 +173,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.rewrite(url, { request: { headers: requestHeaders } })
   }
 
-  if (!isInfraHost(forwardedHost) && !isAuthorizedHost(forwardedHost)) {
+  // Dev/staging escape hatch: BOM_ALLOW_ANY_HOST serves ANY host instead of
+  // 301-ing unrecognized hosts to the canonical apex. Lets the dev deployment
+  // answer on bom.kckern.net (and any future dev alias) without registering each
+  // one in locales.ts. Set ONLY in dev (frontend/next/.env.local, gitignored);
+  // the prod image never sets it, so the allowlist redirect — a deliberate
+  // SEO/host-spoofing guard — stays enforced in production. Default off.
+  const allowAnyHost = process.env.BOM_ALLOW_ANY_HOST === '1'
+  if (!allowAnyHost && !isInfraHost(forwardedHost) && !isAuthorizedHost(forwardedHost)) {
     // Hardcode https — the site is HTTPS-only and markResponse sets HSTS; keying
     // off x-forwarded-proto risks emitting an http:// Location (extra upgrade hop).
     const target = `https://${CANONICAL_EN_HOST}${pathname}${request.nextUrl.search}`

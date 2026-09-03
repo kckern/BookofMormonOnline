@@ -23,6 +23,10 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     env: {
       GRAPHQL_URL: process.env.GRAPHQL_URL ?? 'http://localhost:5006/graphql',
+      // Pin the host-allowlist redirect ON for tests, even on a dev box whose
+      // .env.local sets BOM_ALLOW_ANY_HOST=1 (Next lets an existing process.env
+      // value win over .env.local). Keeps host-allowlist.test.ts deterministic.
+      BOM_ALLOW_ANY_HOST: '0',
     },
   },
 })
