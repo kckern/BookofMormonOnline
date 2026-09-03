@@ -32,10 +32,10 @@ Real-looking names but no content; nothing to show in a feed. Members but never 
 `서울남 스테이크` (17 members), `몰몬경 사랑`, `Hamlin Ward Seminary`, `Deaf ASL LDS Group`, `BOM studying`, `서울 동스테이크`, `Wes's Journey of Discovery` (2 msgs), `1 Nephi` (1 msg).
 → Recommend `listed=0` (keep reachable by direct link; just not featured).
 
-### REVIEW — anomaly
+### REVIEW — anomaly (RESOLVED: keep public)
 | Channel | url | note |
 |---|---|---|
-| תלמידים ישו המשיח | `4f7002d41a94cc82c02f8ddb543f6894` | **970 roots / 1168 msgs but 1 member**, Hebrew, last 2025-08. Looks like a solo/import/scraped channel. Not `en` so excluded from the en feed today, but huge — confirm provenance before it's ever surfaced. |
+| תלמידים ישו המשיח | `4f7002d41a94cc82c02f8ddb543f6894` | **970 roots / 1168 msgs, 1 member.** Hebrew *name* but English *content* (chiasmus/scripture study). Corrected to `lang=en`. **Decision 2026-09-03 (KC): keep public.** Now ranks #3 in the community by activity — left as a normal public group; no provenance action taken. |
 
 ### KEEP — legitimate groups
 Reformers Discuss the BoM (`981706be…`, flagship), Hugh Nibley's Classroom (99 members, 126 roots), **Red Brick Store** (323 roots), Book of Mormon Perspectives Forum, Packets of Light, BSFriends, Reading the BoM as non-LDS, The Lloyd's Study Group, plus real language study groups with content.
