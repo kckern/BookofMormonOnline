@@ -178,9 +178,12 @@ function maskNickname(nickname: string): string {
  * private user never surfaces by name on a public surface (e.g. leaderboard).
  * Public users (`public: true`) pass through untouched. Mirrors legacy
  * maskUserPrivacy (BomCommunity.ts:67).
+ *
+ * Bots are never masked: a bot persona's display name (e.g. "Henry VIII") IS
+ * the content, not private user data, so anonymizing it is nonsensical.
  */
 function maskUserPrivacy(u: Record<string, unknown>): Record<string, unknown> {
-  if (u.public) return u;
+  if (u.public || u.isBot) return u;
   const seed = (u.user_id as string) || 'user';
   return {
     ...u,
@@ -196,14 +199,18 @@ function maskUserPrivacy(u: Record<string, unknown>): Record<string, unknown> {
  * Mirrors legacy loadHomeItem() exactly: parses data JSON for links/highlights,
  * prepends custom_type (pageSlug) to text/section/fax link values.
  */
-function assembleHomeFeedItem(msg: MessageDTO): Record<string, unknown> {
+function assembleHomeFeedItem(msg: MessageDTO, publicUserIds?: Set<string>): Record<string, unknown> {
   const userDto = msg.user;
-  // C-1: mask non-public users so private account real names never surface in
-  // the home feed. assembleHomeUser always defaults public:false (no cross-table
-  // lookup at item-assembly time), so maskUserPrivacy anonymizes every non-public
-  // user. Bots have no nickname to leak and their isBot flag is preserved through
-  // maskUserPrivacy (it only touches nickname/picture, not other fields).
-  const user = userDto ? maskUserPrivacy(assembleHomeUser(userDto)) : null;
+  // C-1: mask non-public HUMAN users so private account real names never surface
+  // in the home feed. assembleHomeUser defaults public:false, so maskUserPrivacy
+  // anonymizes non-public humans. A user is public when they're a joined member of
+  // a discoverable public/open group (publicUserIds, computed once per request).
+  // Bots pass through unmasked — a bot persona's name is content, not PII.
+  const markPublic = (u: Record<string, unknown>) => {
+    if (publicUserIds?.has(u.user_id as string)) u.public = true;
+    return u;
+  };
+  const user = userDto ? maskUserPrivacy(markPublic(assembleHomeUser(userDto))) : null;
 
   const pageSlug = msg.custom_type;
   let data: { links?: Record<string, unknown>; highlights?: string[]; participantRole?: string } = {};
@@ -221,7 +228,7 @@ function assembleHomeFeedItem(msg: MessageDTO): Record<string, unknown> {
   const highlights: string[] | null = data?.highlights?.length ? data.highlights : null;
 
   // C-1: mask repliers too — same reasoning.
-  const repliers = (msg.thread_info?.most_replies ?? []).map((r) => maskUserPrivacy(assembleHomeUser(r)));
+  const repliers = (msg.thread_info?.most_replies ?? []).map((r) => maskUserPrivacy(markPublic(assembleHomeUser(r))));
   const replycount = msg.thread_info?.reply_count ?? 0;
 
   // legacy takes first reaction's user_ids as "likes"
@@ -307,10 +314,21 @@ async function assembleHomeGroup(
  *   - Keep only messages with a custom_type (pageSlug present)
  *   - Sort descending by created_at
  */
+// Every distinct author + replier user_id in a message list — the input to
+// getPublicUserIds so the feed can unmask members of discoverable public groups.
+function collectMessageUserIds(messages: MessageDTO[]): string[] {
+  const ids = new Set<string>();
+  for (const m of messages) {
+    if (m.user?.user_id) ids.add(m.user.user_id);
+    for (const r of m.thread_info?.most_replies ?? []) if (r.user_id) ids.add(r.user_id);
+  }
+  return [...ids];
+}
+
 export function feedAlgorithm(
   messages: MessageDTO[],
   viewerUserId: string | null,
-  opts: { unfiltered?: boolean } = {},
+  opts: { unfiltered?: boolean; publicUserIds?: Set<string> } = {},
 ): Record<string, unknown>[] {
   // Unlisted-beta channels (e.g. the Reformers discussion) are curated: every
   // root is intentional discussion, so we skip the general-feed noise heuristics
@@ -334,7 +352,7 @@ export function feedAlgorithm(
   return filtered
     .filter((m) => opts.unfiltered || !!m.custom_type)
     .sort((a, b) => b.created_at - a.created_at)
-    .map(assembleHomeFeedItem);
+    .map((m) => assembleHomeFeedItem(m, opts.publicUserIds));
 }
 
 // ─── Featured channels helper ─────────────────────────────────────────────────
@@ -589,7 +607,8 @@ export const communityResolvers: Resolvers = {
 
           // All messages for this channel
           const msgs = await getMessages(ctx.db, channelUrl, { limit: 30 });
-          const feed = feedAlgorithm(msgs, myUserId, { unfiltered: args.unlisted === true });
+          const publicSet = await getPublicUserIds(ctx.db, collectMessageUserIds(msgs));
+          const feed = feedAlgorithm(msgs, myUserId, { unfiltered: true, publicUserIds: publicSet });
           return asGql({ groups: [groupObj], feed });
         }
 
@@ -618,7 +637,9 @@ export const communityResolvers: Resolvers = {
           getMessagesForChannels(ctx.db, allUrls, 30),
         ]);
 
-        const feed = feedAlgorithm([...msgsByChannel.values()].flat(), myUserId, { unfiltered: args.unlisted === true });
+        const flatMsgs = [...msgsByChannel.values()].flat();
+        const publicSet = await getPublicUserIds(ctx.db, collectMessageUserIds(flatMsgs));
+        const feed = feedAlgorithm(flatMsgs, myUserId, { unfiltered: true, publicUserIds: publicSet });
         return asGql({ groups, feed });
       } catch (err) {
         console.error('homefeed error:', err);
@@ -650,7 +671,8 @@ export const communityResolvers: Resolvers = {
         if (!root || root.parent_message_id) return asGql([]);
 
         const replies = await getThread(ctx.db, messageId);
-        return asGql(replies.map(assembleHomeFeedItem));
+        const publicSet = await getPublicUserIds(ctx.db, collectMessageUserIds(replies));
+        return asGql(replies.map((m) => assembleHomeFeedItem(m, publicSet)));
       } catch (err) {
         console.error('homethread error:', err);
         return asGql([]);

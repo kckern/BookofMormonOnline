@@ -98,7 +98,7 @@ export function HomeFeed({
       let token = appController.states.user.token;
       setLoader(null);
       let r = await BoMOnlineAPI(
-        { homefeed: { token, channel: activeGroup, message: messageId, unlisted: unlistedBeta } },
+        { homefeed: { token, channel: activeGroup, message: messageId, unlisted: false } },
         { useCache: false },
       );
       if (cancelled) return;

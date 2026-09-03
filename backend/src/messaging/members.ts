@@ -70,16 +70,24 @@ export async function getPublicUserIds(
   if (userIds.length === 0) return new Set();
   let rows: Array<{ user_id: string }>;
   try {
-    // Explicit-policy channels expose content, not their human roster. Do not
-    // let membership in an unlisted/fixed public channel silently make a user
-    // profile globally public through the legacy leaderboard heuristic.
+    // A user is public when joined to a DISCOVERABLE public/open group: either a
+    // legacy policy-less public group, or one whose explicit policy is public +
+    // listed + enabled. Unlisted/private/hidden policy channels still don't leak
+    // their human roster into global public-ness.
     rows = await db.selectFrom('messenger_members as m')
       .innerJoin('messenger_channels as c', 'c.channel_url', 'm.channel_url')
       .leftJoin('messenger_channel_policy as p', 'p.channel_url', 'm.channel_url')
       .select('m.user_id as user_id').distinct()
       .where('m.user_id', 'in', userIds).where('m.state', '=', 'joined')
       .where('c.custom_type', 'in', ['public', 'open'])
-      .where('p.channel_url', 'is', null).execute();
+      .where((eb) => eb.or([
+        eb('p.channel_url', 'is', null),
+        eb.and([
+          eb('p.visibility', '=', 'public'),
+          eb('p.listed', '=', 1),
+          eb('p.enabled', '=', 1),
+        ]),
+      ])).execute();
   } catch (error) {
     // Rolling deploy compatibility before the additive policy migration.
     const candidate = error as { code?: string; errno?: number };

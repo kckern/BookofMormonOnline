@@ -34,24 +34,6 @@ export default function Home() {
     return () => document.body.classList.remove("community-view");
   }, [mobile, activeTab]);
 
-  useEffect(() => {
-    if (!unlistedBeta) return undefined;
-    let robots = document.querySelector('meta[name="robots"]');
-    const created = !robots;
-    const previous = robots?.getAttribute('content');
-    if (!robots) {
-      robots = document.createElement('meta');
-      robots.setAttribute('name', 'robots');
-      document.head.appendChild(robots);
-    }
-    robots.setAttribute('content', 'noindex,nofollow,noarchive');
-    return () => {
-      if (created) robots.remove();
-      else if (previous == null) robots.removeAttribute('content');
-      else robots.setAttribute('content', previous);
-    };
-  }, [unlistedBeta]);
-
   return (
     // `--tabs` modifier (desktop only) lets the stylesheet own the fixed-header
     // clearance + tab-bar offset without affecting the mobile layout.

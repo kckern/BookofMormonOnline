@@ -92,10 +92,10 @@ function Community({ unlistedBeta = false }) {
   useEffect(() => (document.title = label("community")), []);
 
   return false ? null : (
-    <div className={`home container${unlistedBeta ? " unlistedBeta" : ""}`}>
-      {!unlistedBeta && <div className="leftPanelScroll noselect">
+    <div className="home container">
+      <div className="leftPanelScroll noselect">
         <GroupBrowser activeGroup={activeGroup} setActiveGroup={setActiveGroup} />
-      </div>}
+      </div>
       <div className="rightPanelScroll">
         <HomeFeed
           activeGroup={activeGroup}
