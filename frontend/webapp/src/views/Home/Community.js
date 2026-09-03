@@ -50,6 +50,18 @@ import { timeAgoString } from "../../models/Utils.js";
 // unified Home (/home/community/...) or the legacy top-level (/community/...).
 export const isCommunityPath = (url) => /(^|\/)(community|feed)(\/|$)/.test(url || "");
 
+// Self-hosted (inline data URI) placeholder for a group cover that fails to load
+// at runtime — never point onError at an external image host (policy: no
+// external image domains). Swaps once to avoid an error loop.
+export const GROUP_IMG_FALLBACK =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="#3a3f4b"/><text x="50%" y="56%" text-anchor="middle" font-family="Georgia,serif" font-size="120" fill="#c9a24b">✦</text></svg>',
+  );
+export const groupImgFallback = (e) => {
+  if (e?.target && e.target.src !== GROUP_IMG_FALLBACK) e.target.src = GROUP_IMG_FALLBACK;
+};
+
 export const communityHref = (channel, message) => {
   const beta = typeof window !== "undefined" && /^\/home\/feed(?:\/|$)/.test(window.location.pathname);
   return `${beta ? "/home/feed" : "/home/community"}${channel ? `/${channel}` : ""}${message ? `/${message}` : ""}`;
@@ -450,7 +462,7 @@ function GroupCard({ groupData, activeGroup, setActiveGroup }) {
       <Link to={communityHref(groupData.url)}>
         <div className="groupContent" onClick={() => ReactTooltip.hide()}>
           <div className="groupImage">
-            <img src={groupData.picture} alt={groupData.name || ""} />
+            <img src={groupData.picture} alt={groupData.name || ""} onError={groupImgFallback} />
           </div>
           <div className="groupText">
             <div className="groupTitle">{groupData.name}</div>

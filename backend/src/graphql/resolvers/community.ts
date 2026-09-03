@@ -84,6 +84,18 @@ function defaultAvatar(userId: string): string {
   return genUserAvatar(userId || 'user');
 }
 
+// Self-hosted fallback cover for a group with no image — a deterministic inline
+// SVG (initials on a hue derived from the name). Data URI = zero external
+// dependency (policy: never rely on an external image domain at runtime). Real
+// covers are S3-hosted via scripts/ingest-group-covers; this only fills nulls.
+function groupCoverFallback(name: string | null | undefined): string {
+  const label = (name || 'Group').trim() || 'Group';
+  const initials = label.split(/\s+/).slice(0, 2).map((w) => w[0] || '').join('').toUpperCase() || 'G';
+  let h = 0; for (const ch of label) h = (h * 31 + ch.charCodeAt(0)) % 360;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="hsl(${h},42%,36%)"/><text x="50%" y="50%" dy=".35em" text-anchor="middle" font-family="Georgia,serif" font-size="108" fill="#f2ead9">${initials}</text></svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
 function assembleHomeUser(
   userDto: UserDTO | null,
   progress?: BomUserProgress | null,
@@ -301,7 +313,7 @@ async function assembleHomeGroup(
     name: channel.name,
     description,
     privacy: channel.custom_type,
-    picture: channel.cover_url || null,
+    picture: channel.cover_url || groupCoverFallback(channel.name),
     latest,
     requests,
     members,

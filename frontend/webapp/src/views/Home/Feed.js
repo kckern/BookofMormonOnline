@@ -44,7 +44,7 @@ import publicIcon from "src/views/_Common/Study/svg/public.svg";
 import openIcon from "src/views/_Common/Study/svg/open.svg";
 import ReactTooltip from "react-tooltip";
 import trophy from "src/views/User/svg/trophy.svg";
-import { GroupCallToAction, GroupLeaderBoard, communityHref } from "./Community.js";
+import { GroupCallToAction, GroupLeaderBoard, communityHref, groupImgFallback } from "./Community.js";
 import { md5 } from "../../models/Utils.js";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { useMessenger } from "src/contexts/MessengerContext";
@@ -224,7 +224,7 @@ function HomeFeedBanner({ bannerGroup, setActiveGroup }) {
     <Card className="homeBannerCard">
       <CardBody className="homeBanner">
         <div className="homeBannerImg">
-          <img src={bannerGroup.picture} alt={bannerGroup.name || ""} />
+          <img src={bannerGroup.picture} alt={bannerGroup.name || ""} onError={groupImgFallback} />
           <GroupCallToAction
             groupData={bannerGroup}
           />
