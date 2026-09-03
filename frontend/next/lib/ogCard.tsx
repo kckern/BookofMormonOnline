@@ -224,6 +224,13 @@ export async function renderOgCard(input: OgCardInput): Promise<ImageResponse> {
             ]
           : [{ name: 'Scripture', data: scriptureFont, weight: 400 as const, style: 'normal' as const }]),
       ],
+      // Override @vercel/og's default `immutable, max-age=1y`. These cards are
+      // regenerated as the design (and underlying data) changes, so a frozen
+      // year-long edge copy strands old/broken art. Cache for a day at the edge
+      // but allow revalidation + brief stale serving.
+      headers: {
+        'cache-control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800',
+      },
     },
   )
 }
