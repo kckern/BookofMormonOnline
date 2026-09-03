@@ -1,0 +1,31 @@
+#!/bin/sh
+# pre-commit — block secrets & PII from entering this (public) repo. Scans only the lines
+# you are ADDING in this commit, so pre-existing content never trips it. Delegates the
+# actual detection to .githooks/secret-scan.sh. Bypass once (discouraged): --no-verify.
+set -u
+
+ROOT=$(git rev-parse --show-toplevel) || exit 0
+[ -n "$(git diff --cached --name-only --diff-filter=ACM)" ] || exit 0
+
+# Emit "path:lineno:content" for every added line across the staged diff. The hunk
+# header's first "+<n>" is the new-file start line; count up from there.
+added=$(git diff --cached -U0 --diff-filter=ACM 2>/dev/null | awk '
+  /^\+\+\+ /              { path=$2; sub(/^b\//,"",path); next }
+  /^@@/                   { if (match($0, /\+[0-9]+/)) ln = substr($0, RSTART+1, RLENGTH-1)+0; next }
+  /^\+/ && $0 !~ /^\+\+\+/ { print path ":" ln ":" substr($0,2); ln++ }
+')
+[ -n "$added" ] || exit 0
+
+if ! printf '%s\n' "$added" | sh "$ROOT/.githooks/secret-scan.sh"; then
+  cat >&2 <<'MSG'
+
+✖ pre-commit blocked: a possible secret or PII value was found in your staged changes (above).
+
+  • Real secret/PII → remove it (use env vars / Infisical), then re-commit.
+  • False positive  → add the literal to .githooks/allowlist.txt, or append
+                       "# pragma: allowlist secret" to the offending line.
+  • Bypass once (discouraged): git commit --no-verify
+MSG
+  exit 1
+fi
+exit 0

@@ -1,0 +1,17 @@
+# .githooks/allowlist.txt — literal values the secret/PII pre-commit hook should ignore.
+# One value per line; blank lines and lines starting with # are comments. A staged line
+# that contains any of these substrings is skipped. Keep this list tight — prefer removing
+# a real secret over allowlisting it. For a one-off line, use "# pragma: allowlist secret".
+
+# AWS origin IP — public, DNS still points to it (not secret).
+54.190.52.236
+
+# Project / service email addresses (not personal PII).
+mail@bookofmormononline.net
+no-reply@bookofmormon.online
+support@bookofmormon.online
+kc@kckern.com
+test@test.com
+
+# Note: RFC 5737 documentation IP ranges (192.0.2.x, 198.51.100.x, 203.0.113.x) and
+# private/loopback/CGNAT ranges are handled in secret-scan.sh, not here.
