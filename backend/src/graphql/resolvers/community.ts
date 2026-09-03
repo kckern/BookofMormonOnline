@@ -307,11 +307,16 @@ async function assembleHomeGroup(
  *   - Keep only messages with a custom_type (pageSlug present)
  *   - Sort descending by created_at
  */
-function feedAlgorithm(
+export function feedAlgorithm(
   messages: MessageDTO[],
   viewerUserId: string | null,
+  opts: { unfiltered?: boolean } = {},
 ): Record<string, unknown>[] {
-  const filtered = messages.filter((m) => {
+  // Unlisted-beta channels (e.g. the Reformers discussion) are curated: every
+  // root is intentional discussion, so we skip the general-feed noise heuristics
+  // (page-slug custom_type requirement + short-unlinked drop) that would hide
+  // free-form AI posts. Ordering is unchanged — always newest-first.
+  const filtered = opts.unfiltered ? messages : messages.filter((m) => {
     let data: { links?: Record<string, unknown> } = {};
     try {
       data = JSON.parse(m.data) as typeof data;
@@ -327,7 +332,7 @@ function feedAlgorithm(
   });
 
   return filtered
-    .filter((m) => !!m.custom_type)
+    .filter((m) => opts.unfiltered || !!m.custom_type)
     .sort((a, b) => b.created_at - a.created_at)
     .map(assembleHomeFeedItem);
 }
@@ -584,7 +589,7 @@ export const communityResolvers: Resolvers = {
 
           // All messages for this channel
           const msgs = await getMessages(ctx.db, channelUrl, { limit: 30 });
-          const feed = feedAlgorithm(msgs, myUserId);
+          const feed = feedAlgorithm(msgs, myUserId, { unfiltered: args.unlisted === true });
           return asGql({ groups: [groupObj], feed });
         }
 
@@ -613,7 +618,7 @@ export const communityResolvers: Resolvers = {
           getMessagesForChannels(ctx.db, allUrls, 30),
         ]);
 
-        const feed = feedAlgorithm([...msgsByChannel.values()].flat(), myUserId);
+        const feed = feedAlgorithm([...msgsByChannel.values()].flat(), myUserId, { unfiltered: args.unlisted === true });
         return asGql({ groups, feed });
       } catch (err) {
         console.error('homefeed error:', err);
