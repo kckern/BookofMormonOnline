@@ -19,6 +19,17 @@ test.describe('preview social cards (img.* port)', () => {
     }
   })
 
+  // The /read card shows scripture text in the reader's face with the speaker's portrait,
+  // at chapter, verse, and verse-range granularity (the sitemap includes verse-level refs).
+  test('read cards render at chapter / verse / verse-range granularity', async ({ request }) => {
+    for (const slug of ['/read/1.nephi.1', '/read/1.nephi.1.2', '/read/1.nephi.1.2-2', '/read/1.nephi.1.2-5', '/read/alma.32.21']) {
+      const r = await request.get(slug, { headers: { 'x-forwarded-host': 'img.bookofmormon.online' } })
+      expect(r.status(), slug).toBe(200)
+      expect(r.headers()['content-type'], slug).toContain('image/png')
+      expect((await r.body()).length, slug).toBeGreaterThan(10000)
+    }
+  })
+
   test('img-kr host renders a Korean card (different bytes than English)', async ({ request }) => {
     const en = (await (await request.get('/lehites', { headers: { 'x-forwarded-host': 'img.bookofmormon.online' } })).body()).length
     const ko = (await (await request.get('/lehites', { headers: { 'x-forwarded-host': 'img-kr.bookofmormon.online' } })).body()).length

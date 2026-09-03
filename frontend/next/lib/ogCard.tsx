@@ -18,6 +18,10 @@ const robotoCondensedLight = readFileSync(join(fontsDir, 'RobotoCondensed-Light.
 const ibmPlexSansKRBold = readFileSync(join(fontsDir, 'IBMPlexSansKR-Bold.ttf'))
 const ibmPlexSansKRRegular = readFileSync(join(fontsDir, 'IBMPlexSansKR-Regular.ttf'))
 const ibmPlexSansKRLight = readFileSync(join(fontsDir, 'IBMPlexSansKR-Light.ttf'))
+// The reader's scripture face (Goudy Scripture), converted from the CRA's
+// public/font/scripture.woff2 to TTF (satori can't decode woff2). Used for the
+// body text of /read cards so a scripture excerpt looks like the reader.
+const scriptureFont = readFileSync(join(fontsDir, 'Scripture.ttf'))
 
 // The gold stacked-plates mark, embedded as a data URI (satori <img> needs a
 // data URI or absolute URL; a data URI is deterministic and offline-safe).
@@ -117,6 +121,10 @@ export interface OgCardInput {
   img?: string
   /** Which media collection `img` addresses. */
   imgType?: 'art' | 'people' | 'places'
+  /** Render the description in the reader's Scripture face (for /read excerpts). */
+  descFont?: 'scripture'
+  /** Speaker for a /read card — rendered as a reader-style circular portrait + voice pill. */
+  speaker?: { slug: string; voice: string }
   lang?: string
 }
 
@@ -138,35 +146,51 @@ async function resolveArtUrl(img: string | undefined, imgType: string): Promise<
 // PHP wrapped the description to a fixed line count; satori clamps lines, but a
 // hard char cap first avoids feeding satori a huge string (and keeps the cut on
 // a word boundary rather than shearing a glyph at the box edge).
-function clampDesc(desc: string | undefined): string | undefined {
+function clampDesc(desc: string | undefined, cap = 260): string | undefined {
   if (!desc) return undefined
   const clean = desc.replace(/\s+/g, ' ').trim()
   // Keep the description to a teaser that ends well above the card's bottom edge
-  // (leaves breathing room). ~260 chars ≈ 4 lines at the card's width/size.
-  if (clean.length <= 260) return clean
-  const cut = clean.slice(0, 260)
+  // (leaves breathing room). ~260 chars ≈ 4 lines of grey teaser; scripture fills
+  // more (larger box, denser face) so it gets a higher cap.
+  if (clean.length <= cap) return clean
+  const cut = clean.slice(0, cap)
   const lastSpace = cut.lastIndexOf(' ')
-  return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut) + '…'
+  return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut).replace(/[.,;:]$/, '') + '…'
 }
 
 export async function renderOgCard(input: OgCardInput): Promise<ImageResponse> {
-  const artUrl = await resolveArtUrl(input.img, input.imgType ?? 'art')
   const lang = input.lang ?? 'en'
   const isKorean = lang === 'ko'
+  const isScripture = input.descFont === 'scripture'
+  // A /read card shows the speaker as a reader-style circular portrait + voice pill
+  // instead of the square art thumbnail. Resolve the portrait from the people media.
+  const speakerAvatar = input.speaker
+    ? await resolveArtUrl(input.speaker.slug, 'people')
+    : undefined
+  const speaker = input.speaker ? { voice: input.speaker.voice, avatarUrl: speakerAvatar } : undefined
+  const artUrl = speaker ? undefined : await resolveArtUrl(input.img, input.imgType ?? 'art')
+  // Something occupies the right column (art thumbnail or speaker portrait) → narrower text.
+  const hasRightCol = Boolean(artUrl || speakerAvatar)
   // Fit the title: shrink to one line, else two balanced lines (no widow).
-  // The content column is 720px (art) / 1000px (no art) minus padding.
+  // The content column is 720px (right col) / 1000px (full width) minus padding.
   const titleFit = fitTitle(
     isKorean ? krBoldOtf : robotoBoldOtf,
     input.title,
-    artUrl ? 640 : 900,
+    hasRightCol ? 640 : 900,
   )
   return new ImageResponse(
     createElement(BomOgCard, {
       titleLines: titleFit.lines,
       titleFontSize: titleFit.size,
       sub: input.sub,
-      desc: clampDesc(input.desc),
+      desc: clampDesc(input.desc, isScripture ? 560 : 260),
+      // Scripture LAYOUT (bigger, denser, left-aligned, more lines) always applies for
+      // /read excerpts; the Goudy Scripture FACE only for Latin — it has no Korean glyphs,
+      // so Korean scripture keeps the KR face.
+      scriptureStyle: isScripture,
+      descFont: isScripture && !isKorean ? 'Scripture' : undefined,
       artUrl,
+      speaker,
       logoUrl: platesDataUri,
       siteTitle: SITE_TITLE[lang] ?? SITE_TITLE.en,
       // Korean cards render entirely in IBM Plex Sans KR (it carries Latin too,
@@ -183,13 +207,16 @@ export async function renderOgCard(input: OgCardInput): Promise<ImageResponse> {
       fonts: [
         { name: 'RobotoCondensed', data: robotoCondensedBold, weight: 700, style: 'normal' },
         { name: 'RobotoCondensed', data: robotoCondensedLight, weight: 300, style: 'normal' },
+        // The Scripture (Goudy) face is Latin-only and only used by Latin /read cards.
+        // Korean cards render scripture in the KR face instead, so skip Scripture there
+        // and load the CJK faces — keeps each card's embedded font payload lean.
         ...(isKorean
           ? [
               { name: 'IBMPlexSansKR', data: ibmPlexSansKRBold, weight: 700 as const, style: 'normal' as const },
               { name: 'IBMPlexSansKR', data: ibmPlexSansKRRegular, weight: 400 as const, style: 'normal' as const },
               { name: 'IBMPlexSansKR', data: ibmPlexSansKRLight, weight: 300 as const, style: 'normal' as const },
             ]
-          : []),
+          : [{ name: 'Scripture', data: scriptureFont, weight: 400 as const, style: 'normal' as const }]),
       ],
     },
   )

@@ -1,8 +1,10 @@
 // Pure scripture ref/slug utilities + the immutable BoM canon table. No React/GraphQL
 // deps, so this module is safe to import from plain-Node unit tests.
 
-interface ReadLine { text: string; verse_num: number }
-interface ReadUnit { lines: ReadLine[] }
+interface ReadLine { text: string; verse_num: number; format?: string | null }
+// A unit is one speaker's contiguous passage: its lines plus who is speaking
+// (person_slug → portrait, voice → label), mirroring the reader's block gutter.
+interface ReadUnit { lines: ReadLine[]; person_slug?: string | null; voice?: string | null }
 interface ReadSection { heading: string | null; blocks: ReadUnit[] }
 export interface ReadBlock {
   ref: string

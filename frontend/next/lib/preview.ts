@@ -5,7 +5,7 @@ import { getPerson } from '@/lib/people'
 import { getPlace } from '@/lib/places'
 import { getArt } from '@/lib/art'
 import { getCommentary } from '@/lib/commentary'
-import { resolveChapter, scripturePreview } from '@/lib/scripture'
+import { resolveReadCard } from '@/lib/scripture'
 import { stripMarkup } from '@/lib/seo'
 import { wikiToText, superscript } from '@/lib/entity'
 import { LOCALE_SEGS } from '@/lib/locales'
@@ -61,12 +61,21 @@ export async function gatherPreview(rawSlug: string, lang: string): Promise<OgCa
   const leaf = segs0[segs0.length - 1]
 
   // Scripture reader (a greenfield route not in the PHP box). The ref uses dots
-  // (read/1.nephi.1) but may arrive path-split (read/alma.32/21) — rejoin with '.'.
+  // (read/1.nephi.1, read/1.nephi.1.2, read/1.nephi.1.2-5) but may arrive path-split
+  // (read/alma.32/21) — rejoin with '.'. The card renders scripture text in the reader's
+  // Scripture face with the speaker's portrait + voice label (see lib/ogCard).
   if (first === 'read') {
     const ref = segs0.slice(1).join('.')
-    const res = await resolveChapter(ref).catch(() => null)
-    if (res) {
-      return { title: res.block.ref, desc: scripturePreview(res.block), img: fallbackArt(slug), lang }
+    const card = await resolveReadCard(ref).catch(() => null)
+    if (card) {
+      return {
+        title: card.ref,
+        desc: card.text,
+        descFont: 'scripture',
+        speaker: card.speaker,
+        img: fallbackArt(slug),
+        lang,
+      }
     }
   }
 
