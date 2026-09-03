@@ -30,6 +30,14 @@
     padding-left: 1em;
 }
 
+/* /home/feed hides the tab bar, so the left column's 44px tab-bar clearance has
+   nothing to clear. Match the right (feed) column's top padding to the left so the
+   two panes align. Scoped to /home/feed (.home-feed) — /home/community keeps its
+   flush feed (its tab bar covers only the left column). */
+.container.home.home-feed .rightPanelScroll {
+    padding-top: 44px;
+}
+
 .homeFeed .card-body 
 {
     padding:0;

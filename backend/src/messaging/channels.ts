@@ -22,6 +22,7 @@
  */
 
 import { nanoid } from 'nanoid';
+import { sql } from 'kysely';
 import type { Kysely } from 'kysely';
 import type { DB } from '../../codegen/db.js';
 import type { ChannelDTO } from './dto.js';
@@ -285,11 +286,20 @@ export async function getPublicChannels(
     | 'solo'
   )[];
 
+  // Rank by real activity (most recent message), not channel updated_at — a
+  // merely-touched or empty channel shouldn't outrank an active one. Empty
+  // channels (MAX = NULL) sort last under DESC. Cheap: idx_channel_created covers it.
   let query = db
     .selectFrom('messenger_channels')
     .selectAll()
     .where('custom_type', 'in', types)
-    .orderBy('updated_at', 'desc')
+    .orderBy(
+      sql`(SELECT MAX(mm.created_at) FROM messenger_messages mm
+             WHERE mm.channel_url = messenger_channels.channel_url
+               AND mm.message_type = 'MESG'
+               AND (mm.is_deleted = 0 OR mm.is_deleted IS NULL))`,
+      'desc',
+    )
     .limit(options.limit ?? 100);
 
   if (options.lang) {

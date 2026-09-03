@@ -92,7 +92,7 @@ function Community({ unlistedBeta = false }) {
   useEffect(() => (document.title = label("community")), []);
 
   return false ? null : (
-    <div className="home container">
+    <div className={`home container${unlistedBeta ? " home-feed" : ""}`}>
       <div className="leftPanelScroll noselect">
         <GroupBrowser activeGroup={activeGroup} setActiveGroup={setActiveGroup} />
       </div>
@@ -123,11 +123,12 @@ const FIT_MIN = { leaders: 3, groups: 1, finishers: 4 };
 const OVERFLOW_PX = 4;
 const GROW_SLACK_PX = 100;
 
-function useFitCounts(cardRef) {
+function useFitCounts(cardRef, enabled = true) {
   const [caps, setCaps] = useState(FIT_MAX);
   const rafRef = useRef(0);
 
   const step = useCallback(() => {
+    if (!enabled) return; // "see more" mode: don't compact — the panel scrolls
     const panel = cardRef.current?.parentElement; // the fixed-height .leftPanelScroll
     if (!panel) return;
     const over = panel.scrollHeight - panel.clientHeight;
@@ -143,7 +144,7 @@ function useFitCounts(cardRef) {
       }
       return c; // in-band → stable (same ref → no re-render)
     });
-  }, [cardRef]);
+  }, [cardRef, enabled]);
 
   const schedule = useCallback(() => {
     if (rafRef.current) return;
@@ -168,7 +169,7 @@ function useFitCounts(cardRef) {
     };
   }, [cardRef, schedule]);
 
-  return caps;
+  return enabled ? caps : FIT_MAX;
 }
 
 function GroupBrowser({ activeGroup, setActiveGroup }) {
@@ -210,8 +211,11 @@ function GroupBrowser({ activeGroup, setActiveGroup }) {
     ?.map((i) => i?.grouping)
     .filter((v, i, a) => a.indexOf(v) === i).length;
 
-  const caps = useFitCounts(cardRef);
-  const shownGroups = groupListData.slice(0, caps.groups);
+  const caps = useFitCounts(cardRef, !isFiltered);
+  // "See more" (filtered) mode: show EVERY fetched group and let the panel scroll
+  // (.leftPanelScroll is overflow-y:auto). The height-fit cap only compacts the
+  // default view; applying it in filtered mode is what made "see more" do nothing.
+  const shownGroups = isFiltered ? groupListData : groupListData.slice(0, caps.groups);
 
   return (
     <Card className="Community" innerRef={cardRef}>
@@ -273,14 +277,14 @@ function GroupBrowser({ activeGroup, setActiveGroup }) {
                   {grouping !== next?.grouping && !queryFilter.grouping ? (
                     <div
                       className="seeMore"
-                      onClick={() =>
-                        setQueryFilter((q) => {
-                          q.grouping = grouping;
-                          setSeeMoreLabel(label("loading"));
-                          console.log(q);
-                          return q;
-                        })
-                      }
+                      onClick={() => {
+                        setSeeMoreLabel(label("loading"));
+                        // Immutable update — mutating + returning the same object
+                        // ref makes React bail out of the state change (the old
+                        // `q.grouping = …; return q` only re-rendered by luck via
+                        // the sibling setSeeMoreLabel).
+                        setQueryFilter((q) => ({ ...q, grouping }));
+                      }}
                     >
                       {seeMoreLabel}
                     </div>
