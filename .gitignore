@@ -22,6 +22,8 @@ log.sql
 /dist
 *.sh
 !test/run-regression.sh
+!.githooks/*.sh
+!scripts/install-git-hooks.sh
 *.log
 /.claude
 .worktrees/
