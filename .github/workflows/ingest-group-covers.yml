@@ -1,0 +1,30 @@
+name: ingest-group-covers
+
+# Manual one-off: rehost every group cover image to our own S3
+# (groups/<channel>.jpg) so runtime never depends on an external image domain.
+# Runs scripts/ingest-group-covers.mjs INSIDE the active prod container — S3
+# writes use the EC2 instance role and DB creds come from the container env.
+# Default mode is `dry` (report only); choose `apply` to write S3 + cover_url.
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'dry = report only, apply = write S3 + DB'
+        type: choice
+        default: dry
+        options: [dry, apply]
+
+jobs:
+  ingest:
+    runs-on: [self-hosted, prod]
+    steps:
+      - name: Run group-cover ingest in the active container
+        run: |
+          set -euo pipefail
+          DIR="${BOM_DEPLOY_DIR:-/home/ubuntu/greenfield}"
+          ACTIVE="$(sed -n '1p' "$DIR/active-slot")"
+          echo "active slot: $ACTIVE   mode: ${{ inputs.mode }}"
+          docker container inspect "$ACTIVE" >/dev/null
+          FLAG=""
+          [ "${{ inputs.mode }}" = "apply" ] && FLAG="--apply"
+          docker exec "$ACTIVE" node /app/backend/scripts/ingest-group-covers.mjs $FLAG
