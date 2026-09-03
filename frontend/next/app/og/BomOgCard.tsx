@@ -121,7 +121,7 @@ export function BomOgCard({ titleLines, titleFontSize, sub, desc, artUrl, logoUr
                 marginTop: 16,
                 maxWidth: colWidth - 60,
                 display: '-webkit-box',
-                WebkitLineClamp: 6,
+                WebkitLineClamp: 4,
                 WebkitBoxOrient: 'vertical',
                 overflow: 'hidden',
               }}

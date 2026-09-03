@@ -141,9 +141,12 @@ async function resolveArtUrl(img: string | undefined, imgType: string): Promise<
 function clampDesc(desc: string | undefined): string | undefined {
   if (!desc) return undefined
   const clean = desc.replace(/\s+/g, ' ').trim()
-  if (clean.length <= 500) return clean
-  const cut = clean.slice(0, 500)
-  return cut.slice(0, cut.lastIndexOf(' ')) + '…'
+  // Keep the description to a teaser that ends well above the card's bottom edge
+  // (leaves breathing room). ~260 chars ≈ 4 lines at the card's width/size.
+  if (clean.length <= 260) return clean
+  const cut = clean.slice(0, 260)
+  const lastSpace = cut.lastIndexOf(' ')
+  return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut) + '…'
 }
 
 export async function renderOgCard(input: OgCardInput): Promise<ImageResponse> {

@@ -12,7 +12,7 @@ test.describe('preview social cards (img.* port)', () => {
   })
 
   test('img.* host rewrites any path to a preview card', async ({ request }) => {
-    for (const slug of ['/lehites', '/lehites/1', '/contents', '/']) {
+    for (const slug of ['/lehites', '/lehites/1', '/contents', '/read/1.nephi.1', '/people/nephi1', '/']) {
       const r = await request.get(slug, { headers: { 'x-forwarded-host': 'img.bookofmormon.online' } })
       expect(r.status(), slug).toBe(200)
       expect(r.headers()['content-type'], slug).toContain('image/png')
