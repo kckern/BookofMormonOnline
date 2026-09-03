@@ -40,6 +40,9 @@ export function BomOgCard({ titleLines, titleFontSize, sub, desc, descFont, scri
   const hasRightCol = Boolean(artUrl || avatarUrl)
   const colWidth = hasRightCol ? 720 : 1000
   const isScripture = Boolean(scriptureStyle)
+  const align = isScripture ? 'flex-start' : 'center'
+  // Content width inside the column padding — scripture uses wider L/R padding.
+  const innerWidth = colWidth - (isScripture ? 92 : 48)
   return (
     <div
       style={{
@@ -48,10 +51,27 @@ export function BomOgCard({ titleLines, titleFontSize, sub, desc, descFont, scri
         display: 'flex',
         position: 'relative',
         backgroundColor: BLUE,
+        // Subtle depth: a soft light from the upper-left (near the logo) fading into a
+        // slightly darker base — keeps the blue field from reading flat.
+        backgroundImage:
+          'radial-gradient(80% 90% at 12% -10%, #43506607 0%, #3b465c00 45%),' +
+          'linear-gradient(150deg, #384357 0%, #323b4d 55%, #2c3441 100%)',
         fontFamily,
       }}
     >
       {/* Header: gold plates mark + wordmark */}
+      {/* Soft gold halo behind the logo (a subtle light beam / glow). */}
+      <div
+        style={{
+          position: 'absolute',
+          left: 40,
+          top: 20,
+          width: 172,
+          height: 160,
+          borderRadius: 172,
+          backgroundImage: 'radial-gradient(closest-side, rgba(251,198,88,0.30), rgba(251,198,88,0))',
+        }}
+      />
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={logoUrl} width={132} height={132} alt="" style={{ position: 'absolute', left: 60, top: 34 }} />
       <div style={{ position: 'absolute', left: 208, top: 46, fontSize: 66, fontWeight: 700, color: '#ffffff' }}>
@@ -67,6 +87,10 @@ export function BomOgCard({ titleLines, titleFontSize, sub, desc, descFont, scri
           width: 1080,
           height: 345,
           backgroundColor: CARD,
+          // Gentle top-lit panel + rounded corners + soft drop shadow for depth.
+          backgroundImage: 'linear-gradient(180deg, #e2e4e7 0%, #d6d8db 60%, #cfd2d6 100%)',
+          borderRadius: 28,
+          boxShadow: '0 12px 40px rgba(0,0,0,0.30)',
           display: 'flex',
         }}
       >
@@ -74,22 +98,25 @@ export function BomOgCard({ titleLines, titleFontSize, sub, desc, descFont, scri
           style={{
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center',
+            // Scripture cards read as a left-aligned quote block (title, rule, and text
+            // share one left edge, with the portrait centered opposite); other cards stay
+            // centered around the square thumbnail.
+            alignItems: align,
             justifyContent: 'center',
             width: colWidth,
             height: 345,
-            paddingTop: 24,
-            paddingBottom: 24,
-            paddingLeft: 24,
-            paddingRight: 24,
+            paddingTop: 28,
+            paddingBottom: 28,
+            paddingLeft: isScripture ? 52 : 24,
+            paddingRight: isScripture ? 40 : 24,
           }}
         >
           <div
             style={{
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'center',
-              maxWidth: colWidth - 40,
+              alignItems: align,
+              maxWidth: innerWidth,
             }}
           >
             {titleLines.map((ln, i) => (
@@ -99,7 +126,7 @@ export function BomOgCard({ titleLines, titleFontSize, sub, desc, descFont, scri
                   fontSize: titleFontSize,
                   fontWeight: 700,
                   color: '#000000',
-                  textAlign: 'center',
+                  textAlign: isScripture ? 'left' : 'center',
                   lineHeight: 1.12,
                 }}
               >
@@ -114,17 +141,29 @@ export function BomOgCard({ titleLines, titleFontSize, sub, desc, descFont, scri
                 fontSize: 26,
                 fontWeight: 700,
                 color: BLUE,
-                textAlign: 'center',
+                textAlign: isScripture ? 'left' : 'center',
                 lineHeight: 1.2,
                 marginTop: 8,
-                maxWidth: colWidth - 60,
+                maxWidth: innerWidth,
               }}
             >
               {sub}
             </div>
           )}
 
-          <div style={{ width: Math.min(680, colWidth - 40), height: 5, backgroundColor: GOLD, marginTop: 16 }} />
+          <div
+            style={{
+              width: isScripture ? innerWidth : Math.min(680, colWidth - 40),
+              height: 5,
+              backgroundColor: GOLD,
+              // Left-anchored rule fades out for the scripture quote block.
+              ...(isScripture
+                ? { backgroundImage: 'linear-gradient(90deg, #fbc658 0%, #fbc658 55%, rgba(251,198,88,0.25) 100%)' }
+                : {}),
+              borderRadius: 3,
+              marginTop: 18,
+            }}
+          />
 
           {desc && (
             <div
@@ -137,11 +176,11 @@ export function BomOgCard({ titleLines, titleFontSize, sub, desc, descFont, scri
                 // Only override the family when set; a literal `fontFamily: undefined`
                 // makes satori call .split on undefined (crashes the whole render).
                 ...(descFont ? { fontFamily: descFont } : {}),
-                lineHeight: isScripture ? 1.34 : 1.5,
+                lineHeight: isScripture ? 1.4 : 1.5,
                 color: isScripture ? '#2b2b2b' : GREY,
                 textAlign: isScripture ? 'left' : 'center',
-                marginTop: 16,
-                maxWidth: colWidth - 48,
+                marginTop: 18,
+                maxWidth: innerWidth,
                 display: '-webkit-box',
                 WebkitLineClamp: isScripture ? 6 : 4,
                 WebkitBoxOrient: 'vertical',
@@ -175,7 +214,14 @@ export function BomOgCard({ titleLines, titleFontSize, sub, desc, descFont, scri
             width={210}
             height={210}
             alt=""
-            style={{ width: 210, height: 210, borderRadius: 210, border: `4px solid ${VOICE}`, objectFit: 'cover' }}
+            style={{
+              width: 210,
+              height: 210,
+              borderRadius: 210,
+              border: `4px solid ${VOICE}`,
+              objectFit: 'cover',
+              boxShadow: '0 8px 22px rgba(0,0,0,0.35)',
+            }}
           />
           {speaker?.voice && (
             <div
@@ -192,6 +238,7 @@ export function BomOgCard({ titleLines, titleFontSize, sub, desc, descFont, scri
                 fontWeight: 700,
                 borderRadius: 8,
                 border: '1px solid #444',
+                boxShadow: '0 4px 10px rgba(0,0,0,0.30)',
               }}
             >
               {speaker.voice}
@@ -207,13 +254,15 @@ export function BomOgCard({ titleLines, titleFontSize, sub, desc, descFont, scri
             width: 305,
             height: 300,
             backgroundColor: GOLD,
+            borderRadius: 10,
+            boxShadow: '0 10px 28px rgba(0,0,0,0.35)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={artUrl} width={281} height={280} alt="" style={{ objectFit: 'cover' }} />
+          <img src={artUrl} width={281} height={280} alt="" style={{ objectFit: 'cover', borderRadius: 4 }} />
         </div>
       ) : null}
     </div>
