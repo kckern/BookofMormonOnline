@@ -98,6 +98,16 @@ if container_exists "$next"; then
   docker update --restart=no "$next" >/dev/null
 fi
 
+# Reclaim disk BEFORE the pull. The root volume is small and a full pull can
+# otherwise fail with "no space left on device" mid-layer. Pruning here (not just
+# after the switch) is safe: image prune -a keeps every image referenced by any
+# running OR stopped container, so both live slots and the retained rollback slot
+# survive. 24h retention is plenty — rollback is pinned by the stopped slot's
+# container, not by image age.
+log "reclaiming disk before pull"
+docker builder prune -af >/dev/null 2>&1 || true
+docker image prune -a -f --filter 'until=24h' >/dev/null 2>&1 || true
+
 log "pulling $IMAGE"
 docker pull "$IMAGE"
 desired_image="$(docker image inspect -f '{{.Id}}' "$IMAGE")"
@@ -188,5 +198,5 @@ if [ -n "$active" ] && [ "$active" != "$next" ] && container_running "$active"; 
   log "stopped previous slot $active (retained for rollback until the next deployment)"
 fi
 
-docker image prune -f --filter 'until=168h' >/dev/null 2>&1 || true
+docker image prune -a -f --filter 'until=24h' >/dev/null 2>&1 || true
 log "deployment complete"
