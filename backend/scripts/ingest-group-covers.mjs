@@ -58,8 +58,11 @@ async function sourceBufferFor(ch) {
     if (!r.ok) throw new Error(`sendbird fetch ${r.status}`);
     return { buf: Buffer.from(await r.arrayBuffer()), kind: 'sendbird→rehost' };
   }
-  // dicebear (external) or null → generate our own initials image, never fetch dicebear
-  return { buf: initialsSvg(ch.name), kind: cover ? 'dicebear→generated' : 'null→generated' };
+  // dicebear (external) or null → leave cover_url NULL so the frontend renders
+  // the SELF-HOSTED data-URI initials fallback (browser fonts, incl. CJK).
+  // Don't rasterize SVG text here — the prod Alpine container has no fonts, so
+  // sharp/librsvg renders tofu boxes (and Korean names would need CJK fonts).
+  return { buf: null, kind: cover ? 'dicebear→fallback' : 'null→fallback', fallback: true };
 }
 
 const conn = await mysql.createConnection({ host: env.MYSQL_HOST, port: +(env.MYSQL_PORT || 3306), user: env.MYSQL_USER, password: env.MYSQL_PASSWORD, database: env.MYSQL_DB }); // pragma: allowlist secret
@@ -71,7 +74,12 @@ console.log(`MODE=${MODE}  channels=${rows.length}  S3_PUBLIC_URL=${S3_PUBLIC_UR
 let done = 0, skip = 0, fail = 0;
 for (const ch of rows) {
   try {
-    const { buf, kind } = await sourceBufferFor(ch);
+    const { buf, kind, fallback } = await sourceBufferFor(ch);
+    if (fallback) {
+      if (MODE === 'apply') await conn.query('UPDATE messenger_channels SET cover_url=NULL WHERE channel_url=?', [ch.channel_url]);
+      console.log(`  ○ FALLBACK ${(ch.name || '').slice(0, 30).padEnd(30)} ${kind} → cover_url=NULL`);
+      done++; continue;
+    }
     if (!buf) { console.log(`  ⤳ SKIP  ${(ch.name || '').slice(0, 30).padEnd(30)} ${kind}`); skip++; continue; }
     const jpeg = await sharp(buf, { density: 200 }).resize(512, 512, { fit: 'cover', position: 'attention' }).jpeg({ quality: 82 }).toBuffer();
     // Under profiles/ (the prefix the EC2 instance role can write); grp_ marks
