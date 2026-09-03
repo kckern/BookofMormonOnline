@@ -74,7 +74,9 @@ for (const ch of rows) {
     const { buf, kind } = await sourceBufferFor(ch);
     if (!buf) { console.log(`  ⤳ SKIP  ${(ch.name || '').slice(0, 30).padEnd(30)} ${kind}`); skip++; continue; }
     const jpeg = await sharp(buf, { density: 200 }).resize(512, 512, { fit: 'cover', position: 'attention' }).jpeg({ quality: 82 }).toBuffer();
-    const key = `groups/${ch.channel_url}.jpg`;
+    // Under profiles/ (the prefix the EC2 instance role can write); grp_ marks
+    // group covers vs user avatars (profiles/<userId>.jpg).
+    const key = `profiles/grp_${ch.channel_url}.jpg`;
     const url = `${S3_PUBLIC_URL}/${key}`;
     if (MODE === 'local') { writeFileSync(`/tmp/gc_${ch.channel_url}.jpg`, jpeg); }
     if (MODE === 'apply') {
