@@ -29,6 +29,11 @@ const platesDataUri =
   'data:image/png;base64,' +
   readFileSync(join(process.cwd(), 'public', 'og', 'plates.png')).toString('base64')
 
+// Subtle paper grain overlaid on the light content card (1080×345, maps 1:1).
+const paperTextureDataUri =
+  'data:image/png;base64,' +
+  readFileSync(join(process.cwd(), 'public', 'og', 'paper-texture.png')).toString('base64')
+
 // Parse the BOLD title fonts for text measurement (satori can't shrink-to-fit).
 function toArrayBuffer(b: Buffer): ArrayBuffer {
   return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer
@@ -192,6 +197,7 @@ export async function renderOgCard(input: OgCardInput): Promise<ImageResponse> {
       artUrl,
       speaker,
       logoUrl: platesDataUri,
+      textureUrl: paperTextureDataUri,
       siteTitle: SITE_TITLE[lang] ?? SITE_TITLE.en,
       // Korean cards render entirely in IBM Plex Sans KR (it carries Latin too,
       // for "KR"/numerals); Latin cards use RobotoCondensed. Registering the KR

@@ -23,6 +23,8 @@ interface BomOgCardProps {
   speaker?: { voice: string; avatarUrl?: string }
   /** data: URI of the gold stacked-plates mark. */
   logoUrl: string
+  /** data: URI of the subtle paper grain overlaid on the light card. */
+  textureUrl: string
   /** Localized wordmark, e.g. "Book of Mormon Online". */
   siteTitle: string
   /** Registered font family to render in (RobotoCondensed, or IBMPlexSansKR for ko). */
@@ -35,7 +37,7 @@ const CARD = '#d6d8db'
 const GREY = '#3f3f3f'
 const VOICE = '#92785d' // reader's brown-gold voice pill (Read.scss)
 
-export function BomOgCard({ titleLines, titleFontSize, sub, desc, descFont, scriptureStyle, artUrl, speaker, logoUrl, siteTitle, fontFamily }: BomOgCardProps) {
+export function BomOgCard({ titleLines, titleFontSize, sub, desc, descFont, scriptureStyle, artUrl, speaker, logoUrl, textureUrl, siteTitle, fontFamily }: BomOgCardProps) {
   const avatarUrl = speaker?.avatarUrl
   const hasRightCol = Boolean(artUrl || avatarUrl)
   const colWidth = hasRightCol ? 720 : 1000
@@ -51,25 +53,22 @@ export function BomOgCard({ titleLines, titleFontSize, sub, desc, descFont, scri
         display: 'flex',
         position: 'relative',
         backgroundColor: BLUE,
-        // Subtle depth: a soft light from the upper-left (near the logo) fading into a
-        // slightly darker base — keeps the blue field from reading flat.
-        backgroundImage:
-          'radial-gradient(80% 90% at 12% -10%, #43506607 0%, #3b465c00 45%),' +
-          'linear-gradient(150deg, #384357 0%, #323b4d 55%, #2c3441 100%)',
+        // A clear diagonal gradient across the whole field for depth.
+        backgroundImage: 'linear-gradient(135deg, #3f4c66 0%, #323b4d 52%, #242b37 100%)',
         fontFamily,
       }}
     >
       {/* Header: gold plates mark + wordmark */}
-      {/* Soft gold halo behind the logo (a subtle light beam / glow). */}
+      {/* Perfect black disc (30% opacity) behind the logo. */}
       <div
         style={{
           position: 'absolute',
-          left: 40,
-          top: 20,
-          width: 172,
-          height: 160,
-          borderRadius: 172,
-          backgroundImage: 'radial-gradient(closest-side, rgba(251,198,88,0.30), rgba(251,198,88,0))',
+          left: 48,
+          top: 22,
+          width: 156,
+          height: 156,
+          borderRadius: 156,
+          backgroundColor: 'rgba(0,0,0,0.30)',
         }}
       />
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -87,8 +86,9 @@ export function BomOgCard({ titleLines, titleFontSize, sub, desc, descFont, scri
           width: 1080,
           height: 345,
           backgroundColor: CARD,
-          // Gentle top-lit panel + rounded corners + soft drop shadow for depth.
-          backgroundImage: 'linear-gradient(180deg, #e2e4e7 0%, #d6d8db 60%, #cfd2d6 100%)',
+          // Paper grain over a gentle top-lit panel + rounded corners + soft drop shadow.
+          backgroundImage: `url(${textureUrl}), linear-gradient(180deg, #e2e4e7 0%, #d6d8db 60%, #cfd2d6 100%)`,
+          backgroundSize: '100% 100%, 100% 100%',
           borderRadius: 28,
           boxShadow: '0 12px 40px rgba(0,0,0,0.30)',
           display: 'flex',
