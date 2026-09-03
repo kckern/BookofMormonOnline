@@ -22,7 +22,7 @@ interface BomOgCardProps {
 const BLUE = '#323b4d'
 const GOLD = '#fbc658'
 const CARD = '#d6d8db'
-const GREY = '#646464'
+const GREY = '#3f3f3f'
 
 export function BomOgCard({ titleLines, titleFontSize, sub, desc, artUrl, logoUrl, siteTitle, fontFamily }: BomOgCardProps) {
   const colWidth = artUrl ? 720 : 1000
@@ -115,7 +115,7 @@ export function BomOgCard({ titleLines, titleFontSize, sub, desc, artUrl, logoUr
           {desc && (
             <div
               style={{
-                fontSize: 18,
+                fontSize: 20,
                 fontWeight: 300,
                 lineHeight: 1.5,
                 color: GREY,
