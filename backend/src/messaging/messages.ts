@@ -52,6 +52,22 @@ function nextMessageId(): string {
   return String(_lastMessageTs);
 }
 
+// ─── Write-path field helpers ─────────────────────────────────────────────────
+
+/**
+ * Map postMessage params to the DB insert fields for anchor + content_refs.
+ * Exported as a pure helper so it is directly testable without a DB connection.
+ */
+export function insertRefFields(p: {
+  anchor?: string;
+  references?: unknown[];
+}): { anchor: string | null; content_refs: string | null } {
+  return {
+    anchor: p.anchor ?? null,
+    content_refs: p.references ? JSON.stringify(p.references) : null,
+  };
+}
+
 // ─── Data assembly helpers ────────────────────────────────────────────────────
 
 /**
@@ -333,6 +349,8 @@ export async function postMessage(
      */
     data?: string;
     parentMessageId?: string;
+    anchor?: string;
+    references?: import('./contentRefs.js').Reference[];
   },
 ): Promise<MessageDTO> {
   // Server-side trust boundary: reject empty/whitespace-only bodies and cap
@@ -366,6 +384,7 @@ export async function postMessage(
       link_aux: params.link?.aux ?? null,
       metadata: metadataJson,
       parent_message_id: params.parentMessageId ?? null,
+      ...insertRefFields({ anchor: params.anchor, references: params.references }),
     })
     .execute();
 
