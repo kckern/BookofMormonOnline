@@ -199,16 +199,28 @@ import type { Kysely } from 'kysely';
 import type { DB } from '../../codegen/db.js';
 
 /** Legacy page-internal text unit (custom_type slug + link_target ordinal) →
- *  canonical verse ids. Same path as media/fax legacyUnitToVerseIds. */
+ *  canonical verse ids. Uses the Phase-0-remediated path: leaf-slug fallback for
+ *  deep paths + bom_text.min_verse_id (NOT heading→scripture-guide, which only
+ *  covered 67%; this covers 95.6%). Returns [] for non-verse units (min_verse_id
+ *  NULL: front-matter) or orphaned slugs — the caller then uses a legacy_text ref. */
 export async function legacyRefToVerseIds(db: Kysely<DB>, slug: string, ordinal: number): Promise<number[]> {
-  const page = await db.selectFrom('bom_slug')
-    .select('link').where('slug', '=', slug).where('type', '=', 'PG').executeTakeFirst();
-  if (!page?.link) return [];
-  const unit = await db.selectFrom('bom_text')
-    .select('heading').where('page', '=', page.link).where('link', '=', ordinal).executeTakeFirst();
-  return unit?.heading ? refToVerseIds(String(unit.heading)) : [];
+  const pgLink = async (s: string): Promise<string | null> =>
+    (await db.selectFrom('bom_slug').select('link')
+      .where('slug', '=', s).where('type', '=', 'PG').executeTakeFirst())?.link ?? null;
+  let page = await pgLink(slug);
+  if (!page) { const leaf = slug.split('/').pop(); if (leaf && leaf !== slug) page = await pgLink(leaf); }
+  if (!page) return [];
+  const unit = await db.selectFrom('bom_text').select('min_verse_id')
+    .where('page', '=', page).where('link', '=', ordinal).executeTakeFirst();
+  return unit?.min_verse_id ? [Number(unit.min_verse_id)] : [];
 }
 ```
+
+> Phase-0 de-risk (see spec §De-risk finding): this remediated path lifts 95.6% of
+> real legacy `text` refs; the ~4.4% remainder are genuine non-verse units
+> (`min_verse_id` NULL) or the orphaned `jacobs-sermon` slug → `legacy_text`/`section`
+> fallback in Phase 4. `resolveVerseDisplay` (Task 3) uses `bom_text.min_verse_id`
+> for the reverse (verse-id → unit) too.
 
 - [ ] **Step 4: Run to verify it passes**
 

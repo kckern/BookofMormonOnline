@@ -120,6 +120,29 @@ Reactions, read-state, thread/membership models, the reader UI itself. Backlinks
 doesn't index them; add later via a generated column or the search index if
 needed.
 
+## De-risk finding (Phase 0 spike, 2026-09-03) + remediation
+
+Naive lift (`bom_slug PG → bom_text.heading → scripture-guide`) covered only
+**67.4%** of the 1,769 legacy `text` refs. Two systematic failure classes, both
+remediated (chosen: option B — remediate before migrating):
+
+1. **Deep-path slugs** (`reign-of-judges/korihor`, `war/east`, `lehites/nephis-vision`):
+   `custom_type` holds hierarchical paths whose **leaf segment is the PG slug**.
+   Fix: fall back to the last path segment when the full slug has no `PG` row.
+2. **Heading-parse misses** (thematic titles like "Baptizing the Messiah"): don't
+   parse the heading at all — read **`bom_text.min_verse_id`** (the canonical
+   verse-id per text unit) directly.
+
+With both, lift = **95.6%** (1,692/1,769). The remaining **4.4%** are genuinely
+non-verse and handled by fallback, not failure:
+- `min_verse_id IS NULL` units (front matter, e.g. "Title Page") → `section` ref.
+- orphaned slug not in `bom_slug` at all (`jacobs-sermon`) → `legacy_text`
+  `{slug, ordinal}` ref (renders via today's `textInFeed[slug/ordinal]` path).
+
+**Impact on the seam:** the canonical lift is `bom_text.min_verse_id` (+ leaf-slug
+fallback), NOT heading→scripture-guide. `scripture-guide` `lookup`/`generateReference`
+are still used for free-text refs (bots, `passage_ref`) and display strings.
+
 ## Open questions for the plan
 1. `references` as its own column vs a key inside `metadata`.
 2. Exact `role` vocabulary (is `subject` vs `mention` worth distinguishing at v1?).
