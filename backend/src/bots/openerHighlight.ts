@@ -10,7 +10,8 @@
 
 /** Normalize like the frontend cleanPhrase: lowercase, drop non-alphanumerics. */
 export function normalizePhrase(s: string): string {
-  return (s || '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+  return (s || '').normalize('NFKC').toLocaleLowerCase()
+    .replace(/[^\p{L}\p{N}\s]+/gu, ' ').replace(/\s+/g, ' ').trim();
 }
 
 /** Strip footnote markers + HTML tags/entities to plain readable text. */

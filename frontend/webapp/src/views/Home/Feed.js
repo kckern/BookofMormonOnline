@@ -25,6 +25,7 @@ import {
   breakCache,
   timeAgoString,
   tokenImage,
+  determineLanguage,
 } from "src/models/Utils";
 import activityfeed from "src/views/_Common/svg/activityfeed.svg";
 import { label, ParseMessage } from "src/models/Utils";
@@ -48,6 +49,28 @@ import { GroupCallToAction, GroupLeaderBoard, communityHref, groupImgFallback } 
 import { md5 } from "../../models/Utils.js";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { useMessenger } from "src/contexts/MessengerContext";
+
+export async function loadLinkedContent(items) {
+  const groups = new Map();
+  for (const item of items || []) {
+    const language = item?.link?.lang || determineLanguage();
+    if (!groups.has(language)) groups.set(language, []);
+    groups.get(language).push(item);
+  }
+  const hydrated = {};
+  await Promise.all([...groups.entries()].map(async ([language, messages]) => {
+    const query = prepareQuery(messages);
+    if (!Object.keys(query).length) return;
+    const result = await BoMOnlineAPI(query, { useCache: false, lang: language });
+    for (const [type, values] of Object.entries(result || {})) {
+      if (!hydrated[type]) hydrated[type] = {};
+      for (const [key, value] of Object.entries(values || {})) {
+        hydrated[type][`${language}:${key}`] = value;
+      }
+    }
+  }));
+  return hydrated;
+}
 
 export function HomeFeed({
   activeGroup,
@@ -103,9 +126,7 @@ export function HomeFeed({
       );
       if (cancelled) return;
       let items = r.homefeed[0]?.feed || [];
-      let q = prepareQuery(items);
-
-      let linkedContent = await BoMOnlineAPI(q);
+      let linkedContent = await loadLinkedContent(items);
       if (cancelled) return;
       setLinkedContent(linkedContent);
       setHomeItems(items);
@@ -392,7 +413,7 @@ function HomeFeedItem({
     <img className="trophy" src={trophy} alt={label("finished") || "Finished"} />
   ) : null;
   const statusBox = item.user.isBot ?
-  <div className="progress bot">BOT</div> :
+  <div className="progress bot">{label("bot")}</div> :
   <div className="progress">{item.user.progress}%</div>;
   return (
     <VisibilitySensor key={item.id} onChange={handleVisibilityChange}>
@@ -492,7 +513,8 @@ function ContentInFeed({ item, linkedContent }) {
   let key = map[link.key];
   if (!key) return null;
   let val = link.val;
-  let content = linkedContent?.[key]?.[val];
+  const language = link.lang || determineLanguage();
+  let content = linkedContent?.[key]?.[`${language}:${val}`] ?? linkedContent?.[key]?.[val];
   // Never render an attachment container that isn't hydrated — an unresolved
   // link must show nothing, not an empty scripture/commentary card. (fax resolves
   // its content from textInFeed inside the switch, so exempt it from this guard.)
@@ -803,9 +825,9 @@ function Comment({ comment }) {
   if (!comment) return null;
   let finished = comment.user.finished;
   const isBot = comment.user.nickname === "StudyBuddy" || comment.user.isBot;
-  const botBadge = isBot ? <span className="botBadge">BOT</span> : null;
+  const botBadge = isBot ? <span className="botBadge">{label("bot")}</span> : null;
   const audienceBadge = comment.participant_role === "audience" ? (
-    <span className="audienceBadge">Audience</span>
+    <span className="audienceBadge">{label("Audience")}</span>
   ) : null;
   const trophyImg = finished ? (
     <img className="trophy" src={trophy} alt={label("finished") || "Finished"} />

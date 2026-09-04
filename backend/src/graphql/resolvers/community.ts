@@ -224,7 +224,7 @@ function maskUserPrivacy(u: Record<string, unknown>): Record<string, unknown> {
 export function refsToLink(
   references: Reference[],
   resolvedVerses: Map<number, VerseDisplay>,
-): { key: string; val: string } | null {
+): { key: string; val: string; lang?: string } | null {
   // Pick candidate: prefer first 'subject' role, fallback to first non-highlight
   const candidate =
     references.find((r) => r.role === 'subject') ??
@@ -239,14 +239,15 @@ export function refsToLink(
       // key (matches what the frontend hydrates); a recomputed resolveVerseDisplay
       // can land on a different block ordinal and produce an empty card.
       if (candidate.slug && candidate.ordinal != null) {
-        return { key: 'text', val: `${candidate.slug}/${candidate.ordinal}` };
+        return { key: 'text', val: `${candidate.slug}/${candidate.ordinal}`, ...(candidate.lang ? { lang: candidate.lang } : {}) };
       }
       const display = resolvedVerses.get(Number(candidate.id));
       if (!display) return null;
-      return { key: 'text', val: `${display.slug}/${display.ordinal}` };
+      return { key: 'text', val: `${display.slug}/${display.ordinal}`, ...(candidate.lang ? { lang: candidate.lang } : {}) };
     }
+    case 'text':
     case 'legacy_text': {
-      return { key: 'text', val: `${candidate.slug}/${candidate.ordinal}` };
+      return { key: 'text', val: `${candidate.slug}/${candidate.ordinal}`, ...(candidate.lang ? { lang: candidate.lang } : {}) };
     }
     case 'commentary':
       return { key: 'com', val: String(candidate.id) };
@@ -314,12 +315,14 @@ function assembleHomeFeedItem(
 
   let key: string | null;
   let val: unknown;
+  let linkLang: string | undefined;
   let highlights: string[] | null;
 
   if (hasRefs) {
     const refLink = refsToLink(msg.references, resolvedVerses ?? new Map());
     key = refLink?.key ?? null;
     val = refLink?.val ?? null;
+    linkLang = refLink?.lang;
     const refHighlights = refsToHighlights(msg.references);
     highlights = refHighlights.length > 0 ? refHighlights : null;
   } else {
@@ -351,7 +354,7 @@ function assembleHomeFeedItem(
     likes,
     replycount,
     repliers,
-    link: { key, val },
+    link: { key, val, ...(linkLang ? { lang: linkLang } : {}) },
     highlights,
   };
 }

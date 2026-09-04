@@ -10,10 +10,11 @@ import 'dotenv/config';
 import { readFile } from 'node:fs/promises';
 import { sql } from 'kysely';
 import { closeDb, getDb } from '../src/data/db.js';
+import { validatePromptBundle, type DiscussionPromptBundle } from '../src/bots/discussionPrompts.js';
 
 type Bot = {
   botId: string; displayName: string; nickname: string; profileUrl: string;
-  persona: string; model: string; temperament?: string; tags?: string[];
+  persona: string; model: string; lang?: string; temperament?: string; tags?: string[];
 };
 type AudienceRespondent = Bot & { responseWeight: number; topicTriggers: string[] };
 type Config = {
@@ -30,6 +31,7 @@ type Config = {
     audienceResponseChance: number;
     minBotVoices: number; maxBotVoices: number; maxBotMessages: number; botWindowHours: number;
     minDelayMinutes: number; maxDelayMinutes: number; promptTemplate: string; responseGuardrails: string;
+    promptBundle?: DiscussionPromptBundle;
   };
   topics: Array<{ topicId: string; passageRef: string; passageSlug?: string; passageKind: 'discursive' | 'narrative'; question: string; contextNote?: string }>;
   corpora: Array<{ corpusId: string; title: string; authorKey: string; sourceUri: string; sourceSha256?: string; rightsClass: 'citation_eligible' | 'inference_only' | 'blocked'; rightsNote: string; edition?: string; enabled?: boolean }>;
@@ -57,6 +59,7 @@ function validate(config: Config): void {
     throw new Error('the audience respondent bench must contain 1–8 bots');
   }
   const ids = new Set<string>();
+  const channelLang = config.channel.lang || 'en';
   const reviewedBots: Array<{ bot: Bot; label: string }> = [
     ...config.bots.map((bot, index) => ({ bot, label: `bots[${index}]` })),
     ...config.audienceRespondents.map((bot, index) => ({ bot, label: `audienceRespondents[${index}]` })),
@@ -68,6 +71,9 @@ function validate(config: Config): void {
     })) required(value, `${label}.${key}`);
     if (ids.has(bot.botId)) throw new Error(`duplicate botId ${bot.botId}`);
     if (bot.botId === config.channel.ownerUserId) throw new Error('the human owner cannot also be configured as a bot');
+    if ((bot.lang || channelLang) !== channelLang) {
+      throw new Error(`${label}.lang must exactly match channel.lang (${channelLang})`);
+    }
     ids.add(bot.botId);
   }
   for (const [index, respondent] of config.audienceRespondents.entries()) {
@@ -91,9 +97,17 @@ function validate(config: Config): void {
   }
   if (config.discussion.minBotVoices !== 3 || config.discussion.maxBotVoices !== 5) throw new Error('approved voice range is 3–5');
   if (config.discussion.maxBotMessages !== 12 || config.discussion.botWindowHours !== 72) throw new Error('approved completion limits are 12 messages / 72 hours');
-  if (config.discussion.timezone !== 'America/Denver' || config.discussion.localStartTime !== '08:00:00') throw new Error('approved schedule is 08:00 America/Denver');
+  try { new Intl.DateTimeFormat('en-US', { timeZone: config.discussion.timezone }).format(); }
+  catch { throw new Error('discussion.timezone must be a valid IANA timezone'); }
+  if (!/^([01]\d|2[0-3]):[0-5]\d:00$/.test(config.discussion.localStartTime)) {
+    throw new Error('discussion.localStartTime must be HH:MM:00');
+  }
   required(config.discussion.promptTemplate, 'discussion.promptTemplate');
   required(config.discussion.responseGuardrails, 'discussion.responseGuardrails');
+  if (config.discussion.promptBundle || channelLang !== 'en') {
+    const missing = validatePromptBundle(config.discussion.promptBundle);
+    if (missing.length) throw new Error(`discussion.promptBundle is incomplete: ${missing.join(', ')}`);
+  }
   if (config.discussion.minDelayMinutes < 1 || config.discussion.minDelayMinutes > config.discussion.maxDelayMinutes) throw new Error('discussion delays are invalid');
   if (!config.topics?.length || !config.topics.some((topic) => topic.passageKind === 'discursive') || !config.topics.some((topic) => topic.passageKind === 'narrative')) {
     throw new Error('discursive and narrative Book of Mormon topics are both required');
@@ -131,20 +145,22 @@ function validate(config: Config): void {
   }
 }
 
-function nextLocalEight(timeZone: string): Date {
+function nextLocalTime(timeZone: string, localTime: string): Date {
+  const [wantedHour, wantedMinute] = localTime.split(':');
   const format = new Intl.DateTimeFormat('en-US', { timeZone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
   let candidate = new Date(Math.ceil(Date.now() / 60_000) * 60_000);
   for (let i = 0; i < 60 * 48; i++) {
     const parts = Object.fromEntries(format.formatToParts(candidate).map((part) => [part.type, part.value]));
-    if (parts['hour'] === '08' && parts['minute'] === '00') return candidate;
+    if (parts['hour'] === wantedHour && parts['minute'] === wantedMinute) return candidate;
     candidate = new Date(candidate.getTime() + 60_000);
   }
-  throw new Error(`could not resolve next 08:00 in ${timeZone}`);
+  throw new Error(`could not resolve next ${localTime} in ${timeZone}`);
 }
 
 async function main(): Promise<void> {
   const config = JSON.parse(await readFile(configFile, 'utf8')) as Config;
   validate(config);
+  const channelLang = config.channel.lang || 'en';
   console.log(`VALID: 10 member bots, ${config.audienceRespondents.length} audience bots, ${config.topics.length} topics, ${config.corpora.length} corpora, ${config.botCorpora.length} grants`);
   if (!apply) {
     console.log('DRY RUN: no database writes; pass --apply after operator review');
@@ -218,11 +234,11 @@ async function main(): Promise<void> {
           nickname: bot.nickname, profile_url: bot.profileUrl, is_bot: 1,
         }).execute();
         await trx.insertInto('bom_bot').values({
-          bot_id: bot.botId, display_name: bot.displayName, bot_class: 'study', lang: 'en',
+          bot_id: bot.botId, display_name: bot.displayName, bot_class: 'study', lang: bot.lang || channelLang,
           persona: bot.persona, model: bot.model, temperament: bot.temperament || null,
           tags: JSON.stringify(bot.tags || ['reformers']), enabled: 1,
         }).onDuplicateKeyUpdate({
-          display_name: bot.displayName, bot_class: 'study', lang: 'en', persona: bot.persona,
+          display_name: bot.displayName, bot_class: 'study', lang: bot.lang || channelLang, persona: bot.persona,
           model: bot.model, temperament: bot.temperament || null,
           tags: JSON.stringify(bot.tags || ['reformers']), enabled: 1,
         }).execute();
@@ -276,6 +292,7 @@ async function main(): Promise<void> {
         max_bot_messages: d.maxBotMessages, bot_window_hours: d.botWindowHours,
         min_delay_minutes: d.minDelayMinutes, max_delay_minutes: d.maxDelayMinutes,
         prompt_template: d.promptTemplate, response_guardrails: d.responseGuardrails,
+        prompt_bundle: d.promptBundle ? JSON.stringify(d.promptBundle) : null,
       };
       await trx.insertInto('bom_ai_discussion_config').values({ channel_url: config.channel.channelUrl, ...discussion })
         .onDuplicateKeyUpdate(discussion).execute();
@@ -315,8 +332,9 @@ async function main(): Promise<void> {
         .where('channel_url', '=', config.channel.channelUrl)
         .where('action', '=', 'new_prompt').orderBy('id', 'asc').executeTakeFirst();
       const scheduleValues = {
-        cron: '0 8 * * *', cadence_minutes: null, enabled: 1,
-        next_run_at: nextLocalEight(d.timezone),
+        cron: `${Number(d.localStartTime.slice(3, 5))} ${Number(d.localStartTime.slice(0, 2))} * * *`,
+        cadence_minutes: null, enabled: 1,
+        next_run_at: nextLocalTime(d.timezone, d.localStartTime),
       };
       if (schedule) {
         await trx.updateTable('bom_bot_schedule').set(scheduleValues).where('id', '=', schedule.id).execute();

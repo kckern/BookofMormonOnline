@@ -1274,11 +1274,11 @@ function BaseMessage({
 
   const isBot = !!message?.sender?.metaData?.isBot;
 
-  const botBadge = isBot ? <span className="botBadge">BOT</span> : null;
+  const botBadge = isBot ? <span className="botBadge">{label("bot")}</span> : null;
   let messageData = {};
   try { messageData = JSON.parse(message?.data || "{}"); } catch (_) { /* optional metadata */ }
   const audienceBadge = messageData.participantRole === "audience" ? (
-    <span className="audienceBadge">Audience</span>
+    <span className="audienceBadge">{label("Audience")}</span>
   ) : null;
 
   return (

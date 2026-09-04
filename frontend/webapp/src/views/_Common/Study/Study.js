@@ -858,7 +858,7 @@ function SingleComment({
   // an unguarded destructure here threw a pageerror.
   const { isBot } = message?.sender?.metaData || {};
   const audienceBadge = data?.participantRole === "audience" ? (
-    <span className="audienceBadge">Audience</span>
+    <span className="audienceBadge">{label("Audience")}</span>
   ) : null;
 
   return (
@@ -892,7 +892,7 @@ function SingleComment({
         <div className="commentcontainer">
           <div className="commentcontent">
             <div className="name">
-              {message?.sender?.nickname} {isBot && <span>BOT</span>} {audienceBadge}
+              {message?.sender?.nickname} {isBot && <span>{label("bot")}</span>} {audienceBadge}
             </div>
             {highlightTags}
             {content}

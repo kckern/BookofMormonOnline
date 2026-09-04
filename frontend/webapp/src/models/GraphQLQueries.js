@@ -2072,6 +2072,7 @@ const queries = {
           link {
             key
             val
+            lang
           }
           highlights
         }}`,

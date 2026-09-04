@@ -48,7 +48,7 @@ export default async function BoMOnlineAPI(input, options) {
         //Make GraphQL Server API Call
         let compoundQuery = "{" + queries.map((q) => q.query).join("\n") + "}";
         compoundQuery = compoundQuery.replace(/{mutation(.*)}/, 'mutation$1');
-        let apiResults = await serverGQLCall(compoundQuery, options.authToken);
+        let apiResults = await serverGQLCall(compoundQuery, options.authToken, options.lang);
 		//		console.log('ApiResult',apiResults);
         if(!apiResults?.data) return {error:apiResults};
         //Cache each new item
@@ -72,8 +72,8 @@ export default async function BoMOnlineAPI(input, options) {
     return results;
 }
 
-async function serverGQLCall(graphQL, authToken) {
-    const lang = determineLanguage();
+async function serverGQLCall(graphQL, authToken, language) {
+    const lang = language || determineLanguage();
     let config = {
         method: "post",
         url: GraphQLApiUrl + (lang ? "/"+lang : ""),

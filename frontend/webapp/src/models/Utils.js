@@ -234,7 +234,7 @@ export function renderHTMLContentInFeed(content, highlights) {
     //sanitize string for regex
     string = string.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
 
-    re.push(new RegExp("\\b(" + string + ")\\b", "gi"));
+    re.push(new RegExp("(" + string + ")", "giu"));
     for (let i = 4; i >= 1; i--) {
       let start = string
         .match(new RegExp(`^(\\S+\\s){${i}}`, "gi"))
@@ -245,7 +245,7 @@ export function renderHTMLContentInFeed(content, highlights) {
         ?.shift()
         .trim();
       if (start && end)
-        re.push(new RegExp("(" + `${start}.*?${end}` + ")", "gi"));
+        re.push(new RegExp("(" + `${start}.*?${end}` + ")", "giu"));
     }
     if (highlighted.match(re)) continue;
     highlighted += highlight.string;

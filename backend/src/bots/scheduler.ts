@@ -16,14 +16,14 @@ import { generateBotReply, type BotTurn } from './generate.js';
 import { hasLlmProvider } from './mastra/model.js';
 import { emitPublicChannelEvent } from '../messaging/policy.js';
 import { nanoid } from 'nanoid';
-import { buildTopicRefs } from './topicRefs.js';
-import { resolvePassageBlock, refToVerseIds, type Reference } from '../messaging/contentRefs.js';
+import { resolvePassageBlock, resolveTextBlockByGuid, refToVerseIds, type Reference } from '../messaging/contentRefs.js';
 import { botLog, countSentences } from './logger.js';
-import { sampleReplyShape, replyLengthInstruction, OPENER_LENGTH_INSTRUCTION } from './replyShape.js';
+import { sampleReplyShape } from './replyShape.js';
 import { detectReferenceStrings } from './scriptureBridge.js';
-import { planMoves, moveInstruction, type DiscussionMove } from './discussionMoves.js';
+import { planMoves, type DiscussionMove } from './discussionMoves.js';
 import { parseOpenerHighlight, htmlToPlain } from './openerHighlight.js';
 import { pickStyleWeightedPassage } from './passagePicker.js';
+import { openerPrompts, turnPrompts } from './discussionPrompts.js';
 
 // Book of Mormon verse-id range — only BoM refs resolve to a bom_text block.
 const BOM_FIRST_VERSE_ID = 31_103;
@@ -180,14 +180,6 @@ export function chooseAudienceRespondent<T extends { response_weight: number; to
   return weightedPick(matching, random);
 }
 
-// Bots must never expose the retrieval mechanic. The base guardrails cover
-// "don't imply corpus grounding", but bots were leaking the INVERSE — narrating
-// that retrieval returned nothing ("a profile-based reading since retrieval
-// returned no corpus text"). Forbid any mention of the tooling outright.
-const NO_META_LEAK =
-  'Never mention retrieval, tools, a corpus, sources, whether sources were "available"/"returned", ' +
-  'or that you are reasoning "from persona/profile" — just make the argument in character.';
-
 function managedTurnInstructions(promptTemplate: string, responseGuardrails: string): string {
   // Strip any hardcoded word-count directive from the shared template; length is
   // set per role instead (opener vs reply), so the two don't contradict.
@@ -195,7 +187,7 @@ function managedTurnInstructions(promptTemplate: string, responseGuardrails: str
     .replace(/Keep the response between\s+\d+\s+and\s+\d+\s+words\.?/i, '')
     .replace(/[ \t]{2,}/g, ' ')
     .trim();
-  return [stripped, responseGuardrails, NO_META_LEAK].filter(Boolean).join('\n\n');
+  return [stripped, responseGuardrails].filter(Boolean).join('\n\n');
 }
 
 /** Start a durable, staggered AI discussion from DB-owned configuration. */
@@ -207,30 +199,48 @@ async function runManagedDiscussion(
   const config = await db.selectFrom('bom_ai_discussion_config').selectAll()
     .where('channel_url', '=', channelUrl).where('enabled', '=', 1).executeTakeFirst();
   if (!config) return { posted: 0, reason: 'no-managed-config' };
+  const channel = await db.selectFrom('messenger_channels').select('lang')
+    .where('channel_url', '=', channelUrl).executeTakeFirst();
+  const channelLang = channel?.lang || 'en';
 
   const runId = nanoid(10);
   const runLog = botLog.child({ runId, channelUrl });
   // Fully dynamic: draw a random BoM passage weighted toward discourse+poetry
   // over narrative (via lds_scriptures_lines.style). Replaces the curated topics.
-  const picked = await pickStyleWeightedPassage(db);
+  const picked = await pickStyleWeightedPassage(db, {
+    channelUrl, timeZone: config.timezone, lang: channelLang,
+  });
   if (!picked) return { posted: 0, reason: 'no-passage' };
-  const topicBlock = await resolvePassageBlock(db, picked.passageRef);
+  const topicBlock = await resolveTextBlockByGuid(db, picked.textGuid, channelLang);
   if (!topicBlock) {
     runLog.warn(
-      { event: 'passage.unresolved', passageRef: picked.passageRef, minVerseId: picked.minVerseId },
+      { event: 'passage.unresolved', textGuid: picked.textGuid, minVerseId: picked.minVerseId },
       'picked passage did not resolve to a block',
     );
     return { posted: 0, reason: 'passage-unresolved' };
   }
-  const topicRefs = await buildTopicRefs(picked.passageRef, () => Promise.resolve(topicBlock));
+  const topicRefs: { anchor: string; references: Reference[] } = {
+    anchor: topicBlock.pageSlug,
+    references: [{
+      type: 'text', id: picked.textGuid, role: 'subject', slug: topicBlock.pageSlug,
+      ordinal: topicBlock.ordinal, lang: channelLang,
+    }],
+  };
   const topic = {
-    topic_id: `dyn:${picked.minVerseId}`,
+    topic_id: `text:${picked.textGuid}`,
     passage_ref: picked.passageRef,
     passage_kind: picked.style,
     passage_slug: topicBlock.pageSlug,
     question: '' as string,
   };
-  runLog.info({ event: 'passage.picked', bucket: picked.bucket, style: picked.style, passageRef: picked.passageRef, minVerseId: picked.minVerseId }, 'passage picked');
+  if (picked.fallbackReason) runLog.warn({ event: 'selection.window_fallback', reason: picked.fallbackReason }, 'passage window fallback');
+  runLog.info({
+    event: 'passage.picked', bucket: picked.bucket, style: picked.style,
+    passageRef: picked.passageRef, minVerseId: picked.minVerseId, textGuid: picked.textGuid,
+    selectionMode: picked.selectionMode, windowKey: picked.window?.windowKey ?? null,
+    matchedRange: picked.matchedRange, blockVerseIds: picked.blockVerseIds,
+    matchedVerseIds: picked.matchedVerseIds, historyRelaxed: picked.historyRelaxed, lang: channelLang,
+  }, 'passage picked');
 
   const bots = await db.selectFrom('messenger_members as member')
     .innerJoin('messenger_users as user', 'user.user_id', 'member.user_id')
@@ -238,7 +248,7 @@ async function runManagedDiscussion(
     .select(['bot.bot_id', 'bot.display_name', 'bot.persona', 'bot.model'])
     .where('member.channel_url', '=', channelUrl).where('member.state', '=', 'joined')
     .where('user.is_bot', '=', 1).where('bot.enabled', '=', 1)
-    .where('bot.bot_class', '=', 'study').execute();
+    .where('bot.bot_class', '=', 'study').where('bot.lang', '=', channelLang).execute();
   const configured = bots.filter((bot) => bot.display_name?.trim() && bot.persona?.trim() && bot.model?.trim());
   if (configured.length < config.min_bot_voices) return { posted: 0, reason: 'insufficient-configured-bots' };
 
@@ -259,7 +269,7 @@ async function runManagedDiscussion(
     ])
     .where('audience.channel_url', '=', channelUrl).where('audience.enabled', '=', 1)
     .where('user.is_bot', '=', 1).where('bot.enabled', '=', 1)
-    .where('bot.bot_class', '=', 'study').execute();
+    .where('bot.bot_class', '=', 'study').where('bot.lang', '=', channelLang).execute();
   const configuredAudience = audienceCandidates.filter((bot) => bot.display_name?.trim()
     && bot.persona?.trim() && bot.model?.trim());
   const topicText = `${topic.topic_id} ${topic.passage_ref} ${topic.question}`;
@@ -267,17 +277,12 @@ async function runManagedDiscussion(
     configuredAudience, topicText, config.audience_response_chance,
   );
   const blockPlain = htmlToPlain(topicBlock.text);
-  const instructions = [
-    managedTurnInstructions(config.prompt_template, config.response_guardrails),
-    OPENER_LENGTH_INSTRUCTION,
-    'HIGHLIGHT: after your argument, on a final separate line, write "HIGHLIGHT: " followed by the exact ' +
-      '3-10 word phrase, copied verbatim, from this linked passage text that your point turns on — so it can be ' +
-      `marked in the excerpt:\n"${blockPlain}"`,
-  ].join('\n\n');
+  const instructions = [managedTurnInstructions(config.prompt_template, config.response_guardrails),
+    ...openerPrompts(config.prompt_bundle, blockPlain)].join('\n\n');
   runLog.info(
     {
       event: 'discussion.start', topicId: topic.topic_id, passageKind: topic.passage_kind,
-      passageRef: topic.passage_ref, bucket: picked.bucket, anchor: topicRefs.anchor,
+      passageRef: topic.passage_ref, bucket: picked.bucket, anchor: topicRefs.anchor, lang: channelLang,
       openerBotId: opener.bot_id, voiceCount, voices: voices.map((v) => v.bot_id),
       audienceBotId: audience?.bot_id ?? null,
     },
@@ -285,12 +290,7 @@ async function runManagedDiscussion(
   );
   const openingRaw = await generateBotReply(db, opener.bot_id, [
     { role: 'user', content: instructions },
-    {
-      role: 'user',
-      content: topic.question
-        ? `Passage: ${topic.passage_ref}\nEditorial topic brief: ${topic.question}`
-        : `Passage: ${topic.passage_ref}\nMake your opening argument about this passage.`,
-    },
+    { role: 'user', content: blockPlain },
   ], { log: runLog, label: 'opener', model: opener.model ?? undefined });
   if (!openingRaw) {
     runLog.warn({ event: 'discussion.opener_failed', topicId: topic.topic_id }, 'opener generation failed');
@@ -301,7 +301,7 @@ async function runManagedDiscussion(
   const { body: opening, highlight } = parseOpenerHighlight(openingRaw, topicBlock.text);
   if (highlight) {
     topicRefs.references.push({
-      type: 'verse', id: topicBlock.unitFirstVerseId, role: 'highlight',
+      type: 'text', id: picked.textGuid, role: 'highlight', lang: channelLang,
       slug: topicBlock.pageSlug, ordinal: topicBlock.ordinal, span: { text: highlight },
     });
     runLog.info({ event: 'opener.highlight', phrase: highlight }, 'opener highlight attached');
@@ -320,6 +320,16 @@ async function runManagedDiscussion(
       passageKind: topic.passage_kind,
       passageSlug: topic.passage_slug,
       editorialQuestion: topic.question,
+      contentLanguage: channelLang,
+      selection: {
+        mode: picked.selectionMode, windowKey: picked.window?.windowKey ?? null,
+        windowSequence: picked.window?.sequence ?? null, matchedRange: picked.matchedRange,
+        textGuid: picked.textGuid, blockVerseIds: picked.blockVerseIds,
+        matchedVerseIds: picked.matchedVerseIds, styleBucket: picked.bucket,
+        style: picked.style, passageRef: picked.passageRef,
+        windowLabel: picked.window?.label ?? null,
+        historyRelaxed: picked.historyRelaxed, fallbackReason: picked.fallbackReason ?? null,
+      },
     }),
     anchor: topicRefs.anchor,
     references: topicRefs.references.length ? topicRefs.references : undefined,
@@ -343,6 +353,10 @@ async function runManagedDiscussion(
   await db.transaction().execute(async (trx) => {
     await trx.insertInto('messenger_thread_state').values({
       root_message_id: root.message_id, channel_url: channelUrl, status: 'active', bot_message_count: 1,
+    }).execute();
+    await trx.insertInto('bom_ai_passage_use').values({
+      channel_url: channelUrl, text_guid: picked.textGuid,
+      root_message_id: root.message_id, window_key: picked.window?.windowKey ?? null,
     }).execute();
     let dueAt = now.getTime();
     let followerIdx = 0;
@@ -389,11 +403,12 @@ async function processDueTurns(db: Kysely<DB>): Promise<void> {
   const turns = await db.selectFrom('bom_ai_discussion_turn as turn')
     .innerJoin('messenger_thread_state as thread', 'thread.root_message_id', 'turn.root_message_id')
     .innerJoin('bom_ai_discussion_config as config', 'config.channel_url', 'thread.channel_url')
+    .innerJoin('messenger_channels as channel', 'channel.channel_url', 'thread.channel_url')
     .select([
       'turn.id', 'turn.root_message_id', 'turn.bot_id', 'turn.move', 'thread.channel_url',
       'thread.bot_message_count', 'thread.created_at', 'thread.status',
       'config.max_bot_messages', 'config.bot_window_hours', 'config.prompt_template',
-      'config.response_guardrails',
+      'config.response_guardrails', 'config.prompt_bundle', 'channel.lang as channel_lang',
     ])
     .where('turn.status', '=', 'pending').where('turn.due_at', '<=', new Date())
     .where('thread.status', '=', 'active').where('config.enabled', '=', 1)
@@ -425,8 +440,9 @@ async function processDueTurns(db: Kysely<DB>): Promise<void> {
       // Reply length + link shape: concise by default, longer only when linking.
       const shape = sampleReplyShape();
       const move = (turn.move as DiscussionMove | null) ?? null;
-      const moveInstr = move ? `\n\n${moveInstruction(move)}` : '';
-      const instructions = `${managedTurnInstructions(turn.prompt_template, turn.response_guardrails)}${moveInstr}\n\n${replyLengthInstruction(shape)}`;
+      const channelLang = turn.channel_lang || 'en';
+      const instructions = [managedTurnInstructions(turn.prompt_template, turn.response_guardrails),
+        ...turnPrompts(turn.prompt_bundle, move, shape)].join('\n\n');
       let editorialQuestion = '';
       try {
         const data = JSON.parse(root.data) as Record<string, unknown>;
@@ -455,14 +471,17 @@ async function processDueTurns(db: Kysely<DB>): Promise<void> {
       let anchor: string | undefined;
       let references: Reference[] | undefined;
       if (shape.wantsLink) {
-        const bomRef = detectReferenceStrings(text).find((r) => {
-          const ids = refToVerseIds(r);
+        const bomRef = detectReferenceStrings(text, channelLang).find((r) => {
+          const ids = refToVerseIds(r, channelLang);
           return ids.length > 0 && ids[0]! >= BOM_FIRST_VERSE_ID && ids[0]! <= BOM_LAST_VERSE_ID;
         });
         const block = bomRef ? await resolvePassageBlock(db, bomRef) : null;
         if (block) {
           anchor = block.pageSlug;
-          references = [{ type: 'verse', id: block.unitFirstVerseId, role: 'highlight', slug: block.pageSlug, ordinal: block.ordinal }];
+          references = [{
+            type: 'text', id: block.textGuid ?? block.unitFirstVerseId, role: 'highlight',
+            slug: block.pageSlug, ordinal: block.ordinal, lang: channelLang,
+          }];
           turnLog.info({ event: 'turn.linked', ref: bomRef, anchor, ordinal: block.ordinal }, 'reply linked a scripture block');
         } else {
           turnLog.info({ event: 'turn.link_miss', detected: bomRef ?? null }, 'reply wanted a link but none resolved');
@@ -553,7 +572,10 @@ async function tick(): Promise<void> {
       if (Number(claim.numUpdatedRows) !== 1) continue;
       let succeeded = false;
       try {
-        if (row.action === 'new_prompt') await runNewPrompt(db, row.channel_url);
+        if (row.action === 'new_prompt') {
+          const result = await runNewPrompt(db, row.channel_url);
+          if (result.posted !== 1) throw new Error(`new_prompt posted 0: ${result.reason ?? 'unknown'}`);
+        }
         succeeded = true;
       } catch (e) {
         console.error('[bots] schedule', row.id, 'failed:', (e as Error).message);

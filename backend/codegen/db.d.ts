@@ -110,9 +110,39 @@ export interface BomAiDiscussionConfig {
   min_delay_minutes: Generated<number>;
   narrative_weight: Generated<number>;
   prompt_template: string;
+  prompt_bundle: Json | null;
   response_guardrails: string;
   timezone: Generated<string>;
   updated_at: Generated<Date>;
+}
+
+export interface BomAiPassageRange {
+  max_verse_id: number;
+  min_verse_id: number;
+  ordinal: number;
+  passage_ref: string;
+  window_key: string;
+}
+
+export interface BomAiPassageUse {
+  channel_url: string;
+  id: Generated<number>;
+  root_message_id: string;
+  text_guid: string;
+  used_at: Generated<Date>;
+  window_key: string | null;
+}
+
+export interface BomAiPassageWindow {
+  channel_url: string;
+  created_at: Generated<Date>;
+  enabled: Generated<number>;
+  ends_on: Date;
+  label: string;
+  sequence_no: number;
+  starts_on: Date;
+  updated_at: Generated<Date>;
+  window_key: string;
 }
 
 export interface BomAiDiscussionTurn {
@@ -1367,6 +1397,9 @@ export interface DB {
   bom_ai_discussion_config: BomAiDiscussionConfig;
   bom_ai_discussion_turn: BomAiDiscussionTurn;
   bom_ai_evidence: BomAiEvidence;
+  bom_ai_passage_range: BomAiPassageRange;
+  bom_ai_passage_use: BomAiPassageUse;
+  bom_ai_passage_window: BomAiPassageWindow;
   bom_ai_topic: BomAiTopic;
   bom_bot: BomBot;
   bom_bot_rag: BomBotRag;

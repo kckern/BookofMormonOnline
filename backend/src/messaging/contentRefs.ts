@@ -12,7 +12,7 @@
  *   Reference type + resolveReference — dispatcher (verse wired; others deferred)
  */
 
-import { lookup as lookupReference, generateReference } from 'scripture-guide';
+import { lookup as lookupReference, generateReference, type LanguageCode } from 'scripture-guide';
 import type { Kysely } from 'kysely';
 import type { DB } from '../../codegen/db.js';
 import { SlugResolver } from '../data/slugResolver.js';
@@ -24,9 +24,9 @@ import { SlugResolver } from '../data/slugResolver.js';
  * sorted, de-duped array of numeric verse ids.  Returns [] for any
  * unrecognised or empty input.
  */
-export function refToVerseIds(ref: string): number[] {
+export function refToVerseIds(ref: string, lang: string = 'en'): number[] {
   if (!ref || typeof ref !== 'string') return [];
-  const ids = lookupReference(ref.replace(/[–—]/g, '-'))?.verse_ids ?? [];
+  const ids = lookupReference(ref.replace(/[–—]/g, '-'), lang as LanguageCode)?.verse_ids ?? [];
   if (!ids.length) return [];
   return [...new Set(ids)].sort((a, z) => a - z);
 }
@@ -35,9 +35,9 @@ export function refToVerseIds(ref: string): number[] {
  * Convert a sorted array of verse ids back to a human-readable reference
  * string.  Returns '' for an empty array.
  */
-export function verseIdsToRef(verseIds: number[]): string {
+export function verseIdsToRef(verseIds: number[], lang: string = 'en'): string {
   if (!verseIds?.length) return '';
-  return generateReference([...verseIds].sort((a, z) => a - z));
+  return generateReference([...verseIds].sort((a, z) => a - z), lang as LanguageCode);
 }
 
 // ─── DB helpers ───────────────────────────────────────────────────────────────
@@ -126,6 +126,8 @@ export async function resolveVerseDisplay(
 // ─── Passage block resolution (containing-unit) ───────────────────────────────
 
 export interface PassageBlock {
+  /** Canonical selected content object. */
+  textGuid?: string;
   /** Page slug — the comment join-key / anchor. Does NOT include the ordinal. */
   pageSlug: string;
   /** Unit ordinal on the page (bom_text.link) — the block a reader lands on. */
@@ -134,6 +136,34 @@ export interface PassageBlock {
   unitFirstVerseId: number;
   /** The unit's HTML content (the text block). */
   text: string;
+  heading?: string | null;
+}
+
+/** Resolve one known bom_text object, optionally applying its language overlay. */
+export async function resolveTextBlockByGuid(
+  db: Kysely<DB>,
+  textGuid: string,
+  lang = 'en',
+): Promise<PassageBlock | null> {
+  const unit = await db.selectFrom('bom_text')
+    .select(['guid', 'page', 'link', 'min_verse_id', 'content', 'heading'])
+    .where('guid', '=', textGuid).executeTakeFirst();
+  if (!unit?.page || unit.link == null || unit.min_verse_id == null) return null;
+  const pagePath = (await new SlugResolver(db).pathsForLinks([unit.page])).get(unit.page);
+  if (!pagePath) return null;
+  let text = String(unit.content ?? '');
+  let heading = unit.heading ?? null;
+  if (lang && lang !== 'en') {
+    const rows = await db.selectFrom('bom_translation').select(['refkey', 'value'])
+      .where('guid', '=', textGuid).where('lang', '=', lang)
+      .where('refkey', 'in', ['content', 'heading']).orderBy('id', 'desc').execute();
+    text = rows.find((row) => row.refkey === 'content')?.value ?? text;
+    heading = rows.find((row) => row.refkey === 'heading')?.value ?? heading;
+  }
+  return {
+    textGuid: unit.guid, pageSlug: pagePath, ordinal: Number(unit.link),
+    unitFirstVerseId: Number(unit.min_verse_id), text, heading,
+  };
 }
 
 /**
@@ -159,7 +189,7 @@ export async function resolvePassageBlock(
 
   const unit = await db
     .selectFrom('bom_text')
-    .select(['page', 'link', 'min_verse_id', 'content'])
+    .select(['guid', 'page', 'link', 'min_verse_id', 'content'])
     .where('min_verse_id', '<=', firstVerse)
     .orderBy('min_verse_id', 'desc')
     .limit(1)
@@ -171,6 +201,7 @@ export async function resolvePassageBlock(
   if (!pagePath) return null;
 
   return {
+    textGuid: unit.guid,
     pageSlug: pagePath,
     ordinal: Number(unit.link),
     unitFirstVerseId: Number(unit.min_verse_id),
@@ -182,6 +213,7 @@ export async function resolvePassageBlock(
 
 export type RefType =
   | 'verse'
+  | 'text'
   | 'legacy_text'
   | 'commentary'
   | 'image'
@@ -202,6 +234,8 @@ export interface Reference {
   ordinal?: number;
   /** page slug — used by legacy_text and section refs */
   slug?: string;
+  /** Content language for channel-scoped attachments. */
+  lang?: string;
 }
 
 export interface ResolvedReference extends Reference {

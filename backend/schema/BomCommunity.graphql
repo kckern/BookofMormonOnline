@@ -128,6 +128,7 @@ type HomeUser {
 type ContentLink {
   key: String
   val: String
+  lang: String
 }
 
 type Bot {

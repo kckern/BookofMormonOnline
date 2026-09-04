@@ -127,6 +127,7 @@ export type Conn = {
 export type ContentLink = {
   __typename?: 'ContentLink';
   key?: Maybe<Scalars['String']['output']>;
+  lang?: Maybe<Scalars['String']['output']>;
   val?: Maybe<Scalars['String']['output']>;
 };
 
@@ -2613,6 +2614,7 @@ export type ConnResolvers<ContextType = AppContext, ParentType extends Resolvers
 
 export type ContentLinkResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['ContentLink'] = ResolversParentTypes['ContentLink']> = {
   key?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  lang?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   val?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

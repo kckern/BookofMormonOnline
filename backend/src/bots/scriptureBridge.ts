@@ -1,5 +1,5 @@
 import type { Kysely } from 'kysely';
-import { detectReferences, generateReference, lookup } from 'scripture-guide';
+import { detectReferences, generateReference, lookup, type LanguageCode } from 'scripture-guide';
 import type { DB } from '../../codegen/db.js';
 
 const BOM_FIRST_VERSE_ID = 31_103;
@@ -12,12 +12,12 @@ export interface ScriptureBridgeResult {
 }
 
 /** Detect references using scripture-guide without rewriting the source text. */
-export function detectReferenceStrings(text: string): string[] {
+export function detectReferenceStrings(text: string, lang: string = 'en'): string[] {
   const refs: string[] = [];
   detectReferences(text, (reference) => {
     refs.push(reference);
     return reference;
-  });
+  }, lang as LanguageCode);
   return [...new Set(refs)];
 }
 
@@ -60,4 +60,3 @@ export async function bridgeBookOfMormonToBible(
     edges,
   };
 }
-
