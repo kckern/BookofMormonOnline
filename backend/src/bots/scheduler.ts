@@ -23,6 +23,7 @@ import { sampleReplyShape, replyLengthInstruction, OPENER_LENGTH_INSTRUCTION } f
 import { detectReferenceStrings } from './scriptureBridge.js';
 import { planMoves, moveInstruction, type DiscussionMove } from './discussionMoves.js';
 import { parseOpenerHighlight, htmlToPlain } from './openerHighlight.js';
+import { pickStyleWeightedPassage } from './passagePicker.js';
 
 // Book of Mormon verse-id range — only BoM refs resolve to a bom_text block.
 const BOM_FIRST_VERSE_ID = 31_103;
@@ -207,36 +208,29 @@ async function runManagedDiscussion(
     .where('channel_url', '=', channelUrl).where('enabled', '=', 1).executeTakeFirst();
   if (!config) return { posted: 0, reason: 'no-managed-config' };
 
-  const kind = rand(100) < config.discursive_weight ? 'discursive' : 'narrative';
-  // Candidate topics, preferred kind first, then least-recently-used. We pick the
-  // first that resolves to a real page text block so the opener ALWAYS attaches a
-  // scripture-excerpt card (first-class requirement) — never a bare mention.
-  const candidates = await db.selectFrom('bom_ai_topic').selectAll()
-    .where('channel_url', '=', channelUrl).where('enabled', '=', 1)
-    .orderBy(sql`case when passage_kind = ${kind} then 0 else 1 end`)
-    .orderBy('last_used_at', 'asc').orderBy('use_count', 'asc')
-    .limit(8).execute();
-  if (!candidates.length) return { posted: 0, reason: 'no-topics' };
-
   const runId = nanoid(10);
   const runLog = botLog.child({ runId, channelUrl });
-  let topic: (typeof candidates)[number] | undefined;
-  let topicRefs: Awaited<ReturnType<typeof buildTopicRefs>> | undefined;
-  let topicBlock: Awaited<ReturnType<typeof resolvePassageBlock>> | undefined;
-  for (const candidate of candidates) {
-    const block = await resolvePassageBlock(db, candidate.passage_ref ?? '');
-    if (block) {
-      topic = candidate;
-      topicBlock = block;
-      topicRefs = await buildTopicRefs(candidate.passage_ref ?? '', () => Promise.resolve(block));
-      break;
-    }
+  // Fully dynamic: draw a random BoM passage weighted toward discourse+poetry
+  // over narrative (via lds_scriptures_lines.style). Replaces the curated topics.
+  const picked = await pickStyleWeightedPassage(db);
+  if (!picked) return { posted: 0, reason: 'no-passage' };
+  const topicBlock = await resolvePassageBlock(db, picked.passageRef);
+  if (!topicBlock) {
     runLog.warn(
-      { event: 'topic.skipped_unresolved', topicId: candidate.topic_id, passageRef: candidate.passage_ref },
-      'topic did not resolve to a page text block; skipping',
+      { event: 'passage.unresolved', passageRef: picked.passageRef, minVerseId: picked.minVerseId },
+      'picked passage did not resolve to a block',
     );
+    return { posted: 0, reason: 'passage-unresolved' };
   }
-  if (!topic || !topicRefs || !topicBlock) return { posted: 0, reason: 'no-resolvable-topic' };
+  const topicRefs = await buildTopicRefs(picked.passageRef, () => Promise.resolve(topicBlock));
+  const topic = {
+    topic_id: `dyn:${picked.minVerseId}`,
+    passage_ref: picked.passageRef,
+    passage_kind: picked.style,
+    passage_slug: topicBlock.pageSlug,
+    question: '' as string,
+  };
+  runLog.info({ event: 'passage.picked', bucket: picked.bucket, style: picked.style, passageRef: picked.passageRef, minVerseId: picked.minVerseId }, 'passage picked');
 
   const bots = await db.selectFrom('messenger_members as member')
     .innerJoin('messenger_users as user', 'user.user_id', 'member.user_id')
@@ -283,7 +277,7 @@ async function runManagedDiscussion(
   runLog.info(
     {
       event: 'discussion.start', topicId: topic.topic_id, passageKind: topic.passage_kind,
-      passageRef: topic.passage_ref, kind, anchor: topicRefs.anchor,
+      passageRef: topic.passage_ref, bucket: picked.bucket, anchor: topicRefs.anchor,
       openerBotId: opener.bot_id, voiceCount, voices: voices.map((v) => v.bot_id),
       audienceBotId: audience?.bot_id ?? null,
     },
@@ -293,7 +287,9 @@ async function runManagedDiscussion(
     { role: 'user', content: instructions },
     {
       role: 'user',
-      content: `Passage: ${topic.passage_ref}\nEditorial topic brief: ${topic.question}`,
+      content: topic.question
+        ? `Passage: ${topic.passage_ref}\nEditorial topic brief: ${topic.question}`
+        : `Passage: ${topic.passage_ref}\nMake your opening argument about this passage.`,
     },
   ], { log: runLog, label: 'opener', model: opener.model ?? undefined });
   if (!openingRaw) {
@@ -365,10 +361,6 @@ async function runManagedDiscussion(
       }).execute();
       scheduled.push({ botId: bot.bot_id, ordinal: index + 1, move: step.move, dueAt: when.toISOString() });
     }
-    await trx.updateTable('bom_ai_topic').set({
-      last_used_at: now,
-      use_count: sql<number>`use_count + 1`,
-    }).where('topic_id', '=', topic.topic_id).execute();
   });
   rootLog.info({ event: 'discussion.turns_scheduled', count: scheduled.length, turns: scheduled }, 'follow-up turns scheduled');
   return { posted: 1, promptGuid: topic.topic_id };

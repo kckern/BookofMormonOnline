@@ -55,6 +55,15 @@ Locked decisions:
 - **OP responds.** After the first clarify/pushback, one opener-response turn (`isOpenerResponse`, move `respond`) is scheduled so there's real back-and-forth.
 - Observability: `opener.highlight`/`opener.highlight_miss` + `move` on `turn.start`.
 
+## Round 3 — dynamic style-weighted passage selection (2026-09-04, KC)
+
+Replace the curated `bom_ai_topic` list with dynamic selection across the whole Book of Mormon, weighted toward discourse+poetry (debate-rich) over narrative (chronicle).
+
+- **Source data:** `scripture.guide.tmp_authorship` (verse_id → JSON `styles[]` of discourse/poetry/narrative, full BoM coverage, 6,605 verses). bom_app was granted SELECT on it. Enriched **`bom_prd.lds_scriptures_lines`** with a `style VARCHAR(16)` column (collapsed priority discourse>poetry>narrative, one cross-DB UPDATE via `styles LIKE`). Unit-level distribution over the 3,410 bom_text units: discourse 1,328 / narrative 2,040 / poetry 42 (poetry is only 1.2%).
+- **Buckets (KC):** discourse+poetry are NOT partitioned (poetry is scarce; partitioning would oversample 42 passages). Two buckets — `discourse_poetry` vs `narrative` — weighted **85 / 15** (`BUCKET_WEIGHTS`, the one tunable knob). `passagePicker.ts`: pick bucket, random bom_text unit of that bucket's styles (join `lds_scriptures_lines.style` on verse_id=min_verse_id, distinct), expand to a MIN 4 / MAX 12-verse passage via `verseIdsToRef`.
+- **Scheduler:** `runManagedDiscussion` now calls `pickStyleWeightedPassage` instead of the topic loop; synthesizes a `dyn:<verseId>` topic; opener prompt drops the curated editorial brief ("Make your opening argument about this passage"); `bom_ai_topic` use_count update removed. Logs `passage.picked` (bucket/style/ref).
+- Verified by dry-run: 40 draws → 34 discourse+poetry / 6 narrative (=85/15), 0 unresolved, whole-book variety; dynamic opener resolves + highlights. `pickBucket` unit-tested.
+
 ## Out of scope (follow-up)
 - Multi-block passage cards (link the whole 23–35 range as several blocks). v1 links the containing unit.
 - Backfilling `passage_slug` on all `bom_ai_topic` rows.

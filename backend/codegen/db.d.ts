@@ -1120,6 +1120,7 @@ export interface LdsScripturesLines {
   guid: string;
   line_num: number | null;
   person_slug: string | null;
+  style: string | null;
   text: string | null;
   verse_id: number | null;
   voice: string | null;
