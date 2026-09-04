@@ -864,6 +864,8 @@ img.groupAvatar
     display: flex;
     width: 100%;
     color: #666;
+    align-items: flex-start;
+    padding: .2rem 0 .7rem;
 }
 
 .commentThreadItem.selected
@@ -935,11 +937,14 @@ img.groupAvatar
 .commentThreadItem .textbox
 {
     flex-grow: 1;
+    min-width: 0;
 }
 .commentThreadItem .textbox .namerow
 {
     font-weight: 800;
     color: #555;
+    line-height: 1.15rem;
+    margin-bottom: .2rem;
 }
 .commentThreadItem .textbox .namerow span a
 {
@@ -991,7 +996,7 @@ img.groupAvatar
 
 .commentThreadItem .textbox .mesg
 {
-    line-height: 1.2em;
+    line-height: 1.35;
 }
 
 
@@ -1009,7 +1014,7 @@ img.groupAvatar
 .commentThreadItem
 {
     border-bottom: 1px solid #EEE;
-    margin-bottom: 1rem;
+    margin-bottom: .35rem;
 }
 
 span.groupName,
