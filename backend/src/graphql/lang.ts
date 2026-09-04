@@ -25,6 +25,7 @@ const SUPPORTED = env.SUPPORTED_LANGUAGES
 
 const LANG_DOMAINS: Record<string, string> = {
   'xn--289a67xla.kr': 'ko',
+  'livredemormon.fr': 'fr',
 };
 
 export function resolveLang(host: string | undefined, urlPath: string): string {

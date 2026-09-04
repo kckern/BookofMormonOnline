@@ -22,6 +22,7 @@ describe('resolveLang (legacy apollo.ts rules, verbatim)', () => {
 
   test('langDomains map applies', () => {
     expect(resolveLang('xn--289a67xla.kr', '/')).toBe('ko');
+    expect(resolveLang('livredemormon.fr', '/graphql')).toBe('fr');
   });
 
   test('unknown path segments clamp to English', () => {
