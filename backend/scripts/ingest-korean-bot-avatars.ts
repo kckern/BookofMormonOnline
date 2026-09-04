@@ -23,17 +23,27 @@ const generatedSources = [
 
 const apply = process.argv.includes('--apply');
 if (apply && process.env['SANDBOX'] !== '0') throw new Error('Apply requires SANDBOX=0');
+const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+async function fetchSource(url: string, filename: string): Promise<Response> {
+  for (let attempt = 1; attempt <= 5; attempt += 1) {
+    const response = await fetch(url, { redirect: 'follow', headers: { 'user-agent': 'BookofMormonOnline/1.0 (admin@bookofmormon.online) avatar-ingest' } });
+    if (response.ok) return response;
+    if (response.status !== 429 || attempt === 5) throw new Error(`${filename}: HTTP ${response.status}`);
+    await pause(Math.min(30, Number(response.headers.get('retry-after')) || attempt * 5) * 1000);
+  }
+  throw new Error(`${filename}: download retries exhausted`);
+}
 const db = getDb();
 try {
   for (const [botId, filename] of sources) {
     const source = `https://commons.wikimedia.org/wiki/Special:Redirect/file/${encodeURIComponent(filename)}`;
     console.log(`${apply ? 'INGEST' : 'WOULD INGEST'} ${botId} <- ${source}`);
     if (!apply) continue;
-    const response = await fetch(source, { redirect: 'follow', headers: { 'user-agent': 'BookofMormonOnline/1.0 avatar-ingest' } });
-    if (!response.ok) throw new Error(`${filename}: HTTP ${response.status}`);
+    const response = await fetchSource(source, filename);
     const url = await uploadProfileImage(Buffer.from(await response.arrayBuffer()).toString('base64'), botId);
     await db.updateTable('messenger_users').set({ profile_url: url }).where('user_id', '=', botId).execute();
     console.log(`UPDATED ${botId} ${url}`);
+    await pause(1500);
   }
   for (const [botId, relativePath] of generatedSources) {
     const path = fileURLToPath(new URL(relativePath, import.meta.url));
