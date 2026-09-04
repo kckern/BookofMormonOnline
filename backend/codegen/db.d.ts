@@ -1272,7 +1272,9 @@ export interface MessengerMembers {
 }
 
 export interface MessengerMessages {
+  anchor: string | null;
   channel_url: string;
+  content_refs: Json | null;
   created_at: Generated<Date | null>;
   custom_type: Generated<string | null>;
   is_deleted: Generated<number | null>;
