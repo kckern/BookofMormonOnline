@@ -10,6 +10,7 @@ jobs:
   ingest:
     runs-on: [self-hosted, prod]
     steps:
+      - uses: actions/checkout@v4
       - name: Ingest reviewed avatars in active production container
         run: |
           set -euo pipefail
@@ -17,4 +18,7 @@ jobs:
           ACTIVE="$(sed -n '1p' "$DIR/active-slot")"
           FLAG=""
           [ "${{ inputs.mode }}" = "apply" ] && FLAG="--apply"
+          docker cp backend/scripts/ingest-korean-bot-avatars.ts "$ACTIVE":/app/backend/scripts/ingest-korean-bot-avatars.ts
+          docker exec "$ACTIVE" mkdir -p /app/backend/assets/bot-avatars
+          docker cp backend/assets/bot-avatars/kim-ho-jik-interpretive.png "$ACTIVE":/app/backend/assets/bot-avatars/kim-ho-jik-interpretive.png
           docker exec -w /app/backend "$ACTIVE" node --import tsx scripts/ingest-korean-bot-avatars.ts $FLAG
