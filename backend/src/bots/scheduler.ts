@@ -21,6 +21,8 @@ import { resolvePassageBlock, refToVerseIds, type Reference } from '../messaging
 import { botLog, countSentences } from './logger.js';
 import { sampleReplyShape, replyLengthInstruction, OPENER_LENGTH_INSTRUCTION } from './replyShape.js';
 import { detectReferenceStrings } from './scriptureBridge.js';
+import { planMoves, moveInstruction, type DiscussionMove } from './discussionMoves.js';
+import { parseOpenerHighlight, htmlToPlain } from './openerHighlight.js';
 
 // Book of Mormon verse-id range — only BoM refs resolve to a bom_text block.
 const BOM_FIRST_VERSE_ID = 31_103;
@@ -212,15 +214,21 @@ async function runManagedDiscussion(
   const runLog = botLog.child({ runId, channelUrl });
   let topic: (typeof candidates)[number] | undefined;
   let topicRefs: Awaited<ReturnType<typeof buildTopicRefs>> | undefined;
+  let topicBlock: Awaited<ReturnType<typeof resolvePassageBlock>> | undefined;
   for (const candidate of candidates) {
-    const refs = await buildTopicRefs(candidate.passage_ref ?? '', (r) => resolvePassageBlock(db, r));
-    if (refs.resolved) { topic = candidate; topicRefs = refs; break; }
+    const block = await resolvePassageBlock(db, candidate.passage_ref ?? '');
+    if (block) {
+      topic = candidate;
+      topicBlock = block;
+      topicRefs = await buildTopicRefs(candidate.passage_ref ?? '', () => Promise.resolve(block));
+      break;
+    }
     runLog.warn(
       { event: 'topic.skipped_unresolved', topicId: candidate.topic_id, passageRef: candidate.passage_ref },
       'topic did not resolve to a page text block; skipping',
     );
   }
-  if (!topic || !topicRefs) return { posted: 0, reason: 'no-resolvable-topic' };
+  if (!topic || !topicRefs || !topicBlock) return { posted: 0, reason: 'no-resolvable-topic' };
 
   const bots = await db.selectFrom('messenger_members as member')
     .innerJoin('messenger_users as user', 'user.user_id', 'member.user_id')
@@ -256,7 +264,14 @@ async function runManagedDiscussion(
   const audience = chooseAudienceRespondent(
     configuredAudience, topicText, config.audience_response_chance,
   );
-  const instructions = `${managedTurnInstructions(config.prompt_template, config.response_guardrails)}\n\n${OPENER_LENGTH_INSTRUCTION}`;
+  const blockPlain = htmlToPlain(topicBlock.text);
+  const instructions = [
+    managedTurnInstructions(config.prompt_template, config.response_guardrails),
+    OPENER_LENGTH_INSTRUCTION,
+    'HIGHLIGHT: after your argument, on a final separate line, write "HIGHLIGHT: " followed by the exact ' +
+      '3-10 word phrase, copied verbatim, from this linked passage text that your point turns on — so it can be ' +
+      `marked in the excerpt:\n"${blockPlain}"`,
+  ].join('\n\n');
   runLog.info(
     {
       event: 'discussion.start', topicId: topic.topic_id, passageKind: topic.passage_kind,
@@ -266,18 +281,30 @@ async function runManagedDiscussion(
     },
     'managed discussion start',
   );
-  const opening = await generateBotReply(db, opener.bot_id, [
+  const openingRaw = await generateBotReply(db, opener.bot_id, [
     { role: 'user', content: instructions },
     {
       role: 'user',
       content: `Passage: ${topic.passage_ref}\nEditorial topic brief: ${topic.question}`,
     },
   ], { log: runLog, label: 'opener', model: opener.model ?? undefined });
-  if (!opening) {
+  if (!openingRaw) {
     runLog.warn({ event: 'discussion.opener_failed', topicId: topic.topic_id }, 'opener generation failed');
     return { posted: 0, reason: 'opener-generation-failed' };
   }
-  const promptText = `${topic.passage_ref}\n\n${opening}`.trim();
+  // Split off the HIGHLIGHT line; attach it as a highlight span when it validates
+  // against the block text. The card carries the reference, so drop the header.
+  const { body: opening, highlight } = parseOpenerHighlight(openingRaw, topicBlock.text);
+  if (highlight) {
+    topicRefs.references.push({
+      type: 'verse', id: topicBlock.unitFirstVerseId, role: 'highlight',
+      slug: topicBlock.pageSlug, ordinal: topicBlock.ordinal, span: { text: highlight },
+    });
+    runLog.info({ event: 'opener.highlight', phrase: highlight }, 'opener highlight attached');
+  } else {
+    runLog.info({ event: 'opener.highlight_miss' }, 'no valid opener highlight');
+  }
+  const promptText = opening;
   const root = await postMessage(db, {
     channelUrl,
     userId: opener.bot_id,
@@ -304,24 +331,31 @@ async function runManagedDiscussion(
   );
 
   const now = new Date();
-  const scheduled: Array<{ botId: string; ordinal: number; dueAt: string }> = [];
+  // Assign each follow-up a discourse move; the opener re-enters after the first
+  // clarify/pushback (isOpenerResponse) so the thread has real back-and-forth.
+  const followers = [...voices.slice(1), ...(audience ? [audience] : [])];
+  const plan = planMoves(followers.length);
+  const scheduled: Array<{ botId: string; ordinal: number; move: DiscussionMove; dueAt: string }> = [];
   await db.transaction().execute(async (trx) => {
     await trx.insertInto('messenger_thread_state').values({
       root_message_id: root.message_id, channel_url: channelUrl, status: 'active', bot_message_count: 1,
     }).execute();
     let dueAt = now.getTime();
-    const scheduledVoices = [...voices.slice(1), ...(audience ? [audience] : [])];
-    for (const [index, bot] of scheduledVoices.entries()) {
+    let followerIdx = 0;
+    for (const [index, step] of plan.entries()) {
+      const bot = step.isOpenerResponse ? opener : followers[followerIdx++];
+      if (!bot) continue;
       dueAt += randInt(config.min_delay_minutes, config.max_delay_minutes) * 60_000;
       const when = new Date(dueAt);
       await trx.insertInto('bom_ai_discussion_turn').values({
         root_message_id: root.message_id,
         bot_id: bot.bot_id,
         ordinal: index + 1,
+        move: step.move,
         due_at: when,
         status: 'pending',
       }).execute();
-      scheduled.push({ botId: bot.bot_id, ordinal: index + 1, dueAt: when.toISOString() });
+      scheduled.push({ botId: bot.bot_id, ordinal: index + 1, move: step.move, dueAt: when.toISOString() });
     }
     await trx.updateTable('bom_ai_topic').set({
       last_used_at: now,
@@ -356,7 +390,7 @@ async function processDueTurns(db: Kysely<DB>): Promise<void> {
     .innerJoin('messenger_thread_state as thread', 'thread.root_message_id', 'turn.root_message_id')
     .innerJoin('bom_ai_discussion_config as config', 'config.channel_url', 'thread.channel_url')
     .select([
-      'turn.id', 'turn.root_message_id', 'turn.bot_id', 'thread.channel_url',
+      'turn.id', 'turn.root_message_id', 'turn.bot_id', 'turn.move', 'thread.channel_url',
       'thread.bot_message_count', 'thread.created_at', 'thread.status',
       'config.max_bot_messages', 'config.bot_window_hours', 'config.prompt_template',
       'config.response_guardrails',
@@ -390,7 +424,9 @@ async function processDueTurns(db: Kysely<DB>): Promise<void> {
       const replies = await getThread(db, turn.root_message_id);
       // Reply length + link shape: concise by default, longer only when linking.
       const shape = sampleReplyShape();
-      const instructions = `${managedTurnInstructions(turn.prompt_template, turn.response_guardrails)}\n\n${replyLengthInstruction(shape)}`;
+      const move = (turn.move as DiscussionMove | null) ?? null;
+      const moveInstr = move ? `\n\n${moveInstruction(move)}` : '';
+      const instructions = `${managedTurnInstructions(turn.prompt_template, turn.response_guardrails)}${moveInstr}\n\n${replyLengthInstruction(shape)}`;
       let editorialQuestion = '';
       try {
         const data = JSON.parse(root.data) as Record<string, unknown>;
@@ -408,7 +444,7 @@ async function processDueTurns(db: Kysely<DB>): Promise<void> {
         })),
       ];
       turnLog.info(
-        { event: 'turn.start', targetSentences: shape.targetSentences, cap: shape.cap, wantsLink: shape.wantsLink, priorReplies: replies.length },
+        { event: 'turn.start', move, targetSentences: shape.targetSentences, cap: shape.cap, wantsLink: shape.wantsLink, priorReplies: replies.length },
         'turn start',
       );
       const text = await generateBotReply(db, turn.bot_id, conversation, { log: turnLog, label: 'turn' });

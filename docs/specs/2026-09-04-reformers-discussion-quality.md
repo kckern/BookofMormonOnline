@@ -46,6 +46,15 @@
 - Live dry-run: regenerate the jacob-2-marriage opener locally, confirm `anchor=jacobs-address` + card-ready ref; run a full one-thread and eyeball reply lengths + a linked reply.
 - Then re-enable schedule (`bom_bot_schedule.enabled=1`) + deploy.
 
+## Round 2 — opener polish + conversation dynamics (2026-09-04, KC review of live Alma 7 thread)
+
+Locked decisions:
+- **Opener highlights by default.** Opener emits a trailing `HIGHLIGHT: <verbatim 3-10 word phrase>` drawn from the LINKED block text (provided in the prompt); `parseOpenerHighlight` splits it off the body and validates it against the block (frontend `highlightPhrase` wraps the first match in `<mark>`). Attached as a `role:highlight` ref with `span.text`. `openerHighlight.ts` + tests. Passage stays discourse-weighted (config `discursive_weight=80`, unchanged).
+- **Drop the redundant reference header.** The opener no longer prepends `passage_ref` (`promptText = body`); the card carries the reference.
+- **Reply moves (no rubber-stamps).** `discussionMoves.ts`: each follow-up turn gets a MOVE — expand · clarify · pushback · probe · reframe · concede_qualify — via `planMoves` (~50% friction, no back-to-back repeats, never a bare "I agree"). Friction is character-gated in the instruction ("dissent only where your persona genuinely would"). Persisted per turn: **migration `2026-09-04-add-discussion-turn-move.sql`** adds `bom_ai_discussion_turn.move VARCHAR(24) NULL`.
+- **OP responds.** After the first clarify/pushback, one opener-response turn (`isOpenerResponse`, move `respond`) is scheduled so there's real back-and-forth.
+- Observability: `opener.highlight`/`opener.highlight_miss` + `move` on `turn.start`.
+
 ## Out of scope (follow-up)
 - Multi-block passage cards (link the whole 23–35 range as several blocks). v1 links the containing unit.
 - Backfilling `passage_slug` on all `bom_ai_topic` rows.

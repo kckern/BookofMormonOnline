@@ -124,6 +124,7 @@ export interface BomAiDiscussionTurn {
   lease_expires_at: Date | null;
   lease_owner: string | null;
   message_id: string | null;
+  move: string | null;
   ordinal: number;
   root_message_id: string;
   status: Generated<"failed" | "leased" | "pending" | "posted" | "skipped">;
