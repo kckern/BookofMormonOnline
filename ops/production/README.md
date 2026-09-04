@@ -7,6 +7,15 @@ Only one application slot runs at steady state. The deployment timer pulls the
 healthcheck, gracefully reloads the gateway, verifies ports 8200 and 5005, and
 then drains the old slot.
 
+Before every pull, routine cleanup removes build cache and images unused for 24
+hours. If the filesystem containing `BOM_DEPLOY_DIR` is at least 90% full
+(`BOM_EMERGENCY_DISK_PERCENT` overrides the threshold), deployment enters an
+emergency path: it removes the stopped inactive rollback slot, runs
+`docker system prune -a -f` without pruning volumes, and measures disk usage
+again. It refuses to pull if usage remains at or above the threshold. Running
+containers—including the active application and gateway—are preserved, but an
+emergency prune intentionally forfeits the one-deploy rollback slot.
+
 Install paths on the production host:
 
 - `/home/ubuntu/greenfield/deploy-blue-green.sh`

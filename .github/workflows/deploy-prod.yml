@@ -52,7 +52,9 @@ jobs:
     needs: build-push
     runs-on: [self-hosted, prod]
     steps:
+      - uses: actions/checkout@v4
       - name: Blue-green deploy
         run: |
+          install -m 0755 ops/production/deploy-blue-green.sh /home/ubuntu/greenfield/deploy-blue-green.sh
           cd /home/ubuntu/greenfield
           bash deploy-blue-green.sh

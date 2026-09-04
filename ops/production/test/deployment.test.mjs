@@ -82,3 +82,18 @@ test('inactive and rollback slots cannot restart alongside the active slot', () 
   assert.match(rollback, /docker update --restart=always "\$previous"/)
   assert.match(rollback, /docker update --restart=no "\$active"/)
 })
+
+test('90 percent disk pressure sacrifices only the inactive rollback slot before an aggressive prune', () => {
+  assert.match(deployment, /BOM_EMERGENCY_DISK_PERCENT:-90/)
+  ordered(
+    deployment,
+    'disk_used_percent() {',
+    'emergency_prune_if_needed() {',
+    'removing inactive rollback slot $next',
+    'docker rm "$next"',
+    'docker system prune -a -f',
+    'refusing image pull',
+    'docker pull "$IMAGE"',
+  )
+  assert.doesNotMatch(deployment, /docker (system|volume) prune[^\n]*--volumes/)
+})

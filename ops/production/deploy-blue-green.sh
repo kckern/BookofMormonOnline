@@ -15,6 +15,7 @@ STATE_FILE="$BASE_DIR/active-slot"
 LOCK_FILE="$BASE_DIR/deploy.lock"
 HEALTH_TIMEOUT="${BOM_HEALTH_TIMEOUT:-180}"
 DRAIN_SECONDS="${BOM_DRAIN_SECONDS:-15}"
+EMERGENCY_DISK_PERCENT="${BOM_EMERGENCY_DISK_PERCENT:-90}"
 
 log() {
   printf '%s %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$*"
@@ -31,6 +32,37 @@ container_exists() {
 
 container_running() {
   [ "$(docker container inspect -f '{{.State.Running}}' "$1" 2>/dev/null || true)" = "true" ]
+}
+
+disk_used_percent() {
+  df -P "$BASE_DIR" | awk 'NR == 2 { sub(/%$/, "", $5); print $5 }'
+}
+
+emergency_prune_if_needed() {
+  used="$(disk_used_percent)"
+  case "$used" in
+    ''|*[!0-9]*) fail "could not determine disk usage for $BASE_DIR" ;;
+  esac
+  if [ "$used" -lt "$EMERGENCY_DISK_PERCENT" ]; then
+    return 0
+  fi
+
+  log "disk usage ${used}% is at or above ${EMERGENCY_DISK_PERCENT}%; entering emergency prune"
+  # The inactive slot is the only object deliberately retained for rollback.
+  # Removing it unpins its image. Running containers (the active app, gateway,
+  # and unrelated services) are never removed by docker system prune.
+  if container_exists "$next"; then
+    [ "$(docker container inspect -f '{{.State.Running}}' "$next")" = "false" ] \
+      || fail "refusing emergency prune because inactive slot $next is running"
+    log "removing inactive rollback slot $next to release its pinned image"
+    docker rm "$next" >/dev/null
+  fi
+  docker system prune -a -f >/dev/null
+
+  used="$(disk_used_percent)"
+  log "disk usage after emergency prune: ${used}%"
+  [ "$used" -lt "$EMERGENCY_DISK_PERCENT" ] \
+    || fail "disk remains ${used}% full after emergency prune; refusing image pull"
 }
 
 render_gateway_config() {
@@ -107,6 +139,7 @@ fi
 log "reclaiming disk before pull"
 docker builder prune -af >/dev/null 2>&1 || true
 docker image prune -a -f --filter 'until=24h' >/dev/null 2>&1 || true
+emergency_prune_if_needed
 
 log "pulling $IMAGE"
 docker pull "$IMAGE"
