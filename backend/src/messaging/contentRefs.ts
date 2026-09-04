@@ -127,9 +127,11 @@ export async function resolveVerseDisplay(
 
 export type RefType =
   | 'verse'
+  | 'legacy_text'
   | 'commentary'
   | 'image'
   | 'section'
+  | 'fax'
   | 'person'
   | 'place'
   | 'object';
@@ -141,7 +143,10 @@ export interface Reference {
   id: string | number;
   role: RefRole;
   span?: { text: string };
+  /** ordinal within a page — used by legacy_text refs */
   ordinal?: number;
+  /** page slug — used by legacy_text and section refs */
+  slug?: string;
 }
 
 export interface ResolvedReference extends Reference {

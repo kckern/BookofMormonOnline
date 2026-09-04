@@ -26,6 +26,8 @@ import { getMessage, getMessages, getMessagesForChannels, getThread } from '../.
 import { getUser, getUsers, listStudyBots } from '../../messaging/users.js';
 import { addBotToChannel, removeBotFromChannel } from '../../messaging/bots/registry.js';
 import type { ChannelDTO, MessageDTO, UserDTO } from '../../messaging/dto.js';
+import type { Reference, VerseDisplay } from '../../messaging/contentRefs.js';
+import { resolveVerseDisplay } from '../../messaging/contentRefs.js';
 import { getBus } from '../../realtime/RealtimeBus.js';
 import { isDuplicateKeyError } from '../../data/errors.js';
 import { loadReadingPlan } from '../../messaging/readingplan.js';
@@ -207,17 +209,79 @@ function maskUserPrivacy(u: Record<string, unknown>): Record<string, unknown> {
   };
 }
 
+// ─── References → link/highlights bridge ─────────────────────────────────────
+
+/**
+ * Map a Reference array to the `link: { key, val }` shape the frontend consumes.
+ * Selection order:
+ *   1. First ref with role === 'subject'
+ *   2. First ref with role !== 'highlight' (fallback)
+ *
+ * For `verse` refs, `resolvedVerses` must supply the pre-fetched display object
+ * (the function is sync — no DB calls here). Returns null if no usable ref is
+ * found or the verse id is not in the map.
+ */
+export function refsToLink(
+  references: Reference[],
+  resolvedVerses: Map<number, VerseDisplay>,
+): { key: string; val: string } | null {
+  // Pick candidate: prefer first 'subject' role, fallback to first non-highlight
+  const candidate =
+    references.find((r) => r.role === 'subject') ??
+    references.find((r) => r.role !== 'highlight') ??
+    null;
+
+  if (!candidate) return null;
+
+  switch (candidate.type) {
+    case 'verse': {
+      const display = resolvedVerses.get(Number(candidate.id));
+      if (!display) return null;
+      return { key: 'text', val: `${display.slug}/${display.ordinal}` };
+    }
+    case 'legacy_text': {
+      return { key: 'text', val: `${candidate.slug}/${candidate.ordinal}` };
+    }
+    case 'commentary':
+      return { key: 'com', val: String(candidate.id) };
+    case 'image':
+      return { key: 'img', val: String(candidate.id) };
+    case 'section':
+      return { key: 'section', val: `${candidate.slug}/${candidate.id}` };
+    case 'fax':
+      return { key: 'fax', val: String(candidate.id) };
+    default:
+      return null;
+  }
+}
+
+/**
+ * Collect `span.text` from every reference with role === 'highlight', in order.
+ * Refs missing a span.text are skipped.
+ */
+export function refsToHighlights(references: Reference[]): string[] {
+  return references
+    .filter((r) => r.role === 'highlight' && r.span?.text)
+    .map((r) => r.span!.text);
+}
+
 // ─── HomeFeedItem shape assembly ──────────────────────────────────────────────
 
 /**
  * Assemble a HomeFeedItem GQL object from a MessageDTO.
  * Mirrors legacy loadHomeItem() exactly: parses data JSON for links/highlights,
  * prepends custom_type (pageSlug) to text/section/fax link values.
+ *
+ * When msg.references is a non-empty array, derives link + highlights FROM it
+ * (via refsToLink / refsToHighlights) using pre-resolved verse display data
+ * passed in via resolvedVerses.  Otherwise falls back to legacy data.links /
+ * data.highlights behaviour unchanged.
  */
 function assembleHomeFeedItem(
   msg: MessageDTO,
   publicUserIds?: Set<string>,
   progressByUserId?: Map<string, BomUserProgress>,
+  resolvedVerses?: Map<number, VerseDisplay>,
 ): Record<string, unknown> {
   const userDto = msg.user;
   // C-1: mask non-public HUMAN users so private account real names never surface
@@ -239,14 +303,29 @@ function assembleHomeFeedItem(
     data = JSON.parse(msg.data) as typeof data;
   } catch { /* ignore */ }
 
-  const linksMap = data?.links ?? {};
-  const key = Object.keys(linksMap).shift() ?? null;
-  let val: unknown = Object.values(linksMap).shift() ?? null;
-  if (key && ['text', 'section', 'fax'].includes(key) && pageSlug) {
-    val = `${pageSlug}/${val}`;
-  }
+  // Prefer references-based link/highlights when references are present.
+  const hasRefs = Array.isArray(msg.references) && msg.references.length > 0;
 
-  const highlights: string[] | null = data?.highlights?.length ? data.highlights : null;
+  let key: string | null;
+  let val: unknown;
+  let highlights: string[] | null;
+
+  if (hasRefs) {
+    const refLink = refsToLink(msg.references, resolvedVerses ?? new Map());
+    key = refLink?.key ?? null;
+    val = refLink?.val ?? null;
+    const refHighlights = refsToHighlights(msg.references);
+    highlights = refHighlights.length > 0 ? refHighlights : null;
+  } else {
+    // Legacy path: derive from data.links + data.highlights
+    const linksMap = data?.links ?? {};
+    key = Object.keys(linksMap).shift() ?? null;
+    val = Object.values(linksMap).shift() ?? null;
+    if (key && ['text', 'section', 'fax'].includes(key) && pageSlug) {
+      val = `${pageSlug}/${val}`;
+    }
+    highlights = data?.highlights?.length ? data.highlights : null;
+  }
 
   // C-1: mask repliers too — same reasoning.
   const repliers = (msg.thread_info?.most_replies ?? []).map((r) => withUser(r));
@@ -365,10 +444,39 @@ async function fetchProgressByUserId(
   return map;
 }
 
+// Collect unique verse ids from a message list's references (type='verse') so
+// the homefeed resolver can batch-resolve them before calling feedAlgorithm.
+function collectVerseIds(messages: MessageDTO[]): number[] {
+  const ids = new Set<number>();
+  for (const m of messages) {
+    for (const r of m.references ?? []) {
+      if (r.type === 'verse') ids.add(Number(r.id));
+    }
+  }
+  return [...ids];
+}
+
+// Batch-resolve verse ids to display objects using resolveVerseDisplay.
+// Deduplication is handled by collectVerseIds. Nulls are skipped silently.
+// A sequential await loop is intentional: feeds are ≤30 messages, each with
+// few refs, so the total query count is small and we avoid Promise.all fan-out
+// overwhelming a single DB connection pool slot.
+async function fetchResolvedVerses(
+  db: Kysely<DB>,
+  verseIds: number[],
+): Promise<Map<number, VerseDisplay>> {
+  const map = new Map<number, VerseDisplay>();
+  for (const id of verseIds) {
+    const display = await resolveVerseDisplay(db, id);
+    if (display) map.set(id, display);
+  }
+  return map;
+}
+
 export function feedAlgorithm(
   messages: MessageDTO[],
   viewerUserId: string | null,
-  opts: { unfiltered?: boolean; publicUserIds?: Set<string>; progressByUserId?: Map<string, BomUserProgress> } = {},
+  opts: { unfiltered?: boolean; publicUserIds?: Set<string>; progressByUserId?: Map<string, BomUserProgress>; resolvedVerses?: Map<number, VerseDisplay> } = {},
 ): Record<string, unknown>[] {
   // Unlisted-beta channels (e.g. the Reformers discussion) are curated: every
   // root is intentional discussion, so we skip the general-feed noise heuristics
@@ -392,7 +500,7 @@ export function feedAlgorithm(
   return filtered
     .filter((m) => opts.unfiltered || !!m.custom_type)
     .sort((a, b) => b.created_at - a.created_at)
-    .map((m) => assembleHomeFeedItem(m, opts.publicUserIds, opts.progressByUserId));
+    .map((m) => assembleHomeFeedItem(m, opts.publicUserIds, opts.progressByUserId, opts.resolvedVerses));
 }
 
 // ─── Featured channels helper ─────────────────────────────────────────────────
@@ -648,11 +756,13 @@ export const communityResolvers: Resolvers = {
           // All messages for this channel
           const msgs = await getMessages(ctx.db, channelUrl, { limit: 30 });
           const ids = collectMessageUserIds(msgs);
-          const [publicSet, progressMap] = await Promise.all([
+          const verseIds = collectVerseIds(msgs);
+          const [publicSet, progressMap, resolvedVerses] = await Promise.all([
             getPublicUserIds(ctx.db, ids),
             fetchProgressByUserId(ctx.db, ids),
+            fetchResolvedVerses(ctx.db, verseIds),
           ]);
-          const feed = feedAlgorithm(msgs, myUserId, { unfiltered: true, publicUserIds: publicSet, progressByUserId: progressMap });
+          const feed = feedAlgorithm(msgs, myUserId, { unfiltered: true, publicUserIds: publicSet, progressByUserId: progressMap, resolvedVerses });
           return asGql({ groups: [groupObj], feed });
         }
 
@@ -683,11 +793,13 @@ export const communityResolvers: Resolvers = {
 
         const flatMsgs = [...msgsByChannel.values()].flat();
         const flatIds = collectMessageUserIds(flatMsgs);
-        const [publicSet, progressMap] = await Promise.all([
+        const flatVerseIds = collectVerseIds(flatMsgs);
+        const [publicSet, progressMap, resolvedVerses] = await Promise.all([
           getPublicUserIds(ctx.db, flatIds),
           fetchProgressByUserId(ctx.db, flatIds),
+          fetchResolvedVerses(ctx.db, flatVerseIds),
         ]);
-        const feed = feedAlgorithm(flatMsgs, myUserId, { unfiltered: true, publicUserIds: publicSet, progressByUserId: progressMap });
+        const feed = feedAlgorithm(flatMsgs, myUserId, { unfiltered: true, publicUserIds: publicSet, progressByUserId: progressMap, resolvedVerses });
         return asGql({ groups, feed });
       } catch (err) {
         console.error('homefeed error:', err);
