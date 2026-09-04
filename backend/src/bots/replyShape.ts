@@ -77,3 +77,12 @@ export function replyLengthInstruction(shape: ReplyShape): string {
     : '';
   return base + link;
 }
+
+export function countReplyWords(text: string): number {
+  return text.trim().split(/\s+/u).filter(Boolean).length;
+}
+
+export function replyFitsShape(text: string, shape: ReplyShape): boolean {
+  const words = countReplyWords(text);
+  return words >= shape.minWords && words <= shape.maxWords;
+}

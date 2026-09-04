@@ -8,6 +8,7 @@ export interface DiscussionPromptBundle {
   noMetaLeak: string;
   replyLengths: Record<'1' | '2' | '3' | '4', string>;
   replyLength?: string;
+  replyRewrite?: string;
   replyLinkSuffix: string;
   moves: Record<DiscussionMove, string>;
 }
@@ -62,6 +63,18 @@ export function turnPrompts(raw: unknown, move: DiscussionMove | null, shape: Re
       ? (bundle.replyLinkSuffix ?? 'Weave in one additional supporting scripture, ideally from the Book of Mormon.')
       : '',
   ].filter(Boolean);
+}
+
+export function replyRewritePrompt(raw: unknown, shape: ReplyShape, actualWords: number): string {
+  const bundle = promptBundle(raw);
+  const template = bundle.replyRewrite ??
+    'Rewrite your preceding draft in the same language, preserving its strongest point, in {{minWords}}-{{maxWords}} words. ' +
+    'The draft was {{actualWords}} words. Output only the replacement comment.';
+  return template
+    .replaceAll('{{actualWords}}', String(actualWords))
+    .replaceAll('{{targetWords}}', String(shape.targetWords))
+    .replaceAll('{{minWords}}', String(shape.minWords))
+    .replaceAll('{{maxWords}}', String(shape.maxWords));
 }
 
 export function validatePromptBundle(raw: unknown): string[] {

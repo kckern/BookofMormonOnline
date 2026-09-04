@@ -18,12 +18,12 @@ import { emitPublicChannelEvent } from '../messaging/policy.js';
 import { nanoid } from 'nanoid';
 import { resolvePassageBlock, resolveTextBlockByGuid, refToVerseIds, type Reference } from '../messaging/contentRefs.js';
 import { botLog, countSentences } from './logger.js';
-import { sampleReplyShape } from './replyShape.js';
+import { countReplyWords, replyFitsShape, sampleReplyShape } from './replyShape.js';
 import { detectReferenceStrings } from './scriptureBridge.js';
 import { planMoves, type DiscussionMove } from './discussionMoves.js';
 import { parseOpenerHighlight, htmlToPlain } from './openerHighlight.js';
 import { pickStyleWeightedPassage } from './passagePicker.js';
-import { openerPrompts, turnPrompts } from './discussionPrompts.js';
+import { openerPrompts, replyRewritePrompt, turnPrompts } from './discussionPrompts.js';
 import { loadBiographyContext } from './biographyContext.js';
 import { retrieveDiscussionPacket } from './mastra/rag.js';
 
@@ -456,7 +456,7 @@ async function processDueTurns(db: Kysely<DB>): Promise<void> {
       const root = await getMessage(db, turn.channel_url, turn.root_message_id);
       if (!root) throw new Error('discussion root missing');
       const replies = await getThread(db, turn.root_message_id);
-      const priorWordCounts = replies.map((reply) => reply.message.trim().split(/\s+/u).filter(Boolean).length);
+      const priorWordCounts = replies.map((reply) => countReplyWords(reply.message));
       const shape = sampleReplyShape(Math.random, priorWordCounts);
       const move = (turn.move as DiscussionMove | null) ?? null;
       const channelLang = turn.channel_lang || 'en';
@@ -486,8 +486,27 @@ async function processDueTurns(db: Kysely<DB>): Promise<void> {
         { event: 'turn.start', move, lengthBand: shape.band, targetWords: shape.targetWords, wantsLink: shape.wantsLink, priorReplies: replies.length },
         'turn start',
       );
-      const text = await generateBotReply(db, turn.bot_id, conversation, { log: turnLog, label: 'turn' });
-      if (!text) throw new Error('bot generation returned no text');
+      let text: string | null = null;
+      let attemptConversation = conversation;
+      for (let attempt = 1; attempt <= 3; attempt += 1) {
+        text = await generateBotReply(db, turn.bot_id, attemptConversation, {
+          log: turnLog, label: attempt === 1 ? 'turn' : `turn-length-rewrite-${attempt}`,
+        });
+        if (!text) throw new Error('bot generation returned no text');
+        const actualWords = countReplyWords(text);
+        if (replyFitsShape(text, shape)) break;
+        turnLog.warn(
+          { event: 'turn.length_rejected', attempt, actualWords, minWords: shape.minWords, maxWords: shape.maxWords },
+          'generated reply outside enforced length range',
+        );
+        attemptConversation = [
+          ...conversation,
+          { role: 'assistant', content: text },
+          { role: 'user', content: replyRewritePrompt(turn.prompt_bundle, shape, actualWords) },
+        ];
+        text = null;
+      }
+      if (!text) throw new Error(`bot failed enforced ${shape.minWords}-${shape.maxWords} word range after 3 attempts`);
 
       // WS3: when this reply is meant to link, attach the first Book of Mormon
       // scripture it cites as a content card (role: highlight).
@@ -525,7 +544,7 @@ async function processDueTurns(db: Kysely<DB>): Promise<void> {
       turnLog.info(
         {
           event: 'turn.posted', messageId: message.message_id, latencyMs: Date.now() - turnStart,
-          sentences: countSentences(text), words: text.trim().split(/\s+/u).filter(Boolean).length,
+          sentences: countSentences(text), words: countReplyWords(text),
           lengthBand: shape.band, targetWords: shape.targetWords, linked: !!references,
         },
         'turn posted',

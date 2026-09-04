@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sampleReplyShape, replyLengthInstruction } from '../../src/bots/replyShape.js';
+import { countReplyWords, replyFitsShape, sampleReplyShape, replyLengthInstruction } from '../../src/bots/replyShape.js';
 
 function sequence(values: number[]) {
   let index = 0;
@@ -51,5 +51,22 @@ describe('replyLengthInstruction', () => {
     expect(instruction).toContain(`${shape.minWords}-${shape.maxWords} words`);
     expect(instruction).toContain('OVERRIDES');
     expect(instruction).toContain('additional supporting scripture');
+  });
+});
+
+describe('reply length enforcement', () => {
+  const shape = sampleReplyShape(sequence([0.3, 0.5, 0.9]));
+
+  it('counts whitespace-delimited words and Korean eojeol', () => {
+    expect(countReplyWords('one  two\nthree')).toBe(3);
+    expect(countReplyWords('하나 둘 셋 넷')).toBe(4);
+  });
+
+  it('accepts only the sampled inclusive range', () => {
+    const words = (count: number) => Array.from({ length: count }, () => 'word').join(' ');
+    expect(replyFitsShape(words(shape.minWords), shape)).toBe(true);
+    expect(replyFitsShape(words(shape.maxWords), shape)).toBe(true);
+    expect(replyFitsShape(words(shape.minWords - 1), shape)).toBe(false);
+    expect(replyFitsShape(words(shape.maxWords + 1), shape)).toBe(false);
   });
 });
