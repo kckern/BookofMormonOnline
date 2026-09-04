@@ -37,6 +37,7 @@ COPY --from=build /src/backend/node_modules ./backend/node_modules
 COPY --from=build /src/backend/package*.json ./backend/
 # Operational .mjs scripts (one-off migrations/ingests run via `docker exec`).
 COPY --from=build /src/backend/scripts ./backend/scripts
+COPY --from=build /src/backend/assets ./backend/assets
 COPY --from=build /src/frontend/next/.next ./frontend/next/.next
 COPY --from=build /src/frontend/next/node_modules ./frontend/next/node_modules
 COPY --from=build /src/frontend/next/package*.json ./frontend/next/

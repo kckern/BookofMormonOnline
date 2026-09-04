@@ -2,8 +2,8 @@
 import 'dotenv/config';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { closeDb, getDb } from '../src/data/db.js';
-import { uploadProfileImage } from '../src/media/s3.js';
+import { closeDb, getDb } from '../dist/src/data/db.js';
+import { uploadProfileImage } from '../dist/src/media/s3.js';
 
 const sources = [
   ['6de3f57d56265dd7e323c6f22a21bc70', 'Portrait of King Sejong 1965.jpg'],

@@ -1,7 +1,7 @@
 /** One-off reviewed Wikimedia Commons avatar ingest. Run inside prod with --apply. */
 import 'dotenv/config';
-import { closeDb, getDb } from '../src/data/db.js';
-import { uploadProfileImage } from '../src/media/s3.js';
+import { closeDb, getDb } from '../dist/src/data/db.js';
+import { uploadProfileImage } from '../dist/src/media/s3.js';
 
 const sources = [
   ['3a2664b32361a0d6b7a11a176cdc11e6', 'Carolus Magnus. Charlemagne.jpg'],
