@@ -16,6 +16,8 @@ import { generateBotReply, type BotTurn } from './generate.js';
 import { hasLlmProvider } from './mastra/model.js';
 import { emitPublicChannelEvent } from '../messaging/policy.js';
 import { nanoid } from 'nanoid';
+import { buildTopicRefs } from './topicRefs.js';
+import { resolveVerseDisplay } from '../messaging/contentRefs.js';
 
 const TICK_MS = 60_000;
 let timer: ReturnType<typeof setInterval> | null = null;
@@ -238,6 +240,10 @@ async function runManagedDiscussion(
   ]);
   if (!opening) return { posted: 0, reason: 'opener-generation-failed' };
   const promptText = `${topic.passage_ref}\n\n${opening}`.trim();
+  const topicRefs = await buildTopicRefs(
+    topic.passage_ref ?? '',
+    (verseId) => resolveVerseDisplay(db, verseId),
+  );
   const root = await postMessage(db, {
     channelUrl,
     userId: opener.bot_id,
@@ -250,6 +256,8 @@ async function runManagedDiscussion(
       passageSlug: topic.passage_slug,
       editorialQuestion: topic.question,
     }),
+    anchor: topicRefs.anchor,
+    references: topicRefs.references.length ? topicRefs.references : undefined,
   });
   emitPublicChannelEvent('message_received', channelUrl, root);
 
