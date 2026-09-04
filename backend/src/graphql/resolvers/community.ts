@@ -235,6 +235,12 @@ export function refsToLink(
 
   switch (candidate.type) {
     case 'verse': {
+      // Prefer the ref's stored slug/ordinal — it's the authoritative page-content
+      // key (matches what the frontend hydrates); a recomputed resolveVerseDisplay
+      // can land on a different block ordinal and produce an empty card.
+      if (candidate.slug && candidate.ordinal != null) {
+        return { key: 'text', val: `${candidate.slug}/${candidate.ordinal}` };
+      }
       const display = resolvedVerses.get(Number(candidate.id));
       if (!display) return null;
       return { key: 'text', val: `${display.slug}/${display.ordinal}` };

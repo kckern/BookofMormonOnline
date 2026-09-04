@@ -480,6 +480,8 @@ function determinAction(item) {
 function ContentInFeed({ item, linkedContent }) {
   if (!linkedContent || !item) return null;
   const link = item?.link;
+  // No attachment on this post → render nothing.
+  if (!link || !link.key) return null;
   let map = {
     text: "textInFeed",
     section: "sectionInFeed",
@@ -488,8 +490,13 @@ function ContentInFeed({ item, linkedContent }) {
     img: "imageInFeed",
   };
   let key = map[link.key];
+  if (!key) return null;
   let val = link.val;
-  let content = linkedContent?.[key]?.[val] || {};
+  let content = linkedContent?.[key]?.[val];
+  // Never render an attachment container that isn't hydrated — an unresolved
+  // link must show nothing, not an empty scripture/commentary card. (fax resolves
+  // its content from textInFeed inside the switch, so exempt it from this guard.)
+  if (key !== "faxInFeed" && (!content || Object.keys(content).length === 0)) return null;
 
   switch (key) {
     case "textInFeed":
