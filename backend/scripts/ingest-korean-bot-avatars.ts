@@ -1,5 +1,7 @@
 /** One-off reviewed Wikimedia Commons avatar ingest. Run inside prod with --apply. */
 import 'dotenv/config';
+import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { closeDb, getDb } from '../src/data/db.js';
 import { uploadProfileImage } from '../src/media/s3.js';
 
@@ -15,6 +17,10 @@ const sources = [
   ['bf27142bcefd60b87c22fd9fbadfd6a0', 'Ryu Gwan-sun.jpg'],
 ] as const;
 
+const generatedSources = [
+  ['9f3bf883267a64c4b211b57031700199', '../assets/bot-avatars/kim-ho-jik-interpretive.png'],
+] as const;
+
 const apply = process.argv.includes('--apply');
 if (apply && process.env['SANDBOX'] !== '0') throw new Error('Apply requires SANDBOX=0');
 const db = getDb();
@@ -26,6 +32,14 @@ try {
     const response = await fetch(source, { redirect: 'follow', headers: { 'user-agent': 'BookofMormonOnline/1.0 avatar-ingest' } });
     if (!response.ok) throw new Error(`${filename}: HTTP ${response.status}`);
     const url = await uploadProfileImage(Buffer.from(await response.arrayBuffer()).toString('base64'), botId);
+    await db.updateTable('messenger_users').set({ profile_url: url }).where('user_id', '=', botId).execute();
+    console.log(`UPDATED ${botId} ${url}`);
+  }
+  for (const [botId, relativePath] of generatedSources) {
+    const path = fileURLToPath(new URL(relativePath, import.meta.url));
+    console.log(`${apply ? 'INGEST' : 'WOULD INGEST'} ${botId} <- ${path}`);
+    if (!apply) continue;
+    const url = await uploadProfileImage((await readFile(path)).toString('base64'), botId);
     await db.updateTable('messenger_users').set({ profile_url: url }).where('user_id', '=', botId).execute();
     console.log(`UPDATED ${botId} ${url}`);
   }

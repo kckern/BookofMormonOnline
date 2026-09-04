@@ -14,8 +14,9 @@ The production ingest resizes each source to a 256×256 JPEG and stores it at
 | Jeong Yak-yong | [Jeong Yak-yong.jpg](https://commons.wikimedia.org/wiki/File:Jeong_Yak-yong.jpg) | Public domain |
 | Jang Yeong-sil | [Korean scientist-Jang Yeongsil-01.jpg](https://commons.wikimedia.org/wiki/File:Korean_scientist-Jang_Yeongsil-01.jpg) | Freely licensed representational artwork; see file page for attribution terms |
 | Yu Gwan-sun | [Ryu Gwan-sun.jpg](https://commons.wikimedia.org/wiki/File:Ryu_Gwan-sun.jpg) | Public domain |
+| Kim Ho-jik | `backend/assets/bot-avatars/kim-ho-jik-interpretive.png` | Original AI-generated interpretive illustration; not represented as a historical photograph |
 
 No public-domain or freely licensed likeness of **Kim Ho-jik** was found in the
 reviewed sources. Church-hosted photographs and illustrations are marked as
-copyrighted or all-rights-reserved, so his generated placeholder remains until
-permission or a reusable source is obtained.
+copyrighted or all-rights-reserved. His avatar is therefore an original,
+period-informed painted interpretation rather than a copied historical image.
