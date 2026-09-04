@@ -123,6 +123,61 @@ export async function resolveVerseDisplay(
   return { slug, ordinal, text };
 }
 
+// ─── Passage block resolution (containing-unit) ───────────────────────────────
+
+export interface PassageBlock {
+  /** Page slug — the comment join-key / anchor. Does NOT include the ordinal. */
+  pageSlug: string;
+  /** Unit ordinal on the page (bom_text.link) — the block a reader lands on. */
+  ordinal: number;
+  /** Verse id at the start of the containing unit (bom_text.min_verse_id). */
+  unitFirstVerseId: number;
+  /** The unit's HTML content (the text block). */
+  text: string;
+}
+
+/**
+ * Resolve a passage reference (e.g. "Jacob 2:23-35") to the page text BLOCK
+ * that CONTAINS its first verse — the unit a reader would land on.
+ *
+ * Unlike resolveVerseDisplay (which requires an exact min_verse_id match, so it
+ * only resolves passages that begin on a unit boundary), this finds the
+ * containing unit: the largest min_verse_id <= the passage's first verse. That
+ * makes mid-unit passages (e.g. Jacob 2:23, which sits inside the unit starting
+ * at 2:22) link reliably instead of silently failing.
+ *
+ * Returns null when the ref is unparseable or has no page mapping — callers
+ * MUST treat that as "cannot attach a block" (skip), never post a bare mention.
+ */
+export async function resolvePassageBlock(
+  db: Kysely<DB>,
+  passageRef: string,
+): Promise<PassageBlock | null> {
+  const verseIds = refToVerseIds(passageRef);
+  if (!verseIds.length) return null;
+  const firstVerse = verseIds[0]!;
+
+  const unit = await db
+    .selectFrom('bom_text')
+    .select(['page', 'link', 'min_verse_id', 'content'])
+    .where('min_verse_id', '<=', firstVerse)
+    .orderBy('min_verse_id', 'desc')
+    .limit(1)
+    .executeTakeFirst();
+  if (!unit?.page || unit.link == null || unit.min_verse_id == null) return null;
+
+  const pageSlugs = await new SlugResolver(db).pathsForLinks([unit.page]);
+  const pagePath = pageSlugs.get(unit.page);
+  if (!pagePath) return null;
+
+  return {
+    pageSlug: pagePath,
+    ordinal: Number(unit.link),
+    unitFirstVerseId: Number(unit.min_verse_id),
+    text: String(unit.content ?? ''),
+  };
+}
+
 // ─── Reference type + dispatcher ─────────────────────────────────────────────
 
 export type RefType =

@@ -17,7 +17,14 @@ import { hasLlmProvider } from './mastra/model.js';
 import { emitPublicChannelEvent } from '../messaging/policy.js';
 import { nanoid } from 'nanoid';
 import { buildTopicRefs } from './topicRefs.js';
-import { resolveVerseDisplay } from '../messaging/contentRefs.js';
+import { resolvePassageBlock, refToVerseIds, type Reference } from '../messaging/contentRefs.js';
+import { botLog, countSentences } from './logger.js';
+import { sampleReplyShape, replyLengthInstruction, OPENER_LENGTH_INSTRUCTION } from './replyShape.js';
+import { detectReferenceStrings } from './scriptureBridge.js';
+
+// Book of Mormon verse-id range — only BoM refs resolve to a bom_text block.
+const BOM_FIRST_VERSE_ID = 31_103;
+const BOM_LAST_VERSE_ID = 37_706;
 
 const TICK_MS = 60_000;
 let timer: ReturnType<typeof setInterval> | null = null;
@@ -171,7 +178,13 @@ export function chooseAudienceRespondent<T extends { response_weight: number; to
 }
 
 function managedTurnInstructions(promptTemplate: string, responseGuardrails: string): string {
-  return [promptTemplate, responseGuardrails].filter(Boolean).join('\n\n');
+  // Strip any hardcoded word-count directive from the shared template; length is
+  // set per role instead (opener vs reply), so the two don't contradict.
+  const stripped = (promptTemplate || '')
+    .replace(/Keep the response between\s+\d+\s+and\s+\d+\s+words\.?/i, '')
+    .replace(/[ \t]{2,}/g, ' ')
+    .trim();
+  return [stripped, responseGuardrails].filter(Boolean).join('\n\n');
 }
 
 /** Start a durable, staggered AI discussion from DB-owned configuration. */
@@ -185,16 +198,29 @@ async function runManagedDiscussion(
   if (!config) return { posted: 0, reason: 'no-managed-config' };
 
   const kind = rand(100) < config.discursive_weight ? 'discursive' : 'narrative';
-  let topic = await db.selectFrom('bom_ai_topic').selectAll()
+  // Candidate topics, preferred kind first, then least-recently-used. We pick the
+  // first that resolves to a real page text block so the opener ALWAYS attaches a
+  // scripture-excerpt card (first-class requirement) — never a bare mention.
+  const candidates = await db.selectFrom('bom_ai_topic').selectAll()
     .where('channel_url', '=', channelUrl).where('enabled', '=', 1)
-    .where('passage_kind', '=', kind).orderBy('last_used_at', 'asc').orderBy('use_count', 'asc')
-    .limit(1).executeTakeFirst();
-  if (!topic) {
-    topic = await db.selectFrom('bom_ai_topic').selectAll()
-      .where('channel_url', '=', channelUrl).where('enabled', '=', 1)
-      .orderBy('last_used_at', 'asc').orderBy('use_count', 'asc').limit(1).executeTakeFirst();
+    .orderBy(sql`case when passage_kind = ${kind} then 0 else 1 end`)
+    .orderBy('last_used_at', 'asc').orderBy('use_count', 'asc')
+    .limit(8).execute();
+  if (!candidates.length) return { posted: 0, reason: 'no-topics' };
+
+  const runId = nanoid(10);
+  const runLog = botLog.child({ runId, channelUrl });
+  let topic: (typeof candidates)[number] | undefined;
+  let topicRefs: Awaited<ReturnType<typeof buildTopicRefs>> | undefined;
+  for (const candidate of candidates) {
+    const refs = await buildTopicRefs(candidate.passage_ref ?? '', (r) => resolvePassageBlock(db, r));
+    if (refs.resolved) { topic = candidate; topicRefs = refs; break; }
+    runLog.warn(
+      { event: 'topic.skipped_unresolved', topicId: candidate.topic_id, passageRef: candidate.passage_ref },
+      'topic did not resolve to a page text block; skipping',
+    );
   }
-  if (!topic) return { posted: 0, reason: 'no-topics' };
+  if (!topic || !topicRefs) return { posted: 0, reason: 'no-resolvable-topic' };
 
   const bots = await db.selectFrom('messenger_members as member')
     .innerJoin('messenger_users as user', 'user.user_id', 'member.user_id')
@@ -230,20 +256,28 @@ async function runManagedDiscussion(
   const audience = chooseAudienceRespondent(
     configuredAudience, topicText, config.audience_response_chance,
   );
-  const instructions = managedTurnInstructions(config.prompt_template, config.response_guardrails);
+  const instructions = `${managedTurnInstructions(config.prompt_template, config.response_guardrails)}\n\n${OPENER_LENGTH_INSTRUCTION}`;
+  runLog.info(
+    {
+      event: 'discussion.start', topicId: topic.topic_id, passageKind: topic.passage_kind,
+      passageRef: topic.passage_ref, kind, anchor: topicRefs.anchor,
+      openerBotId: opener.bot_id, voiceCount, voices: voices.map((v) => v.bot_id),
+      audienceBotId: audience?.bot_id ?? null,
+    },
+    'managed discussion start',
+  );
   const opening = await generateBotReply(db, opener.bot_id, [
     { role: 'user', content: instructions },
     {
       role: 'user',
       content: `Passage: ${topic.passage_ref}\nEditorial topic brief: ${topic.question}`,
     },
-  ]);
-  if (!opening) return { posted: 0, reason: 'opener-generation-failed' };
+  ], { log: runLog, label: 'opener', model: opener.model ?? undefined });
+  if (!opening) {
+    runLog.warn({ event: 'discussion.opener_failed', topicId: topic.topic_id }, 'opener generation failed');
+    return { posted: 0, reason: 'opener-generation-failed' };
+  }
   const promptText = `${topic.passage_ref}\n\n${opening}`.trim();
-  const topicRefs = await buildTopicRefs(
-    topic.passage_ref ?? '',
-    (verseId) => resolveVerseDisplay(db, verseId),
-  );
   const root = await postMessage(db, {
     channelUrl,
     userId: opener.bot_id,
@@ -260,8 +294,17 @@ async function runManagedDiscussion(
     references: topicRefs.references.length ? topicRefs.references : undefined,
   });
   emitPublicChannelEvent('message_received', channelUrl, root);
+  const rootLog = runLog.child({ rootMessageId: root.message_id });
+  rootLog.info(
+    {
+      event: 'discussion.opener_posted', anchor: topicRefs.anchor,
+      refCount: topicRefs.references.length, sentences: countSentences(opening), chars: promptText.length,
+    },
+    'opener posted',
+  );
 
   const now = new Date();
+  const scheduled: Array<{ botId: string; ordinal: number; dueAt: string }> = [];
   await db.transaction().execute(async (trx) => {
     await trx.insertInto('messenger_thread_state').values({
       root_message_id: root.message_id, channel_url: channelUrl, status: 'active', bot_message_count: 1,
@@ -270,19 +313,22 @@ async function runManagedDiscussion(
     const scheduledVoices = [...voices.slice(1), ...(audience ? [audience] : [])];
     for (const [index, bot] of scheduledVoices.entries()) {
       dueAt += randInt(config.min_delay_minutes, config.max_delay_minutes) * 60_000;
+      const when = new Date(dueAt);
       await trx.insertInto('bom_ai_discussion_turn').values({
         root_message_id: root.message_id,
         bot_id: bot.bot_id,
         ordinal: index + 1,
-        due_at: new Date(dueAt),
+        due_at: when,
         status: 'pending',
       }).execute();
+      scheduled.push({ botId: bot.bot_id, ordinal: index + 1, dueAt: when.toISOString() });
     }
     await trx.updateTable('bom_ai_topic').set({
       last_used_at: now,
       use_count: sql<number>`use_count + 1`,
     }).where('topic_id', '=', topic.topic_id).execute();
   });
+  rootLog.info({ event: 'discussion.turns_scheduled', count: scheduled.length, turns: scheduled }, 'follow-up turns scheduled');
   return { posted: 1, promptGuid: topic.topic_id };
 }
 
@@ -326,6 +372,8 @@ async function processDueTurns(db: Kysely<DB>): Promise<void> {
     }).where('id', '=', turn.id).where('status', '=', 'pending').executeTakeFirst();
     if (Number(claim.numUpdatedRows) !== 1) continue;
 
+    const turnLog = botLog.child({ rootMessageId: turn.root_message_id, turnId: turn.id, botId: turn.bot_id });
+    const turnStart = Date.now();
     try {
       const expired = Date.now() - new Date(turn.created_at).getTime() >= turn.bot_window_hours * 60 * 60_000;
       if (expired || turn.bot_message_count >= turn.max_bot_messages) {
@@ -333,13 +381,16 @@ async function processDueTurns(db: Kysely<DB>): Promise<void> {
           .where('id', '=', turn.id).execute();
         await db.updateTable('messenger_thread_state').set({ status: 'bot_complete', bot_complete_at: new Date() })
           .where('root_message_id', '=', turn.root_message_id).execute();
+        turnLog.info({ event: 'turn.skipped', reason: expired ? 'window-expired' : 'max-messages' }, 'turn skipped');
         continue;
       }
 
       const root = await getMessage(db, turn.channel_url, turn.root_message_id);
       if (!root) throw new Error('discussion root missing');
       const replies = await getThread(db, turn.root_message_id);
-      const instructions = managedTurnInstructions(turn.prompt_template, turn.response_guardrails);
+      // Reply length + link shape: concise by default, longer only when linking.
+      const shape = sampleReplyShape();
+      const instructions = `${managedTurnInstructions(turn.prompt_template, turn.response_guardrails)}\n\n${replyLengthInstruction(shape)}`;
       let editorialQuestion = '';
       try {
         const data = JSON.parse(root.data) as Record<string, unknown>;
@@ -356,17 +407,50 @@ async function processDueTurns(db: Kysely<DB>): Promise<void> {
           content: `${reply.user?.nickname || 'Participant'}: ${reply.message}`,
         })),
       ];
-      const text = await generateBotReply(db, turn.bot_id, conversation);
+      turnLog.info(
+        { event: 'turn.start', targetSentences: shape.targetSentences, cap: shape.cap, wantsLink: shape.wantsLink, priorReplies: replies.length },
+        'turn start',
+      );
+      const text = await generateBotReply(db, turn.bot_id, conversation, { log: turnLog, label: 'turn' });
       if (!text) throw new Error('bot generation returned no text');
+
+      // WS3: when this reply is meant to link, attach the first Book of Mormon
+      // scripture it cites as a content card (role: highlight).
+      let anchor: string | undefined;
+      let references: Reference[] | undefined;
+      if (shape.wantsLink) {
+        const bomRef = detectReferenceStrings(text).find((r) => {
+          const ids = refToVerseIds(r);
+          return ids.length > 0 && ids[0]! >= BOM_FIRST_VERSE_ID && ids[0]! <= BOM_LAST_VERSE_ID;
+        });
+        const block = bomRef ? await resolvePassageBlock(db, bomRef) : null;
+        if (block) {
+          anchor = block.pageSlug;
+          references = [{ type: 'verse', id: block.unitFirstVerseId, role: 'highlight', slug: block.pageSlug, ordinal: block.ordinal }];
+          turnLog.info({ event: 'turn.linked', ref: bomRef, anchor, ordinal: block.ordinal }, 'reply linked a scripture block');
+        } else {
+          turnLog.info({ event: 'turn.link_miss', detected: bomRef ?? null }, 'reply wanted a link but none resolved');
+        }
+      }
+
       const audience = await db.selectFrom('bom_ai_audience_bot').select('bot_id')
         .where('channel_url', '=', turn.channel_url).where('bot_id', '=', turn.bot_id)
         .where('enabled', '=', 1).executeTakeFirst();
       const message = await postMessage(db, {
         channelUrl: turn.channel_url, userId: turn.bot_id, message: text,
         parentMessageId: turn.root_message_id, customType: 'bot_comment',
+        anchor,
+        references,
         metadata: audience ? { participantRole: 'audience' } : undefined,
       });
       emitPublicChannelEvent('message_received', turn.channel_url, message);
+      turnLog.info(
+        {
+          event: 'turn.posted', messageId: message.message_id, latencyMs: Date.now() - turnStart,
+          sentences: countSentences(text), targetSentences: shape.targetSentences, linked: !!references,
+        },
+        'turn posted',
+      );
       await db.transaction().execute(async (trx) => {
         await trx.updateTable('bom_ai_discussion_turn').set({
           status: 'posted', message_id: message.message_id, lease_owner: null, lease_expires_at: null,
@@ -382,6 +466,7 @@ async function processDueTurns(db: Kysely<DB>): Promise<void> {
         }
       });
     } catch (error) {
+      turnLog.error({ event: 'turn.failed', latencyMs: Date.now() - turnStart, err: (error as Error).message }, 'turn failed');
       await db.updateTable('bom_ai_discussion_turn').set({
         status: 'failed', failure_reason: (error as Error).message.slice(0, 1000),
         lease_owner: null, lease_expires_at: null,
