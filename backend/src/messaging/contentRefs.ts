@@ -140,13 +140,15 @@ export type RefRole = 'subject' | 'highlight';
 
 export interface Reference {
   type: RefType;
-  id: string | number;
+  id?: string | number;
   role: RefRole;
   span?: { text: string };
   /** ordinal within a page — used by legacy_text refs */
   ordinal?: number;
   /** page slug — used by legacy_text and section refs */
   slug?: string;
+  /** auxiliary discriminator — used by fax refs (e.g. translation variant) */
+  aux?: string;
 }
 
 export interface ResolvedReference extends Reference {
