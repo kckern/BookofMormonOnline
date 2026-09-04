@@ -36,6 +36,12 @@ describe('parseOpenerHighlight', () => {
     expect(highlight).toBe('redeem those who will be baptized');
   });
 
+  it('removes French guillemets from a validated phrase', () => {
+    const opening = 'Un argument.\n\nHIGHLIGHT: « redeem those who will be baptized »';
+    expect(parseOpenerHighlight(opening, BLOCK).highlight)
+      .toBe('redeem those who will be baptized');
+  });
+
   it('returns the whole text as body and null highlight when no HIGHLIGHT line', () => {
     const { body, highlight } = parseOpenerHighlight('Just an argument, no marker.', BLOCK);
     expect(body).toBe('Just an argument, no marker.');

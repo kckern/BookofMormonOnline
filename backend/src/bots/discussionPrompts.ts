@@ -7,6 +7,7 @@ export interface DiscussionPromptBundle {
   highlightInstruction: string;
   noMetaLeak: string;
   replyLengths: Record<'1' | '2' | '3' | '4', string>;
+  replyLength?: string;
   replyLinkSuffix: string;
   moves: Record<DiscussionMove, string>;
 }
@@ -44,9 +45,14 @@ export function openerPrompts(raw: unknown, blockText: string): string[] {
 
 export function turnPrompts(raw: unknown, move: DiscussionMove | null, shape: ReplyShape): string[] {
   const bundle = promptBundle(raw);
-  const configuredLength = bundle.replyLengths?.[String(shape.targetSentences) as '1' | '2' | '3' | '4'];
+  const legacyKey = String(Math.min(4, shape.targetSentences)) as '1' | '2' | '3' | '4';
+  const configuredLength = bundle.replyLength ?? bundle.replyLengths?.[legacyKey];
   const length = configuredLength
-    ? configuredLength.replaceAll('{{maxWords}}', String(shape.targetSentences * 22 + (shape.wantsLink ? 30 : 0)))
+    ? configuredLength
+      .replaceAll('{{targetWords}}', String(shape.targetWords))
+      .replaceAll('{{minWords}}', String(shape.minWords))
+      .replaceAll('{{maxWords}}', String(shape.maxWords))
+      .replaceAll('{{band}}', shape.band)
     : replyLengthInstruction(shape);
   return [
     bundle.noMetaLeak ?? DEFAULT_NO_META_LEAK,
@@ -65,7 +71,9 @@ export function validatePromptBundle(raw: unknown): string[] {
   for (const key of ['openerTask', 'openerLength', 'highlightInstruction', 'noMetaLeak', 'replyLinkSuffix'] as const) {
     if (!bundle[key]?.trim()) missing.push(key);
   }
-  for (const target of ['1', '2', '3', '4'] as const) if (!bundle.replyLengths?.[target]?.trim()) missing.push(`replyLengths.${target}`);
+  if (!bundle.replyLength?.trim()) {
+    for (const target of ['1', '2', '3', '4'] as const) if (!bundle.replyLengths?.[target]?.trim()) missing.push(`replyLengths.${target}`);
+  }
   for (const move of ['expand', 'clarify', 'pushback', 'probe', 'reframe', 'concede_qualify', 'respond'] as DiscussionMove[]) {
     if (!bundle.moves?.[move]?.trim()) missing.push(`moves.${move}`);
   }

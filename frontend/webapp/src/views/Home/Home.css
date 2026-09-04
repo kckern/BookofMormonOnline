@@ -637,7 +637,7 @@ img.groupAvatar
 
 .homeFeedHeader .timestamp,
 .homeFeedHeader .timestamp a{
-    color: #696969;
+    color: #555;
     white-space: nowrap;
     font-weight: 400;
     font-size: .8rem;
@@ -945,7 +945,7 @@ img.groupAvatar
 {
     font-weight: 300;
     font-size: 1.5ex;
-    color: #AAA;
+    color: #666;
 }
 
 .commentThreadItem .mesg .scriptureContainerWrapper

@@ -456,8 +456,8 @@ async function processDueTurns(db: Kysely<DB>): Promise<void> {
       const root = await getMessage(db, turn.channel_url, turn.root_message_id);
       if (!root) throw new Error('discussion root missing');
       const replies = await getThread(db, turn.root_message_id);
-      // Reply length + link shape: concise by default, longer only when linking.
-      const shape = sampleReplyShape();
+      const priorWordCounts = replies.map((reply) => reply.message.trim().split(/\s+/u).filter(Boolean).length);
+      const shape = sampleReplyShape(Math.random, priorWordCounts);
       const move = (turn.move as DiscussionMove | null) ?? null;
       const channelLang = turn.channel_lang || 'en';
       const instructions = [managedTurnInstructions(turn.prompt_template, turn.response_guardrails),
@@ -483,7 +483,7 @@ async function processDueTurns(db: Kysely<DB>): Promise<void> {
         })),
       ];
       turnLog.info(
-        { event: 'turn.start', move, targetSentences: shape.targetSentences, cap: shape.cap, wantsLink: shape.wantsLink, priorReplies: replies.length },
+        { event: 'turn.start', move, lengthBand: shape.band, targetWords: shape.targetWords, wantsLink: shape.wantsLink, priorReplies: replies.length },
         'turn start',
       );
       const text = await generateBotReply(db, turn.bot_id, conversation, { log: turnLog, label: 'turn' });
@@ -525,7 +525,8 @@ async function processDueTurns(db: Kysely<DB>): Promise<void> {
       turnLog.info(
         {
           event: 'turn.posted', messageId: message.message_id, latencyMs: Date.now() - turnStart,
-          sentences: countSentences(text), targetSentences: shape.targetSentences, linked: !!references,
+          sentences: countSentences(text), words: text.trim().split(/\s+/u).filter(Boolean).length,
+          lengthBand: shape.band, targetWords: shape.targetWords, linked: !!references,
         },
         'turn posted',
       );

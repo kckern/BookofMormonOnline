@@ -41,7 +41,10 @@ export function parseOpenerHighlight(opening: string, blockHtml: string): Opener
   if (idx < 0) return { body, highlight: null };
 
   const line = opening.slice(idx).match(/HIGHLIGHT:\s*([^\n]+)/i);
-  const raw = (line?.[1] ?? '').replace(/^["'“”‘’]+|["'“”‘’.]+$/g, '').trim();
+  // Models localize quotation marks. Strip French guillemets as well as curly
+  // and straight quotes before persisting the phrase: the feed highlighter
+  // performs a literal match against the linked block.
+  const raw = (line?.[1] ?? '').replace(/^["'“”‘’«»]+|["'“”‘’«».]+$/g, '').trim();
   const nPhrase = normalizePhrase(raw);
   const nPlain = normalizePhrase(htmlToPlain(blockHtml));
   if (nPhrase.length >= 3 && nPlain.includes(nPhrase)) return { body, highlight: raw };

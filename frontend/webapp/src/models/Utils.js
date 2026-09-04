@@ -6,6 +6,7 @@ import Parser from "html-react-parser";
 import DOMPurify from "dompurify";
 import moment from "moment";
 import "moment/locale/ko";
+import "moment/locale/fr";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import { getCache, setCache } from "./Cache";
 import {Spinner} from "../views/_Common/Loader";
@@ -305,15 +306,18 @@ export function BlankParagraph({ min, max }) {
 }
 
 export function timeAgoString(unixTimestamp) {
-  if (unixTimestamp === 0) return label("never");
+  const numericTimestamp = Number(unixTimestamp);
+  if (!Number.isFinite(numericTimestamp) || numericTimestamp <= 0)
+    return label("never");
 
   let now = Math.round(Date.now() / 1000);
-  moment.locale(label("moment_locale"));
-  if (now - unixTimestamp < 60 * 60 * 25 * 5)
-    return moment.unix(unixTimestamp).fromNow();
+  const requestedLocale = label("moment_locale") || "en";
+  moment.locale(requestedLocale);
+  if (now - numericTimestamp < 60 * 60 * 25 * 5)
+    return moment.unix(numericTimestamp).locale(requestedLocale).fromNow();
 
   let timestamp = date.format(
-    new Date(unixTimestamp * 1000),
+    new Date(numericTimestamp * 1000),
     label("time_ago_date_format"),
   ); //'ddd, DD MMM YYYY [at] h:mma'
 

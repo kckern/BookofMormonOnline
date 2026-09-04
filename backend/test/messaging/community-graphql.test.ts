@@ -59,6 +59,18 @@ async function exec(
   return json.data as Record<string, unknown>;
 }
 
+async function execForLang(lang: string, source: string) {
+  const langYoga = createYoga({ schema: buildSchema(), context: () => buildContext(db, lang) });
+  const res = await langYoga.fetch('http://localhost/graphql', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', accept: 'application/json' },
+    body: JSON.stringify({ query: source }),
+  });
+  const json = (await res.json()) as { data?: Record<string, unknown>; errors?: Array<{ message: string }> };
+  if (json.errors?.length) throw new Error(json.errors.map((error) => error.message).join('; '));
+  return json.data as Record<string, unknown>;
+}
+
 beforeAll(async () => {
   yoga = createYoga({
     schema: buildSchema(),
@@ -159,6 +171,29 @@ describe('homefeed (multi-channel, no token)', () => {
     expect(typeof item['channel_url']).toBe('string');
     expect(typeof item['msg']).toBe('string');
     expect(item['user']).toBeTruthy();
+  });
+});
+
+describe('homefeed (unlisted discovery)', () => {
+  it.each(['en', 'ko', 'fr'])('returns only %s channels while direct permalinks stay readable', async (lang) => {
+    const data = await execForLang(lang, `query { homefeed(unlisted: true) { groups { url } } }`);
+    const groups = (data['homefeed'] as { groups: Array<{ url: string }> }).groups;
+    if (groups.length) {
+      const rows = await db.selectFrom('messenger_channels').select(['channel_url', 'lang'])
+        .where('channel_url', 'in', groups.map((group) => group.url)).execute();
+      expect(rows.every((row) => row.lang === lang)).toBe(true);
+    }
+  });
+
+  it('does not apply discovery language filtering to an explicit channel URL', async () => {
+    const french = await db.selectFrom('messenger_channels as channel')
+      .innerJoin('messenger_channel_policy as policy', 'policy.channel_url', 'channel.channel_url')
+      .select('channel.channel_url').where('channel.lang', '=', 'fr')
+      .where('policy.visibility', '=', 'unlisted').where('policy.enabled', '=', 1).executeTakeFirst();
+    expect(french).toBeTruthy();
+    const data = await execForLang('ko', `query { homefeed(channel: "${french!.channel_url}", unlisted: true) { groups { url } } }`);
+    const groups = (data['homefeed'] as { groups: Array<{ url: string }> }).groups;
+    expect(groups.map((group) => group.url)).toContain(french!.channel_url);
   });
 });
 

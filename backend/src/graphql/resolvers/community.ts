@@ -543,12 +543,16 @@ async function getFeaturedChannels(ctx: AppContext, lang: string | null, limit =
 async function getUnlistedChannels(
   ctx: AppContext,
   viewerUserId: string | null,
+  lang: string | null,
 ): Promise<ChannelDTO[]> {
-  const rows = await ctx.db.selectFrom('messenger_channel_policy')
-    .select('channel_url')
-    .where('enabled', '=', 1)
-    .where('listed', '=', 0)
-    .where('visibility', '=', 'unlisted')
+  const effectiveLang = (!lang || lang === 'dev') ? 'en' : lang;
+  const rows = await ctx.db.selectFrom('messenger_channel_policy as policy')
+    .innerJoin('messenger_channels as channel', 'channel.channel_url', 'policy.channel_url')
+    .select('policy.channel_url')
+    .where('policy.enabled', '=', 1)
+    .where('policy.listed', '=', 0)
+    .where('policy.visibility', '=', 'unlisted')
+    .where('channel.lang', '=', effectiveLang)
     .execute();
   const channels = await Promise.all(rows.map(async ({ channel_url }) => {
     const access = await getChannelAccess(ctx.db, channel_url, viewerUserId);
@@ -830,7 +834,7 @@ export const communityResolvers: Resolvers = {
 
         // Multi-channel mode: featured + user's own channels
         const featuredChannels = args.unlisted === true
-          ? await getUnlistedChannels(ctx, myUserId)
+          ? await getUnlistedChannels(ctx, myUserId, lang)
           : await getFeaturedChannels(ctx, lang);
         const featuredUrls = new Set(featuredChannels.map((c) => c.channel_url));
 

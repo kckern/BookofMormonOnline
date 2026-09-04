@@ -1,54 +1,55 @@
-/**
- * test/bots/reply-shape.test.ts
- *
- * Unit tests for the reply length + link histogram. Reformer discussion replies
- * must be concise with controlled variety (1→15% · 2→45% · 3→25% · 4→15%),
- * capped at 4 normally / 6 when linking, ~1/3 attaching a scripture link.
- */
-
 import { describe, it, expect } from 'vitest';
 import { sampleReplyShape, replyLengthInstruction } from '../../src/bots/replyShape.js';
 
-// sampleReplyShape draws random() twice: first → sentence bucket, second → link.
-const withDraws = (sentenceDraw: number, linkDraw: number) => {
-  let calls = 0;
-  return sampleReplyShape(() => (calls++ === 0 ? sentenceDraw : linkDraw));
-};
+function sequence(values: number[]) {
+  let index = 0;
+  return () => values[index++] ?? 0.99;
+}
 
 describe('sampleReplyShape', () => {
-  it('maps the histogram buckets to sentence targets', () => {
-    expect(withDraws(0.10, 0.9).targetSentences).toBe(1); // < 0.15
-    expect(withDraws(0.50, 0.9).targetSentences).toBe(2); // 0.15–0.60
-    expect(withDraws(0.70, 0.9).targetSentences).toBe(3); // 0.60–0.85
-    expect(withDraws(0.90, 0.9).targetSentences).toBe(4); // ≥ 0.85
+  it('maps draws into a broad five-band, right-skewed distribution', () => {
+    expect(sampleReplyShape(sequence([0.10, 0.5, 0.9])).band).toBe('micro');
+    expect(sampleReplyShape(sequence([0.30, 0.5, 0.9])).band).toBe('short');
+    expect(sampleReplyShape(sequence([0.65, 0.5, 0.9])).band).toBe('medium');
+    expect(sampleReplyShape(sequence([0.90, 0.5, 0.9])).band).toBe('long');
+    expect(sampleReplyShape(sequence([0.98, 0.5, 0.9])).band).toBe('extended');
   });
 
-  it('raises the cap to 6 when linking, else 4', () => {
-    const linking = withDraws(0.5, 0.1); // second draw < 0.33 → link
-    expect(linking.wantsLink).toBe(true);
-    expect(linking.cap).toBe(6);
+  it('produces a long tail with substantially more spread than the old sentence histogram', () => {
+    let state = 0x12345678;
+    const random = () => ((state = (1664525 * state + 1013904223) >>> 0) / 0x100000000);
+    const samples = Array.from({ length: 20_000 }, () => sampleReplyShape(random).targetWords).sort((a, b) => a - b);
+    const mean = samples.reduce((sum, value) => sum + value, 0) / samples.length;
+    const median = samples[Math.floor(samples.length / 2)]!;
+    const p10 = samples[Math.floor(samples.length * 0.1)]!;
+    const p90 = samples[Math.floor(samples.length * 0.9)]!;
+    expect(mean).toBeGreaterThan(median);
+    expect(p90 / p10).toBeGreaterThan(5);
+    expect(samples.filter((value) => value >= 131).length / samples.length).toBeCloseTo(0.05, 1);
+  });
 
-    const plain = withDraws(0.5, 0.9); // second draw ≥ 0.33 → no link
-    expect(plain.wantsLink).toBe(false);
-    expect(plain.cap).toBe(4);
+  it('retries a target too close to recent thread replies', () => {
+    const shape = sampleReplyShape(sequence([
+      0.30, 0.5, // short, about 30: rejected against prior 30
+      0.90, 0.5, // long, about 103: accepted
+      0.9,       // no link
+    ]), [30]);
+    expect(shape.band).toBe('long');
+    expect(shape.targetWords).toBeGreaterThan(75);
+  });
+
+  it('samples scripture linking independently', () => {
+    expect(sampleReplyShape(sequence([0.3, 0.5, 0.1])).wantsLink).toBe(true);
+    expect(sampleReplyShape(sequence([0.3, 0.5, 0.9])).wantsLink).toBe(false);
   });
 });
 
 describe('replyLengthInstruction', () => {
-  it('is word-anchored, marked as overriding, and asks for a scripture when linking', () => {
-    const plain = replyLengthInstruction({ targetSentences: 2, cap: 4, wantsLink: false });
-    expect(plain).toContain('2 short sentences');
-    expect(plain).toContain('under ~44 words'); // 2 * 22
-    expect(plain).toContain('OVERRIDES');
-
-    const linked = replyLengthInstruction({ targetSentences: 3, cap: 6, wantsLink: true });
-    expect(linked).toContain('additional supporting scripture');
-    expect(linked).toContain('Book of Mormon'); // nudged toward BoM refs (render cards)
-    expect(linked).toContain('under ~96 words'); // 3 * 22 + 30
-  });
-
-  it('uses singular "one short sentence" for a target of 1', () => {
-    expect(replyLengthInstruction({ targetSentences: 1, cap: 4, wantsLink: false }))
-      .toContain('one short sentence');
+  it('communicates a bounded word range and optional scripture link', () => {
+    const shape = sampleReplyShape(sequence([0.65, 0.5, 0.1]));
+    const instruction = replyLengthInstruction(shape);
+    expect(instruction).toContain(`${shape.minWords}-${shape.maxWords} words`);
+    expect(instruction).toContain('OVERRIDES');
+    expect(instruction).toContain('additional supporting scripture');
   });
 });
