@@ -865,7 +865,7 @@ img.groupAvatar
     width: 100%;
     color: #666;
     align-items: flex-start;
-    padding: .2rem 0 .7rem;
+    padding: .25rem 0 .35rem;
 }
 
 .commentThreadItem.selected
@@ -944,7 +944,7 @@ img.groupAvatar
     font-weight: 800;
     color: #555;
     line-height: 1.15rem;
-    margin-bottom: .2rem;
+    margin-bottom: .1rem;
 }
 .commentThreadItem .textbox .namerow span a
 {
@@ -996,7 +996,7 @@ img.groupAvatar
 
 .commentThreadItem .textbox .mesg
 {
-    line-height: 1.35;
+    line-height: 1.2em;
 }
 
 
