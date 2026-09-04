@@ -1,5 +1,5 @@
 /**
- * Validate or apply a complete DB-owned flagship study-group configuration.
+ * Validate or apply a complete DB-owned managed study-group configuration.
  * The JSON file is intentionally external to source control: it contains all
  * names, profiles, personas, prompts, model choices, topics, and optional corpus grants.
  *
@@ -18,7 +18,7 @@ type Bot = {
 };
 type AudienceRespondent = Bot & { responseWeight: number; topicTriggers: string[] };
 type Config = {
-  archiveChannelUrl: string;
+  archiveChannelUrl?: string;
   channel: { channelUrl: string; name: string; description: string; coverUrl: string; ownerUserId: string; lang?: string };
   bots: Bot[];
   audienceRespondents: AudienceRespondent[];
@@ -32,10 +32,11 @@ type Config = {
     minBotVoices: number; maxBotVoices: number; maxBotMessages: number; botWindowHours: number;
     minDelayMinutes: number; maxDelayMinutes: number; promptTemplate: string; responseGuardrails: string;
     promptBundle?: DiscussionPromptBundle;
+    scheduleEnabled?: boolean;
   };
-  topics: Array<{ topicId: string; passageRef: string; passageSlug?: string; passageKind: 'discursive' | 'narrative'; question: string; contextNote?: string }>;
-  corpora: Array<{ corpusId: string; title: string; authorKey: string; sourceUri: string; sourceSha256?: string; rightsClass: 'citation_eligible' | 'inference_only' | 'blocked'; rightsNote: string; edition?: string; enabled?: boolean }>;
-  botCorpora: Array<{ botId: string; corpusId: string; retrievalWeight?: number }>;
+  topics?: Array<{ topicId: string; passageRef: string; passageSlug?: string; passageKind: 'discursive' | 'narrative'; question: string; contextNote?: string }>;
+  corpora?: Array<{ corpusId: string; title: string; authorKey: string; sourceUri: string; sourceSha256?: string; rightsClass: 'citation_eligible' | 'inference_only' | 'blocked'; rightsNote: string; edition?: string; enabled?: boolean }>;
+  botCorpora?: Array<{ botId: string; corpusId: string; retrievalWeight?: number }>;
 };
 
 const args = process.argv.slice(2);
@@ -49,14 +50,13 @@ function required(value: unknown, label: string): asserts value {
 }
 
 function validate(config: Config): void {
-  required(config.archiveChannelUrl, 'archiveChannelUrl');
   required(config.channel?.channelUrl, 'channel.channelUrl');
   required(config.channel?.ownerUserId, 'channel.ownerUserId');
   required(config.channel?.name, 'channel.name');
   if (config.archiveChannelUrl === config.channel.channelUrl) throw new Error('fresh channel must differ from the archive');
   if (config.bots?.length !== 10) throw new Error('the reviewed flagship member roster must contain exactly ten bots');
-  if (!config.audienceRespondents?.length || config.audienceRespondents.length > 8) {
-    throw new Error('the audience respondent bench must contain 1–8 bots');
+  if (!Array.isArray(config.audienceRespondents) || config.audienceRespondents.length > 8) {
+    throw new Error('the audience respondent bench must contain 0–8 bots');
   }
   const ids = new Set<string>();
   const channelLang = config.channel.lang || 'en';
@@ -109,11 +109,9 @@ function validate(config: Config): void {
     if (missing.length) throw new Error(`discussion.promptBundle is incomplete: ${missing.join(', ')}`);
   }
   if (config.discussion.minDelayMinutes < 1 || config.discussion.minDelayMinutes > config.discussion.maxDelayMinutes) throw new Error('discussion delays are invalid');
-  if (!config.topics?.length || !config.topics.some((topic) => topic.passageKind === 'discursive') || !config.topics.some((topic) => topic.passageKind === 'narrative')) {
-    throw new Error('discursive and narrative Book of Mormon topics are both required');
-  }
+  const topics = config.topics || [];
   const topicIds = new Set<string>();
-  for (const [index, topic] of config.topics.entries()) {
+  for (const [index, topic] of topics.entries()) {
     required(topic.topicId, `topics[${index}].topicId`);
     required(topic.passageRef, `topics[${index}].passageRef`);
     required(topic.question, `topics[${index}].question`);
@@ -121,7 +119,8 @@ function validate(config: Config): void {
     topicIds.add(topic.topicId);
   }
   const seenCorpusIds = new Set<string>();
-  for (const [index, corpus] of config.corpora.entries()) {
+  const corpora = config.corpora || [];
+  for (const [index, corpus] of corpora.entries()) {
     required(corpus.corpusId, `corpora[${index}].corpusId`);
     required(corpus.title, `corpora[${index}].title`);
     required(corpus.authorKey, `corpora[${index}].authorKey`);
@@ -134,9 +133,9 @@ function validate(config: Config): void {
       throw new Error(`corpora[${index}].sourceSha256 must be a reviewed SHA-256 before enablement`);
     }
   }
-  const corpusIds = new Set(config.corpora.map((corpus) => corpus.corpusId));
+  const corpusIds = new Set(corpora.map((corpus) => corpus.corpusId));
   const seenGrants = new Set<string>();
-  for (const grant of config.botCorpora) {
+  for (const grant of config.botCorpora || []) {
     if (!ids.has(grant.botId) || !corpusIds.has(grant.corpusId)) throw new Error('botCorpora contains an unknown bot/corpus');
     const grantKey = `${grant.botId}:${grant.corpusId}`;
     if (seenGrants.has(grantKey)) throw new Error(`duplicate botCorpora grant ${grantKey}`);
@@ -161,7 +160,10 @@ async function main(): Promise<void> {
   const config = JSON.parse(await readFile(configFile, 'utf8')) as Config;
   validate(config);
   const channelLang = config.channel.lang || 'en';
-  console.log(`VALID: 10 member bots, ${config.audienceRespondents.length} audience bots, ${config.topics.length} topics, ${config.corpora.length} corpora, ${config.botCorpora.length} grants`);
+  const topics = config.topics || [];
+  const corpora = config.corpora || [];
+  const botCorpora = config.botCorpora || [];
+  console.log(`VALID: 10 member bots, ${config.audienceRespondents.length} audience bots, ${topics.length} topics, ${corpora.length} corpora, ${botCorpora.length} grants`);
   if (!apply) {
     console.log('DRY RUN: no database writes; pass --apply after operator review');
     return;
@@ -197,9 +199,10 @@ async function main(): Promise<void> {
       if (botUsers.some((user) => user.is_bot !== 1)) {
         throw new Error('refusing to repurpose an existing human messenger identity as a bot');
       }
+      const policyChannels = [config.channel.channelUrl, ...(config.archiveChannelUrl ? [config.archiveChannelUrl] : [])];
       const existingPolicies = await trx.selectFrom('messenger_channel_policy')
         .select(['channel_url', 'owner_user_id'])
-        .where('channel_url', 'in', [config.archiveChannelUrl, config.channel.channelUrl]).execute();
+        .where('channel_url', 'in', policyChannels).execute();
       if (existingPolicies.some((policy) => policy.owner_user_id && policy.owner_user_id !== config.channel.ownerUserId)) {
         throw new Error('refusing to change an existing channel owner through bulk configuration');
       }
@@ -221,9 +224,11 @@ async function main(): Promise<void> {
       }).onDuplicateKeyUpdate({ role: 'operator', state: 'joined' }).execute();
       // The legacy archive was bot-owned. Bootstrap the reviewed human owner so
       // policy ownership is explicit without deleting or rewriting the archive.
-      await trx.insertInto('messenger_members').values({
-        channel_url: config.archiveChannelUrl, user_id: config.channel.ownerUserId, role: 'operator', state: 'joined',
-      }).onDuplicateKeyUpdate({ role: 'operator', state: 'joined' }).execute();
+      if (config.archiveChannelUrl) {
+        await trx.insertInto('messenger_members').values({
+          channel_url: config.archiveChannelUrl, user_id: config.channel.ownerUserId, role: 'operator', state: 'joined',
+        }).onDuplicateKeyUpdate({ role: 'operator', state: 'joined' }).execute();
+      }
 
       for (const bot of configuredBots) {
         await trx.insertInto('messenger_users').values({
@@ -249,8 +254,10 @@ async function main(): Promise<void> {
         }).onDuplicateKeyUpdate({ role: 'member', state: 'joined' }).execute();
       }
       const audienceIds = config.audienceRespondents.map((bot) => bot.botId);
-      await trx.deleteFrom('messenger_members').where('channel_url', '=', config.channel.channelUrl)
-        .where('user_id', 'in', audienceIds).execute();
+      if (audienceIds.length) {
+        await trx.deleteFrom('messenger_members').where('channel_url', '=', config.channel.channelUrl)
+          .where('user_id', 'in', audienceIds).execute();
+      }
       await trx.updateTable('bom_ai_audience_bot').set({ enabled: 0 })
         .where('channel_url', '=', config.channel.channelUrl).execute();
       for (const respondent of config.audienceRespondents) {
@@ -272,16 +279,18 @@ async function main(): Promise<void> {
       };
       await trx.insertInto('messenger_channel_policy').values({ channel_url: config.channel.channelUrl, ...flagshipPolicy })
         .onDuplicateKeyUpdate(flagshipPolicy).execute();
-      await trx.updateTable('messenger_channels').set({ custom_type: 'private' })
-        .where('channel_url', '=', config.archiveChannelUrl).execute();
-      const archivePolicy = {
-        owner_user_id: config.channel.ownerUserId, visibility: 'private' as const,
-        membership_policy: 'fixed' as const, root_post_policy: 'nobody' as const,
-        reply_policy: 'nobody' as const, reaction_policy: 'nobody' as const,
-        outsider_comments_live: 0, listed: 0, enabled: 1,
-      };
-      await trx.insertInto('messenger_channel_policy').values({ channel_url: config.archiveChannelUrl, ...archivePolicy })
-        .onDuplicateKeyUpdate(archivePolicy).execute();
+      if (config.archiveChannelUrl) {
+        await trx.updateTable('messenger_channels').set({ custom_type: 'private' })
+          .where('channel_url', '=', config.archiveChannelUrl).execute();
+        const archivePolicy = {
+          owner_user_id: config.channel.ownerUserId, visibility: 'private' as const,
+          membership_policy: 'fixed' as const, root_post_policy: 'nobody' as const,
+          reply_policy: 'nobody' as const, reaction_policy: 'nobody' as const,
+          outsider_comments_live: 0, listed: 0, enabled: 1,
+        };
+        await trx.insertInto('messenger_channel_policy').values({ channel_url: config.archiveChannelUrl, ...archivePolicy })
+          .onDuplicateKeyUpdate(archivePolicy).execute();
+      }
 
       const d = config.discussion;
       const discussion = {
@@ -298,7 +307,7 @@ async function main(): Promise<void> {
         .onDuplicateKeyUpdate(discussion).execute();
       await trx.updateTable('bom_ai_topic').set({ enabled: 0 })
         .where('channel_url', '=', config.channel.channelUrl).execute();
-      for (const topic of config.topics) {
+      for (const topic of topics) {
         await trx.insertInto('bom_ai_topic').values({
           topic_id: topic.topicId, channel_url: config.channel.channelUrl,
           passage_ref: topic.passageRef, passage_slug: topic.passageSlug || null,
@@ -310,7 +319,7 @@ async function main(): Promise<void> {
           context_note: topic.contextNote || null, enabled: 1,
         }).execute();
       }
-      for (const corpus of config.corpora) {
+      for (const corpus of corpora) {
         const row = {
           title: corpus.title, author_key: corpus.authorKey, source_uri: corpus.sourceUri,
           source_sha256: corpus.sourceSha256 || null, rights_class: corpus.rightsClass,
@@ -322,7 +331,7 @@ async function main(): Promise<void> {
       }
       await trx.updateTable('bom_ai_bot_corpus').set({ enabled: 0 })
         .where('bot_id', 'in', configuredBotIds).execute();
-      for (const grant of config.botCorpora) {
+      for (const grant of botCorpora) {
         await trx.insertInto('bom_ai_bot_corpus').values({
           bot_id: grant.botId, corpus_id: grant.corpusId,
           retrieval_weight: String(grant.retrievalWeight ?? 1), enabled: 1,
@@ -333,7 +342,7 @@ async function main(): Promise<void> {
         .where('action', '=', 'new_prompt').orderBy('id', 'asc').executeTakeFirst();
       const scheduleValues = {
         cron: `${Number(d.localStartTime.slice(3, 5))} ${Number(d.localStartTime.slice(0, 2))} * * *`,
-        cadence_minutes: null, enabled: 1,
+        cadence_minutes: null, enabled: d.scheduleEnabled === false ? 0 : 1,
         next_run_at: nextLocalTime(d.timezone, d.localStartTime),
       };
       if (schedule) {
@@ -343,11 +352,13 @@ async function main(): Promise<void> {
           channel_url: config.channel.channelUrl, action: 'new_prompt', ...scheduleValues,
         }).execute();
       }
-      await trx.updateTable('bom_bot_schedule').set({ enabled: 0 })
-        .where('channel_url', '=', config.archiveChannelUrl).execute();
+      if (config.archiveChannelUrl) {
+        await trx.updateTable('bom_bot_schedule').set({ enabled: 0 })
+          .where('channel_url', '=', config.archiveChannelUrl).execute();
+      }
       await sql`DELETE FROM messenger_members WHERE channel_url = ${config.channel.channelUrl} AND state = 'requested'`.execute(trx);
     });
-    console.log(`APPLIED: fresh channel ${config.channel.channelUrl}; archive retained without message migration`);
+    console.log(`APPLIED: managed channel ${config.channel.channelUrl}; schedule ${config.discussion.scheduleEnabled === false ? 'disabled' : 'enabled'}`);
   } finally {
     await closeDb();
   }
