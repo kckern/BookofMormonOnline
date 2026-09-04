@@ -179,6 +179,14 @@ export function chooseAudienceRespondent<T extends { response_weight: number; to
   return weightedPick(matching, random);
 }
 
+// Bots must never expose the retrieval mechanic. The base guardrails cover
+// "don't imply corpus grounding", but bots were leaking the INVERSE — narrating
+// that retrieval returned nothing ("a profile-based reading since retrieval
+// returned no corpus text"). Forbid any mention of the tooling outright.
+const NO_META_LEAK =
+  'Never mention retrieval, tools, a corpus, sources, whether sources were "available"/"returned", ' +
+  'or that you are reasoning "from persona/profile" — just make the argument in character.';
+
 function managedTurnInstructions(promptTemplate: string, responseGuardrails: string): string {
   // Strip any hardcoded word-count directive from the shared template; length is
   // set per role instead (opener vs reply), so the two don't contradict.
@@ -186,7 +194,7 @@ function managedTurnInstructions(promptTemplate: string, responseGuardrails: str
     .replace(/Keep the response between\s+\d+\s+and\s+\d+\s+words\.?/i, '')
     .replace(/[ \t]{2,}/g, ' ')
     .trim();
-  return [stripped, responseGuardrails].filter(Boolean).join('\n\n');
+  return [stripped, responseGuardrails, NO_META_LEAK].filter(Boolean).join('\n\n');
 }
 
 /** Start a durable, staggered AI discussion from DB-owned configuration. */
