@@ -890,7 +890,7 @@ function MyComment({
 
   if (!sbChannel)
     return (
-      <div className="commentThreadItem">
+      <div className="commentThreadItem commentComposer">
         <div className="imagebox noselect">
           {trophyComp}
           <img src={img} onError={breakCache} alt={myName} />
@@ -956,7 +956,7 @@ function MyComment({
   };
 
   return (
-    <div className="commentThreadItem">
+    <div className="commentThreadItem commentComposer">
       <div className="imagebox noselect">
         <img src={img} onError={breakCache} alt={myName} />
         <div className="progress">

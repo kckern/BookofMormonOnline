@@ -1018,6 +1018,11 @@ img.groupAvatar
     margin-bottom: .35rem;
 }
 
+.commentThreadItem.commentComposer
+{
+    border-bottom: 0;
+}
+
 span.groupName,
 .groupAvatar
 {
