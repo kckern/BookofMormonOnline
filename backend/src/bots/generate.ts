@@ -21,8 +21,13 @@ export async function generateBotReply(
   const agent = await getBotAgent(db, botId);
   if (!agent) return null;
   try {
+    // Reasoning models (gpt-5.x / gpt-5.6-luna) take a reasoning effort via the
+    // OpenAI provider options. Default 'high'; override with BOT_LLM_REASONING_EFFORT
+    // (none|low|medium|high|xhigh|max for luna). Harmless for non-reasoning models.
+    const reasoningEffort = process.env['BOT_LLM_REASONING_EFFORT'] || 'high';
     const result = await agent.generate(
       messages.map((m) => ({ role: m.role, content: m.content })),
+      { providerOptions: { openai: { reasoningEffort } } },
     );
     const text = (result && (result.text ?? result.output)) as string | undefined;
     const trimmed = text?.trim();
