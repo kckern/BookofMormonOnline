@@ -5,6 +5,8 @@
  * (frontend/webapp/src/models/MessengerController.js) sees identical shapes.
  */
 
+import type { Reference } from './contentRefs.js';
+
 export interface UserDTO {
   user_id: string;
   nickname: string;
@@ -29,6 +31,8 @@ export interface MessageDTO {
   message: string;
   custom_type: string;
   data: string; // JSON string carrying links/highlights (back-compat)
+  anchor: string | null;
+  references: Reference[];
   parent_message_id: string | null;
   thread_info: {
     reply_count: number;

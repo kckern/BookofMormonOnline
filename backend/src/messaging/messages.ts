@@ -141,11 +141,33 @@ type RawMessage = {
   link_target: string | null;
   link_aux: string | null;
   metadata: unknown;
+  anchor: string | null;
+  content_refs: unknown;
   parent_message_id: string | null;
   is_deleted: number | null;
   created_at: Date | null;
   updated_at: Date | null;
 };
+
+/**
+ * Normalise the `content_refs` DB column value into a Reference[].
+ *
+ * mysql2 may hand back the JSON column already parsed (array) or as a raw
+ * JSON string. Handles both, plus null/undefined and invalid JSON gracefully.
+ * Exported so it is directly testable without a DB connection.
+ */
+export function parseContentRefs(raw: unknown): import('./dto.js').MessageDTO['references'] {
+  if (raw == null) return [];
+  let val: unknown = raw;
+  if (typeof raw === 'string') {
+    try {
+      val = JSON.parse(raw);
+    } catch {
+      return [];
+    }
+  }
+  return Array.isArray(val) ? (val as import('./dto.js').MessageDTO['references']) : [];
+}
 
 /**
  * Assemble many MessageDTOs with a CONSTANT number of queries, no matter how many
@@ -249,6 +271,8 @@ async function assembleMessages(db: Kysely<DB>, msgs: RawMessage[]): Promise<Mes
       message: m.message,
       custom_type: m.custom_type ?? '',
       data: buildDataString(m.link_type, m.link_target, m.link_aux, highlights, m.metadata),
+      anchor: m.anchor ?? null,
+      references: parseContentRefs(m.content_refs),
       parent_message_id: m.parent_message_id ?? null,
       thread_info: threadInfo,
       reactions: aggregateReactions(reactionsByMsg.get(m.message_id) ?? []),
@@ -445,8 +469,8 @@ export async function getMessagesForChannels(
   const rows = (
     await sql<RawMessage>`
       SELECT message_id, channel_url, user_id, message_type, message, custom_type,
-             link_type, link_target, link_aux, metadata, parent_message_id, is_deleted,
-             created_at, updated_at
+             link_type, link_target, link_aux, metadata, anchor, content_refs,
+             parent_message_id, is_deleted, created_at, updated_at
       FROM (
         SELECT m.*, ROW_NUMBER() OVER (
                  PARTITION BY channel_url ORDER BY created_at DESC, message_id DESC
