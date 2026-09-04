@@ -51,7 +51,7 @@ export function replyLengthInstruction(shape: ReplyShape): string {
     `under ~${maxWords} words total. Make ONE point, plainly. Keep each sentence short. ` +
     `No preamble, no summary of the passage, no sign-off.`;
   const link = shape.wantsLink
-    ? ' Weave in ONE additional supporting scripture (book chapter:verse) that sharpens the point.'
+    ? ' Weave in ONE additional supporting scripture — ideally another Book of Mormon passage (book chapter:verse) — that sharpens the point.'
     : '';
   return base + link;
 }

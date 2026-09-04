@@ -43,6 +43,7 @@ describe('replyLengthInstruction', () => {
 
     const linked = replyLengthInstruction({ targetSentences: 3, cap: 6, wantsLink: true });
     expect(linked).toContain('additional supporting scripture');
+    expect(linked).toContain('Book of Mormon'); // nudged toward BoM refs (render cards)
     expect(linked).toContain('under ~96 words'); // 3 * 22 + 30
   });
 
