@@ -1278,7 +1278,7 @@ function BaseMessage({
   let messageData = {};
   try { messageData = JSON.parse(message?.data || "{}"); } catch (_) { /* optional metadata */ }
   const audienceBadge = messageData.participantRole === "audience" ? (
-    <span className="audienceBadge">{label("Audience")}</span>
+    <span className="audienceBadge">{label("audience")}</span>
   ) : null;
 
   return (

@@ -324,8 +324,8 @@ function RecentFinishers({ finishers }) {
           data-for="leaderBoardItem-tip"
           onClick={() => history.push(`/${m.bookmark}`)}
           data-tip={
-            titleFormatter("Last seen", timeAgoString(m.lastseen)) +
-            titleFormatter("Last studied", m.laststudied)
+            titleFormatter(label("last_seen").replace(/:\s*$/, ""), timeAgoString(m.lastseen)) +
+            titleFormatter(label("last_studied"), m.laststudied)
           }
           data-html={true}
         >
@@ -386,8 +386,8 @@ function LeaderBoard({ leaders }) {
           onClick={() => history.push(`/${m.bookmark}`)}
           data-for="leaderBoardItem-tip"
           data-tip={
-            titleFormatter("Last seen", timeAgoString(m.lastseen)) +
-            titleFormatter("Last studied", m.laststudied)
+            titleFormatter(label("last_seen").replace(/:\s*$/, ""), timeAgoString(m.lastseen)) +
+            titleFormatter(label("last_studied"), m.laststudied)
           }
           data-html={true}
         >

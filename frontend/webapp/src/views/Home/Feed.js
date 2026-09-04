@@ -410,7 +410,7 @@ function HomeFeedItem({
   }, [item.id]);
   let finished = item.user.finished;
   const trophyImg = finished ? (
-    <img className="trophy" src={trophy} alt={label("finished") || "Finished"} />
+    <img className="trophy" src={trophy} alt={label("finished")} />
   ) : null;
   const statusBox = item.user.isBot ?
   <div className="progress bot">{label("bot")}</div> :
@@ -664,7 +664,7 @@ function Comments({ comments, count, item, group, memberMap, sbChannel, fetchCom
 
   const appController = useAppController();
   const [alertOn, setAlert] = useState(false);
-  useModalA11y(alertOn, { onClose: () => setAlert(false), label: "Members only" });
+  useModalA11y(alertOn, { onClose: () => setAlert(false), label: label("members_only") });
 
   const [newMessages, setNewMessages] = useState([]);
   let myUserId = appController.states.user.user;
@@ -801,19 +801,19 @@ function Comments({ comments, count, item, group, memberMap, sbChannel, fetchCom
       <SweetAlert
         customClass={"sweet-alert-modal"}
         show={alertOn}
-        title={"Members only"}
+        title={label("members_only")}
         onConfirm={() => setAlert(false)}
         //  onCancel={onCancel}
         showConfirm={true}
         showCancel={true}
         btnSize=""
         cancelBtnBsStyle="danger"
-        confirmBtnText="Join"
-        cancelBtnText="Cancel"
+        confirmBtnText={label("join")}
+        cancelBtnText={label("cancel")}
         confirmBtnCssClass="model-confirm-btn-css-class"
         cancelBtnCssClass="model-cancel-btn-css-class"
       >
-        {"a"}
+        {label("members_only_detail")}
       </SweetAlert>
     </div>
   );
@@ -828,10 +828,10 @@ function Comment({ comment }) {
   const isBot = comment.user.nickname === "StudyBuddy" || comment.user.isBot;
   const botBadge = isBot ? <span className="botBadge">{label("bot")}</span> : null;
   const audienceBadge = comment.participant_role === "audience" ? (
-    <span className="audienceBadge">{label("Audience")}</span>
+    <span className="audienceBadge">{label("audience")}</span>
   ) : null;
   const trophyImg = finished ? (
-    <img className="trophy" src={trophy} alt={label("finished") || "Finished"} />
+    <img className="trophy" src={trophy} alt={label("finished")} />
   ) : null;
   let timeAgo = timeAgoString(comment.timestamp / 1000);
   return (
@@ -884,7 +884,7 @@ function MyComment({
     group.privacy === "open" ? "join_group" : "apply_for_membership";
   let finished = appController.states.user.finished;
   let trophyComp = finished ? (
-    <img className="trophy" src={trophy} alt={label("finished") || "Finished"} />
+    <img className="trophy" src={trophy} alt={label("finished")} />
   ) : null;
   const myName = appController.states.user.social?.nickname || "";
 
