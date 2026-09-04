@@ -15,6 +15,87 @@ import { searchContent } from '../../search/retrieve.js';
 import type { SearchHit } from '../../search/types.js';
 import { bridgeBookOfMormonToBible } from '../scriptureBridge.js';
 
+export interface DiscussionCandidate {
+  botId: string;
+  displayName: string;
+  lifeSketch: Array<{ year?: number | string; event: string }>;
+  /** Resolved by policy/roster code before retrieval; false is a hard exclusion. */
+  eligible?: boolean;
+  participantRole?: 'member' | 'audience';
+}
+
+export interface GroundingEvidence {
+  kind: 'topic' | 'biography';
+  text: string;
+  score: number;
+  botId?: string;
+  locator?: string | null;
+}
+
+export interface RankedDiscussionCandidate extends DiscussionCandidate {
+  relevanceScore: number;
+  biographyEvidence: GroundingEvidence[];
+}
+
+export interface DiscussionRetrievalPacket {
+  query: string;
+  topicEvidence: GroundingEvidence[];
+  candidates: RankedDiscussionCandidate[];
+}
+
+export interface DiscussionRetrievalRequest {
+  passageText: string;
+  passageRef?: string;
+  editorialQuestion?: string;
+  lang?: string;
+  candidates: DiscussionCandidate[];
+}
+
+const terms = (value: string) => new Set(words(value).filter((word) => word.length > 2));
+const overlapScore = (query: Set<string>, value: string) => {
+  const candidate = terms(value);
+  if (!query.size || !candidate.size) return 0;
+  let matches = 0;
+  for (const word of query) if (candidate.has(word)) matches += 1;
+  return matches / Math.sqrt(query.size * candidate.size);
+};
+
+/**
+ * Two-axis discussion retrieval seam. Today biography relevance can be
+ * computed from reviewed life sketches; later the injected retriever can add
+ * biography/corpus chunks without changing scheduler or prompt contracts.
+ */
+export async function retrieveDiscussionPacket(
+  request: DiscussionRetrievalRequest,
+  retriever: (args: Parameters<typeof searchContent>[0]) => Promise<SearchHit[]> = searchContent,
+): Promise<DiscussionRetrievalPacket> {
+  const query = [request.passageRef, request.editorialQuestion, request.passageText].filter(Boolean).join('\n');
+  let topicHits: SearchHit[] = [];
+  try {
+    topicHits = await retriever({ query, types: ['verse', 'commentary', 'matter'], lang: request.lang, limit: 12 });
+  } catch (err) {
+    console.warn('[rag] discussion topic retrieval failed:', err instanceof Error ? err.message : err);
+  }
+  const topicEvidence = topicHits.map((hit) => ({
+    kind: 'topic' as const, text: hit.text, score: hit.score, locator: hit.locator || hit.ref || hit.slug,
+  }));
+  const expandedQuery = terms(`${query}\n${topicHits.map((hit) => hit.text).join('\n')}`);
+  const candidates = request.candidates.filter((candidate) => candidate.eligible !== false).map((candidate) => {
+    const sketch = candidate.lifeSketch.map((item) => item.event).join(' ');
+    const score = overlapScore(expandedQuery, `${candidate.displayName} ${sketch}`);
+    return {
+      ...candidate,
+      relevanceScore: score,
+      biographyEvidence: candidate.lifeSketch
+        .map((item) => ({ kind: 'biography' as const, botId: candidate.botId,
+          text: `${item.year ?? 'Undated'}: ${item.event}`, score: overlapScore(expandedQuery, item.event) }))
+        .filter((item) => item.score > 0)
+        .sort((a, b) => b.score - a.score),
+    };
+  }).sort((a, b) => b.relevanceScore - a.relevanceScore);
+  return { query, topicEvidence, candidates };
+}
+
 export interface RagResource {
   id: number;
   resource_type: string;

@@ -6,6 +6,7 @@ import HomeTabs, { activeTabFor } from "./HomeTabs";
 import Sampler from "./Sampler";
 import Community from "./Community";
 import User from "../User/User";
+import PublicBotProfile from "../User/PublicBotProfile";
 
 // Unified Home shell (spec: docs/specs/2026-07-17-unified-tabbed-home.md).
 // Owns the desktop tab bar + an inner Switch that renders the existing Sampler /
@@ -40,6 +41,7 @@ export default function Home() {
     <div className={shellClass}>
       {!mobile && !unlistedBeta && <HomeTabs />}
       <Switch>
+        <Route path="/home/profile/:userId"><PublicBotProfile /></Route>
         <Route path="/home/user/:value?"><User /></Route>
 
         <Route path="/home/feed/:channelId/:messageId(\d+)"><Community unlistedBeta /></Route>

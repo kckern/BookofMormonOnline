@@ -24,6 +24,8 @@ import { planMoves, type DiscussionMove } from './discussionMoves.js';
 import { parseOpenerHighlight, htmlToPlain } from './openerHighlight.js';
 import { pickStyleWeightedPassage } from './passagePicker.js';
 import { openerPrompts, turnPrompts } from './discussionPrompts.js';
+import { loadBiographyContext } from './biographyContext.js';
+import { retrieveDiscussionPacket } from './mastra/rag.js';
 
 // Book of Mormon verse-id range — only BoM refs resolve to a bom_text block.
 const BOM_FIRST_VERSE_ID = 31_103;
@@ -245,7 +247,7 @@ async function runManagedDiscussion(
   const bots = await db.selectFrom('messenger_members as member')
     .innerJoin('messenger_users as user', 'user.user_id', 'member.user_id')
     .innerJoin('bom_bot as bot', 'bot.bot_id', 'member.user_id')
-    .select(['bot.bot_id', 'bot.display_name', 'bot.persona', 'bot.model'])
+    .select(['bot.bot_id', 'bot.display_name', 'bot.persona', 'bot.model', 'bot.life_sketch'])
     .where('member.channel_url', '=', channelUrl).where('member.state', '=', 'joined')
     .where('user.is_bot', '=', 1).where('bot.enabled', '=', 1)
     .where('bot.bot_class', '=', 'study').where('bot.lang', '=', channelLang).execute();
@@ -256,10 +258,26 @@ async function runManagedDiscussion(
     .where('channel_url', '=', channelUrl).where('custom_type', '=', 'bot_prompt')
     .where((eb) => eb.or([eb('is_deleted', 'is', null), eb('is_deleted', '=', 0)]))
     .orderBy('created_at', 'desc').limit(1).executeTakeFirst();
-  const openerPool = configured.filter((bot) => bot.bot_id !== previous?.user_id);
-  const opener = (openerPool.length ? openerPool : configured)[rand(openerPool.length || configured.length)]!;
+  const blockPlain = htmlToPlain(topicBlock.text);
+  const retrieval = await retrieveDiscussionPacket({
+    passageText: blockPlain, passageRef: topic.passage_ref, editorialQuestion: topic.question,
+    lang: channelLang,
+    candidates: configured.map((bot) => ({
+      botId: bot.bot_id, displayName: bot.display_name,
+      lifeSketch: Array.isArray(bot.life_sketch) ? bot.life_sketch as Array<{ year?: number | string; event: string }> : [],
+      eligible: true, participantRole: 'member',
+    })),
+  });
+  const relevantIds = retrieval.candidates.filter((candidate) => candidate.relevanceScore > 0)
+    .map((candidate) => candidate.botId);
+  const ranked = relevantIds.map((id) => configured.find((bot) => bot.bot_id === id)!).filter(Boolean);
+  const rotationPool = (ranked.length ? ranked : configured).filter((bot) => bot.bot_id !== previous?.user_id);
+  const openerPool = rotationPool.length ? rotationPool : (ranked.length ? ranked : configured);
+  // Keep a little variety among equally relevant voices while favoring the top match.
+  const opener = openerPool[rand(Math.min(3, openerPool.length))]!;
   const voiceCount = Math.min(configured.length, randInt(config.min_bot_voices, config.max_bot_voices));
-  const voices = [opener, ...shuffled(configured.filter((bot) => bot.bot_id !== opener.bot_id)).slice(0, voiceCount - 1)];
+  const relevanceOrdered = [...ranked, ...shuffled(configured.filter((bot) => !relevantIds.includes(bot.bot_id)))];
+  const voices = [opener, ...relevanceOrdered.filter((bot) => bot.bot_id !== opener.bot_id).slice(0, voiceCount - 1)];
   const audienceCandidates = await db.selectFrom('bom_ai_audience_bot as audience')
     .innerJoin('messenger_users as user', 'user.user_id', 'audience.bot_id')
     .innerJoin('bom_bot as bot', 'bot.bot_id', 'audience.bot_id')
@@ -276,7 +294,6 @@ async function runManagedDiscussion(
   const audience = chooseAudienceRespondent(
     configuredAudience, topicText, config.audience_response_chance,
   );
-  const blockPlain = htmlToPlain(topicBlock.text);
   const instructions = [managedTurnInstructions(config.prompt_template, config.response_guardrails),
     ...openerPrompts(config.prompt_bundle, blockPlain)].join('\n\n');
   runLog.info(
@@ -288,8 +305,10 @@ async function runManagedDiscussion(
     },
     'managed discussion start',
   );
+  const openerBiography = await loadBiographyContext(db, opener.bot_id, blockPlain);
   const openingRaw = await generateBotReply(db, opener.bot_id, [
     { role: 'user', content: instructions },
+    ...(openerBiography ? [{ role: 'user' as const, content: openerBiography }] : []),
     { role: 'user', content: blockPlain },
   ], { log: runLog, label: 'opener', model: opener.model ?? undefined });
   if (!openingRaw) {
@@ -448,8 +467,12 @@ async function processDueTurns(db: Kysely<DB>): Promise<void> {
         const data = JSON.parse(root.data) as Record<string, unknown>;
         editorialQuestion = typeof data['editorialQuestion'] === 'string' ? data['editorialQuestion'] : '';
       } catch { /* old managed roots may not carry the editorial brief */ }
+      const turnBiography = await loadBiographyContext(db, turn.bot_id, root.message);
       const conversation: BotTurn[] = [
         { role: 'user', content: instructions },
+        ...(turnBiography
+          ? [{ role: 'user' as const, content: turnBiography }]
+          : []),
         ...(editorialQuestion
           ? [{ role: 'user' as const, content: `Editorial topic brief: ${editorialQuestion}` }]
           : []),

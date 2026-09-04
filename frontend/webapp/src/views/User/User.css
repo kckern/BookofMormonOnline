@@ -420,3 +420,10 @@ h5 span.closeme{
   cursor: pointer;
 }
 
+.publicBotProfile { max-width: 760px; padding-top: 24px; }
+.publicBotProfileHeader { display: flex; align-items: center; gap: 18px; }
+.publicBotProfileHeader img { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; }
+.publicBotProfileHeader h2 { margin: 0 0 8px; }
+.publicBotTag { display: inline-block; margin: 4px 6px 0 0; padding: 3px 8px; border-radius: 12px; background: #eee; }
+.publicBotActivity { margin: 12px 0; }
+.publicBotActivity .card-body > div { margin-top: 8px; }

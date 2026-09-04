@@ -1195,6 +1195,29 @@ export type ProgressScore = {
   summary?: Maybe<UserStudySummary>;
 };
 
+export type PublicBotActivity = {
+  __typename?: 'PublicBotActivity';
+  channel_name?: Maybe<Scalars['String']['output']>;
+  channel_url?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['Float']['output']>;
+  message?: Maybe<Scalars['String']['output']>;
+  parent_message_id?: Maybe<Scalars['String']['output']>;
+  timestamp?: Maybe<Scalars['Float']['output']>;
+};
+
+export type PublicBotProfile = {
+  __typename?: 'PublicBotProfile';
+  activity?: Maybe<Array<Maybe<PublicBotActivity>>>;
+  birth_year?: Maybe<Scalars['Int']['output']>;
+  death_year?: Maybe<Scalars['Int']['output']>;
+  isBot?: Maybe<Scalars['Boolean']['output']>;
+  life_sketch?: Maybe<Scalars['JSON']['output']>;
+  nickname?: Maybe<Scalars['String']['output']>;
+  picture?: Maybe<Scalars['String']['output']>;
+  tags?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
+  user_id?: Maybe<Scalars['String']['output']>;
+};
+
 export type Query = {
   __typename?: 'Query';
   _?: Maybe<Scalars['Boolean']['output']>;
@@ -1253,6 +1276,7 @@ export type Query = {
   place?: Maybe<Array<Maybe<Place>>>;
   places?: Maybe<Array<Maybe<Place>>>;
   postcomments?: Maybe<Array<Maybe<HomeFeedItem>>>;
+  publicBotProfile?: Maybe<PublicBotProfile>;
   publications?: Maybe<Array<Maybe<Source>>>;
   queue?: Maybe<Array<Maybe<TextBlock>>>;
   read?: Maybe<ReadBlock>;
@@ -1549,6 +1573,11 @@ export type QueryPlacesArgs = {
 export type QueryPostcommentsArgs = {
   message?: InputMaybe<Scalars['Int']['input']>;
   token?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryPublicBotProfileArgs = {
+  userId: Scalars['String']['input'];
 };
 
 
@@ -2329,6 +2358,8 @@ export type ResolversTypes = {
   PlanWarning: ResolverTypeWrapper<Partial<PlanWarning>>;
   PreviewSegment: ResolverTypeWrapper<Partial<PreviewSegment>>;
   ProgressScore: ResolverTypeWrapper<Partial<ProgressScore>>;
+  PublicBotActivity: ResolverTypeWrapper<Partial<PublicBotActivity>>;
+  PublicBotProfile: ResolverTypeWrapper<Partial<PublicBotProfile>>;
   Query: ResolverTypeWrapper<{}>;
   QueueInput: ResolverTypeWrapper<Partial<QueueInput>>;
   ReadBlock: ResolverTypeWrapper<Partial<ReadBlock>>;
@@ -2457,6 +2488,8 @@ export type ResolversParentTypes = {
   PlanWarning: Partial<PlanWarning>;
   PreviewSegment: Partial<PreviewSegment>;
   ProgressScore: Partial<ProgressScore>;
+  PublicBotActivity: Partial<PublicBotActivity>;
+  PublicBotProfile: Partial<PublicBotProfile>;
   Query: {};
   QueueInput: Partial<QueueInput>;
   ReadBlock: Partial<ReadBlock>;
@@ -3382,6 +3415,29 @@ export type ProgressScoreResolvers<ContextType = AppContext, ParentType extends 
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type PublicBotActivityResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['PublicBotActivity'] = ResolversParentTypes['PublicBotActivity']> = {
+  channel_name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  channel_url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  id?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  parent_message_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  timestamp?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type PublicBotProfileResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['PublicBotProfile'] = ResolversParentTypes['PublicBotProfile']> = {
+  activity?: Resolver<Maybe<Array<Maybe<ResolversTypes['PublicBotActivity']>>>, ParentType, ContextType>;
+  birth_year?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  death_year?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  isBot?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  life_sketch?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
+  nickname?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  picture?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  tags?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
+  user_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type QueryResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
   _?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   books?: Resolver<Maybe<Array<Maybe<ResolversTypes['Book']>>>, ParentType, ContextType, Partial<QueryBooksArgs>>;
@@ -3438,6 +3494,7 @@ export type QueryResolvers<ContextType = AppContext, ParentType extends Resolver
   place?: Resolver<Maybe<Array<Maybe<ResolversTypes['Place']>>>, ParentType, ContextType, Partial<QueryPlaceArgs>>;
   places?: Resolver<Maybe<Array<Maybe<ResolversTypes['Place']>>>, ParentType, ContextType, Partial<QueryPlacesArgs>>;
   postcomments?: Resolver<Maybe<Array<Maybe<ResolversTypes['HomeFeedItem']>>>, ParentType, ContextType, Partial<QueryPostcommentsArgs>>;
+  publicBotProfile?: Resolver<Maybe<ResolversTypes['PublicBotProfile']>, ParentType, ContextType, RequireFields<QueryPublicBotProfileArgs, 'userId'>>;
   publications?: Resolver<Maybe<Array<Maybe<ResolversTypes['Source']>>>, ParentType, ContextType>;
   queue?: Resolver<Maybe<Array<Maybe<ResolversTypes['TextBlock']>>>, ParentType, ContextType, Partial<QueryQueueArgs>>;
   read?: Resolver<Maybe<ResolversTypes['ReadBlock']>, ParentType, ContextType, Partial<QueryReadArgs>>;
@@ -3989,6 +4046,8 @@ export type Resolvers<ContextType = AppContext> = {
   PlanWarning?: PlanWarningResolvers<ContextType>;
   PreviewSegment?: PreviewSegmentResolvers<ContextType>;
   ProgressScore?: ProgressScoreResolvers<ContextType>;
+  PublicBotActivity?: PublicBotActivityResolvers<ContextType>;
+  PublicBotProfile?: PublicBotProfileResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   ReadBlock?: ReadBlockResolvers<ContextType>;
   ReadExtra?: ReadExtraResolvers<ContextType>;

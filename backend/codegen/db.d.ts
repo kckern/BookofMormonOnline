@@ -24,12 +24,15 @@ export type JsonPrimitive = boolean | number | string | null;
 export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
 export interface BomBot {
+  birth_year: number | null;
   bot_class: Generated<"community" | "study">;
   bot_id: string;
   created_at: Generated<Date>;
   display_name: string;
+  death_year: number | null;
   enabled: Generated<number>;
   lang: string | null;
+  life_sketch: Json | null;
   model: string | null;
   persona: string | null;
   tags: Json | null;

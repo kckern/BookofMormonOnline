@@ -566,6 +566,59 @@ const asGql = <T>(v: T): any => v;
 
 export const communityResolvers: Resolvers = {
   Query: {
+    /** Public profiles are deliberately bot-only until human privacy controls exist. */
+    publicBotProfile: async (_root, args, ctx: AppContext) => {
+      const userId = args.userId as string;
+      const bot = await ctx.db.selectFrom('bom_bot as bot')
+        .innerJoin('messenger_users as user', 'user.user_id', 'bot.bot_id')
+        .select(['bot.bot_id', 'bot.tags', 'bot.birth_year', 'bot.death_year', 'bot.life_sketch', 'user.nickname', 'user.profile_url', 'user.is_bot'])
+        .where('bot.bot_id', '=', userId)
+        .where('bot.enabled', '=', 1)
+        .where('user.is_bot', '=', 1)
+        .executeTakeFirst();
+      if (!bot) return null;
+
+      const activity = await ctx.db.selectFrom('messenger_messages as message')
+        .innerJoin('messenger_channels as channel', 'channel.channel_url', 'message.channel_url')
+        .innerJoin('messenger_channel_policy as policy', 'policy.channel_url', 'message.channel_url')
+        .innerJoin('messenger_members as membership', (join) => join
+          .onRef('membership.channel_url', '=', 'message.channel_url')
+          .onRef('membership.user_id', '=', 'message.user_id'))
+        .select([
+          'message.message_id', 'message.channel_url', 'message.message',
+          'message.parent_message_id', 'message.created_at', 'channel.name as channel_name',
+        ])
+        .where('message.user_id', '=', userId)
+        .where('membership.state', '=', 'joined')
+        .where('message.is_deleted', '=', 0)
+        .where('policy.enabled', '=', 1)
+        .where('policy.visibility', 'in', ['public', 'unlisted'])
+        .orderBy('message.created_at', 'desc')
+        .limit(100)
+        .execute();
+
+      const tags = Array.isArray(bot.tags)
+        ? bot.tags
+        : (() => { try { return JSON.parse(String(bot.tags || '[]')); } catch { return []; } })();
+      return asGql({
+        user_id: bot.bot_id,
+        nickname: bot.nickname,
+        picture: bot.profile_url,
+        isBot: true,
+        tags,
+        birth_year: bot.birth_year,
+        death_year: bot.death_year,
+        life_sketch: bot.life_sketch,
+        activity: activity.map((row) => ({
+          id: Number(row.message_id),
+          channel_url: row.channel_url,
+          channel_name: row.channel_name,
+          message: row.message,
+          parent_message_id: row.parent_message_id,
+          timestamp: row.created_at ? new Date(row.created_at).getTime() : 0,
+        })),
+      });
+    },
     /**
      * leaderboard — recent finishers + current-progress board (legacy
      * BomCommunity.ts:132). currentProgress: bom_user active in the last 90 days

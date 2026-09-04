@@ -2096,6 +2096,19 @@ const queries = {
         `,
     }
   },
+
+  publicBotProfile: (input) => {
+    input = input.shift();
+    return {
+      type: "publicBotProfile",
+      key: "userId",
+      val: false,
+      query: `publicBotProfile(userId:"${input.userId}") {
+        user_id nickname picture isBot tags birth_year death_year life_sketch
+        activity { id channel_url channel_name message parent_message_id timestamp }
+      }`,
+    };
+  },
   addBot: (input) => {
     input = input.shift();
     return {

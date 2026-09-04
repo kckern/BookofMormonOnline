@@ -15,6 +15,8 @@ import { validatePromptBundle, type DiscussionPromptBundle } from '../src/bots/d
 type Bot = {
   botId: string; displayName: string; nickname: string; profileUrl: string;
   persona: string; model: string; lang?: string; temperament?: string; tags?: string[];
+  birthYear?: number | null; deathYear?: number | null;
+  lifeSketch?: Array<{ year?: number | string; event: string }>;
 };
 type AudienceRespondent = Bot & { responseWeight: number; topicTriggers: string[] };
 type Config = {
@@ -241,10 +243,14 @@ async function main(): Promise<void> {
         await trx.insertInto('bom_bot').values({
           bot_id: bot.botId, display_name: bot.displayName, bot_class: 'study', lang: bot.lang || channelLang,
           persona: bot.persona, model: bot.model, temperament: bot.temperament || null,
+          birth_year: bot.birthYear ?? null, death_year: bot.deathYear ?? null,
+          life_sketch: JSON.stringify(bot.lifeSketch || []),
           tags: JSON.stringify(bot.tags || ['reformers']), enabled: 1,
         }).onDuplicateKeyUpdate({
           display_name: bot.displayName, bot_class: 'study', lang: bot.lang || channelLang, persona: bot.persona,
           model: bot.model, temperament: bot.temperament || null,
+          birth_year: bot.birthYear ?? null, death_year: bot.deathYear ?? null,
+          life_sketch: JSON.stringify(bot.lifeSketch || []),
           tags: JSON.stringify(bot.tags || ['reformers']), enabled: 1,
         }).execute();
       }

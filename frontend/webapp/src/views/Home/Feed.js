@@ -420,8 +420,8 @@ function HomeFeedItem({
       <Card className="homeFeed" key={item.id}>
         <CardHeader className="homeFeedHeader group noselect" key={item.id}>
           <div className="topLine" key={item.id}>
-            <span
-              onClick={() => setActiveGroup(group.url)}
+            <Link
+              to={communityHref(group.url)}
               data-tip={`${label(group.privacy + "_group")}`}
               data-class={`privacyTip_${group.privacy}`}
               data-for={"privacyTip"}
@@ -430,7 +430,7 @@ function HomeFeedItem({
             >
               <img src={privacyIcon} alt={label(group.privacy + "_group") || ""} />{" "}
               {group.name}
-            </span>
+            </Link>
           </div>
 
           <div className="timestamp">
@@ -438,7 +438,7 @@ function HomeFeedItem({
           </div>
         </CardHeader>
         <CardHeader className="homeFeedHeader noselect">
-          <div className="imagebox">
+          <Link className="imagebox" to={`/home/profile/${item.user.user_id}`}>
             {trophyImg}
             <img
               src={item.user.picture}
@@ -446,10 +446,10 @@ function HomeFeedItem({
               alt={item.user.nickname || ""}
             />
             {statusBox}
-          </div>
+          </Link>
           <h5>
             <div>
-              {item.user.nickname}
+              <Link to={`/home/profile/${item.user.user_id}`}>{item.user.nickname}</Link>
               <span className="feedAction">
                 {label("honorific", -1) + label("honorific_subject", -1) + " "}
                 {label(determinAction(item))}
@@ -457,12 +457,13 @@ function HomeFeedItem({
             </div>
           </h5>
 
-          <img
-            className="groupAvatar"
-            onClick={() => setActiveGroup(group.url)}
-            src={group.picture}
-            alt={group.name || group.url || ""}
-          />
+          <Link to={communityHref(group.url)}>
+            <img
+              className="groupAvatar"
+              src={group.picture}
+              alt={group.name || group.url || ""}
+            />
+          </Link>
         </CardHeader>
         <CardBody className="homeFeedBody">
           {item.msg === "•" ? null : (
@@ -840,7 +841,7 @@ function Comment({ comment }) {
       }
       key={comment.id}
     >
-      <div className="imagebox noselect">
+      <Link className="imagebox noselect" to={`/home/profile/${comment.user.user_id}`}>
         {trophyImg}
         <img
           src={comment.user.picture}
@@ -850,10 +851,10 @@ function Comment({ comment }) {
         {!isBot && (
           <div className="progress">{comment.user.progress || 0}%</div>
         )}
-      </div>
+      </Link>
       <div className="textbox">
         <div className="namerow noselect">
-          {comment.user.nickname} {botBadge} {audienceBadge}{" "}
+          <Link to={`/home/profile/${comment.user.user_id}`}>{comment.user.nickname}</Link> {botBadge} {audienceBadge}{" "}
           <span>
             •{" "}
             <Link to={communityHref(comment.channel_url, comment.id)}>

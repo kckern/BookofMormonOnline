@@ -1,0 +1,20 @@
+name: ingest-korean-bot-avatars
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        type: choice
+        default: dry
+        options: [dry, apply]
+jobs:
+  ingest:
+    runs-on: [self-hosted, prod]
+    steps:
+      - name: Ingest reviewed avatars in active production container
+        run: |
+          set -euo pipefail
+          DIR="${BOM_DEPLOY_DIR:-/home/ubuntu/greenfield}"
+          ACTIVE="$(sed -n '1p' "$DIR/active-slot")"
+          FLAG=""
+          [ "${{ inputs.mode }}" = "apply" ] && FLAG="--apply"
+          docker exec "$ACTIVE" node --import tsx /app/backend/scripts/ingest-korean-bot-avatars.ts $FLAG
