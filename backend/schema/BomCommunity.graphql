@@ -9,6 +9,28 @@ extend type Query {
   requestedUsers(token: String, channel: String): [HomeUser]
   leaderboard(token: String): LeaderBoard
   botlist(channel: String): [Bot]
+  publicBotProfile(userId: String!): PublicBotProfile
+}
+
+type PublicBotProfile {
+  user_id: String
+  nickname: String
+  picture: String
+  isBot: Boolean
+  tags: [String]
+  birth_year: Int
+  death_year: Int
+  life_sketch: JSON
+  activity: [PublicBotActivity]
+}
+
+type PublicBotActivity {
+  id: Float
+  channel_url: String
+  channel_name: String
+  message: String
+  parent_message_id: String
+  timestamp: Float
 }
 
 extend type Mutation {
