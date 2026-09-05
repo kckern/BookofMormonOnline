@@ -5,6 +5,7 @@ export interface DiscussionPromptBundle {
   openerTask: string;
   openerLength: string;
   highlightInstruction: string;
+  highlightReviewInstruction?: string;
   noMetaLeak: string;
   replyLengths: Record<'1' | '2' | '3' | '4', string>;
   replyLength?: string;
@@ -34,14 +35,32 @@ export function openerPrompts(raw: unknown, blockText: string): string[] {
   const bundle = promptBundle(raw);
   const highlight = bundle.highlightInstruction
     ? bundle.highlightInstruction.replaceAll('{{blockText}}', blockText)
-    : 'After your argument, on a final separate line, write "HIGHLIGHT: " followed by the exact ' +
-      `3-10 word phrase copied verbatim from this linked text:\n"${blockText}"`;
+    : 'After your argument, add two final separate lines: "THESIS: " followed by your central claim in one sentence, ' +
+      'then "HIGHLIGHT: " followed by the exact 3-10 word phrase from the linked text that most directly proves that thesis. ' +
+      `Do not choose a phrase supporting only a peripheral sentence.\n"${blockText}"`;
   return [
     bundle.noMetaLeak ?? DEFAULT_NO_META_LEAK,
     bundle.openerLength ?? OPENER_LENGTH_INSTRUCTION,
     highlight,
     bundle.openerTask ?? 'Make one clear, text-centered opening argument about this selected block.',
   ];
+}
+
+export function highlightReviewPrompt(
+  raw: unknown,
+  blockText: string,
+  thesis: string,
+  commentary: string,
+): string {
+  const bundle = promptBundle(raw);
+  const template = bundle.highlightReviewInstruction ??
+    'Select the verbatim 3-10 word phrase from the passage that most directly supports the commentary central thesis. ' +
+    'Reject a phrase that supports only a peripheral or concluding sentence. Output exactly one line: HIGHLIGHT: <phrase>.\n' +
+    'PASSAGE:\n{{blockText}}\nTHESIS:\n{{thesis}}\nCOMMENTARY:\n{{commentary}}';
+  return template
+    .replaceAll('{{blockText}}', blockText)
+    .replaceAll('{{thesis}}', thesis)
+    .replaceAll('{{commentary}}', commentary);
 }
 
 export function turnPrompts(raw: unknown, move: DiscussionMove | null, shape: ReplyShape): string[] {

@@ -21,9 +21,11 @@ import { botLog, countSentences } from './logger.js';
 import { countReplyWords, replyFitsShape, sampleReplyShape } from './replyShape.js';
 import { detectReferenceStrings } from './scriptureBridge.js';
 import { planMoves, type DiscussionMove } from './discussionMoves.js';
-import { parseOpenerHighlight, htmlToPlain } from './openerHighlight.js';
+import {
+  highlightCentrality, highlightIsCentral, parseOpenerHighlight, htmlToPlain, validateHighlight,
+} from './openerHighlight.js';
 import { pickStyleWeightedPassage } from './passagePicker.js';
-import { openerPrompts, replyRewritePrompt, turnPrompts } from './discussionPrompts.js';
+import { highlightReviewPrompt, openerPrompts, replyRewritePrompt, turnPrompts } from './discussionPrompts.js';
 import { loadBiographyContext } from './biographyContext.js';
 import { retrieveDiscussionPacket } from './mastra/rag.js';
 
@@ -317,13 +319,34 @@ async function runManagedDiscussion(
   }
   // Split off the HIGHLIGHT line; attach it as a highlight span when it validates
   // against the block text. The card carries the reference, so drop the header.
-  const { body: opening, highlight } = parseOpenerHighlight(openingRaw, topicBlock.text);
+  const parsedOpening = parseOpenerHighlight(openingRaw, topicBlock.text);
+  const opening = parsedOpening.body;
+  const thesis = parsedOpening.thesis ?? opening.split(/(?<=[.!?。！？])\s+/u)[0]?.trim() ?? opening;
+  const reviewRaw = await generateBotReply(db, opener.bot_id, [
+    { role: 'user', content: highlightReviewPrompt(config.prompt_bundle, blockPlain, thesis, opening) },
+  ], { log: runLog, label: 'opener-highlight-review', model: opener.model ?? undefined });
+  const reviewedCandidate = reviewRaw?.match(/HIGHLIGHT:\s*([^\n]+)/i)?.[1] ?? '';
+  const exactReviewedHighlight = validateHighlight(reviewedCandidate, topicBlock.text);
+  const reviewedHighlight = exactReviewedHighlight && highlightIsCentral(exactReviewedHighlight, thesis, opening)
+    ? exactReviewedHighlight : null;
+  const initialHighlight = parsedOpening.highlight && highlightIsCentral(parsedOpening.highlight, thesis, opening)
+    ? parsedOpening.highlight : null;
+  const highlight = reviewedHighlight ?? initialHighlight;
+  const highlightReview = {
+    reviewed: !!reviewRaw,
+    passedExactSourceGate: !!exactReviewedHighlight,
+    passedCentralityGate: !!reviewedHighlight,
+    centralityScore: exactReviewedHighlight ? highlightCentrality(exactReviewedHighlight, thesis, opening) : 0,
+    initial: parsedOpening.highlight,
+    selected: highlight,
+    changed: !!reviewedHighlight && reviewedHighlight !== parsedOpening.highlight,
+  };
   if (highlight) {
     topicRefs.references.push({
       type: 'text', id: picked.textGuid, role: 'highlight', lang: channelLang,
       slug: topicBlock.pageSlug, ordinal: topicBlock.ordinal, span: { text: highlight },
     });
-    runLog.info({ event: 'opener.highlight', phrase: highlight }, 'opener highlight attached');
+    runLog.info({ event: 'opener.highlight', phrase: highlight, thesis, ...highlightReview }, 'reviewed opener highlight attached');
   } else {
     runLog.info({ event: 'opener.highlight_miss' }, 'no valid opener highlight');
   }
@@ -340,6 +363,8 @@ async function runManagedDiscussion(
       passageSlug: topic.passage_slug,
       editorialQuestion: topic.question,
       contentLanguage: channelLang,
+      thesis,
+      highlightReview,
       selection: {
         mode: picked.selectionMode, windowKey: picked.window?.windowKey ?? null,
         windowSequence: picked.window?.sequence ?? null, matchedRange: picked.matchedRange,

@@ -10,6 +10,6 @@ describe('localized opener highlights', () => {
     expect(parseOpenerHighlight(
       '논평입니다.\nHIGHLIGHT: "하나님의 말씀"',
       '<p>그들은 하나님의 말씀을 들었다.</p>',
-    )).toEqual({ body: '논평입니다.', highlight: '하나님의 말씀' });
+    )).toEqual({ body: '논평입니다.', highlight: '하나님의 말씀', thesis: null });
   });
 });

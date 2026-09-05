@@ -29,6 +29,28 @@ export interface OpenerParse {
   body: string;
   /** Validated highlight phrase, or null when absent/unverifiable. */
   highlight: string | null;
+  /** One-sentence central claim supplied for evidence review/auditing. */
+  thesis: string | null;
+}
+
+export function validateHighlight(rawValue: string, blockHtml: string): string | null {
+  const raw = (rawValue ?? '').replace(/^["'“”‘’«»]+|["'“”‘’«».]+$/g, '').trim();
+  const nPhrase = normalizePhrase(raw);
+  const nPlain = normalizePhrase(htmlToPlain(blockHtml));
+  return nPhrase.length >= 3 && nPlain.includes(nPhrase) ? raw : null;
+}
+
+/** Transparent multilingual centrality check used after exact-source matching. */
+export function highlightCentrality(highlight: string, thesis: string, commentary: string): number {
+  const tokens = normalizePhrase(highlight).split(/\s+/u).filter((token) => [...token].length >= 2);
+  if (!tokens.length) return 0;
+  const argumentText = ` ${normalizePhrase(`${thesis} ${commentary}`)} `;
+  const matched = tokens.filter((token) => argumentText.includes(` ${token} `)).length;
+  return matched / tokens.length;
+}
+
+export function highlightIsCentral(highlight: string, thesis: string, commentary: string): boolean {
+  return highlightCentrality(highlight, thesis, commentary) >= 0.25;
 }
 
 /**
@@ -36,17 +58,12 @@ export interface OpenerParse {
  * against the linked block's plain text.
  */
 export function parseOpenerHighlight(opening: string, blockHtml: string): OpenerParse {
-  const idx = opening.search(/\n?\s*HIGHLIGHT:/i);
+  const idx = opening.search(/\n?\s*(?:THESIS|HIGHLIGHT):/i);
   const body = (idx >= 0 ? opening.slice(0, idx) : opening).trim();
-  if (idx < 0) return { body, highlight: null };
+  const thesisLine = opening.match(/(?:^|\n)\s*THESIS:\s*([^\n]+)/i);
+  const thesis = thesisLine?.[1]?.trim() || null;
+  if (idx < 0) return { body, highlight: null, thesis };
 
-  const line = opening.slice(idx).match(/HIGHLIGHT:\s*([^\n]+)/i);
-  // Models localize quotation marks. Strip French guillemets as well as curly
-  // and straight quotes before persisting the phrase: the feed highlighter
-  // performs a literal match against the linked block.
-  const raw = (line?.[1] ?? '').replace(/^["'“”‘’«»]+|["'“”‘’«».]+$/g, '').trim();
-  const nPhrase = normalizePhrase(raw);
-  const nPlain = normalizePhrase(htmlToPlain(blockHtml));
-  if (nPhrase.length >= 3 && nPlain.includes(nPhrase)) return { body, highlight: raw };
-  return { body, highlight: null };
+  const line = opening.match(/(?:^|\n)\s*HIGHLIGHT:\s*([^\n]+)/i);
+  return { body, highlight: validateHighlight(line?.[1] ?? '', blockHtml), thesis };
 }
