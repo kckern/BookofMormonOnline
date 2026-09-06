@@ -1,23 +1,29 @@
 import type { Metadata } from 'next'
 import { getFaxList, faxSuperscript } from '@/lib/fax'
-import { buildMetadata } from '@/lib/seo'
+import { buildMetadata, currentLang } from '@/lib/seo'
 import { label } from '@/lib/labels'
+import { seoPageDescription } from '@/lib/seo-copy'
+import { absoluteUrl } from '@/lib/seo'
+import { webPage } from '@/lib/jsonld'
+import { JsonLd } from '../_components/JsonLd'
 
 const TITLE = 'Facsimiles of Historical Book of Mormon Editions'
 
 export async function generateMetadata(): Promise<Metadata> {
-  const list = await getFaxList()
-  // Description = every edition's plain title joined by ' • ', truncated to 159
-  // + '…' by buildMetadata (matches the PHP box meta description).
+  const lang = await currentLang()
   return buildMetadata({
     title: await label('title_facsimilies', TITLE),
-    description: list.map((f) => f.title).join(' • '),
+    description: seoPageDescription(lang, 'facsimiles'),
     path: '/fax',
+    fallbackKey: 'facsimiles',
+    surface: 'collection',
   })
 }
 
 export default async function FaxIndexPage() {
   const list = await getFaxList()
+  const lang = await currentLang()
+  const title = await label('title_facsimilies', TITLE)
 
   // Built as a raw string to reproduce the PHP template byte-for-byte: the data
   // (titles with apostrophes/ampersands, info text) is injected un-escaped, the
@@ -39,6 +45,7 @@ export default async function FaxIndexPage() {
 
   return (
     <>
+      <JsonLd data={webPage({ type: 'CollectionPage', name: title, description: seoPageDescription(lang, 'facsimiles'), url: await absoluteUrl('/fax'), lang })} />
       <h1>{TITLE}</h1>
       <p>
         <a href="/">❮ Community</a>

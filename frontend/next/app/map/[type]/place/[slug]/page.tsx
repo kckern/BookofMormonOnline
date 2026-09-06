@@ -2,8 +2,11 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getPlace } from '@/lib/places'
 import { getMapDetail } from '@/lib/mapdetail'
-import { buildMetadata, stripMarkup } from '@/lib/seo'
+import { absoluteUrl, buildMetadata, currentLang, stripMarkup } from '@/lib/seo'
 import { superscript, wikiToHtml, wikiToText } from '@/lib/entity'
+import { breadcrumb, creativeWork } from '@/lib/jsonld'
+import { JsonLd } from '../../../../_components/JsonLd'
+import { localizedOrFallback } from '@/lib/seo-copy'
 
 interface Props {
   params: Promise<{ type: string; slug: string }>
@@ -20,11 +23,22 @@ function contextName(placeName: string, mapName: string): string {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { type, slug } = await params
-  const [place, map] = await Promise.all([getPlace(slug), getMapDetail(type)])
+  const lang = await currentLang()
+  const [place, map, english] = await Promise.all([
+    getPlace(slug, lang),
+    getMapDetail(type, lang),
+    lang === 'en' ? Promise.resolve(null) : getPlace(slug, 'en'),
+  ])
   if (!place) return {}
+  const title = contextName(place.name, map?.name ?? '')
   return buildMetadata({
-    title: contextName(place.name, map?.name ?? ''),
-    description: stripMarkup(wikiToText(place.description ?? '')),
+    title,
+    description: localizedOrFallback(
+      lang,
+      stripMarkup(wikiToText(place.description ?? '')),
+      stripMarkup(wikiToText(english?.description ?? '')),
+      title,
+    ),
     path: `/map/${type}/place/${slug}`,
     ogSub: place.info ?? '',
   })
@@ -32,13 +46,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function MapPlacePage({ params }: Props) {
   const { type, slug } = await params
-  const [place, map] = await Promise.all([getPlace(slug), getMapDetail(type)])
+  const lang = await currentLang()
+  const [place, map, english] = await Promise.all([
+    getPlace(slug, lang),
+    getMapDetail(type, lang),
+    lang === 'en' ? Promise.resolve(null) : getPlace(slug, 'en'),
+  ])
   if (!place) notFound()
 
   const name = contextName(place.name, map?.name ?? '')
+  const url = await absoluteUrl(`/map/${type}/place/${slug}`)
+  const schemaDescription = localizedOrFallback(
+    lang,
+    stripMarkup(wikiToText(place.description ?? '')),
+    stripMarkup(wikiToText(english?.description ?? '')),
+    name,
+  )
 
   return (
     <>
+      <JsonLd data={[
+        breadcrumb([{ name: 'Home', url: await absoluteUrl('/') }, { name: 'Maps', url: await absoluteUrl('/map') }, { name, url }]),
+        creativeWork({ type: 'Place', name, description: schemaDescription, url, lang, image: `https://media.bookofmormon.online/places/${slug}` }),
+      ]} />
       <h1>{name}</h1>
       {place.info && (
         <h2

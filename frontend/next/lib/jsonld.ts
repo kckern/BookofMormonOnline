@@ -48,3 +48,39 @@ export function creativeWork(input: WorkInput) {
     ...(image ? { image } : {}),
   }
 }
+
+interface PageInput {
+  type: 'WebPage' | 'AboutPage' | 'CollectionPage' | 'ProfilePage'
+  name: string
+  description: string
+  url: string
+  lang: string
+}
+
+export function webPage(input: PageInput) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': input.type,
+    name: input.name,
+    description: input.description,
+    url: input.url,
+    inLanguage: bcp47(input.lang),
+    isPartOf: { ...IS_PART_OF, url: new URL('/', input.url).toString() },
+  }
+}
+
+export function webSite(name: string, description: string, url: string, lang: string) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name,
+    description,
+    url,
+    inLanguage: bcp47(lang),
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: { '@type': 'EntryPoint', urlTemplate: `${new URL('/', url).toString()}search?q={search_term_string}` },
+      'query-input': 'required name=search_term_string',
+    },
+  }
+}

@@ -26,8 +26,8 @@ const PLACE_QUERY = `
   }
 `
 
-export const getPlace = cache(async (slug: string): Promise<Place | null> => {
-  const data = await gql<{ place: Place[] }>(PLACE_QUERY, { slug: [slug] }, { revalidate: 86400 })
+export const getPlace = cache(async (slug: string, lang?: string): Promise<Place | null> => {
+  const data = await gql<{ place: Place[] }>(PLACE_QUERY, { slug: [slug] }, { revalidate: 86400, ...(lang ? { lang } : {}) })
   const place = data.place?.[0]
   if (!place) return null
   // `maps` is null for places not on any map — coalesce so render is safe.

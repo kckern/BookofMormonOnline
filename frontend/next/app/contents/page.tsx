@@ -1,12 +1,21 @@
 import type { Metadata } from 'next'
 import { getContents, type ContentsPage, type ContentsSection } from '@/lib/contents'
-import { buildMetadata } from '@/lib/seo'
+import { buildMetadata, currentLang } from '@/lib/seo'
 import { label } from '@/lib/labels'
+import { seoPageDescription } from '@/lib/seo-copy'
+import { absoluteUrl } from '@/lib/seo'
+import { webPage } from '@/lib/jsonld'
+import { JsonLd } from '../_components/JsonLd'
 
 export async function generateMetadata(): Promise<Metadata> {
-  // The PHP box emits an empty description for /contents (verified: the head's
-  // <meta name="description"> is blank). buildMetadata passes '' through.
-  return buildMetadata({ title: await label('table_of_contents', 'Table of Contents'), description: '', path: '/contents' })
+  const lang = await currentLang()
+  return buildMetadata({
+    title: await label('table_of_contents', 'Table of Contents'),
+    description: seoPageDescription(lang, 'contents'),
+    path: '/contents',
+    fallbackKey: 'contents',
+    surface: 'collection',
+  })
 }
 
 // The TOC tree is built as a raw HTML string to reproduce the PHP template's
@@ -39,6 +48,8 @@ function renderTitlepage(p: ContentsPage): string {
 
 export default async function ContentsPage() {
   const divisions = await getContents()
+  const lang = await currentLang()
+  const title = await label('table_of_contents', 'Table of Contents')
   // The <section> tree is the inner HTML of the toc div. The div itself is a
   // real element (class="toc") so the only structural wrapper is the one the PHP
   // box emits — no extra container.
@@ -53,6 +64,7 @@ export default async function ContentsPage() {
 
   return (
     <>
+      <JsonLd data={webPage({ type: 'CollectionPage', name: title, description: seoPageDescription(lang, 'contents'), url: await absoluteUrl('/contents'), lang })} />
       <h1>Table of Contents</h1>
       <p>
         <a href="/">❮ Community</a>

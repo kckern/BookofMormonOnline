@@ -16,6 +16,10 @@ test.describe('seoIntentForPath', () => {
     expect(seoIntentForPath('/history')).toBe('noindex')
     expect(seoIntentForPath('/history/lost-116-pages')).toBe('noindex')
   })
+  test('utility surfaces are noindex', () => {
+    expect(seoIntentForPath('/search')).toBe('noindex')
+    expect(seoIntentForPath('/user/jane')).toBe('noindex')
+  })
   test('segment-prefix only — /historyfoo is NOT history', () => {
     expect(seoIntentForPath('/historyfoo')).toBe('crawl')
     expect(seoIntentForPath('/matterspedia')).toBe('crawl')

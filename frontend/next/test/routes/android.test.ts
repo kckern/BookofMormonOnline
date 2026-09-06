@@ -1,6 +1,12 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Android TWA association resources', () => {
+  test('SSR documents link the manifest and install icons', async ({ request }) => {
+    const html = await (await request.get('/about')).text()
+    expect(html).toContain('rel="manifest" href="/manifest.json"')
+    expect(html).toContain('rel="apple-touch-icon"')
+    expect(html).toContain('name="theme-color" content="#000000"')
+  })
   test('/manifest.json is a web manifest, never the CRA HTML shell', async ({ request }) => {
     const response = await request.get('/manifest.json')
     expect(response.status()).toBe(200)
@@ -39,4 +45,3 @@ test.describe('Android TWA association resources', () => {
     ])
   })
 })
-

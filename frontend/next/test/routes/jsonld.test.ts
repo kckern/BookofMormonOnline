@@ -9,6 +9,16 @@ function ldBlocks(html: string): any[] {
 }
 
 test.describe('JSON-LD on other content pages', () => {
+  for (const [path, type] of [
+    ['/', 'WebSite'], ['/about', 'AboutPage'], ['/contents', 'CollectionPage'],
+    ['/people', 'CollectionPage'], ['/places', 'CollectionPage'], ['/map', 'CollectionPage'],
+    ['/timeline', 'CollectionPage'], ['/fax', 'CollectionPage'],
+  ] as const) {
+    test(`${path} emits ${type}`, async ({ request }) => {
+      const blocks = ldBlocks(await (await request.get(path)).text())
+      expect(blocks.find((b) => b['@type'] === type)).toBeTruthy()
+    })
+  }
   test('/place/{slug} emits Place + breadcrumb', async ({ request }) => {
     const blocks = ldBlocks(await (await request.get('/place/jerusalem-1')).text())
     expect(blocks.find((b) => b['@type'] === 'Place')).toBeTruthy()

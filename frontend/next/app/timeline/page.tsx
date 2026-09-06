@@ -1,22 +1,30 @@
 import type { Metadata } from 'next'
 import { getTimeline, timelineIndex } from '@/lib/timeline'
-import { buildMetadata } from '@/lib/seo'
+import { buildMetadata, currentLang } from '@/lib/seo'
 import { label } from '@/lib/labels'
+import { seoPageDescription } from '@/lib/seo-copy'
+import { absoluteUrl } from '@/lib/seo'
+import { webPage } from '@/lib/jsonld'
+import { JsonLd } from '../_components/JsonLd'
 
 // The PHP /timeline index draws from the events that have a name (heading),
 // in the resolver's y-order, with the last-seen era carried forward. Both the
 // meta description and the body list use that same derived collection.
 export async function generateMetadata(): Promise<Metadata> {
-  const items = timelineIndex(await getTimeline())
+  const lang = await currentLang()
   return buildMetadata({
     title: await label('timeline_title', 'Timeline'),
-    description: items.map((i) => i.heading).join(' • '),
+    description: seoPageDescription(lang, 'timeline'),
     path: '/timeline',
+    fallbackKey: 'timeline',
+    surface: 'collection',
   })
 }
 
 export default async function TimelinePage() {
   const items = timelineIndex(await getTimeline())
+  const lang = await currentLang()
+  const title = await label('timeline_title', 'Timeline')
   // Built as a raw string to reproduce the PHP template byte-for-byte: the name
   // carries a literal double space before "(date)", the description is the row's
   // own <p>…</p> html (yielding PHP's <p><p>…</p></p>), and the wrapper is the
@@ -34,6 +42,7 @@ export default async function TimelinePage() {
 
   return (
     <>
+      <JsonLd data={webPage({ type: 'CollectionPage', name: title, description: seoPageDescription(lang, 'timeline'), url: await absoluteUrl('/timeline'), lang })} />
       <h1>Timeline</h1>
       <p>
         <a href="/">❮ Community</a>

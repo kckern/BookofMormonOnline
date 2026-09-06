@@ -7,22 +7,19 @@ import { JsonLd } from '../../_components/JsonLd'
 
 interface Props { params: Promise<{ slug: string }> }
 
-// Meta description: the PHP box concatenates "{date}: {source} • {transcript}"
-// then runs *only* strip_tags (no entity decode, no whitespace collapse) and
-// hard-truncates to 159 chars + '…'. We reproduce that exactly here and pass
-// preTruncated so buildMetadata's own collapse/truncate is skipped — collapsing
-// would drop PHP's double-space after the empty source and shift the 159-char
-// cut by a byte. Entities (&ldquo; &amp; &c) are left raw to match PHP's byte
-// count; Next escapes the leading '&' to '&amp;' in the emitted attribute — an
-// accepted framework serialization deviation (see notes below).
+// Build a useful citation prefix without leaving punctuation behind when legacy
+// records have a missing date or source. buildMetadata performs the shared
+// markup/entity cleanup and final length cap.
 function phpDescription(doc: {
   date: string | null
   source: string | null
   transcript: string | null
 }): string {
-  const raw = `${doc.date ?? ''}: ${doc.source ?? ''} • ${doc.transcript ?? ''}`
-  const stripped = raw.replace(/<[^>]+>/g, '') // PHP strip_tags: tags out, entities/spaces kept
-  return stripped.length > 159 ? stripped.slice(0, 159) + '…' : stripped
+  const date = (doc.date ?? '').trim()
+  const source = (doc.source ?? '').trim()
+  const transcript = (doc.transcript ?? '').replace(/<[^>]+>/g, ' ').trim()
+  const citation = date && source ? `${date}: ${source}` : date || source
+  return [citation, transcript].filter(Boolean).join(' • ')
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -34,7 +31,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // Title is the document text, verbatim.
     title: doc.document ?? '',
     description: phpDescription(doc),
-    preTruncated: true,
     path: `/history/${slug}`,
   })
 }

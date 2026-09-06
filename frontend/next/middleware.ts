@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { LANG_PREFIXES, LOCALE_SEGS, langForHost, isAuthorizedHost, isInfraHost, isForceSsrHost, isPreviewHost, CANONICAL_EN_HOST } from '@/lib/locales'
+import { LANG_PREFIXES, LOCALE_SEGS, LANG_HOST, langForHost, isAuthorizedHost, isInfraHost, isForceSsrHost, isPreviewHost, isNonIndexableLanguageHost, CANONICAL_EN_HOST } from '@/lib/locales'
 import { seoIntentForPath } from '@/lib/features'
 import { proxyClickyJs, proxyClickyBeacon } from '@/lib/clicky'
 import { classify, type Decision, type ClientClass, type RenderMode } from '@/lib/classify'
@@ -16,6 +16,7 @@ const BACKEND_ORIGIN = 'http://localhost:5005'
 const CRA_ASSET_PATHS = new Set(['/sw.js', '/asset-manifest.json'])
 const CRA_ASSET_PREFIXES = ['/static/', '/font/', '/icons/', '/img/', '/md/', '/screenshots/', '/tinymce/']
 const FAX_BACKEND_PREFIXES = ['/fax/boxes/', '/fax/render/', '/fax/text/']
+const STUDY_EDITION_PATHS = new Set(['/studyedition', '/특별반', '/%ED%8A%B9%EB%B3%84%EB%B0%98'])
 
 const SECURITY_HEADERS: Record<string, string> = {
   'Strict-Transport-Security': 'max-age=31536000',
@@ -187,6 +188,19 @@ export async function middleware(request: NextRequest) {
     return markResponse(NextResponse.redirect(target, 301), clientClass)
   }
 
+  // The Study Edition is a Korean-only publication. Keep one canonical native
+  // path and redirect every language/domain variant before the SSR/CRA split.
+  const requestLang = langForHost(forwardedHost)
+  if (STUDY_EDITION_PATHS.has(pathname) && isAuthorizedHost(forwardedHost)) {
+    const onCanonicalKoreanPath = requestLang === 'ko' && pathname !== '/studyedition'
+    if (!onCanonicalKoreanPath) {
+      return markResponse(
+        NextResponse.redirect(`https://${LANG_HOST.ko}/%ED%8A%B9%EB%B3%84%EB%B0%98`, 301),
+        clientClass,
+      )
+    }
+  }
+
   // These platform-association resources must never fall through to the CRA
   // HTML shell. Android and PWABuilder fetch them without browser-navigation
   // headers, and the TWA contract requires exact JSON at these exact paths.
@@ -268,7 +282,7 @@ export async function middleware(request: NextRequest) {
 
   // --- Bot/crawler: serve Next.js SSR with lang header ---
   // Language is by HOST (subdomain/domain), not URL path.
-  const lang = langForHost(request.headers.get('x-forwarded-host') ?? request.headers.get('host'))
+  const lang = requestLang
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set('x-lang', lang)
   const res = NextResponse.next({ request: { headers: requestHeaders } })
@@ -285,7 +299,7 @@ export async function middleware(request: NextRequest) {
     res.headers.set('Vary', ssrVary ? `${ssrVary}, User-Agent` : 'User-Agent')
     res.headers.set('Cache-Control', 'private, no-cache')
   }
-  if (forceSsr || seoIntentForPath(pathname) === 'noindex') {
+  if (forceSsr || seoIntentForPath(pathname) === 'noindex' || isNonIndexableLanguageHost(forwardedHost)) {
     // The ssr.* mirror hosts are a QA preview of the SSR render — never let a
     // crawler index them (canonical already points at the real host; this is
     // belt-and-suspenders so the mirror can't surface in search).

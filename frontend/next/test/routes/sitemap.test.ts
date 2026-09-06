@@ -19,4 +19,16 @@ test.describe('Sitemap /sitemap.xml', () => {
     const xml = await (await request.get('/sitemap.xml')).text()
     expect(xml).toMatch(/bookofmormon\.online/)
   })
+
+  test('includes reciprocal localized alternate links', async ({ request }) => {
+    const xml = await (await request.get('/sitemap.xml')).text()
+    expect(xml).toContain('xmlns:xhtml="http://www.w3.org/1999/xhtml"')
+    expect(xml).toContain('hreflang="fr" href="https://livredemormon.fr/people"')
+    expect(xml).toContain('hreflang="x-default" href="https://bookofmormon.online/people"')
+  })
+
+  test('English sitemap excludes the Korean-only Study Edition', async ({ request }) => {
+    const xml = await (await request.get('/sitemap.xml')).text()
+    expect(xml).not.toContain('<loc>https://bookofmormon.online/studyedition</loc>')
+  })
 })

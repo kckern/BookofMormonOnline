@@ -26,6 +26,10 @@ test.describe('People route /people/{slug}', () => {
     const html = await (await request.get(PATH)).text()
     expect(getMeta(html, 'og:title')).toBeTruthy()
   })
+  test('uses profile Open Graph semantics', async ({ request }) => {
+    const html = await (await request.get('/people/nephi1')).text()
+    expect(getMeta(html, 'og:type')).toBe('profile')
+  })
 
   test('og:description is non-empty', async ({ request }) => {
     const html = await (await request.get(PATH)).text()

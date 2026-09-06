@@ -26,11 +26,16 @@ test.describe('lang-aware content', () => {
   })
 })
 
-test.describe('sitemap stays English + valid', () => {
-  test('/sitemap.xml has content URLs regardless of host', async ({ request }) => {
+test.describe('localized sitemap', () => {
+  test('/sitemap.xml uses the canonical Korean host and reciprocal alternates', async ({ request }) => {
     const r = await request.get('/sitemap.xml', { headers: ko })
     expect(r.status()).toBe(200)
-    expect(await r.text()).toContain('<loc>https://bookofmormon.online/people</loc>')
+    const xml = await r.text()
+    expect(xml).toContain('<loc>https://xn--289a67xla.kr/people</loc>')
+    expect(xml).toContain('hreflang="en" href="https://bookofmormon.online/people"')
+    expect(xml).toContain('hreflang="ko" href="https://xn--289a67xla.kr/people"')
+    expect(xml).toContain('<loc>https://xn--289a67xla.kr/%ED%8A%B9%EB%B3%84%EB%B0%98</loc>')
+    expect(xml).not.toContain('<loc>https://xn--289a67xla.kr/read/')
   })
 })
 

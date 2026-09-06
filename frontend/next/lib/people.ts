@@ -21,7 +21,7 @@ const PERSON_QUERY = `
   }
 `
 
-export const getPerson = cache(async (slug: string): Promise<Person | null> => {
-  const data = await gql<{ person: Person[] }>(PERSON_QUERY, { slug: [slug] }, { revalidate: 86400 })
+export const getPerson = cache(async (slug: string, lang?: string): Promise<Person | null> => {
+  const data = await gql<{ person: Person[] }>(PERSON_QUERY, { slug: [slug] }, { revalidate: 86400, ...(lang ? { lang } : {}) })
   return data.person?.[0] ?? null
 })

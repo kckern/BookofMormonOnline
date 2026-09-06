@@ -23,8 +23,8 @@ const MAP_QUERY = `query MapDetail($slug: [String]) {
   maps(slug: $slug) { slug name desc places { slug name } }
 }`
 
-export const getMapDetail = cache(async (type: string): Promise<MapDetail | null> => {
-  const d = await gql<{ maps: MapDetail[] }>(MAP_QUERY, { slug: [type] }, { revalidate: 3600 })
+export const getMapDetail = cache(async (type: string, lang?: string): Promise<MapDetail | null> => {
+  const d = await gql<{ maps: MapDetail[] }>(MAP_QUERY, { slug: [type] }, { revalidate: 3600, ...(lang ? { lang } : {}) })
   const map = d.maps?.[0]
   if (!map) return null
   return { slug: map.slug, name: map.name, desc: map.desc ?? null, places: map.places ?? [] }

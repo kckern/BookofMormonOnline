@@ -9,4 +9,6 @@
 homeNav:      { hidden: true, seo: remove,  paths: [/home] }
 mattersNav:   { hidden: true, seo: remove,  paths: [/matters] }
 historyNav:   { hidden: true, seo: noindex, paths: [/history] }
+searchSeo:    { seo: noindex, paths: [/search] }
+userSeo:      { seo: noindex, paths: [/user] }
 passageNotes: { hidden: true }   # reader panel — no SSR/crawl surface; SSR ignores it

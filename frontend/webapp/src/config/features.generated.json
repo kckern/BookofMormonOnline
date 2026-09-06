@@ -20,6 +20,18 @@
       "/history"
     ]
   },
+  "searchSeo": {
+    "seo": "noindex",
+    "paths": [
+      "/search"
+    ]
+  },
+  "userSeo": {
+    "seo": "noindex",
+    "paths": [
+      "/user"
+    ]
+  },
   "passageNotes": {
     "hidden": true
   }

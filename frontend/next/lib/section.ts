@@ -222,13 +222,6 @@ export const getSection = cache(async (slug: string): Promise<SectionData | null
   }
 })
 
-// The PHP box's hard 159-char + '…' truncation — WITHOUT collapsing or trimming
-// whitespace (the section description's leading/double spaces are significant and
-// count toward the cap), unlike seo.truncateDesc which normalizes first.
-function truncateRaw(text: string, max = 159): string {
-  return text.length > max ? text.slice(0, max) + '…' : text
-}
-
 export async function sectionMetadata(slug: string): Promise<Metadata> {
   // Page-first: capsulated *page* slugs (e.g. /lehites/nephis-vision,
   // /reign-of-judges/ammonihah) — including those that are also a section — get
@@ -243,16 +236,14 @@ export async function sectionMetadata(slug: string): Promise<Metadata> {
 
   const data = await getSection(slug)
   if (!data) return {}
-  // Description = every row's narration synopsis joined with a single space (the
-  // PHP box concatenates all blocks; empty connection/capsule rows contribute the
-  // leading / double spaces). Truncated raw (no whitespace normalization) so the
-  // 159-char cap lands byte-identically, then passed pre-truncated.
-  const description = truncateRaw(data.descParts.join(' '))
+  // Description = every row's narration synopsis joined with a single space.
+  // buildMetadata sanitizes, normalizes, caps, and supplies a localized fallback
+  // when a legacy section has no synopsis rows.
+  const description = data.descParts.join(' ')
   return buildMetadata({
     title: data.title,
     description,
     path: `/${data.slug}`,
-    preTruncated: true,
     ogSub: data.parentTitle,
   })
 }

@@ -19,8 +19,8 @@ export interface TimelineEvent {
 
 const TIMELINE_QUERY = `query Timeline { timeline { id slug heading date html } }`
 
-export const getTimeline = cache(async (): Promise<TimelineEvent[]> => {
-  const d = await gql<{ timeline: TimelineEvent[] }>(TIMELINE_QUERY, {}, { revalidate: 3600 })
+export const getTimeline = cache(async (lang?: string): Promise<TimelineEvent[]> => {
+  const d = await gql<{ timeline: TimelineEvent[] }>(TIMELINE_QUERY, {}, { revalidate: 3600, ...(lang ? { lang } : {}) })
   return d.timeline ?? []
 })
 
@@ -55,8 +55,8 @@ export function timelineIndex(events: TimelineEvent[]): TimelineIndexItem[] {
 // the legacy lowest-id selection among those content rows. A slug made only of
 // map markers is not a detail page and resolves to 404.
 export const getTimelineEvent = cache(
-  async (slug: string): Promise<TimelineEvent | null> => {
-    const events = await getTimeline()
+  async (slug: string, lang?: string): Promise<TimelineEvent | null> => {
+    const events = await getTimeline(lang)
     const matches = events.filter((e) => e.slug === slug && (e.heading ?? '').trim())
     if (!matches.length) return null
     matches.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))

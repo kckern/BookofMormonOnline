@@ -1,10 +1,13 @@
-// Byte-exact robots.txt matching the PHP box (lowercase "User-agent", empty
-// "Disallow:" = allow all). A route handler gives full control over the text;
-// Next's MetadataRoute.Robots would force "User-Agent" casing and a blank line.
-const BODY = 'User-agent: *\nDisallow:\nSitemap: https://bookofmormon.online/sitemap.xml\n'
+import { headers } from 'next/headers'
+import { LANG_HOST } from '@/lib/locales'
 
-export function GET() {
-  return new Response(BODY, {
+export const dynamic = 'force-dynamic'
+
+export async function GET() {
+  const lang = (await headers()).get('x-lang') ?? 'en'
+  const host = LANG_HOST[lang]
+  const body = 'User-agent: *\nDisallow:\n' + (host ? `Sitemap: https://${host}/sitemap.xml\n` : '')
+  return new Response(body, {
     headers: { 'Content-Type': 'text/plain; charset=utf-8' },
   })
 }

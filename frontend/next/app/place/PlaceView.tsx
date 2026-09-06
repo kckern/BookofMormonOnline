@@ -5,15 +5,23 @@ import { buildMetadata, stripMarkup, absoluteUrl, currentLang } from '@/lib/seo'
 import { superscript, wikiToHtml, wikiToText } from '@/lib/entity'
 import { breadcrumb, creativeWork } from '@/lib/jsonld'
 import { JsonLd } from '../_components/JsonLd'
+import { localizedOrFallback } from '@/lib/seo-copy'
 
 // Shared by /place/:slug and /places/:slug (both 200 on the PHP box). The base
 // is passed so canonical/og:url match the request path the visitor used.
 export async function placeMetadata(slug: string, base: string): Promise<Metadata> {
-  const place = await getPlace(slug)
+  const lang = await currentLang()
+  const [place, english] = await Promise.all([
+    getPlace(slug, lang),
+    lang === 'en' ? Promise.resolve(null) : getPlace(slug, 'en'),
+  ])
   if (!place) return {}
+  const name = superscript(place.name)
+  const localDescription = stripMarkup(wikiToText(place.description ?? ''))
+  const englishDescription = stripMarkup(wikiToText(english?.description ?? ''))
   return buildMetadata({
-    title: superscript(place.name),
-    description: stripMarkup(wikiToText(place.description ?? '')),
+    title: name,
+    description: localizedOrFallback(lang, localDescription, englishDescription, name),
     path: `${base}/${slug}`,
     ogSub: place.info ?? '',
     ogImg: slug,
@@ -22,12 +30,22 @@ export async function placeMetadata(slug: string, base: string): Promise<Metadat
 }
 
 export async function PlaceView({ slug, base }: { slug: string; base: string }) {
-  const place = await getPlace(slug)
+  const lang = await currentLang()
+  const [place, english] = await Promise.all([
+    getPlace(slug, lang),
+    lang === 'en' ? Promise.resolve(null) : getPlace(slug, 'en'),
+  ])
   if (!place) notFound()
 
   const name = superscript(place.name)
   const url = await absoluteUrl(`${base}/${slug}`)
-  const lang = await currentLang()
+  const localDescription = stripMarkup(wikiToText(place.description ?? ''))
+  const schemaDescription = localizedOrFallback(
+    lang,
+    localDescription,
+    stripMarkup(wikiToText(english?.description ?? '')),
+    name,
+  )
   const ld = [
     breadcrumb([
       { name: 'Home', url: await absoluteUrl('/') },
@@ -37,7 +55,7 @@ export async function PlaceView({ slug, base }: { slug: string; base: string }) 
     creativeWork({
       type: 'Place',
       name,
-      description: stripMarkup(wikiToText(place.description ?? '')),
+      description: schemaDescription,
       url,
       lang,
       image: `https://media.bookofmormon.online/places/${slug}`,

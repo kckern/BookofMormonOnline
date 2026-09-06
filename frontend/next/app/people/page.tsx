@@ -1,8 +1,12 @@
 import type { Metadata } from 'next'
 import { getPeopleList } from '@/lib/peopleplaces'
 import { superscript } from '@/lib/entity'
-import { buildMetadata } from '@/lib/seo'
+import { buildMetadata, currentLang } from '@/lib/seo'
 import { label } from '@/lib/labels'
+import { seoPageDescription } from '@/lib/seo-copy'
+import { absoluteUrl } from '@/lib/seo'
+import { webPage } from '@/lib/jsonld'
+import { JsonLd } from '../_components/JsonLd'
 
 const SUP: Record<string, string> = {
   '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
@@ -20,18 +24,20 @@ function supTitle(s: string): string {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const people = await getPeopleList()
-  // PHP box derives the description from the raw (non-superscripted) names,
-  // bullet-joined, then hard-truncates to 159 chars + '…'.
+  const lang = await currentLang()
   return buildMetadata({
     title: await label('title_people', 'People in the Book of Mormon'),
-    description: people.map((p) => p.name).join(' • '),
+    description: seoPageDescription(lang, 'people'),
     path: '/people',
+    fallbackKey: 'people',
+    surface: 'collection',
   })
 }
 
 export default async function PeoplePage() {
   const people = await getPeopleList()
+  const lang = await currentLang()
+  const title = await label('title_people', 'People in the Book of Mormon')
   // Built as a raw string to reproduce the PHP template byte-for-byte, including
   // its <ul> … <ul> (unclosed) wrapper and the <img class="thumb" alt="X"  title="X">
   // markup (double space, no self-close).
@@ -48,6 +54,7 @@ export default async function PeoplePage() {
 
   return (
     <>
+      <JsonLd data={webPage({ type: 'CollectionPage', name: title, description: seoPageDescription(lang, 'people'), url: await absoluteUrl('/people'), lang })} />
       <h1>People in the Book of Mormon</h1>
       <p>
         <a href="/">❮ Community</a>

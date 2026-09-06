@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
 import { cache } from 'react'
 import { headers } from 'next/headers'
-import { LANG_HOST, bcp47, safeHost, CANONICAL_EN_HOST } from './locales'
+import { LANG_HOST, bcp47, safeHost, ogLocale, isNonIndexableLanguageHost } from './locales'
 import { seoIntentForPath } from './features'
 import { getLabels } from './labels'
+import { seoEntityDescription, seoImageAlt, seoPageDescription, type SeoCopyKey } from './seo-copy'
 
 // Constants mirrored from the PHP SSR box head (the parity benchmark).
 export const SITE_SUFFIX = 'Book of Mormon Online'
@@ -59,8 +60,25 @@ const FB_APP_ID = '806253479718989'
 // newlines, then hard-truncates to 159 chars + '…'. Newlines count toward the
 // limit (visible on /about, whose description keeps a '\n\n' paragraph break).
 export function truncateDesc(text: string, max = 159): string {
-  const t = (text ?? '').replace(/[ \t]+/g, ' ').trim()
+  const t = (text ?? '').replace(/\s+/g, ' ').trim()
   return t.length > max ? t.slice(0, max) + '…' : t
+}
+
+export function sanitizeMetadataText(value: string): string {
+  return (value ?? '')
+    .replace(/\[c\][^\[]*\[\/c\]/gi, ' ')
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/[*_~`>#]+/g, ' ')
+    .replace(/&nbsp;|&#160;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;|&#34;/gi, '"')
+    .replace(/&#39;|&#x27;|&apos;/gi, "'")
+    .replace(/&#8217;|&rsquo;/gi, '’')
+    .replace(/&#8212;|&mdash;/gi, '—')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 // Strip [c]id[/c] citation markers and HTML tags from text-block content,
@@ -81,14 +99,12 @@ export function stripMarkup(html: string): string {
 interface SeoInput {
   /** Page-specific title, e.g. "1 Nephi 5:17–19 | Lehi's Family Reunion". */
   title: string
-  /** Raw description text; truncated to the PHP-box rule unless preTruncated. */
+  /** Raw description text; sanitized and truncated before emission. */
   description: string
   /** Route path used for canonical, og:url, and the og image. */
   path: string
   /** Append " • Book of Mormon Online" (default true; false for the literal default title). */
   withSuffix?: boolean
-  /** Skip truncation when the caller already produced the final string. */
-  preTruncated?: boolean
   /** Subtitle line drawn on the OG card (e.g. section name). */
   ogSub?: string
   /** Thumbnail id/slug for the og:image card (art id, or people/place slug). */
@@ -103,13 +119,24 @@ interface SeoInput {
   /** Language override for the og-card lang param + naver tag (defaults to the x-lang
    *  header). /read passes 'en' because its content is English on every host. */
   lang?: string
+  /** Semantic surface controls Open Graph/schema expectations. */
+  surface?: 'website' | 'collection' | 'article' | 'profile'
+  /** Localized fallback copy key when the supplied description is blank. */
+  fallbackKey?: SeoCopyKey
+  /** Accessible description for the generated social card. */
+  imageAlt?: string
 }
 
 // Absolute URL for the current request host (self-referential, like the canonical).
 export async function absoluteUrl(path: string): Promise<string> {
   const h = await headers()
   const host = safeHost(h.get('x-forwarded-host') ?? h.get('host'))
-  const proto = h.get('x-forwarded-proto') ?? 'https'
+  // Every registered public origin is HTTPS-only. Internal localhost harnesses
+  // may still use http, but client-influenced proxy headers must never downgrade
+  // production canonical or social URLs.
+  const proto = host.split(':')[0].toLowerCase() === 'localhost'
+    ? (h.get('x-forwarded-proto') ?? 'http')
+    : 'https'
   return `${proto}://${host}${path}`
 }
 
@@ -133,13 +160,15 @@ function hreflangLanguages(path: string): Record<string, string> {
 // Next.js Metadata object. Uses title.absolute for exact control so the layout
 // template never double-appends the suffix.
 export async function buildMetadata(input: SeoInput): Promise<Metadata> {
-  const { title, description, path, withSuffix = true, preTruncated = false, ogSub, ogImg, ogImgType, hreflang = true, canonicalUrl, lang: langOverride } = input
+  const { title, description, path, withSuffix = true, ogSub, ogImg, ogImgType, hreflang = true, canonicalUrl, lang: langOverride, surface = 'article', fallbackKey, imageAlt } = input
   const { siteSuffix } = await getSiteChrome()
   const fullTitle = withSuffix ? `${title} • ${siteSuffix}` : title
-  const desc = preTruncated ? description : truncateDesc(description)
 
   const h = await headers()
   const lang = langOverride ?? h.get('x-lang') ?? 'en'
+  const cleanDescription = sanitizeMetadataText(description)
+  const fallback = fallbackKey ? seoPageDescription(lang, fallbackKey) : seoEntityDescription(lang, title)
+  const desc = truncateDesc(cleanDescription || fallback)
 
   // og:image — our next/og route replaces the retired GD preview service.
   // Path-based identity keeps URLs clean and the card content matches the page.
@@ -153,11 +182,26 @@ export async function buildMetadata(input: SeoInput): Promise<Metadata> {
   const ogImage = `/og?${ogParams.toString()}`
 
   const abs = canonicalUrl ?? (await absoluteUrl(path))
+  const origin = new URL(abs).origin
+  const ogImageAbs = new URL(ogImage, origin).toString()
+  const alt = imageAlt ?? seoImageAlt(lang, title)
+  const intent = seoIntentForPath(path)
+  const requestHost = h.get('x-forwarded-host') ?? h.get('host')
+  const noindex = intent === 'noindex' || isNonIndexableLanguageHost(requestHost)
+  const alternateLocale = hreflang
+    ? Object.keys(LANG_HOST).filter((code) => code !== lang).map(ogLocale)
+    : []
+  const ogType = surface === 'website' || surface === 'collection'
+    ? 'website'
+    : surface === 'profile'
+      ? 'profile'
+      : 'article'
 
   return {
     title: { absolute: fullTitle },
     description: desc,
-    keywords: KEYWORDS,
+    ...(lang === 'en' ? { keywords: KEYWORDS } : {}),
+    ...(noindex ? { robots: { index: false, follow: true } } : {}),
     alternates: {
       canonical: abs,
       ...(hreflang && seoIntentForPath(path) === 'crawl'
@@ -168,8 +212,11 @@ export async function buildMetadata(input: SeoInput): Promise<Metadata> {
       title: fullTitle,
       description: desc,
       url: abs,
-      type: 'article',
-      images: [{ url: ogImage, secureUrl: ogImage, width: 1200, height: 630 }],
+      type: ogType,
+      siteName: siteSuffix,
+      locale: ogLocale(lang),
+      alternateLocale,
+      images: [{ url: ogImageAbs, secureUrl: ogImageAbs, width: 1200, height: 630, alt }],
     },
     twitter: {
       card: 'summary_large_image',
@@ -177,11 +224,11 @@ export async function buildMetadata(input: SeoInput): Promise<Metadata> {
       creator: TWITTER_SITE,
       title: fullTitle,
       description: desc,
-      images: [ogImage],
+      images: [{ url: ogImageAbs, alt }],
     },
     other: {
       'fb:app_id': FB_APP_ID,
-      'twitter:domain': CANONICAL_EN_HOST,
+      'twitter:domain': new URL(abs).hostname,
       ...(lang === 'ko' ? { 'naver-site-verification': '2e4aebbde9e85f415075e53c9ebcad129e3a83e4' } : {}),
     },
   }
@@ -191,5 +238,7 @@ export async function buildMetadata(input: SeoInput): Promise<Metadata> {
 // specific handler for (e.g. /search, /user, /objects, and the homepage).
 export async function defaultMetadata(path = '/'): Promise<Metadata> {
   const { defaultTitle, defaultBody } = await getSiteChrome()
-  return buildMetadata({ title: defaultTitle, description: defaultBody, path, withSuffix: false })
+  const key: SeoCopyKey = path === '/search' ? 'search' : path === '/user' ? 'user' : 'home'
+  const lang = await currentLang()
+  return buildMetadata({ title: defaultTitle, description: seoPageDescription(lang, key) || defaultBody, path, withSuffix: false, fallbackKey: key, surface: 'website' })
 }

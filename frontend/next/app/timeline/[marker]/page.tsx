@@ -1,7 +1,10 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getTimelineEvent } from '@/lib/timeline'
-import { buildMetadata } from '@/lib/seo'
+import { absoluteUrl, buildMetadata, currentLang, sanitizeMetadataText } from '@/lib/seo'
+import { breadcrumb, creativeWork } from '@/lib/jsonld'
+import { JsonLd } from '../../_components/JsonLd'
+import { localizedOrFallback } from '@/lib/seo-copy'
 
 interface Props { params: Promise<{ marker: string }> }
 
@@ -18,11 +21,8 @@ function titleText(e: { heading: string | null; date: string | null }): string {
 
 // Meta description: the PHP box runs *only* strip_tags over the html (no entity
 // decode, no whitespace collapse) and hard-truncates to 159 chars + '…'. We
-// reproduce that and pass preTruncated so buildMetadata's own collapse/truncate
-// is skipped — collapsing would shift the byte cut. Raw entities (&ldquo; &nbsp;
-// &rsquo;) and a literal '"' are left as-is to match PHP's byte count; Next
-// escapes the leading '&'/'"' in the emitted attribute — an accepted framework
-// serialization deviation (same class as the history/text pages).
+// The source still arrives as legacy HTML; buildMetadata applies the shared
+// metadata sanitizer and final length cap.
 function phpDescription(html: string | null): string {
   const stripped = (html ?? '').replace(/<[^>]+>/g, '')
   return stripped.length > 159 ? stripped.slice(0, 159) + '…' : stripped
@@ -30,20 +30,31 @@ function phpDescription(html: string | null): string {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { marker } = await params
-  const e = await getTimelineEvent(marker)
+  const lang = await currentLang()
+  const [e, english] = await Promise.all([
+    getTimelineEvent(marker, lang),
+    lang === 'en' ? Promise.resolve(null) : getTimelineEvent(marker, 'en'),
+  ])
   if (!e) return {}
+  const title = titleText(e)
   return buildMetadata({
-    title: titleText(e),
-    description: phpDescription(e.html),
-    preTruncated: true,
+    title,
+    description: localizedOrFallback(lang, phpDescription(e.html), phpDescription(english?.html ?? ''), title),
     path: `/timeline/${marker}`,
   })
 }
 
 export default async function TimelineMarkerPage({ params }: Props) {
   const { marker } = await params
-  const e = await getTimelineEvent(marker)
+  const lang = await currentLang()
+  const [e, english] = await Promise.all([
+    getTimelineEvent(marker, lang),
+    lang === 'en' ? Promise.resolve(null) : getTimelineEvent(marker, 'en'),
+  ])
   if (!e) notFound()
+  const title = titleText(e)
+  const url = await absoluteUrl(`/timeline/${marker}`)
+  const schemaDescription = localizedOrFallback(lang, phpDescription(e.html), phpDescription(english?.html ?? ''), title)
 
   // heading carries raw &/"/curly-quote bytes and html is raw markup already
   // wrapped in its own <p>…</p> (giving PHP's <p><p>…</p></p>) — both go through
@@ -51,6 +62,10 @@ export default async function TimelineMarkerPage({ params }: Props) {
   // <img …/> (accepted deviation vs PHP's <img …>).
   return (
     <>
+      <JsonLd data={[
+        breadcrumb([{ name: 'Home', url: await absoluteUrl('/') }, { name: 'Timeline', url: await absoluteUrl('/timeline') }, { name: title, url }]),
+        creativeWork({ type: 'Article', name: title, description: sanitizeMetadataText(schemaDescription), url, lang, image: `https://media.bookofmormon.online/timeline/art/${marker}` }),
+      ]} />
       <h1 dangerouslySetInnerHTML={{ __html: titleText(e) }} />
       <p>
         <a href="/">❮ Community</a>

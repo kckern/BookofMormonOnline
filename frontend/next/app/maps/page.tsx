@@ -1,18 +1,25 @@
 import type { Metadata } from 'next'
 import { getMaps } from '@/lib/maps'
-import { buildMetadata } from '@/lib/seo'
+import { buildMetadata, currentLang } from '@/lib/seo'
+import { seoPageDescription } from '@/lib/seo-copy'
+import { absoluteUrl } from '@/lib/seo'
+import { webPage } from '@/lib/jsonld'
+import { JsonLd } from '../_components/JsonLd'
 
 export async function generateMetadata(): Promise<Metadata> {
-  const maps = await getMaps()
+  const lang = await currentLang()
   return buildMetadata({
     title: 'Maps and Geography Models',
-    description: maps.map((m) => m.name).join(' • '),
+    description: seoPageDescription(lang, 'maps'),
     path: '/maps',
+    fallbackKey: 'maps',
+    surface: 'collection',
   })
 }
 
 export default async function MapsPage() {
   const maps = await getMaps()
+  const lang = await currentLang()
   // Built as a raw string to reproduce the PHP template byte-for-byte, including
   // its <ul> … <ul> (unclosed) wrapper inside the container div.
   const items = maps
@@ -26,6 +33,7 @@ export default async function MapsPage() {
 
   return (
     <>
+      <JsonLd data={webPage({ type: 'CollectionPage', name: 'Maps and Geography Models', description: seoPageDescription(lang, 'maps'), url: await absoluteUrl('/maps'), lang })} />
       <h1>Maps and Geography Models • Book of Mormon Online</h1>
       <p>
         <a href="/">❮ Community</a>

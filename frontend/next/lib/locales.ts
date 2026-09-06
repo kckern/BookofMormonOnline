@@ -43,6 +43,11 @@ export const LANG_HOST: Record<string, string> = {
 // Internal code → BCP47 tag for <html lang>. Identity unless listed.
 const BCP47_MAP: Record<string, string> = { swe: 'sv', jp: 'ja', jpn: 'ja', vn: 'vi', tgl: 'tl', slv: 'sl' }
 
+const OG_LOCALE_MAP: Record<string, string> = {
+  en: 'en_US', ko: 'ko_KR', es: 'es_ES', fr: 'fr_FR', de: 'de_DE',
+  swe: 'sv_SE', vn: 'vi_VN', ru: 'ru_RU', tgl: 'tl_PH', slv: 'sl_SI', tr: 'tr_TR',
+}
+
 // Force-SSR mirror hosts: serve the SSR render to EVERY client (incl. real
 // browsers) so crawler output can be inspected in a normal browser. Value =
 // internal lang code (so ssr-kr renders Korean). Authorized to serve, but their
@@ -68,6 +73,16 @@ export function langForHost(host: string | null | undefined): string {
 
 export function bcp47(code: string): string {
   return BCP47_MAP[code] ?? code
+}
+
+export function ogLocale(code: string): string {
+  return OG_LOCALE_MAP[code] ?? code.replace('-', '_')
+}
+
+export const NON_INDEXABLE_LANGUAGE_HOSTS = new Set(['mormonovaknjiga.si', 'tr.bookofmormon.online'])
+
+export function isNonIndexableLanguageHost(host: string | null | undefined): boolean {
+  return NON_INDEXABLE_LANGUAGE_HOSTS.has(normalizeHost(host))
 }
 
 // Canonical English home — the redirect target for unauthorized hosts.

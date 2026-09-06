@@ -18,6 +18,13 @@ test.describe('remove-intent features 404 for bots', () => {
       expect(r.status(), p).toBe(200)
     }
   })
+  test('/search and /user are noindex, follow', async ({ request }) => {
+    for (const p of ['/search', '/user']) {
+      const r = await request.get(p, { headers: bot })
+      expect((await r.text()).toLowerCase(), p).toContain('noindex, follow')
+      expect(r.headers()['x-robots-tag'], p).toBe('noindex, follow')
+    }
+  })
 })
 
 test.describe('sitemap excludes non-crawl features', () => {
@@ -187,6 +194,22 @@ test.describe('canonical is host-aware', () => {
     })
     const html = await r.text()
     expect(html).toContain('rel="canonical" href="https://xn--289a67xla.kr/people"')
+  })
+  test('public canonical and og:url remain HTTPS when the origin proxy reports http', async ({ request }) => {
+    const r = await request.get('/people', {
+      headers: { ...bot, 'x-forwarded-host': 'bookofmormon.online', 'x-forwarded-proto': 'http' },
+    })
+    const html = await r.text()
+    expect(html).toContain('rel="canonical" href="https://bookofmormon.online/people"')
+    expect(html).toContain('property="og:url" content="https://bookofmormon.online/people"')
+  })
+
+  test('unsupported Slovenian and Turkish hosts are noindex', async ({ request }) => {
+    for (const host of ['mormonovaknjiga.si', 'tr.bookofmormon.online']) {
+      const r = await request.get('/people', { headers: { ...bot, 'x-forwarded-host': host } })
+      expect(r.headers()['x-robots-tag'], host).toBe('noindex, follow')
+      expect((await r.text()).toLowerCase(), host).toContain('noindex, follow')
+    }
   })
   test('unauthorized x-forwarded-host is redirected to canonical (not served)', async ({ request }) => {
     const r = await request.get('/people', {
