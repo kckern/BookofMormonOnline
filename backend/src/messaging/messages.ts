@@ -22,6 +22,7 @@ import { nanoid } from 'nanoid';
 import type { DB } from '../../codegen/db.js';
 import type { MessageDTO, UserDTO, HighlightDTO } from './dto.js';
 import { getUsers } from './users.js';
+import type { Reference } from './contentRefs.js';
 
 /**
  * Max length (characters) of a stored message body. The column is TEXT (65535
@@ -71,41 +72,92 @@ export function insertRefFields(p: {
 // ─── Data assembly helpers ────────────────────────────────────────────────────
 
 /**
- * Build the `data` JSON string exactly as legacy toMessageDTO does:
+ * Build the `data` JSON string from a Reference[] (content_refs) in the same
+ * shape as legacy toMessageDTO:
  *   { links?: { [link_type]: link_target[.link_aux] }, highlights?: string[] }
+ *
+ * Derives `links` from the FIRST non-highlight ref (at-most-one, matching
+ * legacy single-link semantics) and `highlights` from every ref with
+ * role:'highlight' and a span.text.  Metadata passthrough (mentions etc.)
+ * is merged in first; derived links/highlights always win.
+ *
+ * Exported so it is directly unit-testable.
  */
-function buildDataString(
-  linkType: string | null,
-  linkTarget: string | null,
-  linkAux: string | null,
-  highlights: { ordinal: number; text: string }[],
-  metadata?: unknown,
-): string {
+export function buildDataString(references: Reference[], metadata?: unknown): string {
   // Start from the raw client `data` blob persisted in the metadata column
   // (mentions and any other passthrough keys live here). Link/highlights, which
-  // have dedicated columns, are layered on top and win — so messages with no
+  // are derived below, are layered on top and win — so messages with no
   // metadata produce a byte-identical string to before (links/highlights only).
   const obj: Record<string, unknown> = {};
 
   const meta = parseMetadata(metadata);
   if (meta) {
     // Don't echo link/highlights out of metadata — those are owned by the
-    // columns below and re-derived authoritatively. Everything else (mentions,
-    // future passthrough) rides through.
+    // derived values below. Everything else (mentions, future passthrough) rides through.
     for (const [k, v] of Object.entries(meta)) {
       if (k === 'links' || k === 'highlights') continue;
       obj[k] = v;
     }
   }
 
-  if (linkType && linkTarget) {
-    const linkValue = linkAux ? `${linkTarget}.${linkAux}` : linkTarget;
-    obj['links'] = { [linkType]: linkValue };
+  // Derive links from the first non-highlight ref (legacy at-most-one semantics).
+  let linkKey: string | null = null;
+  let linkValue: string | null = null;
+  const highlightTexts: string[] = [];
+
+  for (const ref of references) {
+    if (ref.role === 'highlight') {
+      // Collect highlight text in order.
+      if (ref.span?.text !== undefined) {
+        highlightTexts.push(ref.span.text);
+      }
+    } else if (linkKey === null) {
+      // First non-highlight ref → the single legacy link entry.
+      switch (ref.type) {
+        case 'verse':
+        case 'legacy_text':
+          if (ref.ordinal !== undefined) {
+            linkKey = 'text';
+            linkValue = String(ref.ordinal);
+          }
+          break;
+        case 'commentary':
+          if (ref.id !== undefined) {
+            linkKey = 'com';
+            linkValue = String(ref.id);
+          }
+          break;
+        case 'image':
+          if (ref.id !== undefined) {
+            linkKey = 'img';
+            linkValue = String(ref.id);
+          }
+          break;
+        case 'section':
+          if (ref.id !== undefined) {
+            linkKey = 'section';
+            linkValue = String(ref.id);
+          }
+          break;
+        case 'fax':
+          if (ref.id !== undefined) {
+            linkKey = 'fax';
+            linkValue = ref.aux ? `${String(ref.id)}.${ref.aux}` : String(ref.id);
+          }
+          break;
+        // person/place/object — no legacy link key; skip.
+        default:
+          break;
+      }
+    }
   }
 
-  if (highlights.length > 0) {
-    const sorted = [...highlights].sort((a, b) => a.ordinal - b.ordinal);
-    obj['highlights'] = sorted.map((h) => h.text);
+  if (linkKey !== null && linkValue !== null) {
+    obj['links'] = { [linkKey]: linkValue };
+  }
+
+  if (highlightTexts.length > 0) {
+    obj['highlights'] = highlightTexts;
   }
 
   return JSON.stringify(obj);
@@ -153,9 +205,6 @@ type RawMessage = {
   message_type: 'MESG' | 'FILE' | 'ADMN';
   message: string;
   custom_type: string | null;
-  link_type: string | null;
-  link_target: string | null;
-  link_aux: string | null;
   metadata: unknown;
   anchor: string | null;
   content_refs: unknown;
@@ -201,13 +250,7 @@ async function assembleMessages(db: Kysely<DB>, msgs: RawMessage[]): Promise<Mes
   if (msgs.length === 0) return [];
   const messageIds = msgs.map((m) => m.message_id);
 
-  const [highlightRows, reactionRows, replyRows] = await Promise.all([
-    db
-      .selectFrom('messenger_highlights')
-      .select(['message_id', 'ordinal', 'text'])
-      .where('message_id', 'in', messageIds)
-      .orderBy('ordinal', 'asc')
-      .execute(),
+  const [reactionRows, replyRows] = await Promise.all([
     db
       .selectFrom('messenger_reactions')
       .select(['message_id', 'reaction_key', 'user_id'])
@@ -221,13 +264,6 @@ async function assembleMessages(db: Kysely<DB>, msgs: RawMessage[]): Promise<Mes
       .orderBy('created_at', 'asc')
       .execute(),
   ]);
-
-  const highlightsByMsg = new Map<string, { ordinal: number; text: string }[]>();
-  for (const h of highlightRows) {
-    const arr = highlightsByMsg.get(h.message_id) ?? [];
-    arr.push({ ordinal: Number(h.ordinal), text: h.text });
-    highlightsByMsg.set(h.message_id, arr);
-  }
 
   const reactionsByMsg = new Map<string, { reaction_key: string; user_id: string }[]>();
   for (const r of reactionRows) {
@@ -268,7 +304,6 @@ async function assembleMessages(db: Kysely<DB>, msgs: RawMessage[]): Promise<Mes
   const userMap = new Map(users.map((u) => [u.user_id, u]));
 
   return msgs.map((m) => {
-    const highlights = highlightsByMsg.get(m.message_id) ?? [];
     const repliers = repliersByParent.get(m.message_id);
     const threadInfo =
       repliers && repliers.length > 0
@@ -286,7 +321,7 @@ async function assembleMessages(db: Kysely<DB>, msgs: RawMessage[]): Promise<Mes
       message_type: m.message_type,
       message: m.message,
       custom_type: m.custom_type ?? '',
-      data: buildDataString(m.link_type, m.link_target, m.link_aux, highlights, m.metadata),
+      data: buildDataString(parseContentRefs(m.content_refs), m.metadata),
       anchor: m.anchor ?? null,
       references: parseContentRefs(m.content_refs),
       parent_message_id: m.parent_message_id ?? null,
@@ -488,7 +523,7 @@ export async function getMessagesForChannels(
   const rows = (
     await sql<RawMessage>`
       SELECT message_id, channel_url, user_id, message_type, message, custom_type,
-             link_type, link_target, link_aux, metadata, anchor, content_refs,
+             metadata, anchor, content_refs,
              parent_message_id, is_deleted, created_at, updated_at
       FROM (
         SELECT m.*, ROW_NUMBER() OVER (
