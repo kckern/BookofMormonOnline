@@ -1,12 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+
 import './Witnesses.css';
 import HistorySourceCard from "./HistorySourceCard";
 import { label } from '../../models/Utils';
 import BoMOnlineAPI, { assetUrl } from 'src/models/BoMOnlineAPI';
 import moment from 'moment';
 import Masonry from 'react-masonry-css';
-import WitnessLifeHeatmap, { matchesYearMonth } from './WitnessLifeHeatmap';
+import WitnessLifeHeatmap from './WitnessLifeHeatmap';
+import { byCompositionDesc, compositionDate, groupByDecade, matchesYearMonth } from './witnessSources';
 import Breadcrumb from "src/views/_Common/Breadcrumb/Breadcrumb";
 import HistoryBreadcrumb from "./HistoryBreadcrumb";
 import { useAppController } from "src/contexts/AppControllerContext";
@@ -96,17 +98,47 @@ const WitnessBreadcrumbs = ({ witness }) => (
     </Breadcrumb>
 );
 
+const MONTHS_FULL = ['January', 'February', 'March', 'April', 'May', 'June',
+                     'July', 'August', 'September', 'October', 'November', 'December'];
+
+/**
+ * Render a `selectedYearMonth` key ("YYYY-MM" or bare "YYYY") for the filter
+ * chip and the live region: "September 1945" for a month key, "1945" for a bare
+ * year (the widened state -- see the chip's `yearOnlyInYear` widen button).
+ */
+const formatYearMonth = (ym) => {
+    if (!ym) return '';
+    const [y, m] = String(ym).split('-').map(n => parseInt(n, 10));
+    return m ? `${MONTHS_FULL[m - 1]} ${y}` : `${y}`;
+};
+
+const MONTHS_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/**
+ * Render a {year, month, precision} from compositionDate: "Sep 1945" when the
+ * month is known, a bare "1940" when it is not. This -- not `displayDate`, which
+ * formats `doc.date` -- is what the witness card's date must go through: the
+ * witnesses archive's `date` column is corrupt on many rows (see witnessSources.js),
+ * and compositionDate() is what already reads around that.
+ */
+const formatComposition = (comp) =>
+    !comp ? '' : comp.month ? `${MONTHS_ABBR[comp.month - 1]} ${comp.year}` : `${comp.year}`;
+
+/**
+ * The date of the witness event itself (Three/Eight Witnesses, June 1829).
+ * Both the hero's "Age in 1829" fact (`SingleWitness`) and the index page's
+ * "Age N" chips (`preciseAge`) measure age against this single date — kept
+ * as one constant so a future correction to the date can't update one
+ * consumer and silently miss the other.
+ */
+const WITNESS_EVENT_DATE = '1829-06-28';
+
 const SingleWitness = ({ witness, sourceSlug }) => {
     const appController = useAppController();
 
     const [sources, setSources] = useState(null);
     const [selectedYearMonth, setSelectedYearMonth] = useState(null);
-
-    useEffect(() => {
-        const handleEsc = (event) => { if (event.keyCode === 27) window.history.back(); };
-        window.addEventListener('keydown', handleEsc);
-        return () => window.removeEventListener('keydown', handleEsc);
-    }, []);
 
     useEffect(() => {
         setSelectedYearMonth(null);
@@ -118,7 +150,7 @@ const SingleWitness = ({ witness, sourceSlug }) => {
             history: { archive: "witnesses", principal: witness.principalNames }
         }).then(r => {
             const list = r.history || [];
-            list.sort((a, b) => (b.year || 0) - (a.year || 0) || (a.seq || 0) - (b.seq || 0));
+            list.sort(byCompositionDesc);
             setSources(list);
         });
     }, [witness?.slug]);
@@ -139,6 +171,14 @@ const SingleWitness = ({ witness, sourceSlug }) => {
         openSource(sources.find(s => s.slug === sourceSlug));
     }, [sourceSlug, sources, appController, witness?.slug]);
 
+    const visibleSources = useMemo(() => {
+        if (!sources) return null;
+        if (!selectedYearMonth) return sources;
+        return sources.filter(s => matchesYearMonth(s, selectedYearMonth));
+    }, [sources, selectedYearMonth]);
+
+    const witnessAge = witness?.birthday ? moment(WITNESS_EVENT_DATE).diff(moment(witness.birthday), 'years') : null;
+
     const displayDate = (date) => {
         if (!date) return '';
         const len = date.length;
@@ -148,14 +188,6 @@ const SingleWitness = ({ witness, sourceSlug }) => {
             : label("history_date_format_full")
         );
     };
-
-    const visibleSources = useMemo(() => {
-        if (!sources) return null;
-        if (!selectedYearMonth) return sources;
-        return sources.filter(s => matchesYearMonth(s, selectedYearMonth));
-    }, [sources, selectedYearMonth]);
-
-    const witnessAge = witness?.birthday ? moment('1829-06-28').diff(moment(witness.birthday), 'years') : null;
 
     return <div className="container" style={{ display: 'block' }}>
         <div id="page" className='single-witnesses'>
@@ -168,6 +200,7 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                             <img src={`${assetUrl}/history/witnesses/people/${witness.slug}.jpg`} alt={witness.name} />
                         </div>
                         <div className='witness-hero-bio'>
+                            <h1 className='witness-hero-name'>{witness.name}</h1>
                             <dl className='witness-hero-facts'>
                                 {witness.birthday && (
                                     <div className='witness-fact'><dt>Born</dt><dd>{displayDate(witness.birthday)}</dd></div>
@@ -191,6 +224,14 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                     </div>
                 </aside>
                 <main className='witness-sources'>
+                    {/* Reserve the heatmap's space while sources are in flight so the cards below
+                        don't jump down mid-load. `sources === null` is specifically the in-flight
+                        state: it is set to `[]` synchronously for a witness with no
+                        `principalNames` (no fetch happens, so no heatmap will ever render), and
+                        asynchronously to the fetched list otherwise. A witness whose fetch
+                        resolves to zero rows lands on `sources.length === 0` after loading --
+                        rendering neither skeleton nor heatmap, since there is nothing to plot. */}
+                    {sources === null && <div className='witness-life-heatmap-skeleton' aria-hidden='true' />}
                     {sources && sources.length > 0 && (
                         <WitnessLifeHeatmap
                             witness={witness}
@@ -199,32 +240,89 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                             onSelectYearMonth={setSelectedYearMonth}
                         />
                     )}
-                    {selectedYearMonth && (
-                        <div className='witness-sources-head'>
-                            <button type='button' className='witness-filter-chip' onClick={() => setSelectedYearMonth(null)}>
-                                {selectedYearMonth} <span aria-hidden='true'>✕</span>
-                            </button>
-                        </div>
-                    )}
+                    {/* Announcement lives in its own PERMANENTLY-mounted node, separate from the
+                        visible chip below. ARIA live regions announce on a text mutation *inside an
+                        already-present node* -- a role="status" element that is itself freshly
+                        inserted into the DOM (as the chip is, rendering only when selectedYearMonth
+                        is set) is a different event, and VoiceOver/Safari and some JAWS/NVDA
+                        combinations do not reliably announce it. This node exists from first paint
+                        with empty text, so only its content ever changes. */}
+                    <div role='status' aria-live='polite' className='visually-hidden'>
+                        {selectedYearMonth
+                            ? `Showing ${formatYearMonth(selectedYearMonth)}, ${visibleSources ? visibleSources.length : 0} source${visibleSources && visibleSources.length === 1 ? '' : 's'}`
+                            : ''}
+                    </div>
+
+                    {selectedYearMonth && (() => {
+                        // Month filtering is month-strict (see witnessSources.js matchesYearMonth),
+                        // so a cell's count always equals the card count. Year-only sources from the
+                        // same year are unreachable that way -- this chip is how they stay findable.
+                        // Selecting the bare year widens to both precisions.
+                        const selectedYear = String(selectedYearMonth).split('-')[0];
+                        const isMonthView = String(selectedYearMonth).includes('-');
+                        const yearOnlyInYear = isMonthView && sources
+                            ? sources.filter(s => {
+                                  const c = compositionDate(s);
+                                  return c && c.precision === 'year' && String(c.year) === selectedYear;
+                              }).length
+                            : 0;
+                        return (
+                            <div className='witness-sources-head'>
+                                <div className='witness-filter-chip'>
+                                    <span>
+                                        Showing <strong>{formatYearMonth(selectedYearMonth)}</strong>
+                                        {' · '}{visibleSources ? visibleSources.length : 0} source
+                                        {visibleSources && visibleSources.length === 1 ? '' : 's'}
+                                    </span>
+                                    {yearOnlyInYear > 0 && (
+                                        <button type='button' className='chip-widen'
+                                                onClick={() => setSelectedYearMonth(selectedYear)}>
+                                            {yearOnlyInYear} more dated {selectedYear} without a month — show them
+                                        </button>
+                                    )}
+                                    <button type='button' onClick={() => setSelectedYearMonth(null)}>
+                                        Show all sources
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })()}
                     {sources === null && <div className='witness-sources-loading'>Loading sources…</div>}
                     {sources && sources.length === 0 && (
                         <div className='witness-sources-empty'>No sources available for this witness.</div>
                     )}
                     {visibleSources && visibleSources.length === 0 && sources && sources.length > 0 && (
-                        <div className='witness-sources-empty'>No sources in this month.</div>
+                        <div className='witness-sources-empty'>
+                            <p>No sources in {formatYearMonth(selectedYearMonth)}.</p>
+                            <button type='button' className='btn btn-link'
+                                    onClick={() => setSelectedYearMonth(null)}>
+                                Show all sources
+                            </button>
+                        </div>
                     )}
                     {visibleSources && visibleSources.length > 0 && (
-                        <Masonry breakpointCols={breakpointColumnsObj} className="my-masonry-grid" columnClassName="my-masonry-grid_column">
-                            {visibleSources.map((doc, i) => (
-                                <HistorySourceCard
-                                    key={doc.slug || i}
-                                    doc={doc}
-                                    variant="witness"
-                                    displayDate={displayDate}
-                                    onOpen={openSource}
-                                />
+                        <div className='witness-source-decades'>
+                            {groupByDecade(visibleSources).map(group => (
+                                <section key={group.label} className='witness-decade'>
+                                    <h2 className='witness-decade-label'>{group.label}</h2>
+                                    <Masonry breakpointCols={breakpointColumnsObj} className="my-masonry-grid" columnClassName="my-masonry-grid_column">
+                                        {group.sources.map((doc, i) => (
+                                            <HistorySourceCard
+                                                key={doc.slug || i}
+                                                doc={doc}
+                                                variant="witness"
+                                                // Not `displayDate` (which formats `doc.date` directly) --
+                                                // ignores its argument and formats this doc's own
+                                                // compositionDate() instead, since `doc.date` is corrupt
+                                                // on many witness rows.
+                                                displayDate={() => formatComposition(compositionDate(doc))}
+                                                onOpen={openSource}
+                                            />
+                                        ))}
+                                    </Masonry>
+                                </section>
                             ))}
-                        </Masonry>
+                        </div>
                     )}
                 </main>
             </div>
@@ -233,9 +331,68 @@ const SingleWitness = ({ witness, sourceSlug }) => {
 };
 
 
-const Witnesses = () => {
+/**
+ * Bare "YYYY" birthdays in `data` are placeholders standing in for an unknown
+ * exact date, not a real (if imprecise) date — e.g. Hiram Page's "1800".
+ * Expressed as what is actually being tested (a whole-string 4-digit year),
+ * not as a length coincidence: "1800-01-27" is 10 characters and "1800 "
+ * (stray trailing space) would wrongly slip past a bare length check while
+ * still parsing to a valid, silently-fabricated age. Mirrors the year-prefix
+ * regex parsing `witnessSources.js`'s `parseYearMonth` already uses, rather
+ * than inventing a second, looser date-shape idiom.
+ */
+const isYearOnlyPlaceholder = (birthday) => /^\d{4}$/.test(String(birthday).trim());
 
-    const dateofWitness = `1829-06-28`;
+/** Year-only birthdays in `data` are placeholders, not real dates — no age is claimed for them. */
+const preciseAge = (birthday) => {
+    if (!birthday || isYearOnlyPlaceholder(birthday)) return null;
+    const age = moment(WITNESS_EVENT_DATE).diff(moment(birthday), 'years');
+    return Number.isNaN(age) ? null : age;
+};
+
+/**
+ * Oldest first at the time of the witness event. Sorts a copy — `data` is
+ * module state. Assumes every entry has a birthday; add a guard here if a
+ * future entry omits one — `moment(undefined)` resolves to *now*, not NaN,
+ * so a missing birthday would silently sort that witness in as freshly born
+ * rather than crashing or landing at a NaN-tolerant fallback position.
+ */
+const byAgeAtEvent = (a, b) =>
+    moment(a.birthday).valueOf() - moment(b.birthday).valueOf();
+
+/**
+ * One index-page group (Three/Eight/Other). Hoisted because the three group
+ * blocks were otherwise identical apart from heading/subtitle/trailing content.
+ *
+ * `[...data[groupKey]].sort(...)` sorts a COPY — the old inline
+ * `data[groupKey].sort((b, a) => ...)` sorted the module-level array in place
+ * on every render, which also silently reordered `WitnessBreadcrumbs`'s
+ * dropdown menu (it reads from this same `data` object).
+ */
+const WitnessGroup = ({ groupKey, heading, subtitle, children }) => (
+    <div className={groupKey}>
+        <h4>{heading}</h4>
+        <h5>{subtitle}</h5>
+        <div className='witness-container'>
+            {[...data[groupKey]].sort(byAgeAtEvent).map(w => {
+                const age = preciseAge(w.birthday);
+                return (
+                    <div key={w.slug} className='witness'>
+                        <Link to={`/history/witnesses/${w.slug}`}>
+                            <img src={`${assetUrl}/history/witnesses/people/${w.slug}.jpg`}
+                                 alt={w.name} className='witness-image' />
+                            <div className='witness-name'>{w.name}</div>
+                            {age !== null && <div className='witness-age'>Age {age}</div>}
+                        </Link>
+                    </div>
+                );
+            })}
+        </div>
+        {children}
+    </div>
+);
+
+const Witnesses = () => {
 
     const { witness, source } = useParams();
     if (witness) {
@@ -252,91 +409,36 @@ const Witnesses = () => {
             <div id="page" className='witnesses' >
                 <HistoryBreadcrumb sectionKey="witnesses" />
                 <h3 className="title lg-4 text-center">{label("title_witnesses")}</h3>
-                <div className='three-witnesses'>
-                    <h4>Three Witnesses</h4>
-                    <h5>
-                        Heard the voice of God • Saw an angel • Saw the plates • Saw the engravings
-                    </h5>
-                    <div className='witness-container'>
-                        {data["three-witnesses"]
-                        .sort((b, a) => moment(dateofWitness).diff(moment(a.birthday), 'years') - moment(dateofWitness).diff(moment(b.birthday), 'years'))
-                        .map((w, i) => (
-                            <div key={i} className='witness'>
-                                <Link to={`/history/witnesses/${w.slug}`}>
-                                <img src={`${assetUrl}/history/witnesses/people/${w.slug}.jpg`} alt={w.name} className='witness-image' />
-                                    <div className='witness-name'>
-                                    {w.name}
-                                    </div>
-                                    <div className='witness-age'>
-                                    Age {moment(dateofWitness).diff(moment(w.birthday), 'years')}                                       
-                                    </div>
-                                </Link>
-                            </div>
-                        ))}
-                    </div>
+                <WitnessGroup
+                    groupKey='three-witnesses'
+                    heading='Three Witnesses'
+                    subtitle='Heard the voice of God • Saw an angel • Saw the plates • Saw the engravings'
+                >
                     <div className='witness-statement'>
                         <p>Be it known unto all nations, kindreds, tongues, and people, unto whom this work shall come:</p> <ul> <li>We, through the grace of God the Father, and our Lord Jesus Christ, have <b>seen the plates</b> which contain this record: <ul> <li>A record of the people of Nephi.</li> <li>A record of the Lamanites, their brethren.</li> <li>A record of the people of Jared, who came from the tower of which hath been spoken.</li> </ul> </li> <li>We know they have been translated by the gift and power of God, for <b>his voice hath declared it unto us</b>; wherefore we know of a surety that the work is true.</li> <li>We also testify that we have <b>seen the engravings</b> upon the plates: <ul> <li>Shown unto us by the power of God, and not of man.</li> </ul> </li> <li>We declare with words of soberness, that <b>an angel of God came down</b> from heaven: <ul> <li>Brought and laid before our eyes, that <b>we beheld and saw the plates</b>.</li> <li><b>Saw the engravings</b> thereon.</li> <li>By the grace of God the Father, and our Lord Jesus Christ, <b>we beheld</b> and bear record that these things are true.</li> </ul> </li> <li>The voice of the Lord commanded us that we should bear record of it; wherefore, to be obedient unto the commandments of God, we bear testimony of these things.</li> </ul> <p>If we are faithful in Christ:</p> <ul> <li>We shall rid our garments of the blood of all men.</li> <li>Be found spotless before the judgment-seat of Christ.</li> <li>Shall dwell with him eternally in the heavens.</li> </ul> <p>And the honor be to the Father, and to the Son, and to the Holy Ghost, which is one God. Amen.</p>
                     </div>
-                </div>
+                </WitnessGroup>
                 <hr/>
-                <div className='eight-witnesses'>
-                    <h4>Eight Witnesses</h4>
-                    <h5>
-                        Saw the plates • Handled the plates • Saw the engravings
-                    </h5>
-                    <div className='witness-container'>
-                        {data["eight-witnesses"]
-                        .sort((b, a) => moment(dateofWitness).diff(moment(a.birthday), 'years') - moment(dateofWitness).diff(moment(b.birthday), 'years'))
-                        .map((w, i) => (
-                            <div key={i} className='witness'>
-                                <Link to={`/history/witnesses/${w.slug}`}>
-                                    <img src={`${assetUrl}/history/witnesses/people/${w.slug}.jpg`} alt={w.name} className='witness-image' />
-                                    <div className='witness-name'>
-                                    {w.name}
-                                    </div>
-                                    <div className='witness-age'>
-                                    Age {moment(dateofWitness).diff(moment(w.birthday), 'years')}                                       
-                                    </div>
-                                </Link>
-                            </div>
-                        ))}
-                    </div>
+                <WitnessGroup
+                    groupKey='eight-witnesses'
+                    heading='Eight Witnesses'
+                    subtitle='Saw the plates • Handled the plates • Saw the engravings'
+                >
                     <div className='witness-statement'>
                         <p>Be it known unto all nations, kindreds, tongues, and people, unto whom this work shall come:</p>
-                        <ul><li>That Joseph Smith, Jun., the translator of this work, has <b>shown unto us the plates</b> of which hath been spoken, which have the appearance of gold; 
+                        <ul><li>That Joseph Smith, Jun., the translator of this work, has <b>shown unto us the plates</b> of which hath been spoken, which have the appearance of gold;
                             <ul><li>and as many of the leaves as the said Smith has translated <b>we did handle with our hands</b>;</li><li> and we also <b>saw the engravings</b> thereon,</li><li> all of which has the appearance of ancient work,</li><li> and of curious workmanship.</li></ul></li>
                         <li>And this we bear record with words of soberness, that the said Smith has shown unto us, for <b>we have seen and hefted</b>, and know of a surety that the said Smith has got the plates of which we have spoken.</li>
                         <li>And we give our names unto the world, to witness unto the world that which we have seen.</li><li> And we lie not, God bearing witness of it.</li>
                         </ul>
                     </div>
-                </div>  
+                </WitnessGroup>
                 <hr/>
-                <div className='other-witnesses'>
-                    <h4>Other Sources</h4>
-                    <h5>
-                        Had various experiences with the plates or with Joseph while in posession of the plates
-                    </h5>
-                    <div className='witness-container'>
-                        {data["other-witnesses"]
-                        .sort((b, a) => moment(dateofWitness).diff(moment(a.birthday), 'years') - moment(dateofWitness).diff(moment(b.birthday), 'years'))
-                        .map((w, i) => (
-                            <div key={i} className='witness'>
-                                <Link to={`/history/witnesses/${w.slug}`}>
-                                    <img src={`${assetUrl}/history/witnesses/people/${w.slug}.jpg`} alt={w.name} className='witness-image' />
-                                    <div className='witness-name'>
-                                    {w.name}
-                                    </div>
-                                    <div className='witness-age'>
-                                    Age {moment(dateofWitness).diff(moment(w.birthday), 'years')}
-                                    </div>
-                                </Link>
-                            </div>
-                        ))}
-                    </div>
-                    <div>
-                        <h4>Witness Statements</h4>
-                    </div>
-                    </div>
+                <WitnessGroup
+                    groupKey='other-witnesses'
+                    heading='Other Sources'
+                    subtitle='Had various experiences with the plates or with Joseph while in possession of the plates'
+                />
             </div>
         </div>
     );

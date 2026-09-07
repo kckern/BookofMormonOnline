@@ -103,6 +103,15 @@ function History() {
   }, [])
 
 
+  // Correct as-is: this view fetches archive:"reception", whose `date` column is
+  // clean (verified — 0 of 580 rows diverge from `year`), so reading it directly
+  // is safe here.
+  //
+  // If you consolidate this view with the Witnesses view (they already share
+  // .historycard CSS), do NOT carry this formatter over: the witnesses archive's
+  // `date` is corrupt on 76 rows. `compositionDate` in ./witnessSources.js
+  // resolves dates for BOTH archives, dispatching on the row's `archive` field,
+  // and is what a shared card should call.
   const displayDate = (date) => {
     let len = date.length;
     return moment(date, [(len === 4) ? "YYYY" : 'YYYY-MM-DD']).format((len === 4) ?  label("history_date_format_year") : (len === 7) ?  label("history_date_format_month") : label("history_date_format_full"))

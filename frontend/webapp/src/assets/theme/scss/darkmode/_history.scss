@@ -16,11 +16,22 @@ html[data-theme="dark"] {
   .bc-dropdown .witness-option.current { background: var(--surface-4); color: var(--text-primary); }
   .bc-dropdown .witness-avatar { background-color: var(--surface-3); }
   .single-witnesses .witness-hero-portrait { background-color: var(--surface-3); }
+  // The #F4F4F4/#ECECEC shimmer gradient in Witnesses.css is light-mode-only hardcoded hex,
+  // same as every other Witnesses.css color this file overrides — swapped for the surface
+  // tokens the rest of this block already uses, so the loading placeholder doesn't render as
+  // a stark light-gray box against a dark page.
+  .single-witnesses .witness-life-heatmap-skeleton {
+    background: linear-gradient(90deg, var(--surface-2) 0%, var(--surface-3) 50%, var(--surface-2) 100%);
+  }
+  .single-witnesses .witness-hero-name { color: var(--text-primary); }
   .single-witnesses .witness-hero-facts dt { color: var(--text-muted); }
   .single-witnesses .witness-hero-facts dd { color: var(--text-primary); }
   .single-witnesses .witness-fact { border-bottom-color: rgba(255, 255, 255, 0.09); }
   .single-witnesses .witness-bio { color: var(--text-secondary); }
-  .single-witnesses .witness-filter-chip { background: var(--surface-2); }
+  .single-witnesses .witness-filter-chip {
+    background: var(--surface-2); border-color: var(--border); color: var(--text-primary);
+    button { color: var(--text-secondary); &:hover { color: var(--text-primary); background: var(--surface-3); } }
+  }
   .single-witnesses .witness-sources .historycard { background-color: var(--surface-2); border-color: var(--border); }
   .single-witnesses .witness-sources .historycard:hover { background-color: var(--surface-3); border-color: var(--text-muted); }
   /* redesigned source card — lead quote + support row */
@@ -37,4 +48,13 @@ html[data-theme="dark"] {
   .single-witnesses .witness-sources .historyThumb img { border-color: var(--border); }
   .single-witnesses .witness-sources h5 { color: var(--text-primary); }
   .single-witnesses .witness-sources .citation { color: var(--text-muted); }
+  // Found during Task 17's verification sweep: both introduced with no dark counterpart.
+  // `.firsthand-badge`'s light text (#0d47a1) measured 1.55:1 against its own translucent-
+  // blue badge over a dark card -- reused the same light->dark blue mapping
+  // WitnessLifeHeatmap.css already uses for its event marker (#1565c0 -> #64a5e8), which
+  // measures 5.15:1 against the badge's effective dark background. `.witness-decade-label`'s
+  // #767676 measured 3.50:1 against the dark page background (below AA); --text-muted
+  // measures 4.61:1.
+  .single-witnesses .witness-sources .firsthand-badge { color: #64a5e8; }
+  .single-witnesses .witness-decade-label { color: var(--text-muted); }
 }

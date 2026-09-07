@@ -56,12 +56,28 @@ export default function HistorySourceCard({ doc, variant = "reception", displayD
   if (!doc) return null;
   const isReception = variant === "reception";
   const dateText = displayDate ? displayDate(doc.date) : (doc.date || "");
+  const firsthand = !!doc.quote_is_witness_voice;
+  // Attribution shown outside the quote itself, for a card with no money quote to
+  // attribute (or a quote that already names a different reporter in its own
+  // footer) — a bare quote_speaker there would otherwise be the only place a
+  // reader learns who this account is from.
+  const byline = doc.reporter_label || doc.author;
+  const open = () => onOpen && onOpen(doc);
   return (
-    <div className="historycard historySourceCard card" onClick={() => onOpen && onOpen(doc)}>
+    <div
+      className={`historycard historySourceCard card${firsthand ? " is-firsthand" : ""}`}
+      role="button"
+      tabIndex={0}
+      onClick={open}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); }
+      }}
+    >
       <div className="historyHeader">
         <Identicon seed={doc.slug || doc.document || doc.source || ""} size={34} className="historyIdenticon" />
         {dateText && <span className="dateChip">{dateText}</span>}
         {isReception && doc.source && <div className="historySource">{doc.source}</div>}
+        {byline && <div className="historyByline">{byline}</div>}
       </div>
 
       {/* Lead with the money quote when present. Witness testimony is attributed
@@ -92,6 +108,8 @@ export default function HistorySourceCard({ doc, variant = "reception", displayD
       {doc.teaser && <div className="historyTeaserText">{Parser(doc.teaser)}</div>}
 
       <ReliabilityFacets doc={doc} />
+
+      {firsthand && <div className="firsthand-badge">In his own words</div>}
 
       <div className="historySupport">
         {doc.id && (
