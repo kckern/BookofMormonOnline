@@ -11,10 +11,21 @@ import "./ChiasmGlyph.css";
  * - isPivot: bar(s) whose MAJOR depth equals the maximum major depth — the
  *   chiasm's turning point. Sub-letters share their major's depth, matching
  *   the detail panel's pivot definition (max-major lines, not max-indent).
+ *   Depth-1 schemes (single major) get no pivot accent at all.
+ * - Schemes longer than 16 raw entries (majors + sub-letters) compact to their
+ *   de-duplicated major-letter silhouette (uniform widths); full-length bars
+ *   would be sub-2px blobs.
  */
 export function glyphBars(scheme, lineLengths) {
-  const chars = (scheme || "").split("");
+  let chars = (scheme || "").split("");
   if (!chars.length) return [];
+  // Long schemes render as sub-2px blobs at card size (audit 2026-07-17 §5.2):
+  // compact to the major-letter silhouette, collapsing consecutive repeats.
+  const compact = chars.length > 16;
+  if (compact) {
+    chars = chars.filter((c) => /[A-Z]/.test(c)).filter((c, i, arr) => c !== arr[i - 1]);
+    if (!chars.length) return [];
+  }
   let currentMajor = 0;
   const bars = chars.map((ch) => {
     const isMajor = /[A-Z]/.test(ch);
@@ -22,8 +33,9 @@ export function glyphBars(scheme, lineLengths) {
     return { indent: isMajor ? currentMajor : currentMajor + 0.5, widthFactor: 1, isPivot: false };
   });
   const maxMajor = Math.max(...bars.map((b) => Math.floor(b.indent)));
-  bars.forEach((b) => { b.isPivot = Math.floor(b.indent) === maxMajor; });
-  if (Array.isArray(lineLengths) && lineLengths.length === bars.length) {
+  // depth-1: everything would be "the pivot" — an all-amber glyph reads as an error
+  if (maxMajor > 0) bars.forEach((b) => { b.isPivot = Math.floor(b.indent) === maxMajor; });
+  if (!compact && Array.isArray(lineLengths) && lineLengths.length === bars.length) {
     const sorted = [...lineLengths].sort((a, b) => a - b);
     const t1 = sorted[Math.floor((sorted.length - 1) / 3)];
     const t2 = sorted[Math.floor(((sorted.length - 1) * 2) / 3)];

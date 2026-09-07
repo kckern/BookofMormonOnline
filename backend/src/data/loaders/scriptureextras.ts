@@ -2,6 +2,7 @@
 import { sql, type Kysely } from 'kysely';
 import type { DB } from '../../../codegen/db.js';
 import type { Loaders } from '../loaders.js';
+import { deSlugGroupName, parseVerseIdFromNote, resolveEntityNames } from './objects.js';
 
 // ─── Row shapes ─────────────────────────────────────────────────────────────
 
@@ -88,6 +89,89 @@ export interface PlaceItem {
   slug: string;
   name: string | null;
   info: string | null;
+}
+
+/** A bom_xrels row anchored to a verse via the scripture ref in its note.
+ * A passage has no implicit anchor entity, so BOTH endpoints are carried. */
+export interface PassageXrelRow {
+  rel: string;
+  src_type: string;
+  src_slug: string;
+  src_name: string;
+  dst_type: string;
+  dst_slug: string;
+  dst_name: string;
+  note: string | null;
+  verse_id: number;
+}
+
+// ─── Passage xrels: module-scope lazy verse→xrels index ─────────────────────
+//
+// bom_xrels is 2,868 static rows — scan once per process. The PROMISE is
+// cached (not the resolved map) so concurrent first calls share one scan.
+
+let verseXrelIndexPromise: Promise<Map<number, PassageXrelRow[]>> | null = null;
+
+async function scanVerseXrelIndex(db: Kysely<DB>): Promise<Map<number, PassageXrelRow[]>> {
+  const rows = await db
+    .selectFrom('bom_xrels')
+    .select(['rel', 'src_type', 'src_slug', 'dst_type', 'dst_slug', 'note'])
+    .where('note', 'is not', null)
+    .execute();
+
+  const anchored = rows
+    .map((r) => ({ ...r, verse_id: parseVerseIdFromNote(r.note) }))
+    .filter((r): r is typeof r & { verse_id: number } => r.verse_id != null);
+
+  // Resolve BOTH endpoints' display names in one batch per entity table.
+  const names = await resolveEntityNames(
+    db,
+    anchored.flatMap((r) => [
+      { type: r.src_type, slug: r.src_slug },
+      { type: r.dst_type, slug: r.dst_slug },
+    ]),
+  );
+
+  // Groups have no table — de-slug; unresolvable non-group slugs fall back to the slug.
+  const nameOf = (type: string, slug: string) =>
+    names.get(`${type}:${slug}`)?.name ?? (type === 'group' ? deSlugGroupName(slug) : slug);
+
+  const index = new Map<number, PassageXrelRow[]>();
+  for (const r of anchored) {
+    const row: PassageXrelRow = {
+      rel: r.rel,
+      note: r.note,
+      verse_id: r.verse_id,
+      src_type: r.src_type,
+      src_slug: r.src_slug,
+      src_name: nameOf(r.src_type, r.src_slug),
+      dst_type: r.dst_type,
+      dst_slug: r.dst_slug,
+      dst_name: nameOf(r.dst_type, r.dst_slug),
+    };
+    const list = index.get(r.verse_id) ?? [];
+    list.push(row);
+    index.set(r.verse_id, list);
+  }
+  return index;
+}
+
+/** Passage xrels for a set of verse_ids (passagenotes is verse-list-wise, not range-wise). */
+export async function xrelsByVerseIds(db: Kysely<DB>, verseIds: number[]): Promise<PassageXrelRow[]> {
+  if (!verseIds.length) return [];
+  if (!verseXrelIndexPromise) {
+    verseXrelIndexPromise = scanVerseXrelIndex(db).catch((err) => {
+      verseXrelIndexPromise = null; // let a failed scan retry on the next request
+      throw err;
+    });
+  }
+  const index = await verseXrelIndexPromise;
+  const out: PassageXrelRow[] = [];
+  for (const v of verseIds) {
+    const rows = index.get(v);
+    if (rows) out.push(...rows);
+  }
+  return out;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

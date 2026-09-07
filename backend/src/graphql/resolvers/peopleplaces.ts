@@ -3,6 +3,7 @@ import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 import { generateReference } from 'scripture-guide';
 import type { PeopleRow, PlaceFullRow, IndexRow, RelationResult, MapRow } from '../../data/loaders/peopleplaces.js';
+import { deSlugGroupName } from '../../data/loaders/objects.js';
 
 /** getSlugTip: incoming slug args may be paths — take the last segment. */
 function getSlugTip(slug: string): string {
@@ -39,6 +40,23 @@ export const peopleplacesResolvers: Resolvers = {
       // No slug → full list (legacy returns all places).
       if (!slugs.length) return ctx.loaders.allPlaces() as unknown as never[];
       return ctx.loaders.placesBySlugs(slugs) as unknown as never[];
+    },
+
+    /**
+     * group — synthesized entity: no table backs groups, so each slug becomes
+     * { slug, de-slugged name, reverse xrels } iff at least one xrel row points at it.
+     */
+    group: async (_root, args, ctx) => {
+      const slugs = (args.slug ?? [])
+        .filter((s): s is string => s !== null)
+        .map(getSlugTip);
+      const results = await Promise.all(
+        slugs.map(async (slug) => {
+          const xrels = await ctx.loaders.xrelsByDstEntity.load({ type: 'group', slug });
+          return xrels.length ? { slug, name: deSlugGroupName(slug), xrels } : null;
+        })
+      );
+      return results.filter(Boolean) as unknown as never[];
     },
   },
 

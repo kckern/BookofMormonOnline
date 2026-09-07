@@ -9,8 +9,6 @@ import "./XrelSection.css";
 
 /** dst_type → media asset folder. `group` has no artwork, hence no entry. */
 const ASSET_PATH = { people: "people", place: "places", matter: "matters" };
-/** dst_type → popup route. Same keys: what has a thumb has a popup. */
-const POPUP_TYPE = { people: "people", place: "places", matter: "matters" };
 
 /**
  * ReactTooltip id="relToolTip" is mounted inside PopUp.js's `Relationships`,
@@ -51,6 +49,23 @@ export function groupXrels(xrels) {
  * uses: thumbnail, one line of text, title in a tooltip, whole card clickable,
  * and no internal scroll — the popup column scrolls.
  */
+/**
+ * Map an xrel endpoint type + slug to a setPopUp payload.
+ * Shared by XrelSection and the Read view's RelationshipsPanel — one
+ * definition of which entity types open which popup. Returns null for
+ * unknown types (no popup surface).
+ */
+export function popUpTargetFor(type, slug) {
+  if (type === "people") return { type: "people", ids: [slug], underSlug: "people" };
+  if (type === "place") return { type: "places", ids: [slug], underSlug: "places" };
+  // dst_type/src_type values on bom_xrels are 'matter', not the pre-rename 'object'
+  // (see the Objects->Matters domain rename, commit aeea69b6) -- matching PopUp.js's
+  // own "matters" dispatch and Matters.js/MattersFilter.js's setPopUp calls.
+  if (type === "matter") return { type: "matters", ids: [slug], underSlug: "matters" };
+  if (type === "group") return { type: "group", ids: [slug], underSlug: "group" };
+  return null;
+}
+
 export default function XrelSection({ xrels, showEmpty, noHeading }) {
   const appController = useAppController();
   // Cards and the tooltip mount together, but re-render when data arrives late.
@@ -61,14 +76,15 @@ export default function XrelSection({ xrels, showEmpty, noHeading }) {
   const hasRows = Array.isArray(xrels) && xrels.length > 0;
   if (!hasRows && !showEmpty) return null;
 
+  // popUpTargetFor (defined above), not ASSET_PATH (that's thumbnails only): it
+  // also covers 'group', which has no thumbnail but does have a popup.
   const openXrel = (xrel) => {
-    const type = POPUP_TYPE[xrel.dst_type];
-    if (!type) return; // group: no page to open
-    appController.functions.setPopUp({ type, ids: [xrel.dst_slug], underSlug: type });
+    const target = popUpTargetFor(xrel.dst_type, xrel.dst_slug);
+    if (target) appController.functions.setPopUp(target);
   };
 
   const card = (x, idx) => {
-    const clickable = !!POPUP_TYPE[x.dst_type];
+    const clickable = !!popUpTargetFor(x.dst_type, x.dst_slug);
     const assetType = ASSET_PATH[x.dst_type];
     return (
       <li

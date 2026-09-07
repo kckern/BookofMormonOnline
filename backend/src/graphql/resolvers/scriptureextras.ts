@@ -9,6 +9,7 @@ import {
   type ImageRow,
   reduceChiasmusLines,
   resolveChiasmusSpeakers,
+  xrelsByVerseIds,
 } from '../../data/loaders/scriptureextras.js';
 
 // ─── lang normalisation ────────────────────────────────────────────────────────
@@ -412,6 +413,12 @@ export const scriptureextrasResolvers: Resolvers = {
     refs: async (parent) => {
       const { verseIds, ctx } = parent as unknown as PassageNotesCtx;
       const rows = await ctx.loaders.fetchRefsForVerseIds(verseIds);
+      return rows as unknown as never[];
+    },
+
+    xrels: async (parent) => {
+      const { verseIds, ctx } = parent as unknown as PassageNotesCtx;
+      const rows = await xrelsByVerseIds(ctx.db, verseIds);
       return rows as unknown as never[];
     },
   },

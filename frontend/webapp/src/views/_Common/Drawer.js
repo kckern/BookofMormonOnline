@@ -23,6 +23,7 @@ import { getDetectedScripturesHtml, getHtmlScriptureLinkParserOptions, useIsMoun
 import { ScripturePanelSingle } from "../Page/Narration";
 import { findAncestor } from "../../models/Utils";
 import { useAppController } from "src/contexts/AppControllerContext";
+import XrelSection from "./XrelSection";
 
 
 export function MobileDrawer() {
@@ -88,9 +89,13 @@ function DrawerContent({ setLocalOpen }) {
     if (type === "history")
         return <HistoryDrawer />;
     if (type === "places")
-        return <Place setLocalOpen={setLocalOpen} />;
+        return <Place key={id} setLocalOpen={setLocalOpen} />;
     if (type === "people")
-        return <Person setLocalOpen={setLocalOpen} />;
+        return <Person key={id} setLocalOpen={setLocalOpen} />;
+    if (type === "object")
+        return <ObjectDrawer key={id} />;
+    if (type === "group")
+        return <GroupDrawer key={id} />;
     if (type === "victory")
         return <Victory context="drawer" />;
     if (type === "pFilter")
@@ -202,6 +207,7 @@ function Person({ setLocalOpen }) {
               setActiveScriptureReference(reference);
             })}
           </div>
+          <XrelSection xrels={person?.xrels} noHeading />
       </div>
       <div ref={scripturePanelRef}>
           <ScripturePanelSingle
@@ -252,6 +258,7 @@ function Place({ setLocalOpen }) {
             setActiveScriptureReference(reference);
           })}
         </div>
+        <XrelSection xrels={place?.xrels} />
       </div>
       <div ref={scripturePanelRef}>
           <ScripturePanelSingle
@@ -264,6 +271,65 @@ function Place({ setLocalOpen }) {
       </div>
     </>
 	);
+}
+
+function GroupDrawer() {
+    const appController = useAppController();
+    const slug = appController.states.popUp.activeId;
+    const [group, setGroupData] = useState(null);
+
+    useEffect(() => {
+        setTimeout(() => {
+            BoMOnlineAPI(
+                { group: slug }
+            ).then((response) => {
+                setGroupData(response.group?.[slug]);
+            });
+        }, 500);
+    }, []);
+
+    if (!group) return <Spinner />;
+
+    return (
+        <div className="subject overflow-auto p-4">
+            <div className="pDrawerHeaderBox">
+                <div>
+                    <h3>{group.name}</h3>
+                </div>
+            </div>
+            <XrelSection xrels={group.xrels} showEmpty />
+        </div>
+    );
+}
+
+function ObjectDrawer() {
+    const appController = useAppController();
+    const slug = appController.states.popUp.activeId;
+    const [obj, setObjectData] = useState(null);
+
+    useEffect(() => {
+        setTimeout(() => {
+            BoMOnlineAPI(
+                { object: slug }
+            ).then((response) => {
+                setObjectData(response.object?.[slug]);
+            });
+        }, 500);
+    }, []);
+
+    if (!obj) return <Spinner />;
+
+    return (
+        <div className="subject overflow-auto p-4">
+            <div className="pDrawerHeaderBox">
+                <div>
+                    <h3>{processName(obj.name)}</h3>
+                    {obj.subtitle && <h4>{replaceNumbers(obj.subtitle)}</h4>}
+                </div>
+            </div>
+            <XrelSection xrels={obj.xrels} showEmpty />
+        </div>
+    );
 }
 
 function HistoryDrawer() {

@@ -160,6 +160,30 @@ const queries = {
             }`,
     }
   },
+  group: (ids) => {
+    return {
+      type: "group",
+      key: "slug",
+      val: ids,
+      query:
+        q("group", "slug", ids) +
+        `{
+                slug
+                name
+                xrels {
+                    rel
+                    srcweight
+                    dst_type
+                    dst_slug
+                    dst_name
+                    dst_title
+                    note
+                    verse_id
+                    direction
+                }
+            }`,
+    }
+  },
   matterList: (ids) => {
     return {
       type: "matterList",
@@ -232,6 +256,17 @@ const queries = {
                     ref
                     type
                     significant
+                }
+                xrels {
+                    rel
+                    src_type
+                    src_slug
+                    src_name
+                    dst_type
+                    dst_slug
+                    dst_name
+                    note
+                    verse_id
                 }
             }`,
     }
@@ -2263,6 +2298,17 @@ const queries = {
                       ref
                       type
                       significant
+                  }
+                  xrels {
+                      rel
+                      src_type
+                      src_slug
+                      src_name
+                      dst_type
+                      dst_slug
+                      dst_name
+                      note
+                      verse_id
                   }
               }`,
       }

@@ -14,7 +14,7 @@ import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 import { findUserByToken } from '../../data/loaders/userauth.js';
 import { md5 } from '../../auth/identity.js';
-import { parseVerseIdFromNote } from '../../data/loaders/matters.js';
+import { deSlugGroupName, parseVerseIdFromNote, resolveEntityNames } from '../../data/loaders/matters.js';
 import { canonicalSelector } from '../../media/fax/canonical.js';
 import { imageScanMeta } from '../../media/fax/resolve.js';
 import { getHomeSamplerCache } from '../homeSamplerCacheStore.js';
@@ -340,92 +340,88 @@ const sampleCrossRefs = async (ctx: AppContext, seed: number) => {
   };
 };
 
-// Entity display-name lookup for relationship hubs/edges. Column meanings per
-// type mirror xrelsBySlug in loaders/matters.ts: people name/title,
-// places name/info, matters name/subtitle.
-const entityNames = async (
-  ctx: AppContext,
-  wanted: { type: string; slug: string }[],
-): Promise<Map<string, { name: string; title: string | null }>> => {
-  const slugsOf = (t: string) => [...new Set(wanted.filter((w) => w.type === t).map((w) => w.slug))];
-  const [people, places, matters] = await Promise.all([
-    slugsOf('people').length
-      ? ctx.db.selectFrom('bom_people').select(['slug', 'name', 'title']).where('slug', 'in', slugsOf('people')).execute()
-      : [],
-    slugsOf('place').length
-      ? ctx.db.selectFrom('bom_places').select(['slug', 'name', 'info']).where('slug', 'in', slugsOf('place')).execute()
-      : [],
-    slugsOf('matter').length
-      ? ctx.db.selectFrom('bom_matters').select(['slug', 'name', 'subtitle']).where('slug', 'in', slugsOf('matter')).execute()
-      : [],
-  ]);
-  const map = new Map<string, { name: string; title: string | null }>();
-  for (const p of people) if (p.name) map.set(`people:${p.slug}`, { name: p.name, title: p.title ?? null });
-  for (const p of places) if (p.name) map.set(`place:${p.slug}`, { name: p.name, title: p.info ?? null });
-  for (const o of matters) if (o.name) map.set(`matter:${o.slug}`, { name: o.name, title: o.subtitle ?? null });
-  return map;
-};
+// Entity display-name lookup for relationship hubs/edges lives in
+// data/loaders/matters.ts (resolveEntityNames) — shared with the xrel loaders.
 
-// Entity types this sampler can resolve to a display name (see entityNames).
-// bom_xrels also carries src_type/dst_type='theology', but bom_theology has no
-// loader or view yet, so those rows are excluded rather than rendered as a bare
-// slug. Widen this list when the theology domain lands.
-const SAMPLEABLE_TYPES = ['people', 'place', 'matter'] as const;
-
-// One well-connected hub entity and up to 4 of its typed relations. The hub is
-// seeded over (src_type, src_slug) pairs with >=2 RESOLVABLE edges; GROUP BY
-// needs raw sql. Counting only resolvable edges here keeps the hub pick in sync
-// with the edge query below — otherwise a hub whose edges are all theology
-// passes the HAVING and then falls out at the <2 check, returning null for that
-// seed. Edges whose dst still can't be named are dropped (a bare slug reads as
-// a bug on the front door); if that leaves <2, return null.
+// One well-connected hub entity and up to 4 of its typed relations. bom_xrels
+// is matter-anchored historically (most rows' src is a matter), so to let
+// people/places/matters/groups all headline the tile, the hub pool draws from
+// BOTH directions: src-side pairs (is_dst=0) AND destination-side
+// people/place/matter/group pairs (is_dst=1), each with >=2 edges. GROUP BY
+// needs raw sql. For a destination-side hub the edges are fetched by dst match
+// and DISPLAY the row's src endpoint, flagged reverse:true so the tile renders
+// name-before-verb. Edges whose display endpoint can't be resolved to a name
+// are dropped (a group always de-slugs, so it never drops); if that leaves <2,
+// return null. bom_xrels also carries src_type/dst_type='theology' (no loader/
+// view yet); an all-theology src-side hub falls through to the hubName null
+// check below and the seed simply yields no tile, same outcome as a real
+// per-type SQL filter would give, just resolved after the pick instead of
+// before it.
 const sampleRelationship = async (ctx: AppContext, seed: number) => {
-  const hub = await sql<{ src_type: string; src_slug: string }>`
-    SELECT src_type, src_slug FROM bom_xrels
-    WHERE src_type IN (${sql.join(SAMPLEABLE_TYPES.map((t) => sql.lit(t)))})
-      AND dst_type IN (${sql.join(SAMPLEABLE_TYPES.map((t) => sql.lit(t)))})
-    GROUP BY src_type, src_slug HAVING COUNT(*) >= 2
-    ORDER BY MD5(CONCAT(src_type, ':', src_slug, ':', ${seed}))
+  const hub = await sql<{ hub_type: string; hub_slug: string; is_dst: number }>`
+    SELECT hub_type, hub_slug, is_dst FROM (
+      SELECT src_type AS hub_type, src_slug AS hub_slug, 0 AS is_dst FROM bom_xrels
+        GROUP BY src_type, src_slug HAVING COUNT(*) >= 2
+      UNION ALL
+      SELECT dst_type, dst_slug, 1 FROM bom_xrels WHERE dst_type IN ('people', 'place', 'matter', 'group')
+        GROUP BY dst_type, dst_slug HAVING COUNT(*) >= 2
+    ) hubs
+    ORDER BY MD5(CONCAT(hub_type, ':', hub_slug, ':', is_dst, ':', ${seed}))
     LIMIT 1
   `.execute(ctx.db);
   const h = hub.rows[0];
   if (!h) return null;
-  const edgeRows = await ctx.db
-    .selectFrom('bom_xrels')
-    .select(['rel', 'dst_type', 'dst_slug', 'note'])
-    .where('src_type', '=', h.src_type)
-    .where('src_slug', '=', h.src_slug)
-    .where('dst_type', 'in', [...SAMPLEABLE_TYPES])
-    .orderBy(seededOrder('dst_slug', seed))
-    .limit(6)
-    .execute();
-  const names = await entityNames(ctx, [
-    { type: h.src_type, slug: h.src_slug },
-    ...edgeRows.map((e) => ({ type: e.dst_type, slug: e.dst_slug })),
+  const isDst = Number(h.is_dst) === 1;
+  // For a dst-side hub, each edge's displayed endpoint is the row's SRC; for a
+  // src-side hub it's the row's DST. Alias both to endType/endSlug.
+  const edgeRows = isDst
+    ? await ctx.db
+        .selectFrom('bom_xrels')
+        .select(['rel', 'src_type as endType', 'src_slug as endSlug', 'note'])
+        .where('dst_type', '=', h.hub_type)
+        .where('dst_slug', '=', h.hub_slug)
+        .orderBy(seededOrder('src_slug', seed))
+        .limit(6)
+        .execute()
+    : await ctx.db
+        .selectFrom('bom_xrels')
+        .select(['rel', 'dst_type as endType', 'dst_slug as endSlug', 'note'])
+        .where('src_type', '=', h.hub_type)
+        .where('src_slug', '=', h.hub_slug)
+        .orderBy(seededOrder('dst_slug', seed))
+        .limit(6)
+        .execute();
+  const names = await resolveEntityNames(ctx.db, [
+    { type: h.hub_type, slug: h.hub_slug },
+    ...edgeRows.map((e) => ({ type: e.endType, slug: e.endSlug })),
   ]);
-  const hubName = names.get(`${h.src_type}:${h.src_slug}`);
+  // Groups have no entity table — de-slug their display name (never dropped).
+  const nameOf = (type: string, slug: string): { name: string; title: string | null } | null =>
+    names.get(`${type}:${slug}`) ?? (type === 'group' ? { name: deSlugGroupName(slug), title: null } : null);
+  const hubName = nameOf(h.hub_type, h.hub_slug);
   if (!hubName) return null;
   const edges = edgeRows
     .map((e) => {
-      const dst = names.get(`${e.dst_type}:${e.dst_slug}`);
+      const dst = nameOf(e.endType, e.endSlug);
       if (!dst) return null;
       const verseId = parseVerseIdFromNote(e.note ?? null);
       return {
         rel: e.rel,
-        dstType: e.dst_type,
-        dstSlug: e.dst_slug,
+        dstType: e.endType,
+        dstSlug: e.endSlug,
         dstName: dst.name,
         dstTitle: dst.title,
         note: e.note ?? null,
         ref: verseId ? generateReference([verseId]) : null,
+        reverse: isDst,
       };
     })
     .filter((e): e is NonNullable<typeof e> => e !== null)
     .slice(0, 4);
   if (edges.length < 2) return null;
   return {
-    hubType: h.src_type,
-    hubSlug: h.src_slug,
+    hubType: h.hub_type,
+    hubSlug: h.hub_slug,
     hubName: hubName.name,
     hubTitle: hubName.title,
     edges,

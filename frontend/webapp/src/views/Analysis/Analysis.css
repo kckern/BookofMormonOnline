@@ -66,3 +66,7 @@
     font-size: 2em;
     padding-top:1em;
 }
+/* Breadcrumb back to the /analysis hub (shared by Analysis sub-views) */
+.analysis-breadcrumb { font-size: .85rem; color: var(--text-muted); margin: .5rem 0 0; }
+.analysis-breadcrumb a { color: var(--link); }
+.analysis-breadcrumb .current { color: var(--text-secondary); }

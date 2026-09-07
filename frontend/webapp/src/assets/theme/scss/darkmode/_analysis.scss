@@ -1,5 +1,7 @@
-/* Analysis views (Chiasmus) — dark theme overrides.
-   Chiasmus.css is token-driven; only the literals tokens can't express live here. */
+/* Analysis views (Chiasmus + breadcrumb) — dark theme overrides. Two kinds
+   of rule belong here: dark-only literals the tokens can't express (the rail
+   palette), and specificity restatements where a generic dark rule would
+   otherwise out-rank a view stylesheet (Chiasmus.css, Analysis.css). */
 html[data-theme="dark"] {
   /* Book-group rail hues, dark variants (light set lives in Chiasmus.css).
      Validated with dataviz validate_palette.js vs #1a1a1a: lightness band,
@@ -13,19 +15,17 @@ html[data-theme="dark"] {
   --rail-ether: #4fa854;
   --rail-moroni: #e9589b;
 
-  /* Light CSS uses a #FFFF0022 yellow alpha wash on the active line/scheme —
-     too dim and hue-wrong on dark surfaces. Warm wash from --highlight's hue. */
-  .chiasmus_line.active .highlight { background-color: rgba(255, 243, 176, 0.14); }
-  .chiasmus_line.active .scheme { background-color: rgba(255, 243, 176, 0.14); }
+  /* Active-pair wash now comes straight from the --highlight token in
+     Chiasmus.css (#55502a here) — no dark override needed. The pivot badge
+     likewise needs no restatement: Chiasmus.css's pivot rule (0,4,0) already
+     outranks the .active .scheme wash (0,3,0) in both themes. */
 
-  /* The pivot badge keeps its amber fill even when its own pair is active —
-     the wash above would otherwise repaint it (this themed selector outranks
-     the light-file pivot rule). Same #1a1a1a-on-amber pairing as light mode. */
-  .chiasmus_line.pivot .scheme:not(.minor) {
-    background-color: var(--accent-amber);
-    color: #1a1a1a;
-  }
+  /* Card hover/active outlines need no override anymore: hover uses
+     --border-strong and active uses --link, both theme-aware tokens (the old
+     rgba-white patch here also outranked the active --link ring on hover). */
 
-  /* Card hover outline is var(--shadow) (a black wash) — invisible on dark cards. */
-  .chiasmus_list .chiasmus:hover { outline-color: rgba(255, 255, 255, 0.2); }
+  /* Breadcrumb hub link: the generic dark `a` rule (html[data-theme="dark"] a,
+     0-1-2) outranks Analysis.css's .analysis-breadcrumb a (0-1-1) and paints
+     it muted #aaa — restate the link color at themed specificity. */
+  .analysis-breadcrumb a { color: var(--link); &:hover { color: var(--link-hover); } }
 }
