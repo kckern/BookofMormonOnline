@@ -10,7 +10,7 @@ import { createYoga } from 'graphql-yoga';
 import { getDb, closeDb } from '../../src/data/db.js';
 import { buildSchema } from '../../src/graphql/schema.js';
 import { buildContext } from '../../src/graphql/context.js';
-import { parseVerseIdFromNote } from '../../src/data/loaders/objects.js';
+import { parseVerseIdFromNote } from '../../src/data/loaders/matters.js';
 
 const db = getDb();
 let yoga: ReturnType<typeof createYoga>;

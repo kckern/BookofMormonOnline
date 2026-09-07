@@ -2,7 +2,7 @@
 import { sql, type Kysely } from 'kysely';
 import type { DB } from '../../../codegen/db.js';
 import type { Loaders } from '../loaders.js';
-import { deSlugGroupName, parseVerseIdFromNote, resolveEntityNames } from './objects.js';
+import { deSlugGroupName, parseVerseIdFromNote, resolveEntityNames } from './matters.js';
 
 // ─── Row shapes ─────────────────────────────────────────────────────────────
 

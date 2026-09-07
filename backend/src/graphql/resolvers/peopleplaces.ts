@@ -3,7 +3,7 @@ import type { Resolvers } from '../../../codegen/graphql.js';
 import type { AppContext } from '../context.js';
 import { generateReference } from 'scripture-guide';
 import type { PeopleRow, PlaceFullRow, IndexRow, RelationResult, MapRow } from '../../data/loaders/peopleplaces.js';
-import { deSlugGroupName } from '../../data/loaders/objects.js';
+import { deSlugGroupName } from '../../data/loaders/matters.js';
 
 /** getSlugTip: incoming slug args may be paths — take the last segment. */
 function getSlugTip(slug: string): string {
