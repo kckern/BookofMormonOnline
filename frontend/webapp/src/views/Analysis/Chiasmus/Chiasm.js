@@ -4,7 +4,6 @@ import { Spinner } from "../../_Common/Loader";
 import Parser from "html-react-parser";
 import { label } from 'src/models/Utils';
 import { t } from "./t";
-import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { escapeRegex } from "./chiasmUtils";
 import ChiasmGlyph from "../../_Common/ChiasmGlyph";
 import { openScripture } from "../../Home/tiles/ScripturePopup";
@@ -28,7 +27,10 @@ export const fetchChiasm = (id) => {
     return BoMOnlineAPI({ chiasm: [id] }, { useCache: false }).then((r) => {
         const c = r?.chiasm?.[id];
         if (c) cachePut(id, c);
-        return c;
+        // Unknown id: the backend answers {"data":{}} and structureResults maps
+        // that to { chiasm: { <id>: null } }. Chiasm's loading state is null, so
+        // normalize to undefined — the panel's error state — or it spins forever.
+        return c ?? undefined;
     });
 };
 export const __clearChiasmCache = () => chiasmCache.clear(); // test hook
@@ -63,9 +65,12 @@ function ChiasticLine({line_key, label, line_text, highlights, isPivot, effectiv
     const alphabetPosition = upperCaseLetter.charCodeAt(0) - 64 -1;
     const indexCSS = {marginLeft: `${alphabetPosition * 1.5}ex`};
 
-    const minorAlphabetPosition = lowerCaseLetter.replace(/[αβγδ]/g, char => String.fromCharCode(char.charCodeAt(0) - 848)).charCodeAt(0) - 96 - 1;
-
-    const minorCSS = {marginLeft: `${minorAlphabetPosition * 1.5}ex`};
+    // Only computed for lines that have a sub-letter — charCodeAt(0) of ""
+    // is NaN, which produced marginLeft:"NaNex" on major-only lines (harmless
+    // only because the minor badge wasn't rendered for them).
+    const minorCSS = lowerCaseLetter
+        ? { marginLeft: `${(lowerCaseLetter.replace(/[αβγδ]/g, char => String.fromCharCode(char.charCodeAt(0) - 848)).charCodeAt(0) - 97) * 1.5}ex` }
+        : undefined;
 
     const hasActiveScheme = !!effectiveScheme;
     const isActiveScheme = effectiveScheme === upperCaseLetter;
@@ -98,26 +103,23 @@ function Chiasm({chiasm_id, setChiasmusId, closeChiasm, nextId, prevId}) {
         setChiasm(null);
         setPinnedScheme(null);
         setCopied(false);
+        // Belt-and-braces: whatever stalls upstream, the panel must not spin forever
+        const failsafe = setTimeout(() => {
+            if (!cancelled) setChiasm((c) => (c === null ? undefined : c));
+        }, 15000);
         fetchChiasm(chiasm_id).then((c) => {
-            if (!cancelled) setChiasm(c);
+            if (!cancelled) setChiasm(c);           // c === undefined → error state
         }).catch((e) => {
             console.error(e);
             if (!cancelled) setChiasm(undefined);
         });
-        return () => { cancelled = true; };
+        return () => { cancelled = true; clearTimeout(failsafe); };
     }, [chiasm_id]);
 
     // warm the cache for the neighbors so prev/next (and arrow keys) are instant
     useEffect(() => {
         [prevId, nextId].filter(Boolean).forEach((id) => { fetchChiasm(id).catch(() => {}); });
     }, [prevId, nextId]);
-
-    const {replace} = useHistory();
-    useEffect(() => {
-        // keep the browse-state query string (useBrowseState) — without it,
-        // opening a chiasm reset every filter/sort/group in the index panel
-        replace(`/analysis/chiasmus/${chiasm_id}${window.location.search}`);
-    }, [chiasm_id]);
 
     const {lines, reference, title, scheme} = chiasm || {};
     useEffect(() => {
@@ -134,7 +136,7 @@ function Chiasm({chiasm_id, setChiasmusId, closeChiasm, nextId, prevId}) {
     useEffect(() => () => clearTimeout(copyTimer.current), []);
 
     if (chiasm === undefined) return <div className="chiasm error">{t("chiasm_load_failed", "Couldn't load this chiasm.")}</div>;
-    if (!chiasm) return <div className="chiasm"><Spinner/></div>
+    if (!chiasm) return <div className="chiasm loading"><Spinner/></div>
 
     // Pinned pair (tap/click a badge) wins over hover; hover works when unpinned.
     const effectiveScheme = pinnedScheme || activeScheme;
@@ -158,7 +160,18 @@ function Chiasm({chiasm_id, setChiasmusId, closeChiasm, nextId, prevId}) {
                 <h4 className="title">{title || t("untitled_chiasm", "Untitled")}</h4>
                 <h4 className="title reference">{reference}</h4>
             </div>
-            <button type="button" className="close noselect" aria-label={t("close", "Close")} onClick={closeChiasm}>×</button>
+            <div className="chiasm-header-nav noselect">
+                <button type="button" disabled={!prevId}
+                    aria-label={t("previous", "Previous")}
+                    title={t("prev_hint", "Previous chiasm (← arrow key)")}
+                    onClick={() => setChiasmusId(prevId)}>‹</button>
+                <button type="button" disabled={!nextId}
+                    aria-label={t("next", "Next")}
+                    title={t("next_hint", "Next chiasm (→ arrow key)")}
+                    onClick={() => setChiasmusId(nextId)}>›</button>
+                <button type="button" className="close" aria-label={t("close", "Close")}
+                    title={t("close_hint", "Close (Esc)")} onClick={closeChiasm}>×</button>
+            </div>
         </div>
         <div className="chiasm-actions noselect">
             <button type="button" onClick={() => openScripture(reference)}>{t("read_in_context", "Read in context")}</button>
@@ -166,6 +179,11 @@ function Chiasm({chiasm_id, setChiasmusId, closeChiasm, nextId, prevId}) {
                 {copied ? t("link_copied", "Copied!") : t("copy_link", "Copy link")}
             </button>
         </div>
+        <details className="chiasm-help noselect">
+            <summary>{t("chiasm_help_title", "How to read a chiasm")}</summary>
+            <p>{t("chiasm_help_body",
+                "A chiasm mirrors its ideas around a center: matching letters (A, B, C…) mark paired, mirrored statements, and the amber line is the pivot — the idea the passage turns on. Hover a line to preview its pair; click or tap the letter badge to pin it (click again to unpin).")}</p>
+        </details>
         <div className="chiasmus_lines" onMouseLeave={()=>setActiveScheme(null)}>
             {lines.map((line, i) => {
                 return <ChiasticLine key={i} {...line}
@@ -182,8 +200,5 @@ function Chiasm({chiasm_id, setChiasmusId, closeChiasm, nextId, prevId}) {
         <button type="button" disabled={!nextId} onClick={()=>setChiasmusId(nextId)}>{t("next", "Next")} ⮕</button>
         </div>
     </div>
-        
-
-
 }
 export default Chiasm;

@@ -48,6 +48,21 @@ describe("glyphBars", () => {
     expect(bars[1].indent).toBeGreaterThan(bars[0].indent);
     expect(bars[1].indent).toBeLessThan(bars[2].indent);
   });
+  test("schemes over 16 entries compact to de-duplicated majors", () => {
+    const scheme = "AaAbAcBaBbCaCbDaDbDcCcBcAd"; // 26 entries
+    const bars = glyphBars(scheme);
+    expect(bars.length).toBeLessThanOrEqual(16);
+    bars.forEach((b) => expect(Number.isInteger(b.indent)).toBe(true)); // majors only
+  });
+  test("compact mode ignores lineLengths (uniform widths)", () => {
+    const scheme = "A".repeat(9) + "B".repeat(9); // 18 majors → compacts to AB
+    const bars = glyphBars(scheme, Array(18).fill(5));
+    expect(bars).toHaveLength(2); // compacted to the AB silhouette
+    expect(bars.map((b) => b.widthFactor)).toEqual(bars.map(() => 1));
+  });
+  test("depth-1 schemes get no pivot accent", () => {
+    expect(glyphBars("AAAA").every((b) => !b.isPivot)).toBe(true);
+  });
 });
 
 describe("ChiasmGlyph", () => {

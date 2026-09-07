@@ -1,4 +1,5 @@
 import { lookupReference } from "scripture-guide";
+import { t } from "./t"; // no cycle: t.js only imports src/models/Utils
 
 // Isaiah/Malachi/Matthew quotation blocks — chiasms here mirror Biblical text.
 // (Same list previously hardcoded inside the component.)
@@ -24,6 +25,11 @@ export const BOOK_GROUPS = {
 };
 
 export const escapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+// Display form of a depthBucket: the overflow bucket "+" reads as "8+".
+// Single definition — used by the toolbar chips, card depth badges, and
+// depth group headers.
+export const displayDepth = (bucket) => (bucket === "+" ? "8+" : bucket);
 
 export function parseScheme(scheme) {
   const s = scheme || "";
@@ -123,7 +129,7 @@ export function applyBrowseState(enriched, s) {
   const keyFn = {
     book: (c) => c.book || "—",
     speaker: (c) => c.speakerName || "—", // display-formatted in enrichChiasmus from the server speaker field
-    depth: (c) => `Level ${c.depthBucket}`,
+    depth: (c) => String(c.depthBucket), // raw bucket ("2"…"7", "+"); display via groupLabel
     type: (c) => (c.isBiblical ? "Biblical" : c.isCompound ? "Compound" : "Simple"),
   }[s.group];
   if (!keyFn) return { flat, groups: null };
@@ -139,7 +145,7 @@ export function applyBrowseState(enriched, s) {
     keys.sort((a, b) => BOOK_ORDER.indexOf(a) - BOOK_ORDER.indexOf(b));
   } else if (s.group === "depth") {
     // Deterministic level order regardless of active sort: numeric asc, "+" last.
-    const levelRank = (k) => (k === "Level +" ? Infinity : Number(k.slice(6)));
+    const levelRank = (k) => (k === "+" ? Infinity : Number(k));
     keys.sort((a, b) => levelRank(a) - levelRank(b));
   } else if (s.group === "speaker") {
     // Alphabetical regardless of active sort; unattributed ("—") last.
@@ -151,4 +157,15 @@ export function applyBrowseState(enriched, s) {
   }
   const groups = keys.map((k) => ({ key: k, items: map.get(k) }));
   return { flat, groups };
+}
+
+/**
+ * Display label for a group key (used by the group-header render). Depth and
+ * type keys are raw machine values that need translation; book and speaker
+ * keys are already display strings.
+ */
+export function groupLabel(key, group) {
+  if (group === "depth") return t("group_level", "Level $1", [displayDepth(key)]);
+  if (group === "type") return t(`type_${key.toLowerCase()}`, key);
+  return key;
 }

@@ -1,18 +1,23 @@
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import BoMOnlineAPI, { assetUrl } from "../../../models/BoMOnlineAPI";
 import Loader from "../../_Common/Loader";
 import ChiasmGlyph from "../../_Common/ChiasmGlyph";
 import "./Chiasmus.css";
 import Chiasm from "./Chiasm";
 import { label, determineLanguage } from 'src/models/Utils';
-import { useRouteMatch, useHistory } from "react-router-dom/cjs/react-router-dom.min";
-import { enrichChiasmus, applyBrowseState, BOOK_GROUPS } from "./chiasmUtils";
+import { useRouteMatch, useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
+import { enrichChiasmus, applyBrowseState, BOOK_GROUPS, groupLabel, displayDepth } from "./chiasmUtils";
 import useBrowseState, { DEFAULTS } from "./useBrowseState";
 import { t } from "./t";
+import AnalysisBreadcrumb from "../AnalysisBreadcrumb";
 
 const DEBOUNCE_MS = 250;
 
-function BrowseToolbar({ state, set, depthCounts, categoryCounts }) {
+// Index-page document title — set on mount and restored when the detail
+// panel closes (Chiasm.js owns the title while a chiasm is open).
+const indexDocTitle = () => t("chiasms_doc_title", "Chiasmus") + " | " + label("home_title");
+
+function BrowseToolbar({ state, set, depthCounts, categoryCounts, shownCount, totalCount }) {
     // Search input strategy: controlled, mirrored into local state so typing
     // stays smooth (no URL replace per keystroke) while still following
     // URL-driven changes (back/forward, Clear all). `lastSent` distinguishes
@@ -68,99 +73,129 @@ function BrowseToolbar({ state, set, depthCounts, categoryCounts }) {
 
     return (
         <div className="browse_toolbar">
-            <input
-                type="search"
-                className="browse_search"
-                placeholder={t("search_chiasms", "Search chiasms…")}
-                aria-label={t("search_chiasms", "Search chiasms…")}
-                value={q}
-                onChange={onSearchChange}
-            />
-            <select
-                value={state.group}
-                onChange={(e) => set({ group: e.target.value })}
-                aria-label={t("group_by", "Group by")}
-            >
-                <option value="none">{t("group_none", "No grouping")}</option>
-                <option value="book">{t("group_book", "Book")}</option>
-                <option value="speaker">{t("group_speaker", "Speaker")}</option>
-                <option value="depth">{t("group_depth", "Depth")}</option>
-                <option value="type">{t("group_type", "Type")}</option>
-            </select>
-            <select
-                value={state.sort}
-                onChange={(e) => set({ sort: e.target.value })}
-                aria-label={t("sort_by", "Sort")}
-            >
-                <option value="canonical">{t("sort_canonical", "Canonical order")}</option>
-                <option value="depth">{t("sort_depth", "Depth")}</option>
-                <option value="length">{t("sort_length", "Length")}</option>
-                <option value="title">{t("sort_title", "Title")}</option>
-            </select>
-            <button
-                type="button"
-                className="dir_button"
-                aria-pressed={state.dir === "desc"}
-                aria-label={t("sort_direction", "Reverse sort direction")}
-                onClick={() => set({ dir: state.dir === "asc" ? "desc" : "asc" })}
-            >
-                {state.dir === "asc" ? "↓" : "↑"}
-            </button>
-            {/* depth chips: INCLUSION semantics — selected = shown; none selected = all shown */}
-            {depthKeys.map((d) => {
-                const selected = state.depths.includes(d);
-                return (
-                    <button
-                        key={d}
-                        type="button"
-                        className={`chip depth_chip${selected ? " selected" : ""}`}
-                        aria-pressed={selected}
-                        aria-label={t("depth_chip_label", "Depth $1 — $2 chiasms", [d, depthCounts[d]])}
-                        onClick={() => toggleDepth(d)}
-                    >
-                        <span className="chip_count" aria-hidden="true">{depthCounts[d]}</span>{d}
-                    </button>
-                );
-            })}
-            {typeChips.map(([value, chipLabel, count]) => {
-                const selected = state.type === value;
-                return (
-                    <button
-                        key={value}
-                        type="button"
-                        className={`chip type_chip${selected ? " selected" : ""}`}
-                        aria-pressed={selected}
-                        onClick={() => set({ type: selected ? null : value })}
-                    >
-                        {count != null && <span className="chip_count">{count}</span>}{chipLabel}
-                    </button>
-                );
-            })}
+            <div className="toolbar_controls">
+                <input
+                    type="search"
+                    className="browse_search"
+                    placeholder={t("search_chiasms", "Search chiasms…")}
+                    aria-label={t("search_chiasms", "Search chiasms…")}
+                    value={q}
+                    onChange={onSearchChange}
+                />
+                <label className="toolbar_field">{t("group_caption", "Group")}
+                    <select value={state.group} onChange={(e) => set({ group: e.target.value })}>
+                        <option value="none">{t("group_none", "No grouping")}</option>
+                        <option value="book">{t("group_book", "Book")}</option>
+                        <option value="speaker">{t("group_speaker", "Speaker")}</option>
+                        <option value="depth">{t("group_depth", "Depth")}</option>
+                        <option value="type">{t("group_type", "Type")}</option>
+                    </select>
+                </label>
+                <label className="toolbar_field">{t("sort_by", "Sort")}
+                    <select value={state.sort} onChange={(e) => set({ sort: e.target.value })}>
+                        <option value="canonical">{t("sort_canonical", "Canonical order")}</option>
+                        <option value="depth">{t("sort_depth", "Depth")}</option>
+                        <option value="length">{t("sort_length", "Length")}</option>
+                        <option value="title">{t("sort_title", "Title")}</option>
+                    </select>
+                </label>
+                <button
+                    type="button"
+                    className="dir_button"
+                    aria-pressed={state.dir === "desc"}
+                    title={t("sort_direction", "Reverse sort direction")}
+                    aria-label={t("sort_direction", "Reverse sort direction")}
+                    onClick={() => set({ dir: state.dir === "asc" ? "desc" : "asc" })}
+                >
+                    {state.dir === "asc" ? "↓" : "↑"}
+                </button>
+                <span className="browse_count">{t("results_shown", "$1 of $2 shown", [shownCount, totalCount])}</span>
+            </div>
+            <div className="toolbar_chips">
+                <span className="chip_caption">{t("depth_levels", "Levels")}</span>
+                {/* depth chips: INCLUSION semantics — selected = shown; none selected = all shown */}
+                {depthKeys.map((d) => {
+                    const selected = state.depths.includes(d);
+                    return (
+                        <button
+                            key={d}
+                            type="button"
+                            className={`chip depth_chip${selected ? " selected" : ""}`}
+                            aria-pressed={selected}
+                            aria-label={t("depth_chip_label", "Depth $1 — $2 chiasms", [displayDepth(d), depthCounts[d]])}
+                            onClick={() => toggleDepth(d)}
+                        >
+                            {displayDepth(d)}<span className="chip_count" aria-hidden="true">· {depthCounts[d]}</span>
+                        </button>
+                    );
+                })}
+                <span className="chip_divider" aria-hidden="true" />
+                {typeChips.map(([value, chipLabel, count]) => {
+                    const selected = state.type === value;
+                    return (
+                        <button
+                            key={value}
+                            type="button"
+                            className={`chip type_chip${selected ? " selected" : ""}`}
+                            aria-pressed={selected}
+                            onClick={() => set({ type: selected ? null : value })}
+                        >
+                            {chipLabel}{count != null && <span className="chip_count" aria-hidden="true">· {count}</span>}
+                        </button>
+                    );
+                })}
+            </div>
         </div>
     );
 }
 
-const ChiasmCard = memo(function ChiasmCard({ chiasm, active, onSelect }) {
+// Color key for the book-group card rails (audit §8.1: the palette was
+// validated but never explained on screen). Slugs match the rail-* classes,
+// which set --rail-color in both themes — the dots reuse it, no new colors.
+// Slugs must stay in sync with BOOK_GROUPS in chiasmUtils.js; display names live here.
+const RAIL_LEGEND = [
+    ["small-plates", "Small Plates (1 Nephi–Omni)"],
+    ["abridgment", "Abridgment (W of M–Helaman)"],
+    ["ministry", "Ministry (3–4 Nephi)"],
+    ["mormon", "Mormon"],
+    ["ether", "Ether"],
+    ["moroni", "Moroni"],
+];
+function RailLegend() {
+    return <div className="rail_legend noselect">
+        {RAIL_LEGEND.map(([slug, name]) => (
+            <span key={slug} className={`legend_item rail-${slug}`}>
+                <span className="legend_dot" aria-hidden="true" />{t(`rail_${slug.replace("-", "_")}`, name)}
+            </span>
+        ))}
+    </div>;
+}
+
+const ChiasmCard = memo(function ChiasmCard({ chiasm, active, onSelect, hideSpeaker }) {
     const { chiasmus_id, reference, depthBucket, title, scheme, bookGroup } = chiasm;
+    const depthLabel = displayDepth(depthBucket);
     // Reference is plain text styled like the site's scripture pill, NOT a
     // RefPill: RefPill is a span[role=button] and interactive content inside
     // a <button> is invalid HTML (and an a11y trap). Read-in-context lives in
     // the detail panel (Task 13); RefPill appears where there's no button
     // nesting (Task 14's PassageNotes).
+    // hideSpeaker: when grouped by speaker the group header already names the
+    // speaker — the per-card avatar + name line would repeat it on every card.
     return (
         <button type="button" onClick={() => onSelect(chiasmus_id)}
             className={`chiasmus rail-${bookGroup} ${active ? "active" : ""}`} aria-pressed={active}>
             <div className="card-head">
-                {chiasm.speaker?.person_slug && (
+                {!hideSpeaker && chiasm.speaker?.person_slug && (
                     <img className="speaker-avatar" loading="lazy" width="36" height="36"
                         alt={chiasm.speakerName || ""}
+                        onError={(e) => { e.currentTarget.style.display = "none"; }}
                         src={`${assetUrl}/people/${chiasm.speaker.person_slug}`} />
                 )}
                 <div className="card-titles">
-                    <div className="title">{title || t("untitled_chiasm", "Untitled")}</div>
-                    {chiasm.speakerName && <div className="speaker-name">{chiasm.speakerName}</div>}
+                    <div className="title" title={title || undefined}>{title || t("untitled_chiasm", "Untitled")}</div>
+                    {!hideSpeaker && chiasm.speakerName && <div className="speaker-name">{chiasm.speakerName}</div>}
                 </div>
-                <span className="depth-chip" title={t("chiastic_depth", "Chiastic depth")}>{depthBucket}</span>
+                <span className="depth-chip" title={t("chiastic_depth", "Chiastic depth: $1 levels", [depthLabel])}>{depthLabel}</span>
             </div>
             <div className="card-body">
                 {/* multi-char line_keys make line_lengths longer than the scheme
@@ -168,7 +203,7 @@ const ChiasmCard = memo(function ChiasmCard({ chiasm, active, onSelect }) {
                     uniform bar widths for those chiasms */}
                 <ChiasmGlyph scheme={scheme} lineLengths={chiasm.line_lengths} size={44}
                     title={t("chiasm_structure", "Structure: $1", [scheme])} />
-                <span className="reference">{reference}</span>
+                <span className="reference" title={reference}>{reference}</span>
             </div>
         </button>
     );
@@ -176,7 +211,7 @@ const ChiasmCard = memo(function ChiasmCard({ chiasm, active, onSelect }) {
 
 function Chiasmus({ enriched, flat, groups, state, set, setChiasmusId, activeChiasmus }) {
 
-    useEffect(() => { document.title = t("chiasms_doc_title", "Chiasms") + " | " + label("home_title"); }, []);
+    useEffect(() => { document.title = indexDocTitle(); }, []);
 
     const depthCounts = useMemo(
         () => enriched.reduce((acc, c) => { acc[c.depthBucket] = (acc[c.depthBucket] || 0) + 1; return acc; }, {}),
@@ -202,44 +237,55 @@ function Chiasmus({ enriched, flat, groups, state, set, setChiasmusId, activeChi
             chiasm={chiasm}
             active={activeChiasmus === chiasm.chiasmus_id}
             onSelect={setChiasmusId}
+            hideSpeaker={state.group === "speaker"}
         />
     ));
 
     return <div className="chiasmIndexPanel noselect">
-        <BrowseToolbar state={state} set={set} depthCounts={depthCounts} categoryCounts={categoryCounts} />
-        {flat.length === 0 ? (
-            <div className="browse_empty">
-                {t("no_chiasms_match", "No chiasms match — clear a filter or search term.")}
-                <button type="button" onClick={() => set({ ...DEFAULTS })}>{t("clear_all_filters", "Clear all")}</button>
-            </div>
-        ) : groups ? (
-            groups.map((group) => (
-                // when grouped by BOOK the section carries the same rail-* class as
-                // its cards (group.key is a book name → map through BOOK_GROUPS);
-                // the header underline picks up --rail-color from it
-                <section
-                    className={`chiasm_group${state.group === "book" ? ` rail-${BOOK_GROUPS[group.key] || "other"}` : ""}`}
-                    key={group.key}
-                >
-                    <h4 className="group-header">{group.key} <span className="count">{group.items.length}</span></h4>
-                    <div className="chiasmus_list">{cards(group.items)}</div>
-                </section>
-            ))
-        ) : (
-            <div className="chiasmus_list">{cards(flat)}</div>
-        )}
+        <BrowseToolbar state={state} set={set} depthCounts={depthCounts} categoryCounts={categoryCounts}
+            shownCount={flat.length} totalCount={enriched.length} />
+        {state.group === "book" && <RailLegend />}
+        <div className="chiasmIndexScroll">
+            {flat.length === 0 ? (
+                <div className="browse_empty">
+                    {t("no_chiasms_match", "No chiasms match — clear a filter or search term.")}
+                    <button type="button" onClick={() => set({ ...DEFAULTS })}>{t("clear_all_filters", "Clear all")}</button>
+                </div>
+            ) : groups ? (
+                groups.map((group) => (
+                    // when grouped by BOOK the section carries the same rail-* class as
+                    // its cards (group.key is a book name → map through BOOK_GROUPS);
+                    // the header underline picks up --rail-color from it
+                    <section
+                        className={`chiasm_group${state.group === "book" ? ` rail-${BOOK_GROUPS[group.key] || "other"}` : ""}`}
+                        key={group.key}
+                    >
+                        <h4 className="group-header">{groupLabel(group.key, state.group)} <span className="count">({group.items.length})</span></h4>
+                        <div className="chiasmus_list">{cards(group.items)}</div>
+                    </section>
+                ))
+            ) : (
+                <div className="chiasmus_list">{cards(flat)}</div>
+            )}
+        </div>
     </div>;
-
 }
-
 
 function Container() {
     const [chiasmus, setChiasmus] = useState(null);
-    // deep link: /analysis/chiasmus/<chiasmus_id> opens that chiasm directly
+    // URL is the source of truth for the open chiasm:
+    // /analysis/chiasmus/<chiasmus_id> — react-router re-renders on every
+    // navigation, so Back/Forward open and close the panel by themselves.
     const { params } = useRouteMatch();
-    const [, urlChiasmId] = params?.value?.split("/") || [];
-    const [chiasmus_id, setChiasmusId] = useState(urlChiasmId || null);
-    const { replace } = useHistory();
+    const chiasmus_id = params?.value?.split("/")[1] || null;
+    const { replace, push } = useHistory();
+    // Router search (not window.location.search — under a memory history the
+    // two diverge, and window.location could be stale right after a filter
+    // change). Read through a ref so the mount-only keydown effect's captured
+    // closures stay correct.
+    const { search } = useLocation();
+    const searchRef = useRef(search);
+    useEffect(() => { searchRef.current = search; }, [search]);
     const lang = determineLanguage();
 
     // Browse state lives here (Container is inside the Router context) so the
@@ -248,15 +294,38 @@ function Container() {
     const enriched = useMemo(() => enrichChiasmus(Array.isArray(chiasmus) ? chiasmus : [], lang), [chiasmus, lang]);
     const { flat, groups } = useMemo(() => applyBrowseState(enriched, state), [enriched, state]);
 
-    // stable across renders: setChiasmusId and replace are both stable, and
-    // window.location is read at call time, so the mount-only keydown effect
-    // below can close over this safely. The query string is preserved so
-    // closing a chiasm doesn't wipe the browse state out of the URL.
-    const closeChiasm = () => { setChiasmusId(null); replace("/analysis/chiasmus" + window.location.search); };
-    const chiasmusIdRef = useRef(chiasmus_id); // Create a ref
+    // Mirrors the URL-derived chiasmus_id for the mount-only keydown effect
+    // (kept in sync by the effect below; written eagerly in setChiasmusId).
+    const chiasmusIdRef = useRef(chiasmus_id);
+
+    // First open from the index PUSHES one history entry (so Back closes the
+    // panel); prev/next/arrow browsing while open REPLACES (no history spam);
+    // close REPLACES back to the index. The browse query string is preserved
+    // so opening/closing a chiasm doesn't wipe filters out of the URL.
+    // useCallback with only refs + stable history fns captured: identity is
+    // stable across renders, so the mount-only keydown effect can close over
+    // it safely and ChiasmCard's memo isn't defeated by a fresh onSelect.
+    const setChiasmusId = useCallback((id) => {
+        const qs = searchRef.current;
+        const wasOpen = !!chiasmusIdRef.current;
+        // Eager ref write: the sync effect below runs in a passive effect, so a
+        // second call landing before it flushes (e.g. rapid raw keydowns) would
+        // see a stale ref and push twice. Back/Forward still rely on the effect.
+        chiasmusIdRef.current = id;
+        if (!id) { replace("/analysis/chiasmus" + qs); return; }
+        if (wasOpen) replace(`/analysis/chiasmus/${id}` + qs);
+        else push(`/analysis/chiasmus/${id}` + qs);
+    }, [replace, push]);
+    const closeChiasm = () => setChiasmusId(null);
+
+    // when the panel closes, restore the index page title (Chiasm.js sets the
+    // per-chiasm title while it is open)
     useEffect(() => {
-        chiasmusIdRef.current = chiasmus_id; // Update the ref whenever chiasmus_id changes
-        //scroll into view in chiasmus_list
+        if (!chiasmus_id) document.title = indexDocTitle();
+    }, [chiasmus_id]);
+    // keep the ref following Back/Forward, and center the now-active card
+    useEffect(() => {
+        chiasmusIdRef.current = chiasmus_id;
         const activeElement = document.querySelector(".chiasmus.active");
         if(activeElement){
             activeElement.scrollIntoView({behavior: "smooth", block: "center", inline: "center"});
@@ -304,50 +373,50 @@ function Container() {
             if(e.key === "Escape") closeChiasm();
         };
 
-        //set keyboard shortcuts for left and right arrow keys to navigate chiasmus
         document.addEventListener("keydown", handleKeyDown);
-
-        // Cleanup function to remove the event listener
-        return () => {
-            document.removeEventListener("keydown", handleKeyDown);
-        };
-
-    }, []); // Empty array ensures this runs on mount and unmount only
-
+        return () => document.removeEventListener("keydown", handleKeyDown);
+    }, []); // mount-only: list fetch + arrow/Escape shortcuts (see flatRef above)
 
     // the list must be loaded before we can render anything (deep links set
     // chiasmus_id before the fetch resolves — findIndex on null crashed here)
     if (chiasmus === undefined) return <div className="browse_empty">{t("chiasms_load_failed", "Couldn't load chiasms.")}</div>;
-    if(!chiasmus) return <Loader/>
-    let singlePanel = <div className="chiasmPanel closed"
-    ></div>
-    if(chiasmus_id){
+    if (!chiasmus) return <Loader/>;
+
+    let singlePanel = <div className="chiasmPanel closed"></div>;
+    if (chiasmus_id) {
         // prev/next follow the VISIBLE order and do NOT wrap: null at the ends
         // (and when the open chiasm is filtered out of view) disables the buttons
-        const idIndex = flat.findIndex(x=>x.chiasmus_id===chiasmus_id);
-        const nextId = idIndex !== -1 && idIndex < flat.length-1 ? flat[idIndex+1].chiasmus_id : null;
-        const prevId = idIndex > 0 ? flat[idIndex-1].chiasmus_id : null;
-        singlePanel =
-        <div className="chiasmPanel open">
-        <Chiasm chiasm_id={chiasmus_id}  setChiasmusId={setChiasmusId} closeChiasm={closeChiasm} nextId={nextId} prevId={prevId}/>
-    </div>
-
+        const idIndex = flat.findIndex(x => x.chiasmus_id === chiasmus_id);
+        const nextId = idIndex !== -1 && idIndex < flat.length - 1 ? flat[idIndex + 1].chiasmus_id : null;
+        const prevId = idIndex > 0 ? flat[idIndex - 1].chiasmus_id : null;
+        singlePanel = <div className="chiasmPanel open">
+            <Chiasm chiasm_id={chiasmus_id} setChiasmusId={setChiasmusId} closeChiasm={closeChiasm} nextId={nextId} prevId={prevId}/>
+        </div>;
     }
 
-     let indexPanel = <Chiasmus enriched={enriched} flat={flat} groups={groups} state={state} set={set} setChiasmusId={setChiasmusId} activeChiasmus={chiasmus_id}/>
-
-
+    const indexPanel = <Chiasmus enriched={enriched} flat={flat} groups={groups} state={state} set={set} setChiasmusId={setChiasmusId} activeChiasmus={chiasmus_id}/>;
 
     return <div className="container">
-         <h3 className="title lg-4 text-center">{t("chiasmus_page_title", "Chiasmus in the Book of Mormon")}</h3>
-         <div className="innerChiasmContainer">
-        {indexPanel}
-        {singlePanel}
-         </div>
-
+        <AnalysisBreadcrumb>{t("chiasmus_page_title_short", "Chiasmus")}</AnalysisBreadcrumb>
+        <h3 className="title chiasmus_title">
+            {t("chiasmus_page_title", "Chiasmus in the Book of Mormon")}
+            {enriched.length > 0 && (
+                // JSX strips the whitespace before this span, so without the
+                // hidden separators the heading's accessible name reads
+                // "…Book of Mormon367" — glued on and unlabeled.
+                <span className="total_count" title={t("total_chiasms", "$1 chiasms total", [enriched.length])}>
+                    <span className="visually-hidden"> — </span>
+                    {enriched.length}
+                    <span className="visually-hidden">{t("total_chiasms_sr", " chiasms")}</span>
+                </span>
+            )}
+        </h3>
+        <div className="innerChiasmContainer">
+            {indexPanel}
+            {singlePanel}
         </div>
+    </div>;
 }
 
-
-
+export { BrowseToolbar };
 export default Container;

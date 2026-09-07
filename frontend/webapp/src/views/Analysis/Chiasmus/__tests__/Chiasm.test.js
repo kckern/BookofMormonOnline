@@ -12,7 +12,7 @@ jest.mock("../../../Home/tiles/ScripturePopup", () => ({
 
 import React from "react";
 import "@testing-library/jest-dom";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { openScripture } from "../../../Home/tiles/ScripturePopup";
@@ -108,5 +108,98 @@ describe("Chiasm detail panel", () => {
     fireEvent.click(screen.getByRole("button", { name: "Copy link" }));
     expect(writeText).toHaveBeenCalledWith(window.location.href);
     expect(await screen.findByText("Copied!")).toBeInTheDocument();
+  });
+
+  test("shows the error state when the fetch resolves empty", async () => {
+    BoMOnlineAPI.mockResolvedValueOnce({ chiasm: {} });
+    renderChiasm();
+    expect(await screen.findByText(/couldn't load this chiasm/i)).toBeInTheDocument();
+  });
+
+  test("shows the error state when the backend maps the id to null (live bad-deep-link shape)", async () => {
+    BoMOnlineAPI.mockResolvedValueOnce({ chiasm: { x1: null } });
+    renderChiasm();
+    expect(await screen.findByText(/couldn't load this chiasm/i)).toBeInTheDocument();
+  });
+
+  test("times out to the error state if the fetch never settles", async () => {
+    jest.useFakeTimers();
+    try {
+      BoMOnlineAPI.mockReturnValueOnce(new Promise(() => {})); // never resolves
+      renderChiasm();
+      act(() => { jest.advanceTimersByTime(16000); });
+      expect(await screen.findByText(/couldn't load this chiasm/i)).toBeInTheDocument();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  test("failsafe firing after a successful load does not clobber the content", async () => {
+    // Pins the functional updater (c => c === null ? undefined : c): if the
+    // failsafe were simplified to setChiasm(undefined), a loaded chiasm would
+    // flip to the error state 15s after opening.
+    jest.useFakeTimers();
+    try {
+      renderChiasm();
+      await act(async () => { await Promise.resolve(); }); // let the mocked fetch settle
+      expect(screen.getByText("Test Chiasm")).toBeInTheDocument();
+      act(() => { jest.advanceTimersByTime(16000); });
+      expect(screen.getByText("Test Chiasm")).toBeInTheDocument();
+      expect(screen.queryByText(/couldn't load this chiasm/i)).not.toBeInTheDocument();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  test("renders a collapsed how-to explainer", async () => {
+    BoMOnlineAPI.mockResolvedValue({ chiasm: { x1: fixture } });
+    renderChiasm();
+    await screen.findByText("Test Chiasm");
+    const details = screen.getByText(/how to read a chiasm/i).closest("details");
+    expect(details).not.toHaveAttribute("open");
+    expect(details).toHaveTextContent(/pivot/i);
+  });
+
+  test("header has prev/next that follow visible order and hint at arrow keys", async () => {
+    BoMOnlineAPI.mockResolvedValue({ chiasm: { x1: fixture } });
+    const setChiasmusId = jest.fn();
+    render(
+      <MemoryRouter>
+        <Chiasm chiasm_id="x1" setChiasmusId={setChiasmusId} closeChiasm={jest.fn()} nextId="x2" prevId={null} />
+      </MemoryRouter>
+    );
+    await screen.findByText("Test Chiasm");
+    const header = document.querySelector(".chiasm-header");
+    const next = within(header).getByRole("button", { name: /next/i });
+    expect(within(header).getByRole("button", { name: /previous/i })).toBeDisabled();
+    expect(next.title).toMatch(/→/);
+    fireEvent.click(next);
+    expect(setChiasmusId).toHaveBeenCalledWith("x2");
+  });
+
+  test("last-in-list state disables next while prev stays enabled", async () => {
+    BoMOnlineAPI.mockResolvedValue({ chiasm: { x1: fixture } });
+    render(
+      <MemoryRouter>
+        <Chiasm chiasm_id="x1" setChiasmusId={jest.fn()} closeChiasm={jest.fn()} nextId={null} prevId="x0" />
+      </MemoryRouter>
+    );
+    await screen.findByText("Test Chiasm");
+    const header = document.querySelector(".chiasm-header");
+    expect(within(header).getByRole("button", { name: /next/i })).toBeDisabled();
+    expect(within(header).getByRole("button", { name: /previous/i })).toBeEnabled();
+  });
+
+  test("header × calls closeChiasm", async () => {
+    BoMOnlineAPI.mockResolvedValue({ chiasm: { x1: fixture } });
+    const closeChiasm = jest.fn();
+    render(
+      <MemoryRouter>
+        <Chiasm chiasm_id="x1" setChiasmusId={jest.fn()} closeChiasm={closeChiasm} nextId={null} prevId={null} />
+      </MemoryRouter>
+    );
+    await screen.findByText("Test Chiasm");
+    fireEvent.click(within(document.querySelector(".chiasm-header")).getByRole("button", { name: /close/i }));
+    expect(closeChiasm).toHaveBeenCalledTimes(1);
   });
 });

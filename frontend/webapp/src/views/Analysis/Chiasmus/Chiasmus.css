@@ -25,6 +25,26 @@
 .rail-ether { --rail-color: var(--rail-ether); }
 .rail-moroni { --rail-color: var(--rail-moroni); }
 
+/* Rail color key, shown between the toolbar and the card grid when grouped
+   by book (audit §8.1). Dots read --rail-color from the legend_item's own
+   rail-* class, so light/dark variants come for free. */
+.rail_legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1ex 2ex;
+    font-size: .75rem;
+    color: var(--text-muted);
+    margin: 0 1ex .5ex;
+}
+.legend_item { display: inline-flex; align-items: center; gap: .6ex; white-space: nowrap; }
+.legend_dot {
+    width: .8em;
+    height: .8em;
+    border-radius: 50%;
+    background: var(--rail-color, var(--border));
+    flex: 0 0 auto;
+}
+
 .chiasm_group .group-header {
     border-bottom: 2px solid var(--rail-color, transparent);
 }
@@ -34,7 +54,9 @@
 .chiasmus_list
 {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+    /* 15rem minimum (was 10rem): at 10rem nearly every title truncated —
+       "Record of Kn…" — making the card's primary text useless (audit §5.1) */
+    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
     /* 1em spacing between columns */
     grid-column-gap: 1ex;
     /* 1em spacing between rows */
@@ -45,10 +67,42 @@
 
 .browse_toolbar {
     display: flex;
+    flex-direction: column;
+    gap: .5ex;
+    margin: 1ex 0;
+}
+
+.toolbar_controls,
+.toolbar_chips {
+    display: flex;
     flex-wrap: wrap;
     gap: 1ex;
     align-items: center;
-    margin: 1ex 0;
+}
+
+.toolbar_field {
+    display: flex;
+    gap: .6ex;
+    align-items: center;
+    font-size: .85rem;
+    color: var(--text-muted);
+}
+
+.chip_caption {
+    font-size: .8rem;
+    color: var(--text-muted);
+}
+
+.chip_divider {
+    width: 1px;
+    align-self: stretch;
+    background: var(--border);
+}
+
+.browse_count {
+    margin-left: auto;
+    font-size: .8rem;
+    color: var(--text-muted);
 }
 
 .browse_search {
@@ -90,15 +144,19 @@
     font: inherit;
 }
 
+/* selected = accent (--link), not gray — gray read as "disabled" (audit §4.3);
+   contrast validated in the plan: light #345496/#fff ≈ 7.6:1, dark
+   #a8c7fa/#1a1a1a ≈ 9:1 — both AA */
 .chip.selected {
-    background: var(--text-muted);
+    background: var(--link);
     color: var(--surface-0);
-    border-color: var(--text-muted);
+    border-color: var(--link);
 }
 
 .chip .chip_count {
     font-size: .75em;
-    margin-right: .5ex;
+    margin-left: .5ex;
+    margin-right: 0;
 }
 
 .group-header {
@@ -165,10 +223,12 @@
     appearance: none;
 }
 
+/* calmer affordances (audit §5.7): 2px neutral hover ring, 2px accent ring
+   for the active card — the old 3px shadow/text-primary rings shouted */
 .chiasmus_list .chiasmus:hover
 {
     background-color: var(--surface-4);
-    outline: 3px solid var(--shadow);
+    outline: 2px solid var(--border-strong);
 }
 
 .chiasmus_line
@@ -211,7 +271,7 @@
 
 /* pinned pair — persistent (tap-friendly) highlight; distinct from hover */
 .chiasmus_line .scheme.pinned {
-    outline: 2px solid var(--accent-amber);
+    outline: 2px solid var(--link);   /* was --accent-amber: amber means pivot, not selection */
     outline-offset: 1px;
 }
 
@@ -252,6 +312,9 @@
     object-fit: cover;
     flex-shrink: 0;
     border: 2px solid var(--rail-color, var(--border));
+    /* placeholder fill while the lazy image loads (and before onError hides
+       a broken one) — otherwise the circle is transparent with a bare ring */
+    background: var(--surface-4);
 }
 
 .card-titles {
@@ -259,12 +322,16 @@
     min-width: 0;
 }
 
+/* Titles wrap to two lines, then clamp (with a title-attribute tooltip for
+   the rest) — replaces the old one-line cut that clipped almost everything */
 .card-titles .title {
     font-weight: 800;
     color: var(--text-primary);
-    line-height: 1.1;
+    line-height: 1.15;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .speaker-name {
@@ -304,6 +371,13 @@
     border-radius: .5ex;
     padding: 0 1ex;
     text-align: right;
+    /* long multi-range references ellipsize inside the pill (tooltip carries
+       the full text) instead of wrapping or blowing out the card width */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    min-width: 0;
 }
 
 .chiasmus_line:not(.inactive) .highlight
@@ -316,7 +390,7 @@
 {
     font-weight: 500;
     color: var(--text-primary);
-    background-color: #FFFF0022;
+    background-color: var(--highlight);
     padding-left: 1ex;
     padding-right: 1ex;
     margin-left: -1ex;
@@ -362,30 +436,48 @@
 
 .chiasmus_line.active .scheme
 {
-    background-color: #FFFF0022;
+    background-color: var(--highlight);
     color: var(--text-primary);
     border: 1px solid var(--text-muted);
 }
+
+/* header diet (audit §3.1): compact title instead of display-size h3, with
+   the total corpus count alongside */
+.chiasmus_title { font-size: 1.5rem; margin: .25rem 0 .75rem; }
+.chiasmus_title .total_count { font-size: .8em; font-weight: 400; color: var(--text-muted); margin-left: 1ex; }
 
 .innerChiasmContainer{
     display: flex;
     flex-direction: row;
     gap: 1rem;
+    /* one shared viewport offset for BOTH panels (index + detail) — was two
+       mismatched magic numbers (14.5rem vs 10.5rem). Retuned for the Task 6
+       header diet: panel top sits at ~169px, so 11.5rem (184px) lands the
+       panel bottom ~15px above the viewport edge with no page scrollbar. */
+    --panel-viewport-offset: 11.5rem;
 }
 
-/* the scroll container for the whole index side — toolbar, group headers
-   (which stick to its top), and the card grids */
+/* index side: toolbar stays fixed at the top; only .chiasmIndexScroll below
+   it scrolls (group headers stick to ITS top, under the toolbar) */
 .chiasmIndexPanel{
     width: 100%;
     flex-grow: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - var(--panel-viewport-offset));
+    overflow: hidden;
+}
+
+.chiasmIndexScroll {
     overflow: auto;
-    max-height: calc(100vh - 14.5rem);
+    flex: 1;
 }
 
 .chiasmPanel{
     transition: width 0.5s ease;
     overflow: auto;
-    height: calc(100vh - 10.5rem);
+    height: calc(100vh - var(--panel-viewport-offset));
 }
 
 .chiasmPanel.closed{
@@ -394,25 +486,16 @@
 
 .chiasmPanel.open{
     width: 40%;
+    min-width: 26rem; /* ≥416px of readable column at any two-pane width (audit §3.2) */
+    flex-shrink: 0;
 }
 
-.chiasm .close{
-    float: right;
-    color: var(--text-faint);
-    /* neutralize <button> chrome */
-    background: none;
-    border: 0;
-    padding: 0;
-    font: inherit;
-    line-height: inherit;
-}
-.chiasm .close:hover{
-    color: var(--text-primary);
-}
-
-.chiasmus.active:hover,
-.chiasmus.active{
-    outline: 3px solid var(--text-primary);
+/* .chiasmus_list prefix lifts specificity to (0,3,0): the card <button> keeps
+   :focus after a mouse click, and Bootstrap's button:focus:not(:focus-visible)
+   { outline: 0 } at (0,2,1) was stripping the ring off the just-clicked card */
+.chiasmus_list .chiasmus.active:hover,
+.chiasmus_list .chiasmus.active{
+    outline: 2px solid var(--link);
     background-color: var(--surface-4);
     /* hide the hairline border under the outline but KEEP the color rail
        (was `border: 0`, which stripped the rail and shifted layout) */
@@ -435,12 +518,19 @@
     font-size: 0.9rem;
 }
 
-/* detail header: glyph | title+reference | close */
+/* detail header: glyph | title+reference | ‹ › ×. Sticky against the nearest
+   scroll container — .chiasmPanel on desktop, the .chiasmPanel.open overlay on
+   mobile — so prev/next/close stay reachable mid-scroll in a long chiasm
+   (audit §6.1). Opaque background so lines don't ghost through. */
 .chiasm-header {
     display: flex;
     align-items: flex-start;
     gap: 1rem;
     padding: 1ex 0;
+    position: sticky;
+    top: 0;
+    background: var(--surface-0);
+    z-index: 1;
 }
 .chiasm-header .chiasmGlyph {
     flex-shrink: 0;
@@ -450,20 +540,42 @@
     min-width: 0;
 }
 
+/* header nav cluster: ‹ › × — always-visible prev/next (audit §6.1), with
+   arrow-key hints in the tooltips */
+.chiasm-header-nav { display: flex; gap: .5ex; align-items: center; }
+.chiasm-header-nav button {
+    background: var(--control); border: 1px solid var(--border); border-radius: .5ex;
+    color: var(--text-secondary); font-size: 1.1rem; line-height: 1;
+    padding: .3ex 1.2ex; cursor: pointer; min-width: 2rem;
+}
+.chiasm-header-nav button:disabled { opacity: .4; cursor: default; }
+.chiasm-header-nav button:hover:not(:disabled) { background: var(--control-hover); color: var(--text-primary); }
+/* the × is chromeless: no border/background, faint until hovered — and its
+   hover is color-only (no background pill), keeping it visually distinct
+   from the bordered ‹ › buttons. button.close outranks the button:hover rule
+   above ((0,3,1) at equal specificity, later in file). */
+.chiasm-header-nav .close {
+    border: 0; background: none;
+    color: var(--text-faint);
+    font-size: 1.5rem; padding: 0 .5ex;
+}
+.chiasm-header-nav button.close:hover { background: none; }
+
 .chiasm-actions {
     display: flex;
     gap: 1ex;
     margin-bottom: 1ex;
 }
+/* Collapsed "How to read a chiasm" explainer (audit §6.3: five visual
+   encodings, zero on-screen explanation) */
+.chiasm-help { margin: 0 0 1ex; font-size: .85rem; color: var(--text-muted); }
+.chiasm-help summary { cursor: pointer; }
+.chiasm-help p { margin: .5ex 0 0; color: var(--text-secondary); max-width: 34rem; }
+
 .chiasm .chiasmus_lines
 {
     border-top: 1px solid var(--border);
     padding-top: 1rem;
-}
-
-.chiasm .close{
-    font-size: 1.5rem;
-    cursor: pointer;
 }
 
 .chiasmus_nav
@@ -515,14 +627,22 @@
     color: var(--text-secondary);
 }
 
-.chiasm .loadBar{
-    position: relative;
-    margin-top: -10rem;
+.chiasm.loading {
+    display: flex;
+    justify-content: center;
+    padding: 4rem 0;
+}
+/* The global .loadBar is position:absolute with an inline top:20vh — it would
+   escape the (unpositioned) panel and center over the whole page. Static keeps
+   it in the flex flow and makes the inline top inert. */
+.chiasm.loading .loadBar {
+    position: static;
 }
 
 /* Mobile: the detail panel becomes a full-screen overlay instead of a 40%
    side column, and the card grid drops to 2 then 1 columns */
 @media (max-width: 800px) {
+    .chiasmus_title { font-size: 1.2rem; }
     .innerChiasmContainer {
         flex-direction: column;
     }
@@ -534,12 +654,24 @@
     }
     .chiasmPanel.open {
         position: fixed;
-        inset: 0;
+        /* start below the app's fixed .heading-bar.mobile (Header.js; 60px tall,
+           z-index 5300 in Main.css). Probed 2026-07-17: with inset:0 that bar
+           covered the panel's .chiasm-header and its × close. Out-stacking it
+           is not an option — anything above 5300 would also cover
+           ScripturePopup (z-index 2000), so offset top instead of z-index. */
+        inset: 60px 0 0 0;
         width: 100%;
-        height: 100%;
+        /* base rule's min-width (26rem, audit §3.2) would out-rank width:100%
+           and overflow narrow phones — reset it inside the overlay */
+        min-width: 0;
+        height: auto;
         background: var(--surface-0);
         z-index: 1050;
-        padding: 1rem;
+        /* no top padding: with it, the sticky .chiasm-header rests below the
+           padding zone and scrolled lines ghost through the 1rem strip above
+           it — the header's own padding-top (below) supplies the breathing
+           room instead, and it scrolls WITH the header so nothing peeks over */
+        padding: 0 1rem 1rem;
         overflow: auto;
         /* base rule transitions width 0.5s — animating 0→100vw on open flashes */
         transition: none;
@@ -548,15 +680,43 @@
            pure CSS, and the fixed overlay covers the page visually anyway) */
         overscroll-behavior: contain;
     }
-    /* keep the × reachable while scrolling a long chiasm in the overlay */
+    /* (the ‹ › × header stays reachable while scrolling the overlay via the
+       base .chiasm-header sticky rule — the overlay is the scroll container) */
     .chiasmPanel.open .chiasm-header {
-        position: sticky;
-        top: 0;
-        background: var(--surface-0);
-        z-index: 1;
+        padding-top: 1rem; /* replaces the overlay's stripped top padding */
     }
+    /* touch targets: pad ‹ › × up to comfortable tap height (the .close
+       selector repeats at (0,2,0) so the padded × beats its base 0 .5ex) */
+    .chiasm-header-nav button,
+    .chiasm-header-nav .close {
+        padding: .8ex 1.2ex;
+    }
+    /* error/loading states have no sticky header — restore their top gap */
+    .chiasmPanel.open .chiasm.error,
+    .chiasmPanel.open .chiasm.loading {
+        padding-top: 1rem;
+    }
+    /* mobile: the whole page scrolls — undo the desktop inner-scroll split
+       (overflow:hidden + inner overflow:auto would trap scrolling in a
+       viewport-height box). Toolbar not sticky on mobile — acceptable. */
     .chiasmIndexPanel {
         max-height: none;
+        overflow: visible;
+        display: block;
+    }
+    .chiasmIndexScroll {
+        overflow: visible;
+    }
+    /* chips scroll sideways instead of stacking four rows (audit §3.1) */
+    .toolbar_chips {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: .5ex;
+    }
+    /* rail legend likewise: one scrollable row, not a three-line stack */
+    .rail_legend {
+        flex-wrap: nowrap;
+        overflow-x: auto;
     }
     .chiasmus_list {
         grid-template-columns: 1fr 1fr;
@@ -570,7 +730,8 @@
 }
 
 .chiasmus_list .chiasmus:focus-visible,
-.chiasm .close:focus-visible,
+.chiasm-help summary:focus-visible,
+.chiasm-header-nav button:focus-visible,
 .chiasmus_nav button:focus-visible,
 .chiasm-actions button:focus-visible,
 .chiasmus_line button.scheme:focus-visible,
