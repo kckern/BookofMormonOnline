@@ -26,8 +26,9 @@
   --hm-compressed-stripe: #bfbfbf;
   --hm-posthumous: #ececec;
   --hm-selected: #c75200;
-  --hm-clear-hover: #f7f7f7;
+  --hm-level-1-border: #9eb66f;
   --hm-level-2-border: #5fae53;
+  --hm-level-3-border: #1c7b2f;
   --hm-level-4-border: #114519;
   --hm-event-border: #0a3d80;
   --hm-excom-border: #4a0072;
@@ -63,8 +64,9 @@ html[data-theme="dark"] .witness-life-heatmap {
   --hm-compressed-stripe: #555555;
   --hm-posthumous: #333333;
   --hm-selected: #ff7043;
-  --hm-clear-hover: #333333;
+  --hm-level-1-border: #1a3a1c;
   --hm-level-2-border: #3d7a3a;
+  --hm-level-3-border: #4a8f4a;
   --hm-level-4-border: #2a5c2a;
   --hm-event-border: #1565c0;
   --hm-excom-border: #7b1fa2;
@@ -73,19 +75,61 @@ html[data-theme="dark"] .witness-life-heatmap {
   --hm-compressed-border: #555555;
 }
 
+/* `width: fit-content` + `max-width`/`min-width` here is read by WitnessLifeHeatmap.js's
+   ResizeObserver, which measures THIS element to compute the cell size that determines this
+   element's own natural width — see the long comment on that effect before changing either
+   side of this. min-width: 640px is a floor, but verified empirically it is rarely the
+   *binding* constraint: the legend row below (`.witness-life-heatmap-legend`) has its own
+   fixed natural width from its static swatches/labels — ~593px for a witness with an
+   `excommunication` swatch, ~483px without one (12 of 19 witnesses lack it) — and that is
+   usually what this element's fit-content sizing actually locks onto, with or without the
+   640px floor, for anything but the sparsest grids. Either way, the resolved width is very
+   often WIDER than the grid's own content (a 7-column witness's grid is only ~134px). See
+   `.witness-life-heatmap-scroll`'s comment below for how that gap is kept from reading as
+   dead space. */
 .witness-life-heatmap {
     --bom-heatmap-cell: 8px;
     --bom-heatmap-row: 8px;
     --bom-heatmap-gap: 1px;
-    margin: 1.5rem 0;
+    --bom-heatmap-months-col: calc(0.6rem + 6px);
+    margin: 1.5rem auto;
+    width: fit-content;
+    max-width: 100%;
+    min-width: min(100%, 640px);
     font-size: 0.75rem;
     color: var(--hm-text);
 }
 
+/* width: fit-content + margin: 0 auto here, deliberately: without it this row is a plain
+   width:auto block that FILLS whatever width `.witness-life-heatmap` resolves to (via its
+   min-width floor, or via the legend row's own natural width — see the wrapper's comment
+   above and the ResizeObserver comment in WitnessLifeHeatmap.js). The grid's own content
+   (months column + N cells) is very often narrower than that resolved width — verified
+   empirically: for a sparse witness like Christian Whitmer (7 columns), the grid content is
+   only ~134px wide inside a 640px-floored wrapper. Left-aligned, that produces ~500px of
+   blank space flush to the right of a tiny grid — a smaller-scale recurrence of the exact W1
+   defect this task exists to fix. Centering the grid block turns that into a symmetric margin
+   on both sides, which reads as intentional framing around a small chart rather than a broken
+   layout. This does not affect the ages/grid-wrap/years internal alignment (age ticks over
+   grid columns) — that alignment is untouched, entirely internal to this now-centered block. */
 .witness-life-heatmap-scroll {
     overflow-x: auto;
     overflow-y: hidden;
     padding-bottom: 2px;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+/* Touch scrolling only — momentum/inertia scrolling for the horizontal grid on iOS Safari.
+   The minimum cell size for tappability is deliberately NOT a CSS rule here: overriding
+   --bom-heatmap-cell (also set via inline style on this selector) would require reading its
+   own current value, a cyclic custom-property self-reference invalid at computed-value time
+   regardless of !important. Computed in JS instead — see WitnessLifeHeatmap.js's `widthFor()`
+   comment, and docs/plans/2026-07-18-witnesses-view-ux-fixes.md Task 16 for the full derivation
+   and empirical verification. */
+@media (pointer: coarse) {
+    .witness-life-heatmap-scroll { -webkit-overflow-scrolling: touch; }
 }
 
 /* wrapper around the three aligned rows (ages / grid / years) — fills the
@@ -123,21 +167,7 @@ html[data-theme="dark"] .witness-life-heatmap {
     flex: 0 0 auto;
 }
 
-.witness-life-heatmap-clear {
-    background: var(--hm-bg);
-    border: 1px solid var(--hm-border-soft);
-    border-radius: 1em;
-    padding: 0.1em 0.7em;
-    font-size: 0.7rem;
-    color: var(--hm-text);
-    cursor: pointer;
-    white-space: nowrap;
-}
 
-.witness-life-heatmap-clear:hover {
-    border-color: var(--hm-text);
-    background: var(--hm-clear-hover);
-}
 
 /* proper toggle switch for compress/expand */
 .witness-life-heatmap-switch {
@@ -227,12 +257,12 @@ html[data-theme="dark"] .witness-life-heatmap {
     box-sizing: border-box;
 }
 
-.witness-life-heatmap-grid .cell.has-sources {
-    cursor: pointer;
-    position: relative;
-}
+.witness-life-heatmap-grid .cell.has-sources { position: relative; }
 
-.witness-life-heatmap-grid .cell:hover {
+.witness-life-heatmap-grid .cell.is-clickable { cursor: pointer; }
+
+.witness-life-heatmap-grid .cell.is-clickable:hover,
+.witness-life-heatmap-grid .cell.has-sources:hover {
     box-shadow: 0 0 0 1px var(--hm-text-strong);
     z-index: 10;
     position: relative;
@@ -241,6 +271,13 @@ html[data-theme="dark"] .witness-life-heatmap {
 .witness-life-heatmap-grid .cell.selected {
     box-shadow: 0 0 0 2px var(--hm-selected);
     z-index: 11;
+    position: relative;
+}
+
+.witness-life-heatmap-grid .cell.is-clickable:focus-visible {
+    outline: 2px solid var(--hm-selected);
+    outline-offset: 1px;
+    z-index: 12;
     position: relative;
 }
 
@@ -276,13 +313,53 @@ html[data-theme="dark"] .witness-life-heatmap {
 .witness-life-heatmap-grid .cell.era-death { background: var(--hm-death); }
 .witness-life-heatmap-grid .cell.era-death.has-sources { background: var(--hm-death-dark); }
 
-/* Posthumous era — empty cells are light gray to distinguish the era;
-   cells with sources use the same green scale as the witness era for readability. */
+/* Posthumous era — light gray, to distinguish the death-year months that follow the death
+   itself from ordinary witness-era months.
+   KEPT after Task 8 bounded the grid at death: still reachable for 18 of the 19 witnesses in
+   Witnesses.js's `data` (everyone with a `deathday` except William Hussey/Azel Vandruver, who
+   has none at all — deathOrdinal is always null for them, so eraOf() never labels anything
+   'posthumous'). Since none of those 18 recorded death months is December, each witness has at
+   least one later month in the death year still drawn by the grid, which eraOf() still marks
+   'posthumous' for coloring.
+   bucket-1..4 (a SOURCED posthumous cell) are DELETED here, unlike bucket-0: Task 8 pulls every
+   posthumous source out of sourcesByYm entirely (they render in the strip below instead), so a
+   cell can no longer be simultaneously era-posthumous and count>0 for any witness — those four
+   rules were genuinely dead code, not just visually redundant. */
 .witness-life-heatmap-grid .cell.era-posthumous.bucket-0 { background: var(--hm-posthumous); }
-.witness-life-heatmap-grid .cell.era-posthumous.bucket-1 { background: var(--hm-level-1); }
-.witness-life-heatmap-grid .cell.era-posthumous.bucket-2 { background: var(--hm-level-2); }
-.witness-life-heatmap-grid .cell.era-posthumous.bucket-3 { background: var(--hm-level-3); }
-.witness-life-heatmap-grid .cell.era-posthumous.bucket-4 { background: var(--hm-level-4); }
+
+.witness-life-posthumous {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5em;
+    margin-top: 0.75rem;
+    padding: 0.4rem 0.7rem;
+    background: var(--hm-panel);
+    border: 1px solid var(--hm-border);
+    border-radius: 4px;
+    font-size: 0.7rem;
+    color: var(--hm-text-soft);
+}
+
+.witness-life-posthumous .posthumous-label {
+    font-weight: 600;
+    color: var(--hm-text);
+}
+
+.witness-life-posthumous .posthumous-years {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4em;
+}
+
+.witness-life-posthumous .posthumous-year {
+    padding: 0 0.4em;
+    border-radius: 1em;
+    background: var(--hm-posthumous);
+    color: var(--hm-text);
+}
+
+.witness-life-posthumous .posthumous-count { margin-left: auto; }
 
 .witness-life-heatmap-legend {
     display: flex;
@@ -306,7 +383,9 @@ html[data-theme="dark"] .witness-life-heatmap {
 }
 
 .witness-life-heatmap-legend .swatch.era-witness.bucket-0 { background: var(--hm-panel); }
+.witness-life-heatmap-legend .swatch.era-witness.bucket-1 { background: var(--hm-level-1); border-color: var(--hm-level-1-border); }
 .witness-life-heatmap-legend .swatch.era-witness.bucket-2 { background: var(--hm-level-2); border-color: var(--hm-level-2-border); }
+.witness-life-heatmap-legend .swatch.era-witness.bucket-3 { background: var(--hm-level-3); border-color: var(--hm-level-3-border); }
 .witness-life-heatmap-legend .swatch.era-witness.bucket-4 { background: var(--hm-level-4); border-color: var(--hm-level-4-border); }
 .witness-life-heatmap-legend .swatch.era-event { background: var(--hm-event); border-color: var(--hm-event-border); }
 .witness-life-heatmap-legend .swatch.era-excommunication { background: var(--hm-excom); border-color: var(--hm-excom-border); }
@@ -317,6 +396,15 @@ html[data-theme="dark"] .witness-life-heatmap {
     background-image: repeating-linear-gradient(135deg, transparent 0, transparent 2px, var(--hm-compressed-stripe) 2px, var(--hm-compressed-stripe) 3px);
     border-color: var(--hm-compressed-border);
 }
+
+.witness-life-heatmap-legend .legend-ramp {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2em;
+}
+
+.witness-life-heatmap-legend .legend-ramp .swatch { margin-right: 0; }
+.witness-life-heatmap-legend .legend-ramp-label { color: var(--hm-text-faint); }
 
 .witness-life-heatmap-compressed-note {
     color: var(--hm-text-soft);
@@ -375,7 +463,7 @@ html[data-theme="dark"] .witness-life-heatmap {
     grid-auto-flow: column;
     grid-auto-columns: var(--bom-heatmap-cell);
     column-gap: 1px;
-    margin-left: calc(0.6rem + 6px);
+    margin-left: var(--bom-heatmap-months-col);
     margin-bottom: 2px;
     font-size: 0.6rem;
     color: var(--hm-text-soft);
@@ -425,7 +513,7 @@ html[data-theme="dark"] .witness-life-heatmap {
     grid-auto-flow: column;
     grid-auto-columns: var(--bom-heatmap-cell);
     column-gap: 1px;
-    margin-left: calc(0.6rem + 6px);
+    margin-left: var(--bom-heatmap-months-col);
     margin-top: 4px;
     font-size: 0.6rem;
     color: var(--hm-text-soft);

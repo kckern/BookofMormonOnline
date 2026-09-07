@@ -7,10 +7,22 @@
     gap: 1ex;
 }
 
-.witnesses .eight-witnesses .witness-container{
-    /* grid 4 cols 2 rows, center */
+.witnesses .eight-witnesses .witness-container,
+.witnesses .other-witnesses .witness-container {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
+    gap: 1rem 0.5rem;
+}
+
+@media (max-width: 1100px) {
+    .witnesses .eight-witnesses .witness-container,
+    .witnesses .other-witnesses .witness-container { grid-template-columns: repeat(4, 1fr); }
+}
+
+@media (max-width: 600px) {
+    .witnesses .witness-container { flex-wrap: wrap; }
+    .witnesses .eight-witnesses .witness-container,
+    .witnesses .other-witnesses .witness-container { grid-template-columns: repeat(2, 1fr); }
 }
 .witnesses .witness{
     text-align: center;
@@ -69,15 +81,19 @@
     line-height: 1rem;
 }
 
-.witnesses .witness-statement{
-    
-  font-family: "Scripture", serif;
-  cursor: text;
-  font-size: 1rem;
-  line-height: 1rem;
-  font-weight: 400;
-  color: #00000099;
-  margin: 0 5rem;
+.witnesses .witness-statement {
+    font-family: "Scripture", serif;
+    cursor: text;
+    font-size: 1rem;
+    line-height: 1.5;
+    font-weight: 400;
+    color: #444;
+    margin: 0 auto;
+    max-width: 65ch;
+}
+
+@media (max-width: 700px) {
+    .witnesses .witness-statement { margin: 0 1rem; }
 }
 .witnesses .witness-statement b{
     font-weight: 600;
@@ -165,6 +181,8 @@
     .bc-dropdown .witness-grid {
         grid-template-columns: 1fr;
         min-width: 240px;
+        max-height: 70vh;
+        overflow-y: auto;
     }
 }
 
@@ -198,6 +216,7 @@
     overflow: hidden;
     border-radius: 12px;
     background: #EEE;
+    aspect-ratio: 1 / 1;
 }
 
 .single-witnesses .witness-hero-portrait img {
@@ -210,10 +229,6 @@
 
 .single-witnesses .witness-hero-bio {
     flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    padding: 0.5rem 0;
     min-width: 0;
 }
 
@@ -252,17 +267,24 @@
     font-size: 0.9rem;
     font-weight: 500;
     text-align: right;
+
+/* The branch sized this at 2.25rem/800 for a full-width hero; here the hero sits in the
+   280px rail of .witness-layout, where that wraps badly on longer names. */
+.single-witnesses .witness-hero-name {
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    line-height: 1.15;
+    margin: 0 0 0.75rem;
+}
 }
 
 .single-witnesses .witness-bio {
     font-size: 0.95rem;
-    line-height: 1.5;
+    line-height: 1.6;
     color: #333;
-}
-
-.single-witnesses .witness-bio-placeholder {
-    color: #AAA;
-    font-style: italic;
+    margin-top: 1.25rem;
+    max-width: 60ch;
 }
 
 @media (max-width: 900px) {
@@ -272,16 +294,73 @@
     .single-witnesses .witness-hero-portrait { width: 88px; flex: 0 0 88px; }
 }
 
+/* Height is a measurement, not a placeholder: reconstructing the DOM/CSS WitnessLifeHeatmap.js
+   produces (same classes, same ResizeObserver-driven cellPx convergence) against David Whitmer's
+   152 real rows in headless Chromium converges to a 640px-wide, 9px-cell grid -- the layout's
+   640px min-width floor binds before the container width does -- at ~295px tall. He has both an
+   excommunication swatch and a posthumous strip, so he is close to the tallest a real witness
+   renders. Narrower viewports render shorter (compression kicks in), so this is the desktop
+   worst case. Reserving it stops the cards below jumping down when sources land. */
+.single-witnesses .witness-life-heatmap-skeleton {
+    height: 295px;
+    margin: 1.5rem auto;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #F4F4F4 0%, #ECECEC 50%, #F4F4F4 100%);}
+
 .single-witnesses .witness-sources {
     margin-top: 0;
     min-width: 0;
 }
+
+.single-witnesses .witness-filter-chip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75em;
+    margin-bottom: 1.5rem;
+    padding: 0.5rem 0.9rem;
+    background: #F4F4F4;
+    border: 1px solid #DDD;
+    border-radius: 2em;
+    font-size: 0.85rem;
+    color: #333;
+    width: fit-content;
+}
+
+.single-witnesses .witness-filter-chip button {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    padding: 0.1em 0.5em;
+    border-radius: 1em;
+    font: inherit;
+    font-size: 0.8rem;
+    color: #555;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.single-witnesses .witness-filter-chip button:hover { color: #000; background: #E4E4E4; }
 
 .single-witnesses .witness-sources-loading,
 .single-witnesses .witness-sources-empty {
     text-align: center;
     color: #777;
     padding: 2rem 1rem;
+}
+
+.single-witnesses .witness-decade {
+    margin-bottom: 2rem;
+}
+.single-witnesses .witness-decade-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #767676;
+    padding-bottom: 0.4rem;
+    margin: 0 0 1rem;
+    border-bottom: 1px solid #DDD;
 }
 
 /* Masonry packs the variable-height source cards tighter than a rigid grid. */
@@ -322,13 +401,3 @@
     gap: 0.6rem;
     margin-bottom: 0.75rem;
 }
-.single-witnesses .witness-filter-chip {
-    border: 1px solid #c75200;
-    background: #fff;
-    color: #c75200;
-    border-radius: 999px;
-    padding: 0.1rem 0.6rem;
-    font-size: 0.72rem;
-    cursor: pointer;
-}
-.single-witnesses .witness-filter-chip:hover { background: #c75200; color: #fff; }

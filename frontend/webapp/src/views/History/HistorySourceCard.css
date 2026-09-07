@@ -84,6 +84,25 @@ html[data-theme="dark"] .historySourceCard .historyLead .miniHighlight { color: 
   font-weight: 700;
   color: #333;
 }
+.historySourceCard .historyHeader .historyByline {
+  clear: both;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #444;
+  padding-top: 0.15rem;
+}
+.historySourceCard .firsthand-badge {
+  margin: 0 0.95rem 0.5rem;
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #0d47a1;
+  background: rgba(13, 71, 161, 0.1);
+  border-radius: 4px;
+  padding: 0.15rem 0.5rem;
+}
 /* teaser sits UNDER the money quote (below the blockquote, above the support row) */
 .historySourceCard .historyTeaserText {
   font-style: italic;
