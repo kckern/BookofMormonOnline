@@ -1,0 +1,27 @@
+/* MiniChiasm — compact mirrored-lines rendering, shared by the Home sampler
+   tile and the PassageNotes chiasmus panel. Ported from Sampler.css's
+   .chiasmusTileLine/Key rules, tokenized so dark mode themes automatically. */
+.miniChiasmLine {
+  display: flex;
+  gap: 0.4rem;
+  font-size: 0.74rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  margin-bottom: 0.15rem;
+}
+.miniChiasmKey {
+  flex-shrink: 0;
+  font-weight: 800;
+  color: var(--link);
+  font-size: 0.68rem;
+  line-height: 1.55;
+}
+.miniChiasm mark {
+  background: rgba(240, 200, 80, 0.35);
+  color: inherit;
+  padding: 0 0.1em;
+  border-radius: 0.2em;
+}
+html[data-theme="dark"] .miniChiasm mark {
+  background: rgba(240, 200, 80, 0.22);
+}

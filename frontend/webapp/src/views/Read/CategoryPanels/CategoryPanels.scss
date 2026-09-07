@@ -53,6 +53,55 @@
   }
 }
 
+// Chiasmus tab — glyph + title/reference + deep link per chiasm
+// (theme tokens so dark mode needs no override)
+.chiasmus-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+
+  .chiasmus-panel-item {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.6rem 0.8rem;
+  }
+
+  .chiasmus-panel-head {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+
+    strong {
+      color: var(--text-primary);
+      font-size: 0.85rem;
+    }
+
+    .ref {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+  }
+
+  .miniChiasm {
+    margin-top: 0.5rem;
+  }
+
+  .chiasmus-panel-link {
+    display: inline-block;
+    margin-top: 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--link);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--link-hover);
+      text-decoration: underline;
+    }
+  }
+}
+
 .category-panel {
   // Remove all previous styling since panels are now content-only
   .category-data {

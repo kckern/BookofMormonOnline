@@ -1,5 +1,36 @@
+/* Book-group rail hues — the record's 6-part structure as 4px card rails.
+   Validated (dataviz validate_palette.js, adjacent pairs in canonical order):
+   lightness band, chroma floor, CVD separation (worst deutan ΔE 9.1),
+   normal-vision floor, and >=3:1 contrast vs #fff for every hue. Adjacent
+   pairing is the right model here: groups render in canonical order, and
+   every card also names its book in the reference (secondary encoding).
+   Dark variants live in darkmode/_analysis.scss (validated vs #1a1a1a). */
+:root {
+    --rail-small-plates: #1982b6;
+    --rail-abridgment: #96521c;
+    --rail-ministry: #87519a;
+    --rail-mormon: #8d2e2e;
+    --rail-ether: #19a421;
+    --rail-moroni: #db4a8f; /* pink-magenta: re-stepped off the olive/brown family (Task 12 review) —
+                               the old #8a6509 sat ΔE 5.7 from abridgment even for full-color vision */
+}
 
+/* rail-* classes (on cards, and on .chiasm_group sections when grouped by
+   book) set --rail-color; rail-other sets nothing, so consumers fall back:
+   cards to var(--border), header underlines to transparent */
+.rail-small-plates { --rail-color: var(--rail-small-plates); }
+.rail-abridgment { --rail-color: var(--rail-abridgment); }
+.rail-ministry { --rail-color: var(--rail-ministry); }
+.rail-mormon { --rail-color: var(--rail-mormon); }
+.rail-ether { --rail-color: var(--rail-ether); }
+.rail-moroni { --rail-color: var(--rail-moroni); }
 
+.chiasm_group .group-header {
+    border-bottom: 2px solid var(--rail-color, transparent);
+}
+
+/* scrolling happens on .chiasmIndexPanel (so sticky group headers work);
+   each .chiasmus_list is just a grid inside it */
 .chiasmus_list
 {
     display: grid;
@@ -9,34 +40,115 @@
     /* 1em spacing between rows */
     grid-row-gap: 1ex;
     padding-bottom: 2rem;
-    overflow: auto;
-    max-height: calc(100vh - 14.5rem);
     padding: 1ex;
 }
 
-.chiasmus_controls .filtered{
-    opacity: 0.2;
+.browse_toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1ex;
+    align-items: center;
+    margin: 1ex 0;
 }
 
-.depth_filter .btn{
-    font-size: 1.2rem;
-    padding: 0;
-    width: 2rem;
-    line-height: 50%;
+.browse_search {
+    max-width: 16rem;
+    padding: .4ex 1ex;
+    border: 1px solid var(--border);
+    border-radius: .5ex;
+    background: var(--surface-0);
+    color: var(--text-primary);
 }
-.depth_filter .btn .counter{
-    font-size: 0.8rem;
-    color: #AAA;
-    margin-top: -0.5rem;
-    position: relative;
-    top: -1rem;
+
+.browse_toolbar select {
+    padding: .4ex 1ex;
+    border: 1px solid var(--border);
+    border-radius: .5ex;
+    background: var(--surface-0);
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.browse_toolbar .dir_button {
+    padding: .4ex 1.2ex;
+    border: 1px solid var(--border);
+    border-radius: .5ex;
+    background: var(--control);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font: inherit;
+    line-height: 1;
+}
+
+.chip {
+    border: 1px solid var(--border);
+    background: var(--control);
+    color: var(--text-secondary);
+    border-radius: 1em;
+    padding: 0 1.2ex;
+    cursor: pointer;
+    font: inherit;
+}
+
+.chip.selected {
+    background: var(--text-muted);
+    color: var(--surface-0);
+    border-color: var(--text-muted);
+}
+
+.chip .chip_count {
+    font-size: .75em;
+    margin-right: .5ex;
+}
+
+.group-header {
+    position: sticky;
+    top: 0;
+    background: var(--surface-0);
+    z-index: 1;
+    padding: .5ex 0;
+    margin: 0;
+    display: flex;
+    gap: 1ex;
+    align-items: baseline;
+}
+
+.group-header .count {
+    color: var(--text-faint);
+    font-size: .8em;
+}
+
+.browse_empty {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-muted);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+}
+
+.browse_empty button {
+    border: 1px solid var(--border);
+    background: var(--control);
+    color: var(--text-primary);
+    border-radius: .5ex;
+    padding: .5ex 2ex;
+    cursor: pointer;
+    font: inherit;
+}
+
+.browse_empty button:hover {
+    background: var(--control-hover);
 }
 
 .chiasmus_list .chiasmus
 {
     display: flex;
-    border: 1px solid #e0e0e0;
-    background-color: #DDD;
+    border: 1px solid var(--border);
+    /* the book-group rail; rail-other falls back to the plain border */
+    border-left: 4px solid var(--rail-color, var(--border));
+    background-color: var(--surface-3);
     padding: 1ex;
     height: auto;
     overflow: hidden;
@@ -44,13 +156,19 @@
     cursor: pointer;
     flex-shrink: 0;
     min-height: auto;
-    
+    /* neutralize <button> chrome — cards are real buttons for a11y */
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    width: 100%;
+    margin: 0;
+    appearance: none;
 }
 
 .chiasmus_list .chiasmus:hover
 {
-    background-color: #CCC;
-    outline: 3px solid #00000033;
+    background-color: var(--surface-4);
+    outline: 3px solid var(--shadow);
 }
 
 .chiasmus_line
@@ -72,24 +190,42 @@
 
     font-size: 0.8rem;
     margin-right: 1ex;
-    background-color: #888;
-    color: white;
+    background-color: var(--text-muted);
+    color: var(--surface-0);
     text-align: center;
     border-radius: 50%;
     flex-shrink: 0;
     position: relative;
+    /* the major badge is a real <button> now (pin target) — neutralize
+       button chrome while keeping the circle identity for the minor div too */
+    border: 0;
+    padding: 0;
+    appearance: none;
+    font-family: inherit;
+}
+
+/* only the major badge is interactive (pin target); minor badges are divs */
+.chiasmus_line button.scheme {
+    cursor: pointer;
+}
+
+/* pinned pair — persistent (tap-friendly) highlight; distinct from hover */
+.chiasmus_line .scheme.pinned {
+    outline: 2px solid var(--accent-amber);
+    outline-offset: 1px;
 }
 
 .chiasmus_line .scheme.minor{
-    background-color: #CCC;
-    color: #888;
+    background-color: var(--surface-4);
+    /* --text-secondary, not --text-muted: #777 on #ddd is ~3.3:1 (sub-AA) */
+    color: var(--text-secondary);
 
 }
 
-.chiasmus_line .text 
+.chiasmus_line .text
 {
     font-family: "Scripture", serif;
-    color: #AAA;
+    color: var(--text-secondary);
 }
 
 .chiasm h4
@@ -103,46 +239,83 @@
     text-align: left;
     justify-content: space-between;
     flex-direction: column;
-    
+
 }
-.chiasmus .title{
+.chiasmus .card-head {
+    display: flex;
+    gap: 1ex;
+    align-items: center;
+}
+
+.speaker-avatar {
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid var(--rail-color, var(--border));
+}
+
+.card-titles {
+    flex: 1;
+    min-width: 0;
+}
+
+.card-titles .title {
     font-weight: 800;
-    color: #000 ;
+    color: var(--text-primary);
+    line-height: 1.1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.speaker-name {
+    font-size: .75rem;
+    color: var(--text-muted);
+}
+
+.depth-chip {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--text-muted);
+    color: var(--surface-0);
+    font-size: .85rem;
+    flex-shrink: 0;
+}
+
+.chiasmus .card-body {
     display: flex;
     justify-content: space-between;
-    line-height: 0.8rem;
+    align-items: flex-end;
+    gap: 1ex;
+    margin-top: .5ex;
 }
-.chiasmus .reference{
-    font-weight: 200;
-    color: #444 ;
+
+/* pill-look, non-interactive: the scripture_link visual (Main.css) without
+   role=button — a real RefPill can't sit inside the card <button> */
+.chiasmus .reference {
+    font-family: "Scripture", serif;
     font-size: 0.8rem;
-
-}
-
-
-.chiasmus .depth{
-    background-color: #888;
-    height: 1rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    background-color: var(--control);
+    border: 1px solid var(--border);
+    border-radius: .5ex;
     padding: 0 1ex;
-    color: white;
-    border-radius: 50%;
-    line-height: 1rem;
-}
-
-.chiasmus .scheme{
-    color: #888 ;
+    text-align: right;
 }
 
 .chiasmus_line:not(.inactive) .highlight
 {
     font-weight: 500;
-    color: black    ;
+    color: var(--text-primary);
 }
 
 .chiasmus_line.active .highlight
 {
     font-weight: 500;
-    color: black    ;
+    color: var(--text-primary);
     background-color: #FFFF0022;
     padding-left: 1ex;
     padding-right: 1ex;
@@ -154,35 +327,44 @@
     opacity: 0.5;
 }
 
+/* Pivot — the chiasm's payoff: the deepest line(s) carry the same amber
+   accent as the glyph's center bar. Composes with .active/.inactive: the
+   inactive opacity still dims a pivot when a non-pivot pair is highlighted.
+   :not(.minor) keeps sub-letter badges neutral, and outranks the
+   .active .scheme wash ((0,4,0) > (0,3,0)) so the badge stays amber when its
+   own pair is active. #1a1a1a on #f0ad4e ≈ 8.9:1 (AA). */
+.chiasmus_line.pivot {
+    border-left: 3px solid var(--accent-amber);
+    background: var(--surface-1);
+    padding-left: .5ex;
+}
+.chiasmus_line.pivot .scheme:not(.minor) {
+    background-color: var(--accent-amber);
+    color: #1a1a1a;
+}
+
 .chiasmus_line .text span.label{
     font-family: "Roboto Condensed", sans-serif;
     font-size: 0.7rem;
     padding: 0 1ex;
     border-radius: 0.5ex;
-    background-color: #AAA;
-    color: white;
+    /* --text-muted, not --text-faint: #999 bg + white text is ~2.9:1 (sub-AA) */
+    background-color: var(--text-muted);
+    color: var(--surface-0);
     line-height: 0.9rem;
     position: relative;
     bottom: 0.5ex;
 }
 .chiasmus_line.active .text span.label
 {
-    background-color: #555!important;
+    background-color: var(--text-secondary)!important;
 }
 
 .chiasmus_line.active .scheme
 {
     background-color: #FFFF0022;
-    color: black;
-    border: 1px solid #888;
-}
-
-.chiasmus_controls
-{
-    display: flex;
-    justify-content: space-between;
-    margin-top: 1ex;
-    margin-bottom: 0rem;
+    color: var(--text-primary);
+    border: 1px solid var(--text-muted);
 }
 
 .innerChiasmContainer{
@@ -191,10 +373,13 @@
     gap: 1rem;
 }
 
+/* the scroll container for the whole index side — toolbar, group headers
+   (which stick to its top), and the card grids */
 .chiasmIndexPanel{
     width: 100%;
     flex-grow: 1;
     overflow: auto;
+    max-height: calc(100vh - 14.5rem);
 }
 
 .chiasmPanel{
@@ -213,17 +398,26 @@
 
 .chiasm .close{
     float: right;
-    color: #AAA;
+    color: var(--text-faint);
+    /* neutralize <button> chrome */
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    line-height: inherit;
 }
 .chiasm .close:hover{
-    color: #000;
+    color: var(--text-primary);
 }
 
 .chiasmus.active:hover,
 .chiasmus.active{
-    outline: 3px solid #000;
-    background-color: #CCC;
-    border: 0;
+    outline: 3px solid var(--text-primary);
+    background-color: var(--surface-4);
+    /* hide the hairline border under the outline but KEEP the color rail
+       (was `border: 0`, which stripped the rail and shifted layout) */
+    border-color: transparent;
+    border-left-color: var(--rail-color, var(--border));
 }
 .chiasm h4
 {
@@ -232,17 +426,38 @@
 }
 .chiasm h4.title{
     margin-top: 1ex;
-    color: #444;
+    color: var(--text-secondary);
 }
 .chiasm h4.reference{
     font-weight: 200;
-    color: #444;
+    color: var(--text-secondary);
     margin-bottom: 1ex;
     font-size: 0.9rem;
 }
+
+/* detail header: glyph | title+reference | close */
+.chiasm-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1ex 0;
+}
+.chiasm-header .chiasmGlyph {
+    flex-shrink: 0;
+}
+.chiasm-header .chiasm-titles {
+    flex: 1;
+    min-width: 0;
+}
+
+.chiasm-actions {
+    display: flex;
+    gap: 1ex;
+    margin-bottom: 1ex;
+}
 .chiasm .chiasmus_lines
 {
-    border-top: 1px solid #e0e0e0;
+    border-top: 1px solid var(--border);
     padding-top: 1rem;
 }
 
@@ -260,25 +475,44 @@
 }
 
 
-.chiasmus_nav div
+.chiasmus_nav button,
+.chiasm-actions button
 {
     display: inline-block;
     padding: 10px 20px;
+    font-family: inherit;
     font-size: 14px;
     font-weight: 600;
-    color: #444;
+    color: var(--text-secondary);
     text-align: center;
     text-decoration: none;
-    background-color: #DDD;
+    background-color: var(--control);
     border: none;
     border-radius: 2px;
     cursor: pointer;
     transition: all 0.3s;
 }
 
-.chiasmus_nav div:hover {
-    background-color: #888;
-    color: white;
+.chiasm-actions button {
+    padding: .5ex 2ex;
+    font-weight: 400;
+}
+
+.chiasmus_nav button:hover,
+.chiasm-actions button:hover {
+    background-color: var(--control-hover);
+    color: var(--text-primary);
+}
+
+.chiasmus_nav button:disabled,
+.chiasm-actions button:disabled {
+    opacity: .4;
+    cursor: default;
+}
+.chiasmus_nav button:disabled:hover,
+.chiasm-actions button:disabled:hover {
+    background-color: var(--control);
+    color: var(--text-secondary);
 }
 
 .chiasm .loadBar{
@@ -286,24 +520,68 @@
     margin-top: -10rem;
 }
 
-.depth_filter .filter_label{
-    font-size: 0.7rem;
-    text-align: center;
-    color: #888;
-    rotate: 270deg;
-    display: flex;
-    align-items: center;
-    line-height: 100%;
-    letter-spacing: -0.1ex;
+/* Mobile: the detail panel becomes a full-screen overlay instead of a 40%
+   side column, and the card grid drops to 2 then 1 columns */
+@media (max-width: 800px) {
+    .innerChiasmContainer {
+        flex-direction: column;
+    }
+    /* the closed panel is an empty placeholder div; in column layout its base
+       height (calc(100vh - 10.5rem)) would stack a viewport of dead space
+       below the card grid */
+    .chiasmPanel.closed {
+        display: none;
+    }
+    .chiasmPanel.open {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--surface-0);
+        z-index: 1050;
+        padding: 1rem;
+        overflow: auto;
+        /* base rule transitions width 0.5s — animating 0→100vw on open flashes */
+        transition: none;
+        /* keep overlay scroll from chaining to the page behind it; a real body
+           scroll lock was deliberately skipped (needs JS — the mobile switch is
+           pure CSS, and the fixed overlay covers the page visually anyway) */
+        overscroll-behavior: contain;
+    }
+    /* keep the × reachable while scrolling a long chiasm in the overlay */
+    .chiasmPanel.open .chiasm-header {
+        position: sticky;
+        top: 0;
+        background: var(--surface-0);
+        z-index: 1;
+    }
+    .chiasmIndexPanel {
+        max-height: none;
+    }
+    .chiasmus_list {
+        grid-template-columns: 1fr 1fr;
+    }
 }
 
-.chiasmus_controls input[type="checkbox"]{
-    transform: scale(1.5);
+@media (max-width: 480px) {
+    .chiasmus_list {
+        grid-template-columns: 1fr;
+    }
 }
-.chiasmus_controls .sort_order_button
-{
-    font-size: 1.2rem;
-    padding: 0;
-    width: 2rem;
-    line-height: 50%;
+
+.chiasmus_list .chiasmus:focus-visible,
+.chiasm .close:focus-visible,
+.chiasmus_nav button:focus-visible,
+.chiasm-actions button:focus-visible,
+.chiasmus_line button.scheme:focus-visible,
+.chip:focus-visible,
+.browse_search:focus-visible,
+.browse_toolbar select:focus-visible,
+.browse_toolbar .dir_button:focus-visible,
+.browse_empty button:focus-visible {
+    outline: 2px solid var(--link);
+    outline-offset: 2px;
 }
+
+/* ChiasmGlyph bar rules live in _Common/ChiasmGlyph.css (imported by the
+   component) so the glyph themes correctly outside the Analysis view too. */

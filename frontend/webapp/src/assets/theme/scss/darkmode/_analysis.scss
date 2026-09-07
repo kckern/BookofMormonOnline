@@ -1,0 +1,31 @@
+/* Analysis views (Chiasmus) — dark theme overrides.
+   Chiasmus.css is token-driven; only the literals tokens can't express live here. */
+html[data-theme="dark"] {
+  /* Book-group rail hues, dark variants (light set lives in Chiasmus.css).
+     Validated with dataviz validate_palette.js vs #1a1a1a: lightness band,
+     chroma floor, CVD separation (worst adjacent deutan ΔE 8.0), normal-vision
+     floor, all >=3:1 contrast. Moroni re-stepped to pink-magenta (Task 12
+     review): the old #8a6509 collided with mormon/abridgment under deutan. */
+  --rail-small-plates: #2a7ea8;
+  --rail-abridgment: #c37639;
+  --rail-ministry: #9565a5;
+  --rail-mormon: #c43030;
+  --rail-ether: #4fa854;
+  --rail-moroni: #e9589b;
+
+  /* Light CSS uses a #FFFF0022 yellow alpha wash on the active line/scheme —
+     too dim and hue-wrong on dark surfaces. Warm wash from --highlight's hue. */
+  .chiasmus_line.active .highlight { background-color: rgba(255, 243, 176, 0.14); }
+  .chiasmus_line.active .scheme { background-color: rgba(255, 243, 176, 0.14); }
+
+  /* The pivot badge keeps its amber fill even when its own pair is active —
+     the wash above would otherwise repaint it (this themed selector outranks
+     the light-file pivot rule). Same #1a1a1a-on-amber pairing as light mode. */
+  .chiasmus_line.pivot .scheme:not(.minor) {
+    background-color: var(--accent-amber);
+    color: #1a1a1a;
+  }
+
+  /* Card hover outline is var(--shadow) (a black wash) — invisible on dark cards. */
+  .chiasmus_list .chiasmus:hover { outline-color: rgba(255, 255, 255, 0.2); }
+}

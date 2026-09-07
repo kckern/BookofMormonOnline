@@ -2,6 +2,8 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
+> **Status: executed 2026-07-16** — all 17 tasks landed on dev (subagent-driven; two-stage review per task).
+
 **Goal:** Rebuild the Chiasmus analysis view (`/analysis/chiasmus`) into a browsable, filterable, visually distinctive index with speaker avatars, a scheme-glyph fingerprint per chiasm, real integration into Read/PassageNotes, and full dark-mode/mobile/i18n/a11y coverage — per the audit at `docs/audits/2026-07-16-chiasmus-view-ux-audit.md`.
 
 **Architecture:** Four phases. P0 makes the existing view sound (pure enrichment module kills the `lookupReference`-per-render storm; regex crash fix; fetch/URL hygiene; dark mode; a11y). P1 adds the browse model (URL-encoded search/group/sort/filter state, sticky group headers, filtered-order navigation). P2 adds the visual identity (ChiasmGlyph SVG, card redesign, pivot emphasis, shared MiniChiasm component that also replaces the PassageNotes JSON dump). P3 extends the backend (`speaker`, `verse_id`, `line_lengths` on the `Chiasmus` type) to unlock avatars and speaker grouping.

@@ -44,7 +44,11 @@ const PassageNotes = ({
             if (verseData.refs) counts.refs.push(...verseData.refs);
             if (verseData.xrels) counts.xrels.push(...verseData.xrels);
         });
-        
+
+        // A chiasm spanning multiple verses appears once per verse; the panel
+        // dedups by chiasmus_id, so the badge count must match it
+        counts.chiasmus = counts.chiasmus.filter((c, i, a) => !c.chiasmus_id || a.findIndex(x => x.chiasmus_id === c.chiasmus_id) === i);
+
         return counts;
     };
 

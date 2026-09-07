@@ -934,6 +934,14 @@ query {
     reference
     scheme
     title
+    start_verse_id
+    verse_id
+    line_lengths
+    speaker {
+      person_slug
+      name
+      voice
+    }
     lines {
       guid
       line_key
@@ -945,7 +953,7 @@ query {
 }
 ```
 
-**Returns:** Array of `Chiasmus` objects with structural analysis.
+**Returns:** Array of `Chiasmus` objects with structural analysis. `speaker` (the dominant voice over the structure's verse span) is resolved on this query only — `passagenotes.chiasmus` omits it.
 
 ---
 
@@ -976,6 +984,8 @@ query {
     chiasmus {
       chiasmus_id
       title
+      scheme
+      reference
     }
     people {
       name
@@ -1001,7 +1011,7 @@ query {
 }
 ```
 
-**Returns:** `PassageNotes` object aggregating all annotations for the passage.
+**Returns:** `PassageNotes` object aggregating all annotations for the passage. Each `chiasmus` entry carries the structure's full `scheme` and full-span `reference` even when the passage overlaps only part of it (previously these reflected only the overlapping line/verse); `speaker` is not resolved here — use the `chiasmus` query for that.
 
 ---
 
