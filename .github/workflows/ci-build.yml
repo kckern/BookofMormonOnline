@@ -1,0 +1,33 @@
+name: ci-build
+
+# Build gate (2026-09-08 security audit, H2): compile backend + CRA + Next on every
+# PR and on pushes to the main branches, mirroring the Dockerfile build steps. Catches
+# build breaks (e.g. a stale import) BEFORE they reach the `prod` branch — the prod
+# deploy build had been failing silently on exactly that. Runs on GitHub-HOSTED runners
+# (never the self-hosted prod runner). To gate deploys, make "build" a required status
+# check on `prod` in branch protection.
+on:
+  pull_request:
+  push:
+    branches: [dev, prod, main]
+
+# Least-privilege token: this only reads the repo.
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.15.0'
+      # Mirror Dockerfile: npm ci + npm run build for each workspace. A failure here
+      # is the same failure the prod image build would hit.
+      - name: Build backend (tsc)
+        run: cd backend && npm ci && npm run build
+      - name: Build CRA (frontend/webapp)
+        run: cd frontend/webapp && npm ci && GENERATE_SOURCEMAP=false npm run build
+      - name: Build Next (frontend/next)
+        run: cd frontend/next && npm ci && npm run build
