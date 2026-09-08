@@ -53,6 +53,29 @@ fail() {
   exit 1
 }
 
+# Verify the image's cosign signature before deploying (audit H4, phase 2 —
+# fail-closed): never run an unsigned or tampered image, even if a tag/digest was
+# somehow swapped. Public key inlined (public by design); cosign is cached at
+# $BASE_DIR/cosign (downloaded once, pinned). CI signs the digest in build-push.
+verify_signature() {
+  cosign_bin="$BASE_DIR/cosign"
+  if ! [ -x "$cosign_bin" ]; then
+    log "fetching cosign for signature verification"
+    curl -fsSL "https://github.com/sigstore/cosign/releases/download/v3.1.3/cosign-linux-amd64" -o "$cosign_bin" 2>/dev/null \
+      && chmod +x "$cosign_bin" || fail "could not obtain cosign to verify image signature"
+  fi
+  pub="$BASE_DIR/cosign.pub"
+  cat > "$pub" <<'PUB'
+-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE3IY++CXh+1TqhfmQVUt3/PzB2VAd
+tY3tSQvf0FhELErHXkae8EPfJASMrERzxA3rUv3Ggl+WoT75HrdX6QMGtw==
+-----END PUBLIC KEY-----
+PUB
+  "$cosign_bin" verify --key "$pub" "$1" >/dev/null 2>&1 \
+    || fail "cosign signature verification FAILED for $1 — refusing to deploy"
+  log "verified cosign signature for $1"
+}
+
 container_exists() {
   docker container inspect "$1" >/dev/null 2>&1
 }
@@ -218,6 +241,7 @@ emergency_prune_if_needed
 
 log "pulling $IMAGE"
 docker pull "$IMAGE"
+verify_signature "$IMAGE"
 desired_image="$(docker image inspect -f '{{.Id}}' "$IMAGE")"
 
 if [ -n "$active" ] && container_running "$active"; then
