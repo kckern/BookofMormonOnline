@@ -28,6 +28,7 @@
     "@aws-sdk/client-ses": "^3.1104.0",
     "@aws-sdk/client-sqs": "^3.1121.0",
     "@envelop/core": "^5.5.1",
+    "@fastify/helmet": "^13.1.1",
     "@fastify/rate-limit": "^11.1.0",
     "@mastra/core": "^1.41.0",
     "@mastra/qdrant": "^1.0.2",
