@@ -21,8 +21,31 @@ log() {
   printf '%s %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$*"
 }
 
+# Best-effort deploy-outcome signal to CloudWatch (BOM/Production DeployFailed:
+# 1 on any failure exit, 0 on success) so a failed deploy pages the alerts SNS
+# topic instead of failing silently (audit M3). Never blocks or masks the deploy.
+# Instance id from IMDS (no hardcoded id in this public repo); env override wins.
+report_deploy_outcome() {
+  command -v aws >/dev/null 2>&1 || return 0
+  _iid="${BOM_INSTANCE_ID:-}"
+  if [ -z "$_iid" ]; then
+    _tok="$(curl -sf -X PUT http://169.254.169.254/latest/api/token -H 'X-aws-ec2-metadata-token-ttl-seconds: 60' 2>/dev/null || true)"
+    if [ -n "$_tok" ]; then
+      _iid="$(curl -sf -H "X-aws-ec2-metadata-token: $_tok" http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null || true)"
+    else
+      _iid="$(curl -sf http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null || true)"
+    fi
+  fi
+  [ -n "$_iid" ] || return 0
+  aws cloudwatch put-metric-data --region "${BOM_SM_REGION:-us-west-2}" \
+    --namespace "${BOM_METRIC_NAMESPACE:-BOM/Production}" \
+    --metric-data "MetricName=DeployFailed,Unit=Count,Value=$1,Dimensions=[{Name=InstanceId,Value=$_iid}]" \
+    >/dev/null 2>&1 || true
+}
+
 fail() {
   log "ERROR: $*" >&2
+  report_deploy_outcome 1
   exit 1
 }
 
@@ -120,6 +143,9 @@ render_env_from_secrets() {
   {
     # Non-secret runtime flags — safe to keep in the (public) repo. SANDBOX=0
     # enables writes; NODE_ENV=production masks raw resolver errors.
+    # SOCKET_CORS_ORIGIN restricts cross-origin socket connections (audit H8) —
+    # KEEP IN SYNC with frontend/next/lib/locales.ts (HOST_LANG + FORCE_SSR_HOSTS);
+    # IDN hosts use their punycode (xn--) form since browsers send that in Origin.
     printf '%s\n' \
       'SANDBOX=0' \
       'NODE_ENV=production' \
@@ -127,7 +153,8 @@ render_env_from_secrets() {
       'LOG_LEVEL=info' \
       'PORT=5005' \
       'APP_BASE_URL=https://bookofmormon.online' \
-      'AWS_REGION=us-west-2'
+      'AWS_REGION=us-west-2' \
+      'SOCKET_CORS_ORIGIN=https://bookofmormon.online,https://www.bookofmormon.online,https://xn--289a67xla.kr,https://libromormon.es,https://livredemormon.fr,https://buchmormon.de,https://swe.bookofmormon.online,https://sachmacmon.vn,https://xn--80aahtjpadfibw.net,https://mormonovaknjiga.si,https://tr.bookofmormon.online,https://tgl.bookofmormon.online,https://ssr.bookofmormon.online,https://ssr-kr.bookofmormon.online'
     sm "$sm_prefix/db"
     sm "$sm_prefix/openai"
     sm "$sm_prefix/app"
@@ -276,4 +303,5 @@ if [ -n "$active" ] && [ "$active" != "$next" ] && container_running "$active"; 
 fi
 
 docker image prune -a -f --filter 'until=24h' >/dev/null 2>&1 || true
+report_deploy_outcome 0
 log "deployment complete"
