@@ -69,16 +69,47 @@ jobs:
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: cosign sign --key env://COSIGN_PRIVATE_KEY --yes "kckern/bookofmormon-online@${{ steps.build.outputs.digest }}"
 
+  # Deploy from a GitHub-HOSTED runner (audit H3): assume a scoped OIDC role and
+  # trigger the blue-green deploy on the box via SSM Run Command. No self-hosted
+  # runner on prod, no inbound port, no stored AWS keys. The bom-deploy SSM document
+  # writes the CI-provided script (ScriptB64) and runs it with the pinned digest.
   deploy:
     needs: build-push
-    runs-on: [self-hosted, prod]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - name: Blue-green deploy
+      - name: AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@cbe3b392738ccf3f987d68400dafcf4b0624a56c # v6.2.4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-west-2
+      - name: Blue-green deploy on the box via SSM
+        env:
+          IID: ${{ secrets.PROD_INSTANCE_ID }}
+          IMG: kckern/bookofmormon-online@${{ needs.build-push.outputs.digest }}
         run: |
-          install -m 0755 ops/production/deploy-blue-green.sh /home/ubuntu/greenfield/deploy-blue-green.sh
-          # Pin the exact digest CI just built (audit H4). The box — and the 5-min
-          # reconcile timer — deploy this immutable ref, never the mutable :prod tag.
-          echo "kckern/bookofmormon-online@${{ needs.build-push.outputs.digest }}" > /home/ubuntu/greenfield/desired-image
-          cd /home/ubuntu/greenfield
-          bash deploy-blue-green.sh
+          set -euo pipefail
+          SCRIPT_B64="$(base64 -w0 ops/production/deploy-blue-green.sh)"
+          CID="$(aws ssm send-command --region us-west-2 --instance-ids "$IID" \
+            --document-name bom-deploy \
+            --parameters "ImageRef=${IMG},ScriptB64=${SCRIPT_B64}" \
+            --query Command.CommandId --output text)"
+          echo "SSM command: $CID"
+          ST=Pending
+          for _ in $(seq 1 120); do
+            ST="$(aws ssm get-command-invocation --command-id "$CID" --instance-id "$IID" --query Status --output text 2>/dev/null || echo Pending)"
+            case "$ST" in
+              Success) break ;;
+              Failed|Cancelled|TimedOut)
+                echo "::error::deploy $ST"
+                aws ssm get-command-invocation --command-id "$CID" --instance-id "$IID" --query StandardErrorContent --output text || true
+                exit 1 ;;
+            esac
+            sleep 10
+          done
+          echo "=== deploy output (tail) ==="
+          aws ssm get-command-invocation --command-id "$CID" --instance-id "$IID" --query StandardOutputContent --output text || true
+          [ "$ST" = Success ] || { echo "::error::deploy did not reach Success (last: $ST)"; exit 1; }
