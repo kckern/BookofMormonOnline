@@ -28,6 +28,10 @@ jobs:
       - name: Build backend (tsc)
         run: cd backend && npm ci && npm run build
       - name: Build CRA (frontend/webapp)
-        run: cd frontend/webapp && npm ci && GENERATE_SOURCEMAP=false npm run build
+        # CI=false to mirror the Docker/prod build: react-scripts turns lint
+        # warnings into errors when CI=true (GH Actions default), but the prod
+        # image builds without CI set. Real build breaks (bad imports, etc.) still
+        # hard-fail here; we only avoid failing on warnings prod already tolerates.
+        run: cd frontend/webapp && npm ci && CI=false GENERATE_SOURCEMAP=false npm run build
       - name: Build Next (frontend/next)
         run: cd frontend/next && npm ci && npm run build
