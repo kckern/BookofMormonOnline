@@ -17,6 +17,12 @@ on:
     branches: [prod]
   workflow_dispatch: {}
 
+# Least-privilege GITHUB_TOKEN: this pipeline authenticates to Docker Hub with
+# DOCKERHUB_TOKEN and deploys via the self-hosted runner, so the workflow token
+# only needs to read the repo (2026-09-08 security audit).
+permissions:
+  contents: read
+
 jobs:
   build-push:
     runs-on: ubuntu-latest

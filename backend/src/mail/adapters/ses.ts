@@ -31,7 +31,7 @@ export class SesMailer implements Mailer {
       return { ok: true, id: output.MessageId };
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);
-      console.error(`[mailer:ses] send failed to=${message.to}: ${error}`);
+      console.error(`[mailer:ses] send failed: ${error}`);
       return { ok: false, error };
     }
   }

@@ -25,7 +25,7 @@ ENV REACT_APP_CLICKY_SITE_ID=$REACT_APP_CLICKY_SITE_ID \
     CLICKY_JS_PATH=$CLICKY_JS_PATH \
     CLICKY_BEACON_PATH=$CLICKY_BEACON_PATH
 RUN cd backend && npm run build
-RUN cd frontend/webapp && npm run build
+RUN cd frontend/webapp && GENERATE_SOURCEMAP=false npm run build
 RUN cd frontend/next && npm run build
 
 FROM node:${NODE_VERSION}-alpine AS runtime

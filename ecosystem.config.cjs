@@ -9,7 +9,10 @@ module.exports = {
       name: 'backend',
       cwd: '/app/backend',
       script: 'dist/src/index.js',
-      env: { PORT: '5005' },
+      // NODE_ENV hard-pinned (not only from the rendered .env): GraphQL error
+      // masking + introspection-disable gate on it, so a missing env var must not
+      // silently open them up (2026-09-08 security audit).
+      env: { PORT: '5005', NODE_ENV: 'production' },
       // SSR fetches this process in-container, so a recycle briefly refuses
       // connections and 500s every crawler mid-render. The 500M limit clipped
       // normal crawler-burst working set (~530 MiB observed) and recycled hourly;

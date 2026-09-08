@@ -14,6 +14,9 @@ on:
         default: dry
         options: [dry, apply]
 
+permissions:
+  contents: read
+
 jobs:
   ingest:
     runs-on: [self-hosted, prod]
