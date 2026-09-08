@@ -1,14 +1,16 @@
-# CI/CD — on push to `prod`, build the Docker image on GitHub's hosted runners
-# (free for public repos), push to Docker Hub, then trigger the blue-green deploy
-# on the EC2 box via a self-hosted runner (outbound HTTPS only — no open SSH port).
+# CI/CD — on push to `prod`, build + cosign-sign the Docker image on GitHub's hosted
+# runners, push to Docker Hub, then trigger the blue-green deploy on the EC2 box via
+# AWS SSM Run Command (audit H3). No self-hosted runner on prod, no inbound port, no
+# stored AWS keys (GitHub OIDC). See docs/reference/deployment.md.
 #
 # Required GitHub Actions secrets:
 #   DOCKERHUB_TOKEN        — Docker Hub access token for `kckern`
 #   CLICKY_JS_PATH         — obfuscated path for the Clicky JS proxy
 #   CLICKY_BEACON_PATH     — obfuscated path for the Clicky beacon proxy
-#
-# Self-hosted runner: installed on the prod EC2 box at ~/actions-runner,
-# labelled 'prod'. Connects to GitHub outbound (port 443) — no inbound SSH needed.
+#   COSIGN_PRIVATE_KEY     — cosign signing key (public half at ops/production/cosign.pub)
+#   COSIGN_PASSWORD        — cosign key password
+#   AWS_DEPLOY_ROLE_ARN    — OIDC deploy role (SendCommand to the one instance + docs)
+#   PROD_INSTANCE_ID       — target EC2 instance id
 
 name: deploy-prod
 
@@ -17,9 +19,8 @@ on:
     branches: [prod]
   workflow_dispatch: {}
 
-# Least-privilege GITHUB_TOKEN: this pipeline authenticates to Docker Hub with
-# DOCKERHUB_TOKEN and deploys via the self-hosted runner, so the workflow token
-# only needs to read the repo (2026-09-08 security audit).
+# Least-privilege GITHUB_TOKEN. AWS access is via OIDC (id-token on the deploy job);
+# Docker Hub via DOCKERHUB_TOKEN — so the workflow token only reads the repo.
 permissions:
   contents: read
 
