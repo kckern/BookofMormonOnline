@@ -1,4 +1,7 @@
 name: ingest-korean-bot-avatars
+# Executes via a GitHub-hosted runner -> OIDC -> SSM (audit H3); the bom-ingest
+# document clones the repo on the box so `docker cp` sources resolve. Dispatch
+# from the `prod` branch (the OIDC role trust is locked to prod).
 on:
   workflow_dispatch:
     inputs:
@@ -8,19 +11,44 @@ on:
         options: [dry, apply]
 permissions:
   contents: read
+  id-token: write
 jobs:
   ingest:
-    runs-on: [self-hosted, prod]
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - name: Ingest reviewed avatars in active production container
+      - name: AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@cbe3b392738ccf3f987d68400dafcf4b0624a56c # v6.2.4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-west-2
+      - name: Ingest reviewed avatars in active container via SSM
+        env:
+          IID: ${{ secrets.PROD_INSTANCE_ID }}
+          MODE: ${{ inputs.mode }}
+          REF: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          DIR="${BOM_DEPLOY_DIR:-/home/ubuntu/greenfield}"
-          ACTIVE="$(sed -n '1p' "$DIR/active-slot")"
-          FLAG=""
-          [ "${{ inputs.mode }}" = "apply" ] && FLAG="--apply"
-          docker cp backend/scripts/ingest-korean-bot-avatars.ts "$ACTIVE":/app/backend/scripts/ingest-korean-bot-avatars.ts
-          docker exec "$ACTIVE" mkdir -p /app/backend/assets/bot-avatars
-          docker cp backend/assets/bot-avatars/kim-ho-jik-interpretive.png "$ACTIVE":/app/backend/assets/bot-avatars/kim-ho-jik-interpretive.png
-          docker exec -w /app/backend "$ACTIVE" node --import tsx scripts/ingest-korean-bot-avatars.ts $FLAG
+          APPLY=""; [ "$MODE" = "apply" ] && APPLY="--apply"
+          CMD="$(printf '%s\n' \
+            'set -eu' \
+            'ACTIVE="$(sed -n 1p /home/ubuntu/greenfield/active-slot)"' \
+            'docker cp backend/scripts/ingest-korean-bot-avatars.ts "$ACTIVE":/app/backend/scripts/ingest-korean-bot-avatars.ts' \
+            'docker exec "$ACTIVE" mkdir -p /app/backend/assets/bot-avatars' \
+            'docker cp backend/assets/bot-avatars/kim-ho-jik-interpretive.png "$ACTIVE":/app/backend/assets/bot-avatars/kim-ho-jik-interpretive.png' \
+            "docker exec -w /app/backend \"\$ACTIVE\" node --import tsx scripts/ingest-korean-bot-avatars.ts $APPLY")"
+          CMDB64="$(printf '%s' "$CMD" | base64 -w0)"
+          CID="$(aws ssm send-command --region us-west-2 --instance-ids "$IID" \
+            --document-name bom-ingest --parameters "Ref=${REF},CmdB64=${CMDB64}" \
+            --query Command.CommandId --output text)"
+          echo "SSM command: $CID (mode=$MODE)"
+          ST=Pending
+          for _ in $(seq 1 90); do
+            ST="$(aws ssm get-command-invocation --command-id "$CID" --instance-id "$IID" --query Status --output text 2>/dev/null || echo Pending)"
+            case "$ST" in
+              Success) break ;;
+              Failed|Cancelled|TimedOut) echo "::error::ingest $ST"; aws ssm get-command-invocation --command-id "$CID" --instance-id "$IID" --query StandardErrorContent --output text || true; exit 1 ;;
+            esac
+            sleep 10
+          done
+          aws ssm get-command-invocation --command-id "$CID" --instance-id "$IID" --query StandardOutputContent --output text || true
+          [ "$ST" = Success ] || { echo "::error::ingest not Success ($ST)"; exit 1; }
