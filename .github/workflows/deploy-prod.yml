@@ -26,6 +26,8 @@ permissions:
 jobs:
   build-push:
     runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -38,6 +40,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push
+        id: build
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
@@ -62,5 +65,8 @@ jobs:
       - name: Blue-green deploy
         run: |
           install -m 0755 ops/production/deploy-blue-green.sh /home/ubuntu/greenfield/deploy-blue-green.sh
+          # Pin the exact digest CI just built (audit H4). The box — and the 5-min
+          # reconcile timer — deploy this immutable ref, never the mutable :prod tag.
+          echo "kckern/bookofmormon-online@${{ needs.build-push.outputs.digest }}" > /home/ubuntu/greenfield/desired-image
           cd /home/ubuntu/greenfield
           bash deploy-blue-green.sh
