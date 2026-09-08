@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-08
 **Trigger:** CloudWatch alarm `bom-production-npm-5xx-burst` (≥5 NPM 5xx in 5 min) fired at
-04:30:43 UTC on instance `i-02c9619a48343a8d9` (prod EC2 `ip-10-0-1-12`), reporting 16 5xx in
+04:30:43 UTC on the prod EC2 instance, reporting 16 5xx in
 the 04:25 UTC bucket.
 **Severity:** Low — no outage, self-healing, bot/scanner-facing only. Real (browser) users unaffected.
 
