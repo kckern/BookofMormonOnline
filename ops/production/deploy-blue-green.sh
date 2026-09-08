@@ -98,7 +98,51 @@ verify_gateway() {
   docker exec "$GATEWAY" wget -q -T 15 -O /dev/null http://127.0.0.1:5005/health
 }
 
+# Assemble the runtime env at deploy time from AWS Secrets Manager (read via the
+# EC2 instance role bomdocker-role / BomSecretsRead) plus the non-secret public
+# flags below. Replaces a hand-made .env that could drift or vanish (it did —
+# every deploy failed on a missing .env). Idempotent and self-healing.
+# Secret groups: bom/prod/{db,openai,app} -> .env ; bom/prod/mail -> mail.env.
+# See docs/bugs/2026-09-08-npm-5xx-burst-ssr-econnrefused.md.
+render_env_from_secrets() {
+  command -v aws >/dev/null 2>&1 || fail "aws CLI required to render env from Secrets Manager"
+  command -v jq  >/dev/null 2>&1 || fail "jq required to render env from Secrets Manager"
+  sm_region="${BOM_SM_REGION:-us-west-2}"
+  sm_prefix="${BOM_SM_PREFIX:-bom/prod}"
+  sm() {  # emit a secret as KEY=VALUE lines; abort the deploy if it is missing/not an object
+    sm_val="$(aws secretsmanager get-secret-value --region "$sm_region" --secret-id "$1" --query SecretString --output text 2>/dev/null)" \
+      || fail "cannot read secret $1 (instance role / BomSecretsRead policy?)"
+    printf '%s' "$sm_val" | jq -e 'type == "object"' >/dev/null 2>&1 || fail "secret $1 is not a JSON object"
+    printf '%s' "$sm_val" | jq -r 'to_entries[] | "\(.key)=\(.value)"'
+  }
+  umask 077
+  env_tmp="$ENV_FILE.tmp.$$"
+  {
+    # Non-secret runtime flags — safe to keep in the (public) repo. SANDBOX=0
+    # enables writes; NODE_ENV=production masks raw resolver errors.
+    printf '%s\n' \
+      'SANDBOX=0' \
+      'NODE_ENV=production' \
+      'BOT_SCHEDULER_ENABLED=true' \
+      'LOG_LEVEL=info' \
+      'PORT=5005' \
+      'APP_BASE_URL=https://bookofmormon.online' \
+      'AWS_REGION=us-west-2'
+    sm "$sm_prefix/db"
+    sm "$sm_prefix/openai"
+    sm "$sm_prefix/app"
+  } > "$env_tmp"
+  mv -f "$env_tmp" "$ENV_FILE"
+  chmod 600 "$ENV_FILE"
+  mail_tmp="$MAIL_ENV_FILE.tmp.$$"
+  sm "$sm_prefix/mail" > "$mail_tmp"
+  mv -f "$mail_tmp" "$MAIL_ENV_FILE"
+  chmod 600 "$MAIL_ENV_FILE"
+  log "rendered $ENV_FILE ($(grep -c . "$ENV_FILE") vars) + $MAIL_ENV_FILE ($(grep -c . "$MAIL_ENV_FILE") vars) from Secrets Manager ($sm_prefix/*)"
+}
+
 mkdir -p "$BASE_DIR" "$GATEWAY_DIR"
+render_env_from_secrets
 [ -r "$ENV_FILE" ] || fail "missing environment file: $ENV_FILE"
 [ -r "$MAIL_ENV_FILE" ] || fail "missing mail environment file: $MAIL_ENV_FILE"
 [ -r "$TEMPLATE" ] || fail "missing gateway template: $TEMPLATE"
