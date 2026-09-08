@@ -18,6 +18,20 @@ const CRA_ASSET_PREFIXES = ['/static/', '/font/', '/icons/', '/img/', '/md/', '/
 const FAX_BACKEND_PREFIXES = ['/fax/boxes/', '/fax/render/', '/fax/text/']
 const STUDY_EDITION_PATHS = new Set(['/studyedition', '/특별반', '/%ED%8A%B9%EB%B3%84%EB%B0%98'])
 
+// Vulnerability scanners sweep for secrets/framework endpoints (/.env, /.git,
+// /actuator, Laravel logs) on real AND spoofed hosts. None are valid routes; left
+// to fall through they cost a host-redirect + SSR render each and, in bursts,
+// showed up as upstream 5xx that tripped the NPM 5xx alarm. Short-circuit them to
+// a cheap 404 before any other work. Extend as new probe shapes appear.
+// See docs/bugs/2026-09-08-npm-5xx-burst-ssr-econnrefused.md.
+const JUNK_PROBE_PREFIXES = ['/actuator', '/storage/logs']
+function isJunkProbePath(pathname: string): boolean {
+  // Dotfile probes (.env, .git, .aws…). /.well-known (ACME, assetlinks,
+  // security.txt) is legitimate and must stay reachable.
+  if (pathname.startsWith('/.') && !pathname.startsWith('/.well-known/')) return true
+  return JUNK_PROBE_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'))
+}
+
 const SECURITY_HEADERS: Record<string, string> = {
   'Strict-Transport-Security': 'max-age=31536000',
   'X-Content-Type-Options': 'nosniff',
@@ -144,6 +158,11 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.hostname = hostname.slice(4)
     return markResponse(NextResponse.redirect(url, 301), clientClass)
+  }
+
+  // --- Scanner/secret-probe short-circuit: cheap 404, no redirect or SSR ---
+  if (isJunkProbePath(pathname)) {
+    return markResponse(new NextResponse('Not Found', { status: 404 }), clientClass)
   }
 
   // --- Host allowlist: unauthorized hosts → canonical English (path preserved) ---

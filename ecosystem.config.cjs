@@ -10,7 +10,13 @@ module.exports = {
       cwd: '/app/backend',
       script: 'dist/src/index.js',
       env: { PORT: '5005' },
-      max_memory_restart: '500M',
+      // SSR fetches this process in-container, so a recycle briefly refuses
+      // connections and 500s every crawler mid-render. The 500M limit clipped
+      // normal crawler-burst working set (~530 MiB observed) and recycled hourly;
+      // give the same headroom the `next` process gets. Retry in lib/graphql.ts
+      // bridges the gap; this reduces how often it is exercised.
+      // See docs/bugs/2026-09-08-npm-5xx-burst-ssr-econnrefused.md.
+      max_memory_restart: '768M',
     },
     {
       name: 'next',
