@@ -120,6 +120,18 @@ const graphqlHandler = async (req: FastifyRequest, reply: FastifyReply) => {
   return reply;
 };
 
+// S (2026-09-08 audit M5): security headers on backend-direct responses
+// (/graphql, /api, /fax/*, socket handshake) — these bypass the Next middleware
+// that sets them for HTML. CSP and CORP are left OFF on purpose: the backend
+// serves JSON/API (CSP is a no-op there and Next owns it for HTML), and CORP
+// 'same-origin' would break cross-origin GraphQL calls from the language editions.
+const helmet = (await import('@fastify/helmet')).default;
+await app.register(helmet, {
+  contentSecurityPolicy: false,
+  crossOriginResourcePolicy: false,
+  crossOriginEmbedderPolicy: false,
+});
+
 // A3: global per-IP rate limit on public routes. Next SSR calls GraphQL over
 // loopback inside this container; exempt that trusted internal hop so unrelated
 // crawlers do not collapse into one 127.0.0.1 bucket. Public traffic still has
