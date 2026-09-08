@@ -39,6 +39,8 @@ jobs:
           username: kckern
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+
       - name: Build and push
         id: build
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
@@ -56,6 +58,16 @@ jobs:
             REACT_APP_CLICKY_JS_PATH=${{ secrets.CLICKY_JS_PATH }}
             CLICKY_JS_PATH=${{ secrets.CLICKY_JS_PATH }}
             CLICKY_BEACON_PATH=${{ secrets.CLICKY_BEACON_PATH }}
+
+      # Sign the pushed image by digest (audit H4). Phase 1 of 2 — signing is
+      # non-gating; the deploy-time `cosign verify` (fail-closed) lands separately
+      # once signatures are confirmed present. Key material is a GH secret; the
+      # public half is committed at ops/production/cosign.pub.
+      - name: Sign image
+        env:
+          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+        run: cosign sign --key env://COSIGN_PRIVATE_KEY --yes "kckern/bookofmormon-online@${{ steps.build.outputs.digest }}"
 
   deploy:
     needs: build-push
