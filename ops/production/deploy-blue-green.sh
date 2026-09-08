@@ -1,8 +1,12 @@
 #!/bin/sh
 set -eu
 
-IMAGE="${BOM_IMAGE:-kckern/bookofmormon-online:prod}"
 BASE_DIR="${BOM_DEPLOY_DIR:-/home/ubuntu/greenfield}"
+# Deploy the immutable digest CI recorded in $BASE_DIR/desired-image (audit H4),
+# not the mutable :prod tag — a repointed tag or leaked Docker Hub token then can't
+# change what runs, and the 5-min reconcile timer converges to the pinned digest.
+# BOM_IMAGE overrides; fall back to :prod only if no pin has been recorded yet.
+IMAGE="${BOM_IMAGE:-$(cat "$BASE_DIR/desired-image" 2>/dev/null || echo 'kckern/bookofmormon-online:prod')}"
 ENV_FILE="${BOM_ENV_FILE:-$BASE_DIR/.env}"
 MAIL_ENV_FILE="${BOM_MAIL_ENV_FILE:-$BASE_DIR/mail.env}"
 NETWORK="${BOM_DOCKER_NETWORK:-bomdocker_phpnetwork}"
