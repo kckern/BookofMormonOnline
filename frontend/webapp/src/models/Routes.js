@@ -51,7 +51,6 @@ const JosephSmith = lazy(() => import("../views/History/JosephSmith.js"));
 const HistoryHub = lazy(() => import("../views/History/HistoryHub.jsx"));
 const TranslationSources = lazy(() => import("../views/History/TranslationSources.jsx"));
 const LostPages = lazy(() => import("../views/History/LostPages.js"));
-const RedirectReceptionSlug = lazy(() => import("../views/History/RedirectReceptionSlug.jsx"));
 const NyPa1820s = lazy(() => import("../views/History/NyPa1820s.js"));
 const ReadScripture = lazy(() => import("../views/Read/Read.js"));
 const EntityPage = lazy(() => import("../views/Entity/EntityPage"));
@@ -223,8 +222,13 @@ const routes = [
       component: NyPa1820s,
   },
   {
+      // The document itself, matching what SSR has always meant by this URL
+      // (frontend/next/app/history/[slug]/page.tsx). Archive doc slugs are
+      // shared across all four archives, but setSlug always pushes
+      // /history/<slug>, so the old redirect landed a witnesses or
+      // translation doc under the RECEPTION hub.
       path: "/history/:slug",
-      component: RedirectReceptionSlug,
+      component: () => <EntityPage type="history" />,
   },
   {
       path: "/history",
