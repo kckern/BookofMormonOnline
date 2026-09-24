@@ -1,7 +1,7 @@
 # Entity URL Presentation Model
 
 **Date:** 2026-09-24
-**Status:** Phase 1 implemented 2026-09-24; Phase 2 (presentation model) pending plan
+**Status:** Implemented 2026-09-24 (Phase 1 SSR + Phase 2 presentation model)
 **Scope:** `frontend/webapp` (CRA) + `frontend/next` (SSR)
 
 ## Problem
@@ -257,3 +257,58 @@ phases:
 - `/history/<slug>` for a witnesses doc renders that doc, not the reception hub.
 - A direct load of a commentary URL still renders the parent chapter with the
   commentary in context, never full-page.
+
+
+## Deviations from this design, as built
+
+Recorded so a later reader is not misled by §1, which describes an approach that
+was deliberately not taken.
+
+- **The two history instances were NOT unified** (§1 proposed it, and named it
+  risk #1). Investigation found 57 `push`/`replace` call sites across 10 files —
+  including the reader's chapter navigation and the facsimile viewer's
+  per-page-turn URL sync — all on the instance the Router ignores. Unifying
+  would have made every one of them drive Router re-renders.
+- **Background-location routing was therefore unnecessary.** Because in-app
+  clicks never reach the Router, an entity item route can only mount on direct
+  arrival, so the route renders the page unconditionally and the click path is
+  untouched. Far smaller blast radius than §1's design — but it leaves the
+  dual-history accident load-bearing: anyone who later unifies the instances
+  must implement background locations in the same change, or every modal open
+  will swap its backdrop to an index grid.
+- **Maximize is `closePopUp({ keepSlug: true })` + `routerHistory.replace(samePath)`**,
+  not a presentation flag in controller state. `closePopUp` normally calls
+  `setSlug(underSlug)`, which rewrote the address bar to the index the moment
+  the modal closed — so maximize landed on the right page under the wrong URL
+  until `keepSlug` was added. Caught in browser verification, not by tests.
+- **Back/Forward into a modal entry renders the page, not the modal.** §1's
+  chosen semantics ("fresh load primarily") expected the modal to be restored.
+  Both history instances receive `popstate`, so the Router re-evaluates and the
+  item route mounts. Accepted: the presentation is coherent with the URL.
+- **Three helpers moved out of `PopUp.js` beyond the plan's list** —
+  `Relationships`, `ReferenceList` and `displayDate` now live in
+  `views/_Common/entity/`. The plan had the bodies importing them back out of
+  `PopUp.js`, which would have been circular and would have dragged
+  Narration/Victory/Draggable into every body test. `PopUp.js` re-exports
+  `displayDate` so `Drawer.js` is unaffected. `PopUp.js` went 948 → 684 lines.
+- **`EntityPage` uses a plain `Spinner`, not `PopUp`'s `Loading`**, which renders
+  popup chrome (`#popUp` card with a close ×) that has no place on a page.
+- **Labels go through a local `text(key, fallback)` helper.** `label()` returns
+  `" "` before `global.dictionary` loads and echoes the KEY when the dictionary
+  lacks it (`models/Utils.js:99-101`), so the usual `label(k) || fallback` idiom
+  never falls back — a missing `menu_matters` would have rendered as the literal
+  string "menu_matters".
+- **Relationship clicks on a page navigate page → page.** `Relationships` gained
+  an optional `onEntityClick`; the modal omits it and keeps calling `setPopUp`,
+  the page passes a Router navigation so a related person opens as another page
+  rather than a modal over a stale one.
+- **`/image/<id>` → `/art/<id>` canonicalization was preserved**, matching the
+  canonical SSR path, and `e2e/deeplink-image.spec.js` was rewritten: it had
+  encoded the old contract (resolve to the parent chapter, render the inline
+  `img.panel`). It now also guards that the old panel is *not* what answers the
+  URL.
+- **Not fixed, and pre-existing:** `JosephSmith.js` imports `matchesYearMonth`
+  from `WitnessLifeHeatmap`, which does not export it. This fails the CRA
+  compile, and the resulting dev-server error overlay covers the whole app and
+  intercepts pointer events. Unrelated to this work, but it makes dev
+  hand-testing awkward until fixed.
