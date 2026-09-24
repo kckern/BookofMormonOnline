@@ -65,3 +65,42 @@ systemd timer (`bom-deploy.timer`) reconciles the box to the recorded digest (`d
 - Only signed, digest-pinned images run (cosign verify, fail-closed).
 - Runtime secrets never live in the repo or in GitHub build args (SM-rendered at deploy).
 - CI has no foothold on the prod host (hosted runners + IAM-scoped SSM).
+
+## Disk pressure and container logs
+
+The EC2 root is 34 GB and runs ~16 containers (the greenfield app slots plus the
+BoMDocker stack). Two deploys failed on 2026-09-24 with `disk remains 90% full
+after emergency prune; refusing image pull`. Worth knowing why:
+
+- **Image pruning cannot rescue this box.** `docker system df` reports every
+  image as ACTIVE (15 of 15), because something is running from each one, so
+  `docker system prune -a` frees essentially nothing however much it claims is
+  "reclaimable". The emergency guard in `deploy-blue-green.sh` now truncates
+  oversized container logs *before* it reaches for image pruning, and only gives
+  up the rollback slot after that (`BOM_LOG_TRUNCATE_MB`, default 50).
+- **pm2 wrote unrotated log files.** `pm2-logrotate` is a pm2 *module* and
+  modules do not start under `pm2-runtime`, so nothing rotated them:
+  `next-out.log` reached 0.6 GB and `backend-out.log` 0.4 GB in two weeks.
+  `ecosystem.config.cjs` now sends pm2 output to `/dev/null`; pm2-runtime still
+  forwards every line to container stdout, which is what Vector's `docker_logs`
+  source ships to VictoriaLogs, so nothing is lost.
+- **Docker's json-file driver does not rotate by default.** The app and gateway
+  containers now get `--log-opt max-size=20m --log-opt max-file=3` explicitly
+  from the deploy script.
+
+### Pending: the daemon-wide default needs a docker restart
+
+`/etc/docker/daemon.json` was tightened from `max-size: 100m` to `20m` on
+2026-09-24 (backup alongside it as `daemon.json.bak-<date>`). **It is not in
+effect yet.** `log-driver`/`log-opts` are NOT part of Docker's live-reload set —
+verified empirically: after `systemctl reload docker`, a freshly created
+container still inherited `100m`. Applying it needs `systemctl restart docker`,
+which bounces every container on the box, so it should be scheduled rather than
+done during a deploy.
+
+Note also that Docker bakes the *resolved* default into a container's
+`HostConfig` at creation time, so existing containers keep whatever default was
+current when they were created. The long-lived BoMDocker containers were created
+before any `log-opts` existed and report an empty `max-size` — genuinely
+unbounded until they are next recreated. Until then the deploy guard's log
+truncation is the safety net for them.
