@@ -1,45 +1,24 @@
 import React, { useState, useEffect, useRef } from "react";
 import Comments from "./Study/Study";
-import { assetUrl } from "src/models/BoMOnlineAPI";
-import Parser from "html-react-parser";
-import { renderMoneyQuote } from "./moneyQuote";
 import Draggable from "react-draggable";
-import { renderPersonPlaceHTML, detectScripturesPreservingTokens } from "../Page/PersonPlace";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
-import ReactTooltip from "react-tooltip";
 import { Link, useHistory } from "react-router-dom";
 import { Victory } from "src/views/User/Victory";
-import moment from "moment";
 import XrelSection from "./XrelSection";
-import EntityThumb from "./EntityThumb";
 import "./PopUp.css";
-import {
-  snapSelectionToWord,
-  replaceNumbers,
-  processName,
-  label,
-  log,
-  isMobile,
-} from "src/models/Utils";
-import {
-  Button,
-  Dropdown,
-  DropdownItem,
-  DropdownMenu,
-  DropdownToggle,
-} from "reactstrap";
+import { processName, label, log, isMobile } from "src/models/Utils";
 import ReactMarkdown from "react-markdown";
 import Loader, { Spinner } from "./Loader";
 import { MobileDrawer } from "./Drawer";
 import { addHighlightTagSelectively } from "../Page/TextContent";
 import Commentary from "./Commentary";
 import { ScripturePanelSingle } from "../Page/Narration";
-import { determineLanguage } from "../../models/Utils";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { resolveSlug } from "src/models/slugVariants";
 import PersonBody, { PersonChooser } from "./entity/PersonBody";
-import Relationships from "./entity/Relationships";
-import ReferenceList from "./entity/ReferenceList";
+import PlaceBody, { PlaceChooser } from "./entity/PlaceBody";
+import MatterBody, { MatterChooser } from "./entity/MatterBody";
+import HistoryBody, { historyMeta } from "./entity/HistoryBody";
 
 export function Loading({ type, callingAPI }) {
   const appController = useAppController();
@@ -330,12 +309,16 @@ function Place() {
   if (place === undefined) return <pre>{appController.popUp}</pre>;
   if (place === null) {
     const activeId = appController.states.popUp.activeId;
-    const candidates = (appController.preLoad?.placeList || [])
-      .filter(p => p.slug.startsWith(activeId));
-    if (candidates.length === 1) {
-      appController.functions.setPopUp({ type: "places", ids: [candidates[0].slug], underSlug: "places" });
+    const list = appController.preLoad?.placeList || [];
+    // Shared with SSR via models/slugVariants — see the person branch above.
+    const resolution = resolveSlug(activeId, list.map((pl) => pl.slug));
+    if (resolution.kind === "redirect" || resolution.kind === "exact") {
+      appController.functions.setPopUp({ type: "places", ids: [resolution.slug], underSlug: "places" });
       return <Loading type="Place" />;
     }
+    const candidates = (resolution.candidates || []).map(
+      (slug) => list.find((pl) => pl.slug === slug) || { slug, name: slug, info: null },
+    );
     return (
       <div id="popUp" className="card popupwindow" style={{ top: appController.states.popUp.top, left: appController.states.popUp.left }}>
         <div className="card-header">
@@ -345,15 +328,13 @@ function Place() {
           </ul>
         </div>
         <div className="card-body">
-          <div className="ppbody" style={{ flexDirection: "column", gap: "0.5em" }}>
-            {candidates.length > 1 ? candidates.map(c => (
-              <div key={c.slug} className="related_row" style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "0.75em", padding: "0.5em" }}
-                onClick={() => appController.functions.setPopUp({ type: "places", ids: [c.slug], underSlug: "places" })}>
-                <div className="related_avatar"><img src={`${assetUrl}/places/${c.slug}`} alt={c.name} /></div>
-                <div><strong>{c.name}</strong>{c.info && <div><small>{c.info}</small></div>}</div>
-              </div>
-            )) : <div className="emptyState" style={{ padding: "2em", textAlign: "center" }}>{activeId}</div>}
-          </div>
+          <PlaceChooser
+            requested={activeId}
+            candidates={candidates}
+            onEntityClick={(slug) =>
+              appController.functions.setPopUp({ type: "places", ids: [slug], underSlug: "places" })
+            }
+          />
         </div>
       </div>
     );
@@ -383,65 +364,11 @@ function Place() {
           </ul>
         </div>
         <div className="card-body">
-          <div className="ppbody">
-            <div className="bodytext">
-              <h3>
-                <span>
-                  {Parser(
-                    place.name
-                      ? place.name.replace(/(\d+$)/, "<sup>$1</sup>")
-                      : "",
-                  )}
-                </span>
-                <br />
-                <small className="ppbody-title">{place.info}</small>
-              </h3>
-
-              {renderPersonPlaceHTML(detectScripturesPreservingTokens(place.description, (scripture) => {
-                  if (!scripture) return;
-                  return `<a className="scripture_link">${scripture}</a>`
-                }, determineLanguage()
-              ), appController, setPopUpRef)}
-            </div>
-
-            <div className="refbox">
-              <div className="ppimg">
-              {place?.maps?.length > 0 ? (
-                <Button 
-                  onClick={(e) => {
-                    if(place.maps.length > 1) {
-                    setShowOptions(!showOptions)
-                    } else {
-                      onSelectMapType(e, place.maps[0].slug, place.slug)
-                    }
-                  }
-                }
-                >
-                  {label("view_on_map")}
-                </Button>
-              ) : null}
-
-              {showOptions && (
-                place.maps.map((map, index) => (
-                  <Button 
-                    key={index} 
-                    onClick={(e) => onSelectMapType(e, map.slug, place.slug)}
-                  >
-                    {map.name}
-                  </Button>
-                ))
-              )}
-
-                <EntityThumb type="places" slug={place.slug} name={place.name} rounded />
-              </div>
-
-              <XrelSection xrels={place?.xrels} />
-              <ReferenceList
-                index={place.index}
-                setPopupRef={setPopUpRef}
-              />
-            </div>
-          </div>
+          <PlaceBody
+            data={place}
+            setPopUpRef={setPopUpRef}
+            onMapClick={onSelectMapType}
+          />
         </div>
           <ScripturePanelSingle scriptureData={{ref:PopUpRef}} closeButton={true} setPopUpRef={setPopUpRef} />
         <Comments />
@@ -510,12 +437,16 @@ function MatterPopUp() {
   }
 
   if (obj === null) {
-    const candidates = (appController.preLoad?.matterList || [])
-      .filter(o => o.slug.startsWith(activeId));
-    if (candidates.length === 1) {
-      appController.functions.setPopUp({ type: "matters", ids: [candidates[0].slug], underSlug: "matters" });
+    const list = appController.preLoad?.matterList || [];
+    // Shared with SSR via models/slugVariants — see the person branch above.
+    const resolution = resolveSlug(activeId, list.map((o) => o.slug));
+    if (resolution.kind === "redirect" || resolution.kind === "exact") {
+      appController.functions.setPopUp({ type: "matters", ids: [resolution.slug], underSlug: "matters" });
       return <Loading type="Matter" />;
     }
+    const candidates = (resolution.candidates || []).map(
+      (slug) => list.find((o) => o.slug === slug) || { slug, name: slug, subtitle: null },
+    );
     return (
       <div id="popUp" className="card popupwindow" style={{ top: appController.states.popUp.top, left: appController.states.popUp.left }}>
         <div className="card-header">
@@ -525,15 +456,13 @@ function MatterPopUp() {
           </ul>
         </div>
         <div className="card-body">
-          <div className="ppbody" style={{ flexDirection: "column", gap: "0.5em" }}>
-            {candidates.length > 1 ? candidates.map(c => (
-              <div key={c.slug} className="related_row" style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "0.75em", padding: "0.5em" }}
-                onClick={() => appController.functions.setPopUp({ type: "matters", ids: [c.slug], underSlug: "matters" })}>
-                <div className="related_avatar"><img src={`${assetUrl}/matters/${c.slug}`} alt={c.name} /></div>
-                <div><strong>{processName(c.name)}</strong>{c.subtitle && <div><small>{c.subtitle}</small></div>}</div>
-              </div>
-            )) : <div className="emptyState" style={{ padding: "2em", textAlign: "center" }}>{processName(activeId)}</div>}
-          </div>
+          <MatterChooser
+            requested={activeId}
+            candidates={candidates}
+            onEntityClick={(slug) =>
+              appController.functions.setPopUp({ type: "matters", ids: [slug], underSlug: "matters" })
+            }
+          />
         </div>
       </div>
     );
@@ -559,41 +488,12 @@ function MatterPopUp() {
           </ul>
         </div>
         <div className="card-body" ref={cardRef}>
-          <div className="ppbody" ref={ppRef}>
-            <div className="bodytext" ref={bodyRef}>
-              <h3>
-                {processName(obj.name)}
-                {obj.subtitle && (
-                  <>
-                    <br />
-                    <small className="ppbody-title">{replaceNumbers(obj.subtitle)}</small>
-                  </>
-                )}
-              </h3>
-              {renderPersonPlaceHTML(
-                detectScripturesPreservingTokens(
-                  obj.description || "",
-                  (scripture) => scripture ? `<a className="scripture_link">${scripture}</a>` : "",
-                  determineLanguage()
-                ),
-                appController,
-                setPopUpRef
-              )}
-            </div>
-
-            <div className="refbox">
-              <div className="ppimg">
-                <EntityThumb type="matters" slug={obj.slug} name={obj.name} rounded />
-              </div>
-
-              <XrelSection xrels={obj.xrels} showEmpty />
-
-              <ReferenceList
-                index={obj.index}
-                setPopupRef={setPopUpRef}
-              />
-            </div>
-          </div>
+          <MatterBody
+            data={obj}
+            setPopUpRef={setPopUpRef}
+            ppRef={ppRef}
+            bodyRef={bodyRef}
+          />
         </div>
         <ScripturePanelSingle scriptureData={{ ref: PopUpRef }} closeButton={true} setPopUpRef={setPopUpRef} />
         <Comments />
@@ -679,15 +579,9 @@ export function GroupPopUp() {
   );
 }
 
-export const displayDate = (date) => {
-  if (!date) return "";
-  let len = date.length;
-  return moment(date, [len === 4 ? "YYYY" : "YYYY-MM-DD"]).format(
-    len === 4
-      ? label("history_date_format_year")
-      : label("history_date_format_full"),
-  );
-};
+// Re-exported from entity/displayDate so existing importers (Drawer.js) keep
+// working after the move. See that file for why it moved.
+export { displayDate } from "./entity/displayDate";
 
 function History() {
   const appController = useAppController();
@@ -712,30 +606,10 @@ function History() {
 
   if (!doc) return <Loading type="history" />;
 
-  // Field-adaptive across all four archives (reception / translation / witnesses
-  // / joseph-smith): every part renders only when its data is present, so a doc
-  // missing a source, date, quote, teaser, or facsimile never shows a broken/
-  // dangling element (cf. Home/tiles ArchiveDocTile's filtered-field approach).
-  const rawDate = displayDate(doc.date);
-  const dateText = rawDate && rawDate !== "Invalid date" ? rawDate : "";
-  const metaParts = [...new Set([doc.source, doc.principal, doc.author, dateText].filter(Boolean))];
-  const hasQuote = !!(doc.money_quote || doc.mini_quote);
-  const teaserText = typeof doc.teaser === "string" ? doc.teaser : "";
-  const strip = (s) => String(s || "").replace(/<[^>]+>/g, "").replace(/[^a-z0-9]+/gi, " ").trim().toLowerCase();
-  const titleStripped = strip(doc.document);
-  const teaserStripped = strip(teaserText);
-  const quoteStripped = strip(doc.money_quote || doc.mini_quote);
-  const transcriptStripped = strip(doc.transcript);
-  const teaserDupesTitle = !!teaserStripped && teaserStripped === titleStripped;
-  // Short statements (e.g. witnesses) store the same text as BOTH money_quote and
-  // transcript — don't render it twice. Keep the transcript only when it adds
-  // materially more than the quote (reception clippings: short quote, long text).
-  const transcriptDupesQuote =
-    !!quoteStripped && !!transcriptStripped &&
-    (transcriptStripped === quoteStripped ||
-      (transcriptStripped.includes(quoteStripped) &&
-        transcriptStripped.length < quoteStripped.length * 1.15));
-  const pageCount = Number(doc.pages) || 0;
+  // The field-adaptive locals moved into entity/HistoryBody with the markup that
+  // consumes them; the header below needs the same meta line, so it comes from
+  // the helper the body exports.
+  const metaParts = historyMeta(doc);
 
   return (
     <div
@@ -757,51 +631,7 @@ function History() {
         ) : null}
       </div>
       <div className="card-body">
-        <div id="my-tab-content" className="tab-content">
-          <div className="tab-pane active" id="home" role="tabpanel">
-            {doc.document ? <h3>{doc.document}</h3> : null}
-
-            {hasQuote ? (
-              <blockquote className="historyPopupQuote">
-                {doc.quote_speaker && !doc.quote_is_witness_voice ? (
-                  <span className="historyPopupQuoteBy prefix">{doc.quote_speaker}:</span>
-                ) : null}{" "}
-                &ldquo;{doc.money_quote
-                  ? renderMoneyQuote(doc.money_quote, doc.mini_quote)
-                  : doc.mini_quote}&rdquo;
-                {doc.quote_speaker && doc.quote_is_witness_voice ? (
-                  <cite className="historyPopupQuoteBy">&mdash; {doc.quote_speaker}</cite>
-                ) : null}
-              </blockquote>
-            ) : null}
-
-            {teaserText && !teaserDupesTitle ? (
-              <div className="teaser">{Parser(teaserText)}</div>
-            ) : null}
-
-            {doc.citation ? (
-              <div className="historyPopupCitation">{Parser(String(doc.citation))}</div>
-            ) : null}
-
-            {doc.transcript && !transcriptDupesQuote ? (
-              <div className="transcript">{Parser(doc.transcript)}</div>
-            ) : null}
-
-            {doc.id && pageCount > 0 ? (
-              <div className="history_fax">
-                {[...Array(pageCount).keys()].map((i) => (
-                  <img
-                    key={i}
-                    src={`${assetUrl}/history/fax/${String(doc.id).padStart(4, "0")}.${String(i + 1).padStart(3, "0")}.jpg`}
-                    alt={doc.document || ""}
-                    loading="lazy"
-                    onError={(e) => { e.currentTarget.style.display = "none"; }}
-                  />
-                ))}
-              </div>
-            ) : null}
-          </div>
-        </div>
+      <HistoryBody data={doc} />
       </div>
       <Comments
         pageController={appController.activeLeafCursorController}
