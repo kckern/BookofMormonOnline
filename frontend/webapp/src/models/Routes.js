@@ -54,6 +54,7 @@ const LostPages = lazy(() => import("../views/History/LostPages.js"));
 const NyPa1820s = lazy(() => import("../views/History/NyPa1820s.js"));
 const ReadScripture = lazy(() => import("../views/Read/Read.js"));
 const EntityPage = lazy(() => import("../views/Entity/EntityPage"));
+const ArtPage = lazy(() => import("../views/Entity/ArtPage"));
 const lang = determineLanguage();
 
 
@@ -300,12 +301,12 @@ const routes = [
   },
   {
     path: "/image/:imageId(\\d+)",
-    component: Page,
+    component: ArtPage,
     exact: true,
   },
   {
     path: "/art/:imageId(\\d+)",
-    component: Page,
+    component: ArtPage,
     exact: true,
   },
   {
