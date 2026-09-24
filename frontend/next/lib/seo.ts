@@ -125,6 +125,8 @@ interface SeoInput {
   fallbackKey?: SeoCopyKey
   /** Accessible description for the generated social card. */
   imageAlt?: string
+  /** Force `noindex, follow` regardless of path/host intent (slug-chooser pages). */
+  noindex?: boolean
 }
 
 // Absolute URL for the current request host (self-referential, like the canonical).
@@ -160,7 +162,7 @@ function hreflangLanguages(path: string): Record<string, string> {
 // Next.js Metadata object. Uses title.absolute for exact control so the layout
 // template never double-appends the suffix.
 export async function buildMetadata(input: SeoInput): Promise<Metadata> {
-  const { title, description, path, withSuffix = true, ogSub, ogImg, ogImgType, hreflang = true, canonicalUrl, lang: langOverride, surface = 'article', fallbackKey, imageAlt } = input
+  const { title, description, path, withSuffix = true, ogSub, ogImg, ogImgType, hreflang = true, canonicalUrl, lang: langOverride, surface = 'article', fallbackKey, imageAlt, noindex: forceNoindex = false } = input
   const { siteSuffix } = await getSiteChrome()
   const fullTitle = withSuffix ? `${title} • ${siteSuffix}` : title
 
@@ -187,7 +189,7 @@ export async function buildMetadata(input: SeoInput): Promise<Metadata> {
   const alt = imageAlt ?? seoImageAlt(lang, title)
   const intent = seoIntentForPath(path)
   const requestHost = h.get('x-forwarded-host') ?? h.get('host')
-  const noindex = intent === 'noindex' || isNonIndexableLanguageHost(requestHost)
+  const noindex = forceNoindex || intent === 'noindex' || isNonIndexableLanguageHost(requestHost)
   const alternateLocale = hreflang
     ? Object.keys(LANG_HOST).filter((code) => code !== lang).map(ogLocale)
     : []
