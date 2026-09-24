@@ -36,6 +36,10 @@ import Commentary from "./Commentary";
 import { ScripturePanelSingle } from "../Page/Narration";
 import { determineLanguage } from "../../models/Utils";
 import { useAppController } from "src/contexts/AppControllerContext";
+import { resolveSlug } from "src/models/slugVariants";
+import PersonBody, { PersonChooser } from "./entity/PersonBody";
+import Relationships from "./entity/Relationships";
+import ReferenceList from "./entity/ReferenceList";
 
 export function Loading({ type, callingAPI }) {
   const appController = useAppController();
@@ -198,20 +202,22 @@ function Person() {
     return <Loading type="Person" />;
   }
 
-  const handleClick = (id, e) => {
-    e.preventDefault();
-    appController.functions.setPopUp({ type: "people", ids: [id] });
-  };
   let person = appController.popUpData[appController.states.popUp.activeId];
   if (person === undefined) return <pre>{appController.popUp}</pre>;
   if (person === null) {
     const activeId = appController.states.popUp.activeId;
-    const candidates = (appController.preLoad?.personList || [])
-      .filter(p => p.slug.startsWith(activeId));
-    if (candidates.length === 1) {
-      appController.functions.setPopUp({ type: "people", ids: [candidates[0].slug], underSlug: "people" });
+    const list = appController.preLoad?.personList || [];
+    // Shared with SSR via models/slugVariants — supersedes the old
+    // `slug.startsWith(activeId)` rule, which also matched noahs-priests
+    // under 'noah' and 13 slugs under 'nephi'.
+    const resolution = resolveSlug(activeId, list.map((p) => p.slug));
+    if (resolution.kind === "redirect" || resolution.kind === "exact") {
+      appController.functions.setPopUp({ type: "people", ids: [resolution.slug], underSlug: "people" });
       return <Loading type="Person" />;
     }
+    const candidates = (resolution.candidates || []).map(
+      (slug) => list.find((p) => p.slug === slug) || { slug, name: slug, title: null },
+    );
     return (
       <div id="popUp" className="card popupwindow" style={{ top: appController.states.popUp.top }}>
         <div className="card-header">
@@ -221,15 +227,13 @@ function Person() {
           </ul>
         </div>
         <div className="card-body">
-          <div className="ppbody" style={{ flexDirection: "column", gap: "0.5em" }}>
-            {candidates.length > 1 ? candidates.map(c => (
-              <div key={c.slug} className="related_row" style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "0.75em", padding: "0.5em" }}
-                onClick={() => appController.functions.setPopUp({ type: "people", ids: [c.slug], underSlug: "people" })}>
-                <div className="related_avatar"><img src={`${assetUrl}/people/${c.slug}`} alt={c.name} /></div>
-                <div><strong>{processName(c.name)}</strong>{c.title && <div><small>{replaceNumbers(c.title)}</small></div>}</div>
-              </div>
-            )) : <div className="emptyState" style={{ padding: "2em", textAlign: "center" }}>{processName(activeId)}</div>}
-          </div>
+          <PersonChooser
+            requested={activeId}
+            candidates={candidates}
+            onEntityClick={(slug) =>
+              appController.functions.setPopUp({ type: "people", ids: [slug], underSlug: "people" })
+            }
+          />
         </div>
       </div>
     );
@@ -270,36 +274,14 @@ function Person() {
             </ul>
           </div>
           <div className="card-body">
-            <div className="ppbody">
-              <div className="bodytext">
-                <h3>
-                  {processName(person.name)}
-                  <br />
-                  <small className="ppbody-title">
-                    {replaceNumbers(person.title)}
-                  </small>
-                </h3>
-                {renderPersonPlaceHTML(detectScripturesPreservingTokens(person.description, (scripture) => {
-                  if (!scripture) return;
-                  return `<a className="scripture_link">${scripture}</a>`
-                }, determineLanguage()
-              ), appController, setPopUpRef)}
-              </div>
-
-              <div className="refbox">
-                <div className="ppimg">
-                  <EntityThumb type="people" slug={person.slug} name={processName(person.name)} rounded />
-                </div>
-
-                <h4>{label("relationships")}</h4>
-                <Relationships data={person?.relations} />
-                <XrelSection xrels={person?.xrels} noHeading />
-                <ReferenceList
-                  index={person.index}
-                  setPopupRef={setPopUpRef}
-                />
-              </div>
-            </div>
+            <PersonBody
+              data={person}
+              setPopUpRef={setPopUpRef}
+              PopUpRef={PopUpRef}
+              onEntityClick={(id) =>
+                appController.functions.setPopUp({ type: "people", ids: [id], underSlug: "people" })
+              }
+            />
           </div>
           <ScripturePanelSingle scriptureData={{ref:PopUpRef}} closeButton={true} setPopUpRef={setPopUpRef} />
           <Comments />
@@ -694,106 +676,6 @@ export function GroupPopUp() {
         </div>
       </div>
     </Draggable>
-  );
-}
-
-function Relationships({ data }) {
-  const appController = useAppController();
-  const personRow = (person, i) => {
-    //determine split
-    const namePosition = person.relation.indexOf("$1") ? "back" : "front";
-    const StringwithSplitMarker = namePosition === "front" ?
-      person.relation.replace(/(\$1\S+)/, "$1•")
-    : person.relation.replace("$1", "•$1");
-
-    const replaceWithLink = (text) => {
-      //split by $1, keep delimiter
-      if (!text.includes("$1")) return text;
-      const pieces = text.split(/(\$1)/);
-      if (pieces.length === 1) return text;
-      return pieces.map((piece, i) => {
-        if (piece === "$1") {
-          return  <span key={i} className="nameLink">{person.person.name.replace(/\d+/, "")}</span>
-        }
-        return piece;
-      });
-    }
-    const rows = StringwithSplitMarker.split("•").map(replaceWithLink).filter(i=>!!i);
-    const items = [
-      <div key={`${i}_0`} className="related_text_top">{rows[0]}</div>,
-      <div key={`${i}_1`} className="related_text_bottom">{rows[1]}</div>
-    ];
-
-    const personTitle = person.person.title;
-
-    return (
-      <div
-        key={i}
-        className="related_row"
-        data-for="relToolTip"
-        data-tip={`${personTitle}`}
-      >
-        <div
-          style={{display:"flex"}}
-          onClick={()=>{
-            appController.functions.setPopUp({ type: "people", ids: [person.person.slug],
-              underSlug: "people", });
-          }}
-        >
-          <div className="related_text">
-            {items}
-          </div>
-
-          <div className="related_avatar">
-            <img src={`${assetUrl}/people/${person.person.slug}`} />
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div className="related_people noselect">
-      <ReactTooltip 
-        id="relToolTip" 
-        place="left" 
-        offset={{'bottom': 0, 'left': '10rem'}} 
-        effect="solid" 
-        backgroundColor={"#666"} 
-        arrowColor={"#666"} 
-      />      
-      {data?.map((relation, i) => personRow(relation, i))}
-    </div>
-  );
-}
-
-function ReferenceList({ index, setPopupRef }) {
-  setPopupRef || (setPopupRef = ()=>{})
-  return (
-    <>
-      <h4>{label("references")}</h4>
-      <ol className="reference-list">
-        {index &&
-          index.map((reference, i) => (
-            <li key={i}>
-              <a
-                className="ppref"
-                onClick={()=>setPopupRef(reference.ref)}
-                data-tip={reference.ref}
-              >
-                {replaceNumbers(reference.text)}
-              </a>
-            </li>
-          ))}
-      </ol>
-      <ReactTooltip
-        place="left"
-        offset={{'bottom': 0, 'left': '10rem'}}
-        effect="solid"
-        backgroundColor={"#666"}
-        arrowColor={"#666"}
-      />
-    </>
   );
 }
 
