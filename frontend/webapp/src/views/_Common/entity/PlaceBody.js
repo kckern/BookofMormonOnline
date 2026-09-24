@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import Parser from "html-react-parser";
 import { Button } from "reactstrap";
-import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label, processName, replaceNumbers, determineLanguage } from "src/models/Utils";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { renderPersonPlaceHTML, detectScripturesPreservingTokens } from "../../Page/PersonPlace";
 import XrelSection from "../XrelSection";
 import EntityThumb from "../EntityThumb";
 import ReferenceList from "./ReferenceList";
+import EntityChooser from "./EntityChooser";
 
 /**
  * The content of a place profile — moved verbatim out of PopUp.js's Place().
@@ -89,38 +89,17 @@ export default function PlaceBody({ data, setPopUpRef, onMapClick }) {
 }
 
 /**
- * Ambiguous bare slug (/places/jerusalem → jerusalem-1, jerusalem-2).
- * Candidates come from models/slugVariants resolveSlug.
+ * Ambiguous bare slug. Thin wrapper over the shared EntityChooser so the popup
+ * and the standalone page render one identical, self-styled list.
  */
 export function PlaceChooser({ requested, candidates, onEntityClick }) {
   return (
-    <div className="ppbody" style={{ flexDirection: "column", gap: "0.5em" }}>
-      {candidates.length > 0 ? (
-        candidates.map((c) => (
-          <div
-            key={c.slug}
-            className="related_row"
-            style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "0.75em", padding: "0.5em" }}
-            onClick={() => onEntityClick(c.slug)}
-          >
-            <div className="related_avatar">
-              <img src={`${assetUrl}/places/${c.slug}`} alt={c.name} />
-            </div>
-            <div>
-              <strong>{processName(c.name)}</strong>
-              {c.info && (
-                <div>
-                  <small>{replaceNumbers(c.info)}</small>
-                </div>
-              )}
-            </div>
-          </div>
-        ))
-      ) : (
-        <div className="emptyState" style={{ padding: "2em", textAlign: "center" }}>
-          {requested}
-        </div>
-      )}
-    </div>
+    <EntityChooser
+      requested={requested}
+      candidates={candidates}
+      onEntityClick={onEntityClick}
+      mediaType="places"
+      base="/places"
+    />
   );
 }

@@ -1,7 +1,16 @@
 .entity-page {
   max-width: 62rem;
   margin: 0 auto;
-  padding: 1.5rem 1rem 3rem;
+  /* The app header is fixed over the top of #main-panel, so a page that starts
+     at the panel's top has its first heading clipped. Clear it. */
+  padding: 4.5rem 1rem 3rem;
+}
+
+@media (max-width: 700px) {
+  .entity-page {
+    /* The mobile header is ~57px; 3.5rem left the title touching it. */
+    padding-top: 4.25rem;
+  }
 }
 
 /* The bodies were authored inside .popupwindow, which constrains height and
@@ -12,6 +21,11 @@
   gap: 1.5rem;
   max-height: none;
   overflow: visible;
+}
+
+/* Never let the popup's two-up sidebar row styling leak into a page list. */
+.entity-page .entity-chooser-list .related_row {
+  all: unset;
 }
 
 .entity-page .ppbody .bodytext {

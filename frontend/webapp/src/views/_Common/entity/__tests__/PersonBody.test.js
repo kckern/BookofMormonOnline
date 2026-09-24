@@ -78,10 +78,20 @@ describe("PersonBody", () => {
     expect(onEntityClick).toHaveBeenCalledWith("noah2");
   });
 
-  test("chooser with no candidates shows the requested name as an empty state", () => {
-    const { container } = wrap(
-      <PersonChooser requested="king-noah" candidates={[]} onEntityClick={() => {}} />,
+  test("chooser with no candidates names what was asked for and says not found", () => {
+    wrap(<PersonChooser requested="king-noah" candidates={[]} onEntityClick={() => {}} />);
+    expect(screen.getByRole("heading")).toHaveTextContent("King Noah");
+    expect(screen.getByText(/not found/i)).toBeInTheDocument();
+  });
+
+  test("chooser items are real links, so middle-click and new-tab work", () => {
+    wrap(
+      <PersonChooser
+        requested="noah"
+        candidates={[{ slug: "noah1", name: "Noah1", title: "Son of Lamech" }]}
+        onEntityClick={() => {}}
+      />,
     );
-    expect(container.querySelector(".emptyState")).toBeInTheDocument();
+    expect(screen.getByRole("link")).toHaveAttribute("href", "/people/noah1");
   });
 });

@@ -1,0 +1,92 @@
+/* Disambiguation list for an ambiguous bare slug. Styles are self-contained so
+   the same markup reads correctly inside the popup card AND as a full page —
+   the previous version borrowed the popup's .related_row, which is sized for a
+   narrow two-up sidebar and staircased on a page.
+   House style: black links, neutral gray secondary text, gold #c9a24b accent. */
+
+.entity-chooser {
+  max-width: 34rem;
+}
+
+.entity-chooser-title {
+  margin: 0 0 0.15rem;
+  font-size: 1.6rem;
+  line-height: 1.2;
+}
+
+.entity-chooser-lede {
+  margin: 0 0 1.1rem;
+  color: #6b6b6b;
+  font-size: 0.9rem;
+}
+
+.entity-chooser-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  /* Explicitly single-column: a wrapping COLUMN flex container is what produced
+     the staircase, so no flex-wrap here. */
+  display: block;
+}
+
+.entity-chooser-list > li + li {
+  margin-top: 0.4rem;
+}
+
+.entity-chooser-item {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid #e3e3e3;
+  border-left: 3px solid transparent;
+  border-radius: 0.25rem;
+  text-align: left;
+  text-decoration: none;
+  color: #000;
+  background: #fff;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+
+.entity-chooser-item:hover,
+.entity-chooser-item:focus-visible {
+  background: #f7f7f7;
+  border-left-color: #c9a24b;
+  text-decoration: none;
+  color: #000;
+}
+
+.entity-chooser-thumb {
+  width: 3rem;
+  height: 3rem;
+  flex: 0 0 3rem;
+  object-fit: cover;
+  border-radius: 0.2rem;
+  background: #eee;
+}
+
+.entity-chooser-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.entity-chooser-name {
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.entity-chooser-sub {
+  color: #6b6b6b;
+  font-size: 0.82rem;
+  line-height: 1.25;
+}
+
+/* Inside the popup card the available width is much smaller. */
+#popUp .entity-chooser {
+  max-width: none;
+}
+
+#popUp .entity-chooser-title {
+  font-size: 1.25rem;
+}
