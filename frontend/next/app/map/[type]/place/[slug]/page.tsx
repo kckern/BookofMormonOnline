@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
 import { getPlace } from '@/lib/places'
+import { getPlacesList } from '@/lib/peopleplaces'
+import { resolveSlug } from '@/lib/slug-variants'
 import { getMapDetail } from '@/lib/mapdetail'
 import { absoluteUrl, buildMetadata, currentLang, stripMarkup } from '@/lib/seo'
 import { superscript, wikiToHtml, wikiToText } from '@/lib/entity'
@@ -52,7 +54,15 @@ export default async function MapPlacePage({ params }: Props) {
     getMapDetail(type, lang),
     lang === 'en' ? Promise.resolve(null) : getPlace(slug, 'en'),
   ])
-  if (!place) notFound()
+  if (!place) {
+    // Redirect-only: a chooser inside a map context would strand the visitor
+    // with no map. Multi-variant bare names keep their 404.
+    const resolution = resolveSlug(slug, (await getPlacesList()).map((pl) => pl.slug))
+    if (resolution.kind === 'exact' || resolution.kind === 'redirect') {
+      permanentRedirect(`/map/${type}/place/${resolution.slug}`)
+    }
+    notFound()
+  }
 
   const name = contextName(place.name, map?.name ?? '')
   const url = await absoluteUrl(`/map/${type}/place/${slug}`)
