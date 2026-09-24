@@ -3,10 +3,22 @@
 // the container from Infisical via the compose env_file; the only fixed values
 // here are the intra-container ports. NPM fronts the container:
 //   /graphql,/api,/messenger(WS) -> backend:5005 ; everything else -> next:8200.
+// Logs go to the container's stdout ONLY — never to files inside the container.
+// pm2 writes ~/.pm2/logs/<app>-out.log with NO rotation (pm2-logrotate is a
+// module, and modules are not started under pm2-runtime), so these files grew
+// to 1.6 GB in two weeks, filled the 34 GB root, and made the blue-green deploy
+// refuse to pull an image ("disk remains 90% full after emergency prune").
+// Nothing is lost: pm2-runtime still forwards every line to its own stdout
+// (verified: identical output with and without this redirection), and that
+// stdout is exactly what Vector's docker_logs source ships to VictoriaLogs.
+// Docker's own json.log is bounded by --log-opt in ops/production/deploy-blue-green.sh.
+const LOGS_TO_STDOUT = { out_file: '/dev/null', error_file: '/dev/null' };
+
 module.exports = {
   apps: [
     {
       name: 'backend',
+      ...LOGS_TO_STDOUT,
       cwd: '/app/backend',
       script: 'dist/src/index.js',
       // NODE_ENV hard-pinned (not only from the rendered .env): GraphQL error
@@ -23,6 +35,7 @@ module.exports = {
     },
     {
       name: 'next',
+      ...LOGS_TO_STDOUT,
       cwd: '/app/frontend/next',
       // Do not accept SSR traffic until the colocated GraphQL process is
       // listening. This removes the startup ECONNREFUSED/false-404 window.
@@ -38,6 +51,7 @@ module.exports = {
     },
     {
       name: 'cra',
+      ...LOGS_TO_STDOUT,
       cwd: '/app',
       script: '/usr/local/bin/serve',
       args: '-s frontend/webapp/build -l 8201',

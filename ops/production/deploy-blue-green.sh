@@ -259,8 +259,14 @@ if container_exists "$next"; then
 fi
 
 log "starting candidate $next"
+# Bound the container's json.log: Docker's default json-file driver does NOT
+# rotate, and an unbounded stdout log is the other half of what filled the
+# root disk (a sibling container's json.log had reached 387 MB).
 docker run -d \
   --name "$next" \
+  --log-driver json-file \
+  --log-opt max-size=20m \
+  --log-opt max-file=3 \
   --env-file "$ENV_FILE" \
   --env-file "$MAIL_ENV_FILE" \
   --network "$NETWORK" \
@@ -292,6 +298,9 @@ else
   log "starting stable gateway $GATEWAY"
   docker run -d \
     --name "$GATEWAY" \
+    --log-driver json-file \
+    --log-opt max-size=20m \
+    --log-opt max-file=3 \
     --network "$NETWORK" \
     --restart always \
     --label com.centurylinklabs.watchtower.enable=false \
