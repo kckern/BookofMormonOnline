@@ -177,7 +177,12 @@ async function maybeWireRedisAdapter(io: Server): Promise<void> {
 export async function initRealtime(httpServer: HttpServer): Promise<Server> {
   const io = new Server(httpServer, {
     cors: {
-      origin: '*',
+      // S (2026-09-08 security audit): restrict cross-origin socket connections
+      // when SOCKET_CORS_ORIGIN is set (comma-separated allowlist). Falls back to
+      // '*' so unset envs are unchanged; prod should set it to the language origins.
+      origin: process.env.SOCKET_CORS_ORIGIN
+        ? process.env.SOCKET_CORS_ORIGIN.split(',').map((o) => o.trim())
+        : '*',
       methods: ['GET', 'POST'],
       credentials: true,
     },

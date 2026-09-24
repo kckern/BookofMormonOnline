@@ -2,7 +2,16 @@
 set -eu
 
 NAMESPACE="${BOM_METRIC_NAMESPACE:-BOM/Production}"
-INSTANCE_ID="${BOM_INSTANCE_ID:-i-02c9619a48343a8d9}"
+# Instance id from env, else IMDSv2 (no hardcoded id in this public repo).
+INSTANCE_ID="${BOM_INSTANCE_ID:-}"
+if [ -z "$INSTANCE_ID" ]; then
+  _imds_tok="$(curl -sf -X PUT http://169.254.169.254/latest/api/token -H 'X-aws-ec2-metadata-token-ttl-seconds: 60' 2>/dev/null || true)"
+  if [ -n "$_imds_tok" ]; then
+    INSTANCE_ID="$(curl -sf -H "X-aws-ec2-metadata-token: $_imds_tok" http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null || true)"
+  else
+    INSTANCE_ID="$(curl -sf http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null || true)"
+  fi
+fi
 BASE_DIR="${BOM_DEPLOY_DIR:-/home/ubuntu/greenfield}"
 STATE_DIR="${BOM_METRIC_STATE_DIR:-/var/lib/bom-monitor}"
 STATE_FILE="$STATE_DIR/metrics-state.json"

@@ -1,14 +1,16 @@
-# CI/CD — on push to `prod`, build the Docker image on GitHub's hosted runners
-# (free for public repos), push to Docker Hub, then trigger the blue-green deploy
-# on the EC2 box via a self-hosted runner (outbound HTTPS only — no open SSH port).
+# CI/CD — on push to `prod`, build + cosign-sign the Docker image on GitHub's hosted
+# runners, push to Docker Hub, then trigger the blue-green deploy on the EC2 box via
+# AWS SSM Run Command (audit H3). No self-hosted runner on prod, no inbound port, no
+# stored AWS keys (GitHub OIDC). See docs/reference/deployment.md.
 #
 # Required GitHub Actions secrets:
 #   DOCKERHUB_TOKEN        — Docker Hub access token for `kckern`
 #   CLICKY_JS_PATH         — obfuscated path for the Clicky JS proxy
 #   CLICKY_BEACON_PATH     — obfuscated path for the Clicky beacon proxy
-#
-# Self-hosted runner: installed on the prod EC2 box at ~/actions-runner,
-# labelled 'prod'. Connects to GitHub outbound (port 443) — no inbound SSH needed.
+#   COSIGN_PRIVATE_KEY     — cosign signing key (public half at ops/production/cosign.pub)
+#   COSIGN_PASSWORD        — cosign key password
+#   AWS_DEPLOY_ROLE_ARN    — OIDC deploy role (SendCommand to the one instance + docs)
+#   PROD_INSTANCE_ID       — target EC2 instance id
 
 name: deploy-prod
 
@@ -17,22 +19,32 @@ on:
     branches: [prod]
   workflow_dispatch: {}
 
+# Least-privilege GITHUB_TOKEN. AWS access is via OIDC (id-token on the deploy job);
+# Docker Hub via DOCKERHUB_TOKEN — so the workflow token only reads the repo.
+permissions:
+  contents: read
+
 jobs:
   build-push:
     runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           username: kckern
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+
       - name: Build and push
-        uses: docker/build-push-action@v6
+        id: build
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
           file: ./Dockerfile
@@ -48,13 +60,57 @@ jobs:
             CLICKY_JS_PATH=${{ secrets.CLICKY_JS_PATH }}
             CLICKY_BEACON_PATH=${{ secrets.CLICKY_BEACON_PATH }}
 
+      # Sign the pushed image by digest (audit H4). Phase 1 of 2 — signing is
+      # non-gating; the deploy-time `cosign verify` (fail-closed) lands separately
+      # once signatures are confirmed present. Key material is a GH secret; the
+      # public half is committed at ops/production/cosign.pub.
+      - name: Sign image
+        env:
+          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+        run: cosign sign --key env://COSIGN_PRIVATE_KEY --yes "kckern/bookofmormon-online@${{ steps.build.outputs.digest }}"
+
+  # Deploy from a GitHub-HOSTED runner (audit H3): assume a scoped OIDC role and
+  # trigger the blue-green deploy on the box via SSM Run Command. No self-hosted
+  # runner on prod, no inbound port, no stored AWS keys. The bom-deploy SSM document
+  # writes the CI-provided script (ScriptB64) and runs it with the pinned digest.
   deploy:
     needs: build-push
-    runs-on: [self-hosted, prod]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
-      - uses: actions/checkout@v4
-      - name: Blue-green deploy
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@cbe3b392738ccf3f987d68400dafcf4b0624a56c # v6.2.4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-west-2
+      - name: Blue-green deploy on the box via SSM
+        env:
+          IID: ${{ secrets.PROD_INSTANCE_ID }}
+          IMG: kckern/bookofmormon-online@${{ needs.build-push.outputs.digest }}
         run: |
-          install -m 0755 ops/production/deploy-blue-green.sh /home/ubuntu/greenfield/deploy-blue-green.sh
-          cd /home/ubuntu/greenfield
-          bash deploy-blue-green.sh
+          set -euo pipefail
+          SCRIPT_B64="$(base64 -w0 ops/production/deploy-blue-green.sh)"
+          CID="$(aws ssm send-command --region us-west-2 --instance-ids "$IID" \
+            --document-name bom-deploy \
+            --parameters "ImageRef=${IMG},ScriptB64=${SCRIPT_B64}" \
+            --query Command.CommandId --output text)"
+          echo "SSM command: $CID"
+          ST=Pending
+          for _ in $(seq 1 120); do
+            ST="$(aws ssm get-command-invocation --command-id "$CID" --instance-id "$IID" --query Status --output text 2>/dev/null || echo Pending)"
+            case "$ST" in
+              Success) break ;;
+              Failed|Cancelled|TimedOut)
+                echo "::error::deploy $ST"
+                aws ssm get-command-invocation --command-id "$CID" --instance-id "$IID" --query StandardErrorContent --output text || true
+                exit 1 ;;
+            esac
+            sleep 10
+          done
+          echo "=== deploy output (tail) ==="
+          aws ssm get-command-invocation --command-id "$CID" --instance-id "$IID" --query StandardOutputContent --output text || true
+          [ "$ST" = Success ] || { echo "::error::deploy did not reach Success (last: $ST)"; exit 1; }

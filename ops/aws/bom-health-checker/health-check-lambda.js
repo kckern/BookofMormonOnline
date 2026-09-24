@@ -6,7 +6,7 @@ const HOSTNAME = process.env.HEALTH_HOSTNAME || 'bookofmormon.online'
 const PATH = process.env.HEALTH_PATH || '/graphql'
 const METRIC_NAMESPACE = process.env.METRIC_NAMESPACE || 'BOM/Production'
 const METRIC_NAME = process.env.METRIC_NAME || 'APIHealthy'
-const INSTANCE_ID = process.env.INSTANCE_ID || 'i-02c9619a48343a8d9'
+const INSTANCE_ID = process.env.INSTANCE_ID // set in the Lambda's environment (no hardcoded id in this public repo)
 const cloudWatch = new CloudWatchClient({ region: REGION })
 
 exports.handler = async () => {

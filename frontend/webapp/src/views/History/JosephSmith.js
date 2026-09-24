@@ -8,10 +8,6 @@ import { useAppController } from "src/contexts/AppControllerContext";
 import HistoryBreadcrumb from "./HistoryBreadcrumb";
 import HistorySourceCard from "./HistorySourceCard";
 import WitnessLifeHeatmap from "./WitnessLifeHeatmap";
-// matchesYearMonth lives in witnessSources, not WitnessLifeHeatmap. Importing it
-// from the latter failed the production build ("Attempted import error"), which
-// also put a dev-server error overlay over the whole app. witnessSources.js:298
-// is the real home, and __tests__/witnessSources.test.js already imports it there.
 import { matchesYearMonth } from "./witnessSources";
 import "./Witnesses.css";
 

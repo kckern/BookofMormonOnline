@@ -1,7 +1,7 @@
 import Fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
 import { createYoga } from 'graphql-yoga';
 import { useEngine } from '@envelop/core';
-import { execute, parse, subscribe, validate } from 'graphql';
+import { execute, parse, subscribe, validate, NoSchemaIntrospectionCustomRule } from 'graphql';
 import { env } from './config/env.js';
 import { getDb } from './data/db.js';
 import { buildSchema } from './graphql/schema.js';
@@ -38,6 +38,24 @@ const yoga = createYoga<{ lang: string; ip: string; bearerToken?: string; ua?: s
     // selection order (spec); Yoga's default executor appends keys in
     // resolver-completion order, which breaks byte-parity with legacy.
     useEngine({ parse, validate, execute, subscribe }),
+    // S1 (2026-09-08 security audit): block schema introspection in production so
+    // the public /graphql cannot be enumerated unauthenticated. dev/test keep it
+    // (introspection is useful there and gated tools rely on it). NODE_ENV is
+    // hard-pinned to 'production' in the prod image (ecosystem.config.cjs).
+    ...(process.env.NODE_ENV === 'production'
+      ? [
+          {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            onValidate(payload: any) {
+              // Guard the envelop API so a hook-shape change can never 500 the
+              // endpoint — worst case introspection stays enabled (fail-open).
+              if (typeof payload?.addValidationRule === 'function') {
+                payload.addValidationRule(NoSchemaIntrospectionCustomRule);
+              }
+            },
+          },
+        ]
+      : []),
     {
       // COMPAT: legacy Apollo formatResponse stripped ''/null/[] keys from data
       onExecutionResult({ result }: { result: unknown }) {
@@ -101,6 +119,18 @@ const graphqlHandler = async (req: FastifyRequest, reply: FastifyReply) => {
   reply.send(Buffer.from(await response.arrayBuffer()));
   return reply;
 };
+
+// S (2026-09-08 audit M5): security headers on backend-direct responses
+// (/graphql, /api, /fax/*, socket handshake) — these bypass the Next middleware
+// that sets them for HTML. CSP and CORP are left OFF on purpose: the backend
+// serves JSON/API (CSP is a no-op there and Next owns it for HTML), and CORP
+// 'same-origin' would break cross-origin GraphQL calls from the language editions.
+const helmet = (await import('@fastify/helmet')).default;
+await app.register(helmet, {
+  contentSecurityPolicy: false,
+  crossOriginResourcePolicy: false,
+  crossOriginEmbedderPolicy: false,
+});
 
 // A3: global per-IP rate limit on public routes. Next SSR calls GraphQL over
 // loopback inside this container; exempt that trusted internal hop so unrelated

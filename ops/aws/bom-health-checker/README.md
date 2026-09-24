@@ -22,7 +22,7 @@ Deployment resources:
 - Lambda: `bom-health-checker`
 - Schedule: `bom-health-check-schedule`
 - Metric: `BOM/Production`, `APIHealthy`, dimension
-  `InstanceId=i-02c9619a48343a8d9`
+  `InstanceId=<prod-instance-id>` (set via the Lambda's `INSTANCE_ID` env)
 - Alarm: `bom-production-api-unhealthy`
 - EventBridge rule: `bom-production-api-reboot`
 - Recovery Lambda: `admin-api-reboot`
