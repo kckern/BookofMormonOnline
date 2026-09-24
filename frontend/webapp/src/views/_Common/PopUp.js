@@ -15,6 +15,7 @@ import Commentary from "./Commentary";
 import { ScripturePanelSingle } from "../Page/Narration";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { resolveSlug } from "src/models/slugVariants";
+import MaximizeButton from "./entity/MaximizeButton";
 import PersonBody, { PersonChooser } from "./entity/PersonBody";
 import PlaceBody, { PlaceChooser } from "./entity/PlaceBody";
 import MatterBody, { MatterChooser } from "./entity/MatterBody";
@@ -244,6 +245,7 @@ function Person() {
                 appController.states.popUp.ids.length
               }
             >
+              <MaximizeButton type={appController.states.popUp.type} />
               <li
                 className="close"
                 onClick={appController.functions.closePopUp}
@@ -358,6 +360,7 @@ function Place() {
               appController.states.popUp.ids.length
             }
           >
+            <MaximizeButton type={appController.states.popUp.type} />
             <li className="close" onClick={appController.functions.closePopUp}>
               ×
             </li>
@@ -482,6 +485,7 @@ function MatterPopUp() {
         <div className="card-header">
           <div className="person_head">{label("matter_profile") || "Matter"}</div>
           <ul className={"source_tabs souce_tab_list_" + appController.states.popUp.ids.length}>
+            <MaximizeButton type={appController.states.popUp.type} />
             <li className="close" onClick={appController.functions.closePopUp}>
               ×
             </li>
@@ -622,6 +626,7 @@ function History() {
     >
       <div className="card-header">
         <ul className="source_tabs souce_tab_list_0">
+          <MaximizeButton type={appController.states.popUp.type} />
           <li className="close" onClick={appController.functions.closePopUp}>
             ×
           </li>

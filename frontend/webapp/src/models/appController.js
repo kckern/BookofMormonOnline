@@ -277,7 +277,15 @@ export const appFunctions = {
     appController.states.popUp.type = null;
     appController.states.popUp.ids = [];
     appController.states.popUp.activeId = 1;
-    appController.functions.setSlug(appController.states.popUp.underSlug);
+    // Normally closing returns the URL to whatever was behind the modal. The
+    // maximize control (entity/MaximizeButton.js) is the exception: it closes
+    // the modal precisely so the standalone page can own the entity URL, so
+    // rewriting the slug here would send it back to the index.
+    // NOTE: closePopUp is also used directly as an onClick handler, where
+    // input.val is a click event — hence the optional-chained read.
+    if (!input.val?.keepSlug) {
+      appController.functions.setSlug(appController.states.popUp.underSlug);
+    }
 
     //id = "theater-audio-player"
     const theaterPlayer = document.getElementById("theater-audio-player");

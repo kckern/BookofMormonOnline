@@ -733,3 +733,15 @@ ul.source_tabs li:hover
     }
 
 }
+
+/* Promotes an open modal to its standalone page (entity/MaximizeButton.js).
+   Sits beside the close × and matches its metrics so the two read as one
+   control group. Gold on hover is the house accent. */
+#popUp .source_tabs .maximize {
+  cursor: pointer;
+  color: #6b6b6b;
+}
+
+#popUp .source_tabs .maximize:hover {
+  color: #c9a24b;
+}
