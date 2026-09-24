@@ -1,0 +1,44 @@
+.entity-page {
+  max-width: 62rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+/* The bodies were authored inside .popupwindow, which constrains height and
+   scrolls internally. On a page, let the document scroll instead. */
+.entity-page .ppbody {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  max-height: none;
+  overflow: visible;
+}
+
+.entity-page .ppbody .bodytext {
+  flex: 1 1 22rem;
+  min-width: 0;
+  /* The matter body's sticky offset is driven off the popup card height; on a
+     page there is no card, so neutralise it. */
+  position: static;
+  top: auto;
+}
+
+.entity-page .ppbody .refbox {
+  flex: 0 1 18rem;
+}
+
+.entity-page-back {
+  margin-top: 2rem;
+}
+
+.entity-page-back a {
+  color: #000;
+  text-decoration: none;
+  border-bottom: 1px solid #c9a24b;
+}
+
+@media (max-width: 700px) {
+  .entity-page .ppbody {
+    flex-direction: column;
+  }
+}

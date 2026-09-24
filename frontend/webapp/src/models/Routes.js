@@ -54,6 +54,7 @@ const LostPages = lazy(() => import("../views/History/LostPages.js"));
 const RedirectReceptionSlug = lazy(() => import("../views/History/RedirectReceptionSlug.jsx"));
 const NyPa1820s = lazy(() => import("../views/History/NyPa1820s.js"));
 const ReadScripture = lazy(() => import("../views/Read/Read.js"));
+const EntityPage = lazy(() => import("../views/Entity/EntityPage"));
 const lang = determineLanguage();
 
 
@@ -239,7 +240,7 @@ const routes = [
   },
   {
     path: "/people/:personName",
-    component: People,
+    component: () => <EntityPage type="people" />,
   },
   {
     path: "/people",
@@ -247,11 +248,11 @@ const routes = [
   },
   {
     path: "/place/:placeName",
-    component: Places,
+    component: () => <EntityPage type="places" />,
   },
   {
     path: "/places/:placeName",
-    component: Places,
+    component: () => <EntityPage type="places" />,
   },
   {
     path: "/places",
@@ -259,7 +260,7 @@ const routes = [
   },
   {
     path: "/matters/:matterSlug",
-    component: Matters,
+    component: () => <EntityPage type="matters" />,
   },
   {
     path: "/matters",
