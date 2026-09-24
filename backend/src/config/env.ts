@@ -8,6 +8,7 @@ const optionalNonEmptyString = z.preprocess(
 
 export const envSchema = z.object({
   PORT: z.coerce.number().default(5006),
+  BIND_HOST: z.string().min(1).default('127.0.0.1'),
   MYSQL_HOST: z.string().min(1),
   MYSQL_PORT: z.coerce.number().default(3306),
   MYSQL_USER: z.string().min(1),
