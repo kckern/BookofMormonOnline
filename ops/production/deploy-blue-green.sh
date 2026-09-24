@@ -20,6 +20,10 @@ LOCK_FILE="$BASE_DIR/deploy.lock"
 HEALTH_TIMEOUT="${BOM_HEALTH_TIMEOUT:-180}"
 DRAIN_SECONDS="${BOM_DRAIN_SECONDS:-15}"
 EMERGENCY_DISK_PERCENT="${BOM_EMERGENCY_DISK_PERCENT:-90}"
+# Container stdout logs larger than this are truncated during the emergency
+# prune. Docker's json-file driver does not rotate by default, so on a
+# long-lived box these — not stale images — are what actually fill the disk.
+LOG_TRUNCATE_MB="${BOM_LOG_TRUNCATE_MB:-50}"
 
 log() {
   printf '%s %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$*"
@@ -88,6 +92,35 @@ disk_used_percent() {
   df -P "$BASE_DIR" | awk 'NR == 2 { sub(/%$/, "", $5); print $5 }'
 }
 
+truncate_oversized_container_logs() {
+  # Truncating a live json.log is safe: the daemon holds the fd and keeps
+  # appending, and telemetry ships from the Docker API (vector.yaml uses the
+  # docker_logs source), not from these files.
+  freed_mb=0
+  for f in $(find /var/lib/docker/containers -maxdepth 2 -name '*-json.log' -size +"${LOG_TRUNCATE_MB}"M 2>/dev/null); do
+    sz_mb=$(( $(stat -c %s "$f" 2>/dev/null || echo 0) / 1048576 ))
+    if : > "$f" 2>/dev/null; then
+      cid=$(basename "$(dirname "$f")" | cut -c1-12)
+      name=$(docker inspect -f '{{.Name}}' "$cid" 2>/dev/null | sed 's|^/||')
+      log "truncated ${sz_mb}MB stdout log of ${name:-$cid}"
+      freed_mb=$(( freed_mb + sz_mb ))
+    fi
+  done
+
+  # Belt and braces for containers still running an image that wrote pm2 log
+  # FILES. Current images send pm2 output to /dev/null (ecosystem.config.cjs),
+  # so this is a no-op on them, but a slot left over from an older image can
+  # still be holding gigabytes.
+  for slot in bookofmormon-online-blue bookofmormon-online-green; do
+    if container_running "$slot"; then
+      docker exec "$slot" pm2 flush >/dev/null 2>&1 \
+        && log "flushed pm2 logs in $slot" || true
+    fi
+  done
+
+  log "log truncation released roughly ${freed_mb}MB"
+}
+
 emergency_prune_if_needed() {
   used="$(disk_used_percent)"
   case "$used" in
@@ -98,9 +131,23 @@ emergency_prune_if_needed() {
   fi
 
   log "disk usage ${used}% is at or above ${EMERGENCY_DISK_PERCENT}%; entering emergency prune"
-  # The inactive slot is the only object deliberately retained for rollback.
-  # Removing it unpins its image. Running containers (the active app, gateway,
-  # and unrelated services) are never removed by docker system prune.
+
+  # Step 1: oversized logs. Deliberately FIRST, because image pruning is the
+  # weaker lever on a busy box — every image in use by a running container is
+  # unprunable, so on a host running the full stack `docker system prune -a`
+  # can report gigabytes "reclaimable" and free nothing. Truncating logs also
+  # costs less than step 2, which gives up the rollback slot.
+  truncate_oversized_container_logs
+  used="$(disk_used_percent)"
+  log "disk usage after log truncation: ${used}%"
+  if [ "$used" -lt "$EMERGENCY_DISK_PERCENT" ]; then
+    return 0
+  fi
+
+  # Step 2: give up the rollback slot and prune images. The inactive slot is the
+  # only object deliberately retained for rollback; removing it unpins its
+  # image. Running containers (the active app, gateway, and unrelated services)
+  # are never removed by docker system prune.
   if container_exists "$next"; then
     [ "$(docker container inspect -f '{{.State.Running}}' "$next")" = "false" ] \
       || fail "refusing emergency prune because inactive slot $next is running"
@@ -112,7 +159,7 @@ emergency_prune_if_needed() {
   used="$(disk_used_percent)"
   log "disk usage after emergency prune: ${used}%"
   [ "$used" -lt "$EMERGENCY_DISK_PERCENT" ] \
-    || fail "disk remains ${used}% full after emergency prune; refusing image pull"
+    || fail "disk remains ${used}% full after truncating logs and pruning images; refusing image pull"
 }
 
 render_gateway_config() {
