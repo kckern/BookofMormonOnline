@@ -104,3 +104,21 @@ current when they were created. The long-lived BoMDocker containers were created
 before any `log-opts` existed and report an empty `max-size` — genuinely
 unbounded until they are next recreated. Until then the deploy guard's log
 truncation is the safety net for them.
+
+### Known-bad commit: 15a5559d
+
+`15a5559d` ("Fix /map, broken on React 18 by an async useEffect") **cannot
+build**. It carries the move of the CRA HTML template out of `public/` without
+the `config-overrides.js` change that told react-scripts where the template
+went, because `git mv` had staged the rename and a later `git add` of an
+unrelated file swept it into the commit. CI caught it (`Name: index.html`).
+
+The next commit, `930fd27f`, repairs the pair, and every commit after it builds.
+Nothing was deployed from the broken commit. It is left in history rather than
+rewritten because it was already pushed — but a `git bisect` or a revert that
+lands exactly there will fail to build, and that is why, not something about
+the code at that point.
+
+(Historical note: react-scripts was removed in `b45be4ad`; from there the
+frontend builds with Vite and this particular failure mode is gone.)
+

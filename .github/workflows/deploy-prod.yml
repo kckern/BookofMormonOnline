@@ -17,6 +17,13 @@ name: deploy-prod
 on:
   push:
     branches: [prod]
+    # A docs-only push does not change the image, so it should not rebuild and
+    # blue-green the box. A push mixing docs with code still deploys, and
+    # workflow_dispatch below can always force one. (The [skip ci] convention
+    # used on af5a8c6e does the same job ad hoc; this makes it automatic.)
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
   workflow_dispatch: {}
 
 # Least-privilege GITHUB_TOKEN. AWS access is via OIDC (id-token on the deploy job);
