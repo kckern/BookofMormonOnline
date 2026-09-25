@@ -75,6 +75,25 @@ async function chooseImage() {
     target: { files: [new File(["image"], "photo.jpg", { type: "image/jpeg" })] },
   });
   await screen.findByTestId("cropper");
+  // Waiting for the cropper NODE is not enough. The node renders first; the
+  // instance arrives afterwards, when MockCropper's effect calls
+  // onInitialized -> setCropper(), and only the re-render that commits that
+  // STATE enables the crop controls (`disabled={busy || !cropper}`).
+  //
+  // Clicking Save in that window does nothing at all: the button is still
+  // disabled, so React never fires onClick, so save() is never called and
+  // there is no error, no busy state and no closed dialog to notice. The test
+  // then failed on a bare "onCommit called 0 times" a second later.
+  //
+  // This was genuinely intermittent — it needs the file-change flush and the
+  // effect's state commit to land in separate ticks, which only happened under
+  // CPU contention (reproduced 2 times in 25 runs with the box loaded).
+  // Rotate left carries the same `!cropper` gate and its name is identical in
+  // every test here, so it is the stable signal that the instance is live.
+  // Core matcher, not toBeEnabled: this file deliberately imports no jest-dom.
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Rotate left" }).disabled).toBe(false)
+  );
 }
 
 test("opens an accessible dialog and restores focus after Escape", async () => {
