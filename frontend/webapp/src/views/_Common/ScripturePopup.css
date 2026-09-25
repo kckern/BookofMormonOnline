@@ -64,6 +64,7 @@ html[data-theme="dark"] .samplerScriptureHead button:hover { color: #fff; }
 html[data-theme="dark"] .samplerScripturePassage p { color: #d6d6d6; }
 .samplerScripturePassage sup { color: #999; margin-right: 0.15rem; }
 .samplerScriptureHeading {
+  font-family: "Roboto", "Roboto Condensed", sans-serif;
   font-size: 0.78rem;
   font-weight: 700;
   color: #888;
@@ -87,13 +88,13 @@ html[data-theme="dark"] .samplerScriptureFoot { border-top-color: #3a3a3a; }
   border-radius: 1rem;
   font-size: 0.72rem;
   font-weight: 700;
-  color: #345496;
-  background: rgba(52, 84, 150, 0.1);
-  border: 1px solid rgba(52, 84, 150, 0.22);
+  color: #333;
+  background: rgba(201, 162, 75, 0.1);
+  border: 1px solid rgba(201, 162, 75, 0.22);
   text-decoration: none;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
-.samplerScriptureReadLink:hover { background: rgba(52, 84, 150, 0.18); border-color: rgba(52, 84, 150, 0.4); text-decoration: none; }
+.samplerScriptureReadLink:hover { background: rgba(201, 162, 75, 0.18); border-color: rgba(201, 162, 75, 0.4); text-decoration: none; }
 .samplerScriptureReadLink::after {
   content: "";
   width: 0.82em;
@@ -104,7 +105,7 @@ html[data-theme="dark"] .samplerScriptureFoot { border-top-color: #3a3a3a; }
   mask: url("data:image/svg+xml,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22utf-8%22%3F%3E%20%3Csvg%20width%3D%22800px%22%20height%3D%22800px%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%20%3Cpath%20d%3D%22M16.9995%2015.9995L20.9995%2011.9995M20.9995%2011.9995L16.9995%207.99951M20.9995%2011.9995H8.99951M12.9995%2020.9995H6.20029C5.08019%2020.9995%204.52014%2020.9995%204.09231%2020.7815C3.71599%2020.5898%203.41003%2020.2838%203.21828%2019.9075C3.00029%2019.4797%203.00029%2018.9196%203.00029%2017.7995V6.19951C3.00029%205.07941%203.00029%204.51935%203.21828%204.09153C3.41003%203.71521%203.71599%203.40925%204.09231%203.2175C4.52014%202.99951%205.08019%202.99951%206.20029%202.99951L12.9995%202.99951%22%20stroke%3D%22%23000000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%20%3C/svg%3E") center / contain no-repeat;
 }
 html[data-theme="dark"] .samplerScriptureReadLink {
-  color: #93c6ef;
+  color: #ccc;
   background: rgba(147, 198, 239, 0.12);
   border-color: rgba(147, 198, 239, 0.28);
 }
