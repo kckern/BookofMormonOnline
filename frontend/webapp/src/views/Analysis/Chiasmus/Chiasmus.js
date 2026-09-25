@@ -394,4 +394,9 @@ function Container() {
 
 
 
+// Named export for BrowseToolbar.test.js. This existed until c2b72ec2's browse
+// redesign rewrote the file and dropped it, which silently broke that suite —
+// the test kept importing `undefined`, so React reported only "Element type is
+// invalid" with no clue which element. Nothing in the app imports it.
+export { BrowseToolbar };
 export default Container;
