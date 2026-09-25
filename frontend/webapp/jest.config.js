@@ -79,4 +79,17 @@ module.exports = {
 
   // Load-bearing: see the note above.
   resetMocks: true,
+
+  // CRA left this at jest's default 5000. That was always marginal for the
+  // heaviest jsdom tests — Read.test.js renders a full 43-verse chapter, and
+  // its slowest case measured ~12.6s for the suite in isolation — and adding a
+  // 165th test file tipped it over: the test passed alone but blew the 5s
+  // budget in the full run, where a worker is shared with neighbours like
+  // WitnessLifeHeatmap.test.js (49.8s). Nothing about the app got slower; the
+  // test only ever had 5 seconds of a contended CPU.
+  //
+  // Raised for the whole suite rather than that one test, so the next
+  // borderline case fails honestly instead of flaking. The cost is that a
+  // genuinely hung test now takes 15s to report instead of 5s.
+  testTimeout: 15000,
 };
