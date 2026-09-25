@@ -54,7 +54,9 @@ describe("GroupPopUp", () => {
     rerender(<GroupPopUp />);
     await waitFor(() => expect(screen.getByText("Nephites")).toBeInTheDocument());
     expect(screen.getByText("Plates")).toBeInTheDocument();
-    expect(screen.getByText("kept-by")).toBeInTheDocument();
+    // verbLabel() de-hyphenates a relation whose dictionary key is missing, so
+    // the rendered verb is "kept by" rather than the raw "kept-by" rel.
+    expect(screen.getByText("kept by")).toBeInTheDocument();
   });
 
   test("unknown slug is pinned to null and renders a closable not-found card", async () => {

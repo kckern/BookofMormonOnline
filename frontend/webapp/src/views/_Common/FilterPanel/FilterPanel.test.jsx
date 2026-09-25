@@ -1,7 +1,7 @@
 /* eslint-disable testing-library/no-node-access, testing-library/no-container */
 import React from "react";
 import "@testing-library/jest-dom";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import FilterPanel from "./FilterPanel";
 import { isMobile } from "src/models/Utils";
 
@@ -65,7 +65,9 @@ describe("FilterPanel — mini toolbar (default)", () => {
 
   test("option checked-state reflects value[axis].includes(tag)", () => {
     render(<FilterPanel heading="filters" axes={AXES} value={{ id: ["N"], unit: [] }} onChange={() => {}} />);
-    openAxis("Identification");
+    // With exactly one selection the axis button is labelled with that
+    // selection instead of the axis title, so the button reads "Nephite" here.
+    openAxis("Nephite");
     const switches = screen.getAllByTestId("switch");
     expect(switches[0]).toHaveAttribute("data-checked", "1"); // Nephite
     expect(switches[1]).toHaveAttribute("data-checked", "0"); // Jaredite
@@ -80,8 +82,22 @@ describe("FilterPanel — mini toolbar (default)", () => {
     fireEvent.click(screen.getByText("Nephite"));
     expect(onChange).toHaveBeenLastCalledWith({ id: ["N"], unit: [] });
     rerender(<FilterPanel heading="filters" axes={AXES} value={{ id: ["N"], unit: [] }} onChange={onChange} />);
-    fireEvent.click(screen.getByText("Nephite"));
+    // Now that one option is selected the axis button is ALSO labelled
+    // "Nephite", so the option has to be clicked inside the open popover.
+    fireEvent.click(within(document.querySelector(".fpPopover")).getByText("Nephite"));
     expect(onChange).toHaveBeenLastCalledWith({ id: [], unit: [] });
+  });
+
+  test("one selection labels the axis button with it; two keep the title and add a count", () => {
+    const { rerender } = render(
+      <FilterPanel heading="filters" axes={AXES} value={{ id: ["N"], unit: [] }} onChange={() => {}} />
+    );
+    expect(screen.getByText("Nephite")).toBeInTheDocument();
+    expect(screen.queryByText("Identification")).toBeNull();
+
+    rerender(<FilterPanel heading="filters" axes={AXES} value={{ id: ["N", "J"], unit: [] }} onChange={() => {}} />);
+    expect(screen.getByText("Identification")).toBeInTheDocument();
+    expect(screen.getByText("2")).toBeInTheDocument();
   });
 
   test("per-axis select-all / clear only touch that axis", () => {
