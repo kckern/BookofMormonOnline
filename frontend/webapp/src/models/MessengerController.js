@@ -8,17 +8,24 @@
  */
 
 import { io } from 'socket.io-client';
-import { refreshChannel, tokenImage } from './Utils';
+import { refreshChannel, tokenImage, md5hash } from './Utils';
 import { shapeUser, shapeMember, shapeMessage, shapeChannelFields, shapeThreadInfo } from './messengerShapes';
 
-// Helper for consistent user IDs (same as SendbirdController)
+// Helper for consistent user IDs (same as SendbirdController).
+//
+// This called crypto.createHash('md5') on a BARE GLOBAL `crypto`, which only
+// worked because the file imported crypto-browserify at the top. 2e17214a
+// removed that import as unused — it was not; the call is split across lines,
+// so `crypto` reads as a free identifier. In a browser the global `crypto` is
+// Web Crypto, which has no createHash, so md5() threw TypeError and took the
+// whole Community view (both /home/community and /home/feed) down with it.
+//
+// md5hash is the same real md5 via js-md5, already verified byte-identical to
+// crypto-browserify — user ids derived from this must not change value.
 export const md5 = (string) => {
   const isMD5 = string.match(/^[a-f0-9]{32}$/i);
   if (isMD5) return string;
-  return crypto
-    .createHash('md5')
-    .update(string)
-    .digest('hex');
+  return md5hash(string);
 };
 
 export const uuid4 = () => {
