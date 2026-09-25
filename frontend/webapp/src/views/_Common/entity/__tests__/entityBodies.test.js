@@ -7,9 +7,9 @@ import PlaceBody from "../PlaceBody";
 import MatterBody from "../MatterBody";
 import HistoryBody, { historyMeta } from "../HistoryBody";
 
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
-  default: jest.fn(() => Promise.resolve({})),
+  default: vi.fn(() => Promise.resolve({})),
   assetUrl: "https://media.bookofmormon.online",
 }));
 
@@ -42,7 +42,7 @@ const fixture = {
   states: { popUp: { open: false, type: null, ids: [], activeId: null } },
   preLoad: {},
   popUpData: {},
-  functions: { setPopUp: jest.fn(), closePopUp: jest.fn() },
+  functions: { setPopUp: vi.fn(), closePopUp: vi.fn() },
 };
 
 const wrap = (ui) =>

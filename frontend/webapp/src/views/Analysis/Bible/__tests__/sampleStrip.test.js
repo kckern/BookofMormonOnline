@@ -5,9 +5,9 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import SampleStrip from "../SampleStrip";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
 }));
 
 // resetMocks: true — reinstall per test
@@ -21,10 +21,10 @@ const installApiMock = () =>
   });
 
 describe("SampleStrip", () => {
-  beforeEach(installApiMock);
+  beforeEach(() => { installApiMock(); });
 
   test("renders sample verse text for the chosen partner and links to the reader", async () => {
-    const onOpen = jest.fn();
+    const onOpen = vi.fn();
     render(
       <SampleStrip bomBook="2 Nephi" bibleBook="Isaiah" onOpen={onOpen} />
     );
@@ -38,7 +38,7 @@ describe("SampleStrip", () => {
 
   test("renders nothing when the pair has no correspondences", () => {
     const { container } = render(
-      <SampleStrip bomBook="Enos" bibleBook="Revelation" onOpen={jest.fn()} />
+      <SampleStrip bomBook="Enos" bibleBook="Revelation" onOpen={vi.fn()} />
     );
     expect(container).toBeEmptyDOMElement();
   });
@@ -57,7 +57,7 @@ describe("SampleStrip", () => {
       return Promise.resolve({ verses, versehighlights });
     });
     const { container } = render(
-      <SampleStrip bomBook="2 Nephi" bibleBook="Isaiah" onOpen={jest.fn()} />
+      <SampleStrip bomBook="2 Nephi" bibleBook="Isaiah" onOpen={vi.fn()} />
     );
     await waitFor(() => expect(container.querySelector("span.highlight")).not.toBeNull());
   });

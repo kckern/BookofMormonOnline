@@ -20,7 +20,7 @@ test("useTextContent returns the provided controller", () => {
 });
 
 test("useTextContent throws a helpful error without a provider", () => {
-  jest.spyOn(console, "error").mockImplementation(() => {});
+  vi.spyOn(console, "error").mockImplementation(() => {});
   expect(() => render(<Probe />)).toThrow(/TextContentProvider/);
   console.error.mockRestore();
 });

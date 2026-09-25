@@ -1,5 +1,5 @@
 // FaxCrop is mocked so opening the modal / peek never hits the network.
-jest.mock("../FaxCrop", () => ({
+vi.mock("../FaxCrop", () => ({
   FaxCrop: (p) => <img data-testid="crop" data-version={p.version} alt={p.alt} />,
 }));
 

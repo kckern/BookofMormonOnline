@@ -30,7 +30,7 @@ describe("FaxHighlightOverlay", () => {
       observe() {}
       disconnect() {}
     };
-    const spy = jest
+    const spy = vi
       .spyOn(HTMLElement.prototype, "getBoundingClientRect")
       .mockReturnValue({ width: 700, height: 1000, top: 0, left: 0, right: 700, bottom: 1000, x: 0, y: 0, toJSON: () => {} });
     const { container, rerender } = render(<FaxHighlightOverlay boxes={[]} pageScale={700} />);

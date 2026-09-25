@@ -6,7 +6,7 @@ import Overview from "../Overview";
 import { allPairs, divisionBookPairs, groupPairs, headline } from "../aggregate";
 
 const setup = (props = {}) => {
-  const navigate = jest.fn();
+  const navigate = vi.fn();
   const { container } = render(<Overview navigate={navigate} {...props} />);
   return { navigate, container };
 };
@@ -77,7 +77,7 @@ describe("Overview", () => {
   });
 
   test("every spine segment on screen has a visible label (true-Sankey floor)", () => {
-    render(<Overview navigate={jest.fn()} />);
+    render(<Overview navigate={vi.fn()} />);
     // small books were unlabeled slivers before; with ref-count weights + the
     // 14px floor, every BoM book that HAS references gets a text label
     expect(screen.getByText("Moroni")).toBeInTheDocument();
@@ -89,7 +89,7 @@ describe("Overview", () => {
   });
 
   test("small books stay labeled at the compressed fallback height", () => {
-    render(<Overview navigate={jest.fn()} />);
+    render(<Overview navigate={vi.fn()} />);
     // FALLBACK_H is now 420 (was 640); the spineMinPx floor must still clear the
     // ~9px label guard so slivers like Jarom (3 refs) and Omni (9 refs) keep
     // their labels at the smaller default height.
@@ -98,7 +98,7 @@ describe("Overview", () => {
   });
 
   test("hovering a spine segment fills the readout line", () => {
-    render(<Overview navigate={jest.fn()} />);
+    render(<Overview navigate={vi.fn()} />);
     const readout = screen.getByTestId("xref-readout");
     expect(readout).toHaveTextContent(/hover/i);
     fireEvent.mouseEnter(screen.getAllByRole("button", { name: /2 Nephi,/ })[0]);
@@ -106,7 +106,7 @@ describe("Overview", () => {
   });
 
   test("mode and expansion round-trip through navigate, not local state", () => {
-    const navigate = jest.fn();
+    const navigate = vi.fn();
     render(<Overview state={{ view: "overview" }} navigate={navigate} />);
     fireEvent.click(screen.getByRole("button", { name: /view as table/i }));
     expect(navigate).toHaveBeenCalledWith({ view: "overview", mode: "table", expanded: undefined });

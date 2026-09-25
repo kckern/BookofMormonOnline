@@ -10,9 +10,9 @@ import {
 const makeApp = ({ social = null, token = "tok-1", user = null } = {}) => ({
   states: { user: { user, token, social } },
   functions: {
-    setStudyGroups: jest.fn(),
-    setNotificationUnreadCount: jest.fn(),
-    messengerBridgeChanged: jest.fn(),
+    setStudyGroups: vi.fn(),
+    setNotificationUnreadCount: vi.fn(),
+    messengerBridgeChanged: vi.fn(),
   },
 });
 
@@ -36,7 +36,7 @@ beforeEach(() => {
 
 test("guest mount: no controller created, context is the noop stub, bridge untouched", () => {
   const app = makeApp();
-  const factory = jest.fn();
+  const factory = vi.fn();
   renderProvider(app, factory);
   expect(factory).not.toHaveBeenCalled();
   // useMessenger() is never null: with no controller it falls back to the noop
@@ -62,9 +62,9 @@ test("noopController has the legacy stub surface", async () => {
 });
 
 const makeController = () => ({
-  disconnect: jest.fn(),
-  getStudyGroups: jest.fn().mockResolvedValue([{ url: "g1" }]),
-  loadNotificationUnreadCount: jest.fn().mockResolvedValue(0),
+  disconnect: vi.fn(),
+  getStudyGroups: vi.fn().mockResolvedValue([{ url: "g1" }]),
+  loadNotificationUnreadCount: vi.fn().mockResolvedValue(0),
 });
 
 const rerenderWith = (rerender, app, factory) =>
@@ -77,7 +77,7 @@ const rerenderWith = (rerender, app, factory) =>
 test("sign-in: creates controller, bridges appController.messenger, bootstraps groups", async () => {
   const app = makeApp({ social: { user_id: "abc123" }, user: "kc" });
   const ctrl = makeController();
-  const factory = jest.fn(() => ctrl);
+  const factory = vi.fn(() => ctrl);
   renderProvider(app, factory);
 
   expect(factory).toHaveBeenCalledWith("abc123", "tok-1", app);
@@ -92,7 +92,7 @@ test("sign-in: creates controller, bridges appController.messenger, bootstraps g
 test("guest → sign-in transition creates the controller", () => {
   const app = makeApp();
   const ctrl = makeController();
-  const factory = jest.fn(() => ctrl);
+  const factory = vi.fn(() => ctrl);
   const { rerender } = renderProvider(app, factory);
   expect(factory).not.toHaveBeenCalled();
 
@@ -109,7 +109,7 @@ test("guest → sign-in transition creates the controller", () => {
 
 test("falls back to social.access_token when user token is absent", () => {
   const app = makeApp({ social: { user_id: "abc123", access_token: "at-9" }, token: null });
-  const factory = jest.fn(() => makeController());
+  const factory = vi.fn(() => makeController());
   renderProvider(app, factory);
   expect(factory).toHaveBeenCalledWith("abc123", "at-9", app);
 });
@@ -118,7 +118,7 @@ test("identity change: disconnect old, create new", () => {
   const appA = makeApp({ social: { user_id: "userA" }, user: "a" });
   const ctrlA = makeController();
   const ctrlB = makeController();
-  const factory = jest.fn().mockReturnValueOnce(ctrlA).mockReturnValueOnce(ctrlB);
+  const factory = vi.fn().mockReturnValueOnce(ctrlA).mockReturnValueOnce(ctrlB);
   const { rerender } = renderProvider(appA, factory);
 
   const appB = makeApp({ social: { user_id: "userB" }, user: "b" });
@@ -132,7 +132,7 @@ test("identity change: disconnect old, create new", () => {
 test("sign-out: disconnect, bridge resets to no-op stub (never null), context is the no-op stub", () => {
   const app = makeApp({ social: { user_id: "userA" }, user: "a" });
   const ctrl = makeController();
-  const factory = jest.fn(() => ctrl);
+  const factory = vi.fn(() => ctrl);
   const { rerender } = renderProvider(app, factory);
 
   const guest = makeApp(); // processSignOut clears social
@@ -154,14 +154,14 @@ test("sign-out: disconnect, bridge resets to no-op stub (never null), context is
 test("unmount disconnects", () => {
   const app = makeApp({ social: { user_id: "userA" }, user: "a" });
   const ctrl = makeController();
-  const { unmount } = renderProvider(app, jest.fn(() => ctrl));
+  const { unmount } = renderProvider(app, vi.fn(() => ctrl));
   unmount();
   expect(ctrl.disconnect).toHaveBeenCalledTimes(1);
 });
 
 test("signed-out mount: useMessenger() returns the noop stub, never null", () => {
   const app = makeApp({ token: null }); // social null + token null = fully signed out
-  const factory = jest.fn();
+  const factory = vi.fn();
   renderProvider(app, factory);
   expect(factory).not.toHaveBeenCalled(); // no controller created
   expect(lastCtx).not.toBeNull();
@@ -171,7 +171,7 @@ test("signed-out mount: useMessenger() returns the noop stub, never null", () =>
 
 test("bridge changes are announced via messengerBridgeChanged dispatch", () => {
   const app = makeApp({ social: { user_id: "abc123" }, user: "kc" });
-  const factory = jest.fn(() => makeController());
+  const factory = vi.fn(() => makeController());
   const { rerender } = renderProvider(app, factory);
   // create
   expect(app.functions.messengerBridgeChanged).toHaveBeenCalledTimes(1);

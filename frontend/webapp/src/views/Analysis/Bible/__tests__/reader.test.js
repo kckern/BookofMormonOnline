@@ -8,9 +8,9 @@ import { partnersFor } from "../aggregate";
 import { canons } from "../canon";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
 }));
 
 // CRA sets resetMocks: true, so (re)install the implementation per test.
@@ -24,7 +24,7 @@ const installApiMock = () =>
   });
 
 const setup = (state) => {
-  const navigate = jest.fn();
+  const navigate = vi.fn();
   render(
     <MemoryRouter>
       <Reader
@@ -40,9 +40,9 @@ describe("Reader", () => {
   let alertSpy;
   beforeEach(() => {
     installApiMock();
-    alertSpy = jest.spyOn(window, "alert").mockImplementation(() => {});
+    alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
   });
-  afterEach(() => alertSpy.mockRestore());
+  afterEach(() => { alertSpy.mockRestore(); });
 
   test("first page renders 50 pairs with a Load more button; never alerts", async () => {
     setup();
@@ -106,7 +106,7 @@ describe("Reader", () => {
   });
 
   test("breadcrumb back target honors a kjv origin", () => {
-    const navigate = jest.fn();
+    const navigate = vi.fn();
     render(
       <MemoryRouter>
         <Reader
@@ -133,7 +133,7 @@ describe("Reader", () => {
   });
 
   test("a bibleChapter-scoped reader shows the scope and fewer pairs than unscoped", async () => {
-    const navigate = jest.fn();
+    const navigate = vi.fn();
     const { unmount } = render(
       <MemoryRouter>
         <Reader
@@ -153,7 +153,7 @@ describe("Reader", () => {
   });
 
   test("Escape inside an input does not navigate", () => {
-    const navigate = jest.fn();
+    const navigate = vi.fn();
     render(
       <MemoryRouter>
         <input data-testid="searchbox" />

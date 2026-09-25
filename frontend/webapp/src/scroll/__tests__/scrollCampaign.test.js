@@ -14,7 +14,7 @@ const setScrollY = (y) =>
 
 const fakeEl = (top, height = 100) => ({
   getBoundingClientRect: () => ({ top: top - window.scrollY, height }),
-  click: jest.fn(),
+  click: vi.fn(),
 });
 
 beforeEach(() => {
@@ -27,8 +27,8 @@ beforeEach(() => {
     configurable: true,
   });
   setScrollY(0);
-  window.scrollTo = jest.fn(({ top }) => setScrollY(top)); // instant fake browser
-  window.matchMedia = jest.fn().mockReturnValue({ matches: false });
+  window.scrollTo = vi.fn(({ top }) => setScrollY(top)); // instant fake browser
+  window.matchMedia = vi.fn().mockReturnValue({ matches: false });
 });
 
 test("scrollToElement scrolls to documentTop minus the offset and completes", async () => {
@@ -64,7 +64,7 @@ test("already-at-target is a noop step", async () => {
 
 test("a new run supersedes the in-flight one", async () => {
   // First scroll never settles on its own: browser fake that doesn't move.
-  window.scrollTo = jest.fn();
+  window.scrollTo = vi.fn();
   const mgr = createScrollManager();
   const p1 = mgr.run([step.scrollToElement(() => fakeEl(3000))]);
   await flushFrames(1);
@@ -74,8 +74,8 @@ test("a new run supersedes the in-flight one", async () => {
 });
 
 test("user input interrupts and tail call-steps are skipped", async () => {
-  window.scrollTo = jest.fn(); // never settles
-  const tail = jest.fn();
+  window.scrollTo = vi.fn(); // never settles
+  const tail = vi.fn();
   const mgr = createScrollManager();
   const p = mgr.run([step.scrollToElement(() => fakeEl(3000)), step.call(tail)]);
   await flushFrames(1);
@@ -109,7 +109,7 @@ describe("waitForIdle", () => {
     // call-steps are fire-and-forget (runSteps doesn't await fn's return), so
     // hold the campaign open the way the supersede/interrupt tests do: a
     // browser fake that never moves, released by "arriving" at the target.
-    window.scrollTo = jest.fn();
+    window.scrollTo = vi.fn();
     const mgr = createScrollManager();
     const run = mgr.run([step.scrollToElement(() => fakeEl(3000))]); // target 2800
     let idle = false;
@@ -124,7 +124,7 @@ describe("waitForIdle", () => {
   });
 
   test("waiters queued during a superseded campaign resolve when the replacement ends", async () => {
-    window.scrollTo = jest.fn(); // first campaign never settles
+    window.scrollTo = vi.fn(); // first campaign never settles
     const mgr = createScrollManager();
     const p1 = mgr.run([step.scrollToElement(() => fakeEl(3000))]);
     await flushFrames(1);
@@ -143,7 +143,7 @@ test("openAndAwait clicks only when closed and waits for height stability", asyn
   let open = false;
   let height = 40;
   const box = { getBoundingClientRect: () => ({ height }) };
-  trigger.click = jest.fn(() => {
+  trigger.click = vi.fn(() => {
     open = true;
     height = 400;
   });

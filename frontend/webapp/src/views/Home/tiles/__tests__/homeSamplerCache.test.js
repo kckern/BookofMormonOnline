@@ -9,7 +9,7 @@ import {
 
 beforeEach(() => {
   localStorage.clear();
-  jest.restoreAllMocks();
+  vi.restoreAllMocks();
 });
 
 const samplePayload = { seed: 42, people: [{ slug: "nephi" }], text: { id: 1 } };
@@ -52,14 +52,14 @@ describe("homeSamplerCache", () => {
   });
 
   test("write swallows a storage quota/security error", () => {
-    jest.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
       throw new DOMException("QuotaExceeded");
     });
     expect(() => write(samplePayload, 42)).not.toThrow();
   });
 
   test("read swallows a storage access error and returns null", () => {
-    jest.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
       throw new DOMException("SecurityError");
     });
     expect(read()).toBeNull();

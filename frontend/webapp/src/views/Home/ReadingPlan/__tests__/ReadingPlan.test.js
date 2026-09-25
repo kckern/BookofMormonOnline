@@ -3,11 +3,11 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
 
-jest.mock('src/models/BoMOnlineAPI', () => ({ __esModule: true, default: jest.fn(), ApiBaseUrl: 'http://t' }));
-jest.mock('src/contexts/AppControllerContext', () => ({
+vi.mock('src/models/BoMOnlineAPI', () => ({ __esModule: true, default: vi.fn(), ApiBaseUrl: 'http://t' }));
+vi.mock('src/contexts/AppControllerContext', () => ({
   useAppController: () => ({ states: { user: { token: 'tkn', user: 'u1', social: null, progress: { completed: 0 } } } }),
 }));
-jest.mock('src/models/Utils', () => ({ label: (key) => key }));
+vi.mock('src/models/Utils', () => ({ label: (key) => key }));
 import BoMOnlineAPI from 'src/models/BoMOnlineAPI';
 import { ReadingPlan } from '../index';
 
@@ -21,7 +21,11 @@ const plan = (over = {}) => ({
   ...over,
 });
 
-beforeEach(() => BoMOnlineAPI.mockReset());
+// No explicit mockReset here: vite.config.mjs sets `mockReset: true` globally,
+// and calling it again on a module-factory mock makes Vitest invoke the mock an
+// extra time with NO arguments after the test body, which threw inside any
+// implementation that reads its first argument (q.readingplan).
+
 
 test('renders active plan using server current + progress (no local recompute)', async () => {
   BoMOnlineAPI.mockImplementation((q) =>

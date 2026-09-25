@@ -2,7 +2,7 @@ import React from "react";
 import { render } from "@testing-library/react";
 import { usePageComments } from "../usePageComments";
 
-jest.mock("src/contexts/MessengerContext", () => ({
+vi.mock("src/contexts/MessengerContext", () => ({
   useMessenger: () => null, // disconnected: hook must still register listeners & settle
 }));
 
@@ -11,17 +11,17 @@ const makePageController = () => ({
   pageComments: null,
   states: { pageSlug: "lehites", commentGroupId: null },
   functions: {
-    setPageComments: jest.fn(),
-    addToPageComments: jest.fn(),
-    updateToPageComment: jest.fn(),
-    moveStudyBuddies: jest.fn(),
+    setPageComments: vi.fn(),
+    addToPageComments: vi.fn(),
+    updateToPageComment: vi.fn(),
+    moveStudyBuddies: vi.fn(),
   },
   appController: {
     states: {
       user: { user: "kc", social: { user_id: "kc" } },
       studyGroup: { studyModeOn: true, activeGroup: { url: "group-1" } },
     },
-    functions: { setTypingLocations: jest.fn() },
+    functions: { setTypingLocations: vi.fn() },
   },
 });
 

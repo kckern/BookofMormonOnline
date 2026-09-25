@@ -6,7 +6,7 @@ import TileCTA from "../TileCTA";
 
 describe("TileCTA", () => {
   test("renders a real <button> for onClick actions (native keyboard support)", () => {
-    const onClick = jest.fn();
+    const onClick = vi.fn();
     render(<TileCTA variant="reveal" onClick={onClick}>More</TileCTA>);
     const el = screen.getByRole("button", { name: "More" });
     expect(el.tagName).toBe("BUTTON");

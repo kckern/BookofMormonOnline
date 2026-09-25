@@ -6,9 +6,9 @@ import { MemoryRouter } from "react-router-dom";
 import Breadcrumb from "./Breadcrumb";
 import { isMobile } from "src/models/Utils";
 
-jest.mock("src/models/Utils", () => ({
+vi.mock("src/models/Utils", () => ({
   label: (key) => key,
-  isMobile: jest.fn(() => false),
+  isMobile: vi.fn(() => false),
 }));
 
 const wrap = (ui) => render(<MemoryRouter>{ui}</MemoryRouter>);
@@ -32,7 +32,7 @@ describe("Breadcrumb — trail", () => {
   });
 
   test("Breadcrumb.Link renders a Link for `to` and a button for `onClick`", () => {
-    const onClick = jest.fn();
+    const onClick = vi.fn();
     wrap(
       <Breadcrumb>
         <Breadcrumb.Link to="/history">History</Breadcrumb.Link>
@@ -87,7 +87,7 @@ describe("Breadcrumb — trail", () => {
 });
 
 describe("Breadcrumb.Dropdown", () => {
-  beforeEach(() => isMobile.mockReturnValue(false));
+  beforeEach(() => { isMobile.mockReturnValue(false); });
 
   const Grid = ({ onPick }) => (
     <button type="button" onClick={onPick}>Pick me</button>
@@ -107,7 +107,7 @@ describe("Breadcrumb.Dropdown", () => {
   });
 
   test("closes on outside click and on Escape, firing onOpenChange", () => {
-    const onOpenChange = jest.fn();
+    const onOpenChange = vi.fn();
     wrap(
       <Breadcrumb>
         <Breadcrumb.Dropdown label="Menu" onOpenChange={onOpenChange}><Grid /></Breadcrumb.Dropdown>

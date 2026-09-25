@@ -5,16 +5,16 @@ import NotesTile from "../NotesTile";
 
 // ScriptureExcerpt fetches the passage via the API on mount; keep it pending so
 // the excerpt stays empty and assertions target the note content only.
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
-  default: jest.fn(() => new Promise(() => {})),
+  default: vi.fn(() => new Promise(() => {})),
   assetUrl: "https://media.test",
   ApiBaseUrl: "http://localhost:5005",
 }));
 
 // ScriptureExcerpt imports BoMOnlineAPI with a .js extension — mock it directly
 // so the sub-component renders nothing rather than trying a real API call.
-jest.mock("src/views/_Common/ScriptureExcerpt", () => ({
+vi.mock("src/views/_Common/ScriptureExcerpt", () => ({
   __esModule: true,
   default: () => null,
   readPath: (ref) => (ref ? `/read/${ref}` : null),

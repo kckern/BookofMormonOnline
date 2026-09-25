@@ -1,13 +1,13 @@
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
   assetUrl: "https://media.test",
   ApiBaseUrl: "",
 }));
-jest.mock("../../../Home/tiles/ScripturePopup", () => ({
+vi.mock("../../../Home/tiles/ScripturePopup", () => ({
   __esModule: true,
   default: () => null,
-  openScripture: jest.fn(),
+  openScripture: vi.fn(),
 }));
 
 import React from "react";
@@ -39,12 +39,12 @@ const DETAIL = (id) => ({
 
 beforeAll(() => {
   // jsdom has no scrollIntoView; Container's active-card effect calls it
-  Element.prototype.scrollIntoView = jest.fn();
+  Element.prototype.scrollIntoView = vi.fn();
 });
 
 beforeEach(() => {
   __clearChiasmCache();
-  jest.clearAllMocks();
+  vi.clearAllMocks();
   BoMOnlineAPI.mockImplementation((input) =>
     input.chiasmus
       ? Promise.resolve({ chiasmus: LIST })
@@ -163,7 +163,7 @@ test("non-speaker grouping keeps the per-card speaker name and avatar", async ()
 });
 
 test("browsing produces no duplicate-key warnings (audit §2.3 canary)", async () => {
-  const errSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+  const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
   const history = renderAt("/analysis/chiasmus");
   fireEvent.click(await screen.findByRole("button", { name: /first chiasm/i }));
   await screen.findByText("Detail x1");

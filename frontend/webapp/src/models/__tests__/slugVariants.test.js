@@ -1,5 +1,5 @@
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 import { resolveSlug } from "../slugVariants";
 
 // Same fixtures as frontend/next/test/unit/slug-variants.test.ts — the two

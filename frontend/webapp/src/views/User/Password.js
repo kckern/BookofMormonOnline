@@ -7,7 +7,6 @@ import {
     CardHeader,
     CardBody,
     Input,
-    InputGroupAddon,
     InputGroupText,
     InputGroup,
     Alert
@@ -55,11 +54,9 @@ export function ChangePassword({ setProfileState }) {
     <CardBody>
     <CardBody>
         <InputGroup>
-            <InputGroupAddon addonType="prepend">
                 <InputGroupText>
                     🔑
                 </InputGroupText>
-            </InputGroupAddon>
             <Input
                 placeholder={label("new_password")}
                 name="pass1"
@@ -68,11 +65,9 @@ export function ChangePassword({ setProfileState }) {
             />
         </InputGroup>
         <InputGroup>
-            <InputGroupAddon addonType="prepend">
                 <InputGroupText>
                     🔑
                 </InputGroupText>
-            </InputGroupAddon>
             <Input
                 placeholder={label("confirm_password")}
                 type="password"

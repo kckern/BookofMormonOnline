@@ -10,7 +10,7 @@ import { ATVApparatus } from "../ATVApparatus";
 
 // Keep the compare modal off the network; echo the selector so a test can assert
 // which verse each crop points at.
-jest.mock("../FaxCrop", () => ({
+vi.mock("../FaxCrop", () => ({
   FaxCrop: (p) => <img data-testid="crop" data-selector={p.selector} alt={p.alt} />,
 }));
 

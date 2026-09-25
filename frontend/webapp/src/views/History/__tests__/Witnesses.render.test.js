@@ -30,18 +30,18 @@ import { MemoryRouter, Route } from "react-router-dom";
  *    the defects under test, and paraphrasing them would blunt the tests.
  */
 
-const mockSetPopUp = jest.fn();
+const mockSetPopUp = vi.fn();
 
 // Months the heatmap stub offers as selectable. Reset per test by renderWitness.
 const mockSelectableMonths = { current: [] };
 
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
     __esModule: true,
-    default: jest.fn(() => Promise.resolve({ history: [] })),
+    default: vi.fn(() => Promise.resolve({ history: [] })),
     assetUrl: "https://assets.test",
 }));
 
-jest.mock("src/models/Utils", () => ({
+vi.mock("src/models/Utils", () => ({
     // Real en labels (see docs/plans/2026-08-07-history-translation.md) -- displayDate
     // formats through these, so a naive identity mock would feed moment.format() the
     // literal key string instead of a format token and produce garbage dates.
@@ -52,14 +52,14 @@ jest.mock("src/models/Utils", () => ({
     }[k] ?? k),
 }));
 
-jest.mock("src/contexts/AppControllerContext", () => ({
+vi.mock("src/contexts/AppControllerContext", () => ({
     useAppController: () => ({ functions: { setPopUp: mockSetPopUp } }),
 }));
 
-jest.mock("../WitnessLifeHeatmap", () => ({
+vi.mock("../WitnessLifeHeatmap", () => ({
     __esModule: true,
     default: ({ selectedYearMonth, onSelectYearMonth }) => {
-        const R = require("react");
+        const R = React;
         return R.createElement(
             "div",
             { "data-testid": "heatmap" },
@@ -228,7 +228,7 @@ const awaitCards = async (expected) => {
 const selectMonth = (ym) => fireEvent.click(screen.getByRole("button", { name: `select ${ym}` }));
 
 beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockHistory(WHITMER_SOURCES);
 });
 
@@ -637,7 +637,7 @@ describe("breadcrumb dropdown", () => {
     // to using it here -- that opening it does not regress into the deleted global
     // Escape-navigates-back handler.
     it("closes on Escape without navigating away", async () => {
-        const back = jest.spyOn(window.history, "back").mockImplementation(() => {});
+        const back = vi.spyOn(window.history, "back").mockImplementation(() => {});
         renderWitness("/history/witnesses/david-whitmer");
         const trigger = await screen.findByRole("button", { name: /David Whitmer/ });
         // fireEvent.click, not userEvent.click: Breadcrumb.test.jsx's own working Escape
@@ -682,7 +682,7 @@ describe("breadcrumb dropdown", () => {
         // The deleted global handler fired for the page's whole lifetime,
         // independent of the dropdown's open state. Confirm Escape is inert
         // with the menu never opened at all.
-        const back = jest.spyOn(window.history, "back").mockImplementation(() => {});
+        const back = vi.spyOn(window.history, "back").mockImplementation(() => {});
         renderWitness("/history/witnesses/david-whitmer");
         await screen.findByRole("button", { name: /David Whitmer/ });
         userEvent.type(document.body, "{esc}", { skipClick: true });

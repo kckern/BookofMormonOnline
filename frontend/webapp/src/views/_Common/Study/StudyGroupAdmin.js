@@ -7,7 +7,6 @@ import {
   CardHeader,
   Input,
   InputGroup,
-  InputGroupAddon,
   InputGroupText,
 } from "reactstrap";
 import {
@@ -194,11 +193,9 @@ export default function StudyGroupAdmin() {
           </div>
           <div className={"groupInfo"}>
             <InputGroup>
-              <InputGroupAddon addonType="prepend">
                 <InputGroupText>
                   <img src={flag} />
                 </InputGroupText>
-              </InputGroupAddon>
               <Input
                 id="group_name"
                 placeholder={label("group_name")}
@@ -208,11 +205,9 @@ export default function StudyGroupAdmin() {
               />
             </InputGroup>
             <InputGroup>
-              <InputGroupAddon addonType="prepend">
                 <InputGroupText>
                   <img src={info} />
                 </InputGroupText>
-              </InputGroupAddon>
               <Input
                 id="group_description"
                 placeholder={label("group_description")}

@@ -1,7 +1,7 @@
 import { prefetchThumbs, isThumbWarm, __resetThumbCache } from "../faxThumbCache";
 
 describe("faxThumbCache", () => {
-  beforeEach(() => __resetThumbCache());
+  beforeEach(() => { __resetThumbCache(); });
 
   test("isThumbWarm is false before prefetch, true after image load", () => {
     const loaders = [];

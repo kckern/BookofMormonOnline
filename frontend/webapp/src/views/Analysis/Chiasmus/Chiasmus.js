@@ -421,16 +421,22 @@ function Container() {
 
 
     return <div className="container">
-         <h3 className="title lg-4 text-center chiasmus_title">
+         <h3
+            className="title lg-4 text-center chiasmus_title"
+            // An explicit accessible name, NOT visually-hidden separator spans.
+            // Those spans carried leading/trailing spaces to keep the name from
+            // reading "…Book of Mormon367", but the accessible-name algorithm
+            // trims each text node, so they collapsed to "…Book of Mormon—2chiasms"
+            // — separated but unreadable. aria-label states the name outright,
+            // so it cannot drift with whitespace rules again.
+            aria-label={enriched.length > 0
+                ? `${t("chiasmus_page_title", "Chiasmus in the Book of Mormon")} — ${t("n_chiasms", "$1 chiasms", [enriched.length])}`
+                : undefined}
+         >
             {t("chiasmus_page_title", "Chiasmus in the Book of Mormon")}
             {enriched.length > 0 && (
-                // JSX strips the whitespace before this span, so without the
-                // hidden separators the heading's accessible name reads
-                // "…Book of Mormon367" — glued on and unlabeled.
                 <span className="total_count" title={t("total_chiasms", "$1 chiasms total", [enriched.length])}>
-                    <span className="visually-hidden"> — </span>
                     {enriched.length}
-                    <span className="visually-hidden">{t("total_chiasms_sr", " chiasms")}</span>
                 </span>
             )}
          </h3>

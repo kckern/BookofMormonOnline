@@ -2,15 +2,15 @@ import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
-// Mutable per-test fixtures (must be `mock`-prefixed to satisfy jest.mock hoisting).
+// Mutable per-test fixtures (must be `mock`-prefixed to satisfy vi.mock hoisting).
 let mockBookmark = null;
 let mockSignedIn = false;
 
-const mockApi = jest.fn();
+const mockApi = vi.fn();
 
 // react-scripts sets `resetMocks: true`, which strips a mock's implementation
 // before every test — so the routing behaviour is (re)installed in beforeEach,
-// not inline on the jest.fn(), or the tile would see `undefined` from the API.
+// not inline on the vi.fn(), or the tile would see `undefined` from the API.
 const applyApiImpl = () =>
   mockApi.mockImplementation((q) => {
     if ("mybookmark" in q) return Promise.resolve({ mybookmark: mockBookmark });
@@ -19,17 +19,17 @@ const applyApiImpl = () =>
     return new Promise(() => {}); // readingplanpreview etc. — stay pending
   });
 
-jest.mock("src/models/BoMOnlineAPI.js", () => ({
+vi.mock("src/models/BoMOnlineAPI.js", () => ({
   __esModule: true,
   default: (...args) => mockApi(...args),
 }));
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
   default: (...args) => mockApi(...args),
   assetUrl: "https://media.test",
 }));
 
-jest.mock("src/contexts/AppControllerContext", () => ({
+vi.mock("src/contexts/AppControllerContext", () => ({
   __esModule: true,
   useAppController: () => ({
     states: { user: { token: "tok", user: mockSignedIn ? 42 : null, social: {}, progress: {} } },
@@ -37,11 +37,11 @@ jest.mock("src/contexts/AppControllerContext", () => ({
 }));
 
 // The two heavy children are irrelevant to the routing decision — stub them.
-jest.mock("../ReadingProgressTile", () => ({
+vi.mock("../ReadingProgressTile", () => ({
   __esModule: true,
   default: () => <div data-testid="reading-progress" />,
 }));
-jest.mock("../../ReadingPlan", () => ({
+vi.mock("../../ReadingPlan", () => ({
   __esModule: true,
   ReadingPlan: () => <div data-testid="reading-plan-gallery" />,
 }));

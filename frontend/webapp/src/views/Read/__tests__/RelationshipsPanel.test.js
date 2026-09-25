@@ -4,8 +4,8 @@ import "@testing-library/jest-dom";
 import { render, screen, fireEvent } from "@testing-library/react";
 import RelationshipsPanel from "../CategoryPanels/RelationshipsPanel";
 
-const mockSetPopUp = jest.fn();
-jest.mock("src/contexts/AppControllerContext", () => ({
+const mockSetPopUp = vi.fn();
+vi.mock("src/contexts/AppControllerContext", () => ({
   useAppController: () => ({ functions: { setPopUp: (...args) => mockSetPopUp(...args) } }),
 }));
 

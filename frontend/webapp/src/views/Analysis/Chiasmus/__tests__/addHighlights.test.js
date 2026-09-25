@@ -1,9 +1,9 @@
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
   assetUrl: "https://media.test",
   ApiBaseUrl: "http://localhost:5005",
 }));

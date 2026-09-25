@@ -2,8 +2,6 @@ import './polyfills/randomUUID'; // must be first — secure-context polyfill
 // import 'babel-polyfill';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import * as Sentry from "@sentry/react";
-import { BrowserTracing } from "@sentry/tracing";
 import App from './App';
 import { analytics } from './models/analytics/index.js';
 import "./views/_Common/Header.css";

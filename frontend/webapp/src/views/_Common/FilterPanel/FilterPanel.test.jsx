@@ -5,8 +5,8 @@ import { render, screen, fireEvent, within } from "@testing-library/react";
 import FilterPanel from "./FilterPanel";
 import { isMobile } from "src/models/Utils";
 
-jest.mock("src/models/Utils", () => ({ label: (k) => k, tr: (k, fb) => fb, isMobile: jest.fn(() => false) }));
-jest.mock("src/views/_Common/SearchPopUp", () => ({
+vi.mock("src/models/Utils", () => ({ label: (k) => k, tr: (k, fb) => fb, isMobile: vi.fn(() => false) }));
+vi.mock("src/views/_Common/SearchPopUp", () => ({
   SearchPopUp: (props) =>
     props.isOpen ? (
       <div data-testid="searchpopup">
@@ -18,12 +18,12 @@ jest.mock("src/views/_Common/SearchPopUp", () => ({
 // The switch is no longer mocked: FilterSwitch, which replaced the old
 // bootstrap switch package, exposes the same data-testid/data-checked hooks, so
 // these assertions now exercise the real component.
-const mockSetPopUp = jest.fn();
+const mockSetPopUp = vi.fn();
 const mockCtx = {
   states: { popUp: { type: null }, user: { social: { user_id: "u1" } } },
   functions: { setPopUp: mockSetPopUp },
 };
-jest.mock("src/contexts/AppControllerContext", () => ({ useAppController: () => mockCtx }));
+vi.mock("src/contexts/AppControllerContext", () => ({ useAppController: () => mockCtx }));
 
 const AXES = [
   { name: "id", title: "Identification", options: [{ tag: "N", label: "Nephite" }, { tag: "J", label: "Jaredite" }] },
@@ -32,11 +32,11 @@ const AXES = [
 const SEARCH = {
   placeholder: "search_for_a_person", preLoadData: [],
   testFieldNames: { primary: "name", secondary: "title" }, assetName: "people",
-  selectItemHandler: jest.fn(),
+  selectItemHandler: vi.fn(),
 };
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
   isMobile.mockReturnValue(false);
   mockCtx.states.popUp.type = null;
 });
@@ -74,7 +74,7 @@ describe("FilterPanel — mini toolbar (default)", () => {
   });
 
   test("clicking an unchecked option adds its tag; a checked one removes it", () => {
-    const onChange = jest.fn();
+    const onChange = vi.fn();
     const { rerender } = render(
       <FilterPanel heading="filters" axes={AXES} value={{ id: [], unit: [] }} onChange={onChange} />
     );
@@ -101,7 +101,7 @@ describe("FilterPanel — mini toolbar (default)", () => {
   });
 
   test("per-axis select-all / clear only touch that axis", () => {
-    const onChange = jest.fn();
+    const onChange = vi.fn();
     render(<FilterPanel heading="filters" axes={AXES} value={{ id: [], unit: ["I"] }} onChange={onChange} />);
     openAxis("Identification");
     fireEvent.click(screen.getByText("select_all"));
@@ -111,7 +111,7 @@ describe("FilterPanel — mini toolbar (default)", () => {
   });
 
   test("Clear all empties every axis at once", () => {
-    const onChange = jest.fn();
+    const onChange = vi.fn();
     render(<FilterPanel heading="filters" axes={AXES} value={{ id: ["N"], unit: ["I"] }} onChange={onChange} />);
     fireEvent.click(screen.getByText("Clear all"));
     expect(onChange).toHaveBeenLastCalledWith({ id: [], unit: [] });

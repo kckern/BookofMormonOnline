@@ -7,9 +7,9 @@ import ReadScripture from "../Read";
 import BoMOnlineAPI from "../../../models/BoMOnlineAPI";
 import { AppControllerProvider } from "src/contexts/AppControllerContext";
 
-jest.mock("../../../models/BoMOnlineAPI", () => ({
+vi.mock("../../../models/BoMOnlineAPI", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
   assetUrl: "http://test-assets",
 }));
 
@@ -39,7 +39,7 @@ const buildChapterData = (ref) => {
   };
 };
 
-const appController = { functions: { setPopUp: jest.fn() } };
+const appController = { functions: { setPopUp: vi.fn() } };
 
 const renderRead = (path) =>
   render(
@@ -53,10 +53,10 @@ const renderRead = (path) =>
   );
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
   localStorage.clear();
-  window.scrollTo = jest.fn();
-  Element.prototype.scrollIntoView = jest.fn();
+  window.scrollTo = vi.fn();
+  Element.prototype.scrollIntoView = vi.fn();
   BoMOnlineAPI.mockImplementation(({ read }) =>
     Promise.resolve({ read: { [read]: buildChapterData(read) } })
   );

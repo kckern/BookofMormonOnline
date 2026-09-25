@@ -8,7 +8,7 @@ import MapStoryTile, {
 
 // OpenLayers requires a real canvas. This contract stub exposes all important
 // state and callbacks owned by the tile without replacing their semantics.
-jest.mock("../MapStoryTileInner", () => ({
+vi.mock("../MapStoryTileInner", () => ({
   __esModule: true,
   default: ({ moves, step, complete, animate, playing, onSelectStep, onMapInteraction, onRecenter }) => (
     <div
@@ -25,10 +25,10 @@ jest.mock("../MapStoryTileInner", () => ({
     </div>
   ),
 }));
-jest.mock("src/views/_Common/ScripturePopup", () => ({
+vi.mock("src/views/_Common/ScripturePopup", () => ({
   __esModule: true,
   default: () => null,
-  openScripture: jest.fn(),
+  openScripture: vi.fn(),
 }));
 import { openScripture } from "src/views/_Common/ScripturePopup";
 
@@ -85,12 +85,12 @@ const mapState = (name) => mapCanvas().getAttribute(`data-${name}`);
 beforeAll(() => {
   Object.defineProperty(window, "matchMedia", {
     configurable: true,
-    value: jest.fn(() => ({
+    value: vi.fn(() => ({
       matches: reduceMotion,
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-      addListener: jest.fn(),
-      removeListener: jest.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
     })),
   });
 });
@@ -99,12 +99,12 @@ beforeEach(() => {
   reduceMotion = false;
   window.matchMedia.mockImplementation(() => ({
     matches: reduceMotion,
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    addListener: jest.fn(),
-    removeListener: jest.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
   }));
-  jest.useFakeTimers();
+  vi.useFakeTimers();
   openScripture.mockClear();
   // The component now routes its strings through label(); seed the dictionary so
   // label() resolves to real English (it returns " " when the dictionary is unset).
@@ -122,8 +122,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  jest.runOnlyPendingTimers();
-  jest.useRealTimers();
+  vi.runOnlyPendingTimers();
+  vi.useRealTimers();
   delete global.dictionary;
 });
 
@@ -188,15 +188,15 @@ describe("MapStoryTile", () => {
     const stepOne = playbackTiming(data.moves[0]).stepMs;
     const stepTwo = playbackTiming(data.moves[1]).stepMs;
 
-    act(() => { jest.advanceTimersByTime(stepOne); });
+    act(() => { vi.advanceTimersByTime(stepOne); });
     expect(mapState("step")).toBe("1");
-    act(() => { jest.advanceTimersByTime(stepTwo); });
+    act(() => { vi.advanceTimersByTime(stepTwo); });
     expect(mapState("complete")).toBe("true");
     expect(screen.getAllByText("Journey complete").length).toBeGreaterThan(0);
     expect(screen.getByLabelText("Replay journey")).toBeTruthy();
     expect(screen.getByLabelText("Journey move").value).toBe(String(data.moves.length));
 
-    act(() => { jest.advanceTimersByTime(stepOne + stepTwo + 10000); });
+    act(() => { vi.advanceTimersByTime(stepOne + stepTwo + 10000); });
     expect(mapState("complete")).toBe("true");
     expect(mapState("step")).toBe("1");
   });
@@ -204,7 +204,7 @@ describe("MapStoryTile", () => {
   test("pause freezes automatic progression and play resumes it", () => {
     renderTile();
     fireEvent.click(screen.getByLabelText("Pause journey"));
-    act(() => { jest.advanceTimersByTime(60000); });
+    act(() => { vi.advanceTimersByTime(60000); });
     expect(mapState("step")).toBe("0");
     expect(mapState("playing")).toBe("false");
     fireEvent.click(screen.getByLabelText("Play journey"));
@@ -299,7 +299,7 @@ describe("MapStoryTile", () => {
     expect(mapState("playing")).toBe("false");
     expect(mapState("complete")).toBe("true");
     expect(screen.getByLabelText("Journey move").value).toBe(String(data.moves.length));
-    act(() => { jest.advanceTimersByTime(60000); });
+    act(() => { vi.advanceTimersByTime(60000); });
     expect(mapState("complete")).toBe("true");
   });
 

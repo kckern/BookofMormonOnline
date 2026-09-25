@@ -26,13 +26,13 @@ import { MemoryRouter, Route } from "react-router-dom";
  * run order flags, or future edits to the sibling file.
  */
 
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
     __esModule: true,
-    default: jest.fn(() => Promise.resolve({ history: [] })),
+    default: vi.fn(() => Promise.resolve({ history: [] })),
     assetUrl: "https://assets.test",
 }));
 
-jest.mock("src/models/Utils", () => ({
+vi.mock("src/models/Utils", () => ({
     // Real en labels (see docs/plans/2026-08-07-history-translation.md) -- displayDate
     // formats through these, so a naive identity mock would feed moment.format() the
     // literal key string instead of a format token and produce garbage dates.
@@ -43,14 +43,14 @@ jest.mock("src/models/Utils", () => ({
     }[k] ?? k),
 }));
 
-jest.mock("src/contexts/AppControllerContext", () => ({
-    useAppController: () => ({ functions: { setPopUp: jest.fn() } }),
+vi.mock("src/contexts/AppControllerContext", () => ({
+    useAppController: () => ({ functions: { setPopUp: vi.fn() } }),
 }));
 
 // Not exercised here (sources resolve to [] so the heatmap never mounts), but
 // stubbed anyway to keep this file's import graph as light as the sibling
 // harness's and avoid coupling to WitnessLifeHeatmap's own internals.
-jest.mock("../WitnessLifeHeatmap", () => ({
+vi.mock("../WitnessLifeHeatmap", () => ({
     __esModule: true,
     default: () => null,
 }));

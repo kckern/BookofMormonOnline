@@ -5,7 +5,7 @@ import { ScriptureRefGrid } from "../ScriptureRefGrid";
 const refs = ["Alma 5:2", "Mosiah 3:19"];
 
 test("renders one item per ref, marks the active index, selects on click", () => {
-  const onSelect = jest.fn();
+  const onSelect = vi.fn();
   const { container } = render(
     <ScriptureRefGrid items={refs} activeIndex={1} onSelect={onSelect} />
   );

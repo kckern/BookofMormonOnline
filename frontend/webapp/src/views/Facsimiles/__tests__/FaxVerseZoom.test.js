@@ -4,7 +4,7 @@ import FaxVerseZoom from "../FaxVerseZoom";
 
 describe("FaxVerseZoom", () => {
   test("reports the crop image's natural size on load", () => {
-    const onNaturalSize = jest.fn();
+    const onNaturalSize = vi.fn();
     render(<FaxVerseZoom src="https://media.example/crop.jpg" onNaturalSize={onNaturalSize} />);
 
     const img = document.querySelector(".faxVerseZoom img");

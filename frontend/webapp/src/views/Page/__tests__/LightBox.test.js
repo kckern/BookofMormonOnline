@@ -4,14 +4,14 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { LightBox } from "../Narration";
 import { useNarration } from "src/contexts/NarrationContext";
 
-jest.mock("src/contexts/NarrationContext", () => ({
+vi.mock("src/contexts/NarrationContext", () => ({
   __esModule: true,
-  useNarration: jest.fn(),
+  useNarration: vi.fn(),
   NarrationProvider: ({ children }) => children,
 }));
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
-  default: jest.fn(() => Promise.resolve({})),
+  default: vi.fn(() => Promise.resolve({})),
   assetUrl: "https://media.bookofmormon.online",
 }));
 
@@ -22,12 +22,12 @@ jest.mock("src/models/BoMOnlineAPI", () => ({
 const controller = (over = {}) => ({
   states: { activeImageId: 1002, panelImageIds: [1001, 1002, 1003], ...(over.states || {}) },
   supplement: { image: { 1001: { title: "First" }, 1002: { title: "Second" }, 1003: { title: "Third" } } },
-  functions: { setActiveImageId: jest.fn(), preLoadSupplement: jest.fn() },
+  functions: { setActiveImageId: vi.fn(), preLoadSupplement: vi.fn() },
   ...over,
 });
 
 describe("LightBox (yet-another-react-lightbox port)", () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => { vi.clearAllMocks(); });
 
   test("renders a slide per panel image, sourced from assetUrl/art/<id>", () => {
     useNarration.mockReturnValue(controller());
@@ -47,7 +47,7 @@ describe("LightBox (yet-another-react-lightbox port)", () => {
   });
 
   test("closing reports back so the caller can unmount it", async () => {
-    const setOpenLightBox = jest.fn();
+    const setOpenLightBox = vi.fn();
     useNarration.mockReturnValue(controller());
     render(<LightBox setOpenLightBox={setOpenLightBox} />);
     fireEvent.click(screen.getByLabelText(/close/i));

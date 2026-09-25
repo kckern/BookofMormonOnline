@@ -6,7 +6,6 @@ import {
     CardHeader,
     CardBody,
     Input,
-    InputGroupAddon,
     InputGroupText,
     InputGroup,
     Alert
@@ -45,35 +44,27 @@ export default function EditProfile({ setProfileState }) {
         <CardBody>
             <CardBody>
                 <InputGroup>
-                    <InputGroupAddon addonType="prepend">
                         <InputGroupText>
                             👤
                         </InputGroupText>
-                    </InputGroupAddon>
                     <Input value={appController.states.user.user} type="text" disabled />
                 </InputGroup>
                 <InputGroup>
-                    <InputGroupAddon addonType="prepend">
                         <InputGroupText>
                             🏷️
                         </InputGroupText>
-                    </InputGroupAddon>
                     <Input placeholder={label("name")} defaultValue={appController.states.user.name} type="text" name="name" />
                 </InputGroup>
                 <InputGroup>
-                    <InputGroupAddon addonType="prepend">
                         <InputGroupText>
                             ✉️
                         </InputGroupText>
-                    </InputGroupAddon>
                     <Input placeholder={label("email")} defaultValue={appController.states.user.email} type="text" name="email"  />
                 </InputGroup>
                 <InputGroup>
-                    <InputGroupAddon addonType="prepend">
                         <InputGroupText>
                             📍
                         </InputGroupText>
-                    </InputGroupAddon>
                     <Input placeholder={label("zip_code")} defaultValue={appController.states.user.zip} type="text"  name="zip" />
                 </InputGroup>
 

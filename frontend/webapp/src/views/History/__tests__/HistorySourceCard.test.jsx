@@ -11,48 +11,48 @@ const base = {
 
 describe("HistorySourceCard", () => {
   test("first-hand voice renders the quote then an em-dash attribution", () => {
-    render(<HistorySourceCard doc={{ ...base, money_quote: "I saw the plates", quote_speaker: "Martin Harris", quote_is_witness_voice: true }} onOpen={jest.fn()} />);
+    render(<HistorySourceCard doc={{ ...base, money_quote: "I saw the plates", quote_speaker: "Martin Harris", quote_is_witness_voice: true }} onOpen={vi.fn()} />);
     expect(screen.getByText(/I saw the plates/)).toBeInTheDocument();
     expect(screen.getByText(/—\s*Martin Harris/)).toBeInTheDocument();
   });
 
   test("reporter voice renders a speaker prefix before the quote", () => {
-    render(<HistorySourceCard doc={{ ...base, money_quote: "the plates were shown", quote_speaker: "The Editor", quote_is_witness_voice: false }} onOpen={jest.fn()} />);
+    render(<HistorySourceCard doc={{ ...base, money_quote: "the plates were shown", quote_speaker: "The Editor", quote_is_witness_voice: false }} onOpen={vi.fn()} />);
     expect(screen.getByText(/The Editor:/)).toBeInTheDocument();
     expect(screen.getByText(/the plates were shown/)).toBeInTheDocument();
   });
 
   test("editorial marks [ ... ] become styled spans", () => {
-    const { container } = render(<HistorySourceCard doc={{ ...base, money_quote: "he [Joseph] saw [...] them", quote_speaker: "A Witness", quote_is_witness_voice: true }} onOpen={jest.fn()} />);
+    const { container } = render(<HistorySourceCard doc={{ ...base, money_quote: "he [Joseph] saw [...] them", quote_speaker: "A Witness", quote_is_witness_voice: true }} onOpen={vi.fn()} />);
     const marks = [...container.querySelectorAll(".editorialMark")].map((n) => n.textContent);
     expect(marks).toContain("[Joseph]");
     expect(marks).toContain("[...]");
   });
 
   test("a doc with no money quote renders no blockquote (teaser carries it)", () => {
-    const { container } = render(<HistorySourceCard doc={base} onOpen={jest.fn()} />);
+    const { container } = render(<HistorySourceCard doc={base} onOpen={vi.fn()} />);
     expect(container.querySelector(".historyLead")).toBeNull();
     expect(container.querySelector(".historyTeaserText")).toBeInTheDocument();
   });
 
   test("reception variant shows source + document; witness variant does not", () => {
-    const { container: rc } = render(<HistorySourceCard doc={base} variant="reception" onOpen={jest.fn()} />);
+    const { container: rc } = render(<HistorySourceCard doc={base} variant="reception" onOpen={vi.fn()} />);
     expect(rc.querySelector(".historySource")).toHaveTextContent("Palmyra Freeman");
     expect(rc.querySelector(".historyDocTitle")).toHaveTextContent("The Golden Bible");
-    const { container: wc } = render(<HistorySourceCard doc={base} variant="witness" onOpen={jest.fn()} />);
+    const { container: wc } = render(<HistorySourceCard doc={base} variant="witness" onOpen={vi.fn()} />);
     expect(wc.querySelector(".historySource")).toBeNull();
     expect(wc.querySelector(".historyDocTitle")).toBeNull();
   });
 
   test("clicking the card calls onOpen with the doc", () => {
-    const onOpen = jest.fn();
+    const onOpen = vi.fn();
     render(<HistorySourceCard doc={base} onOpen={onOpen} />);
     fireEvent.click(screen.getByText(/An early notice/));
     expect(onOpen).toHaveBeenCalledWith(base);
   });
 
   test("the mini quote excerpt is highlighted in place within the money quote", () => {
-    const { container } = render(<HistorySourceCard doc={{ ...base, money_quote: "before the KEY PHRASE after", mini_quote: "KEY PHRASE", quote_speaker: null }} onOpen={jest.fn()} />);
+    const { container } = render(<HistorySourceCard doc={{ ...base, money_quote: "before the KEY PHRASE after", mini_quote: "KEY PHRASE", quote_speaker: null }} onOpen={vi.fn()} />);
     const mark = container.querySelector(".historyLead .miniHighlight");
     expect(mark).toBeInTheDocument();
     expect(mark).toHaveTextContent("KEY PHRASE");
@@ -61,7 +61,7 @@ describe("HistorySourceCard", () => {
   });
 
   test("an elided mini quote ([...]) highlights each excerpt separately", () => {
-    const { container } = render(<HistorySourceCard doc={{ ...base, money_quote: "alpha beta gamma delta epsilon", mini_quote: "alpha beta [...] delta epsilon", quote_speaker: null }} onOpen={jest.fn()} />);
+    const { container } = render(<HistorySourceCard doc={{ ...base, money_quote: "alpha beta gamma delta epsilon", mini_quote: "alpha beta [...] delta epsilon", quote_speaker: null }} onOpen={vi.fn()} />);
     const marks = [...container.querySelectorAll(".historyLead .miniHighlight")].map((n) => n.textContent);
     expect(marks).toEqual(["alpha beta", "delta epsilon"]);
     // the skipped middle words remain in the (un-highlighted) money quote
@@ -69,13 +69,13 @@ describe("HistorySourceCard", () => {
   });
 
   test("a bare-ellipsis (...) mini quote also highlights each excerpt", () => {
-    const { container } = render(<HistorySourceCard doc={{ ...base, money_quote: "Joseph bore a powerful testimony to the guards of the divine authenticity", mini_quote: "a powerful testimony ... divine authenticity", quote_speaker: null }} onOpen={jest.fn()} />);
+    const { container } = render(<HistorySourceCard doc={{ ...base, money_quote: "Joseph bore a powerful testimony to the guards of the divine authenticity", mini_quote: "a powerful testimony ... divine authenticity", quote_speaker: null }} onOpen={vi.fn()} />);
     const marks = [...container.querySelectorAll(".historyLead .miniHighlight")].map((n) => n.textContent);
     expect(marks).toEqual(["a powerful testimony", "divine authenticity"]);
   });
 
   test("no highlight when the mini quote is absent or not a verbatim substring", () => {
-    const { container } = render(<HistorySourceCard doc={{ ...base, money_quote: "the whole quote", mini_quote: "not present", quote_speaker: null }} onOpen={jest.fn()} />);
+    const { container } = render(<HistorySourceCard doc={{ ...base, money_quote: "the whole quote", mini_quote: "not present", quote_speaker: null }} onOpen={vi.fn()} />);
     expect(container.querySelector(".miniHighlight")).toBeNull();
     expect(screen.getByText(/the whole quote/)).toBeInTheDocument();
   });
@@ -86,7 +86,7 @@ describe("HistorySourceCard", () => {
   });
 
   test("a money quote with no speaker renders bare (no attribution)", () => {
-    const { container } = render(<HistorySourceCard doc={{ ...base, money_quote: "It is spoken of as the Golden Bible", quote_speaker: null }} onOpen={jest.fn()} />);
+    const { container } = render(<HistorySourceCard doc={{ ...base, money_quote: "It is spoken of as the Golden Bible", quote_speaker: null }} onOpen={vi.fn()} />);
     expect(container.querySelector(".historyLead")).toBeInTheDocument();
     expect(screen.getByText(/It is spoken of as the Golden Bible/)).toBeInTheDocument();
     expect(container.querySelector(".money_quote_attribution")).toBeNull();

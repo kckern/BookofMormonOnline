@@ -67,13 +67,13 @@ describe("aggregate", () => {
     expect(ch12.length).toBeLessThan(all.length);
   });
 
-  test("pairsFor scopes to a Bible chapter when given one", () => {
+  test("pairsFor scopes to a Bible chapter when given one", async () => {
     const all = pairsFor("2 Nephi", "Isaiah");
     const scoped = pairsFor("2 Nephi", "Isaiah", undefined, 2); // Isaiah 2
     expect(scoped.length).toBeGreaterThan(0);
     expect(scoped.length).toBeLessThan(all.length);
     // every returned Bible verse must live in Isaiah 2
-    const { chapterOfVid } = require("../aggregate");
+    const { chapterOfVid } = await import("../aggregate");
     for (const [, bibleVid] of scoped) expect(chapterOfVid(bibleVid)).toBe(2);
   });
 });

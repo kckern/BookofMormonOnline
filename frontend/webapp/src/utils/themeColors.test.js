@@ -1,7 +1,7 @@
 import { isDarkTheme, tooltipTheme, chartTheme } from "./themeColors";
 
 describe("themeColors", () => {
-  afterEach(() => document.documentElement.removeAttribute("data-theme"));
+  afterEach(() => { document.documentElement.removeAttribute("data-theme"); });
 
   it("detects the html data-theme attribute", () => {
     expect(isDarkTheme()).toBe(false);

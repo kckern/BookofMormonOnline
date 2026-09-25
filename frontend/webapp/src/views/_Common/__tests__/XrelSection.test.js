@@ -4,33 +4,33 @@ import "@testing-library/jest-dom";
 import { render, screen, fireEvent } from "@testing-library/react";
 import XrelSection from "../XrelSection";
 
-const mockSetPopUp = jest.fn();
-jest.mock("src/contexts/AppControllerContext", () => ({
+const mockSetPopUp = vi.fn();
+vi.mock("src/contexts/AppControllerContext", () => ({
   useAppController: () => ({ functions: { setPopUp: (...args) => mockSetPopUp(...args) } }),
 }));
 
-jest.mock("src/models/Utils", () => ({
+vi.mock("src/models/Utils", () => ({
   label: (key) => key,
 }));
 
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
   assetUrl: "https://cdn.test",
 }));
 
 // The thumbnail is covered by EntityThumb.test.js; here it only needs to prove
 // which asset path each dst_type resolves to — and must contribute no text of
 // its own, so card textContent assertions stay about the card.
-jest.mock("../EntityThumb", () => (props) => {
-  const R = require("react");
+vi.mock("../EntityThumb", () => ({ default: (props) => {
+  const R = React;
   return R.createElement("div", {
     className: "thumb-mock",
     "data-type": props.type,
     "data-slug": props.slug,
     "data-size": props.size,
   });
-});
+} }));
 
 const srcRow = {
   rel: "held-by",
@@ -52,7 +52,7 @@ const dstRow = {
 };
 
 describe("XrelSection", () => {
-  beforeEach(() => mockSetPopUp.mockClear());
+  beforeEach(() => { mockSetPopUp.mockClear(); });
 
   test("renders nothing when empty and showEmpty is off", () => {
     const { container } = render(<XrelSection xrels={[]} />);

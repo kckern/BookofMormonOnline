@@ -1,6 +1,6 @@
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
   assetUrl: "https://media.test",
   ApiBaseUrl: "http://localhost:5005",
 }));
@@ -14,7 +14,7 @@ const resolveWith = (chiasm) => (query) =>
 describe("fetchChiasm", () => {
   beforeEach(() => {
     __clearChiasmCache();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   test("second call for the same id resolves from cache without a second API call", async () => {

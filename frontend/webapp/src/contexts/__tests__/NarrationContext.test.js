@@ -20,7 +20,7 @@ test("useNarration returns the provided controller", () => {
 });
 
 test("useNarration throws a helpful error without a provider", () => {
-  jest.spyOn(console, "error").mockImplementation(() => {});
+  vi.spyOn(console, "error").mockImplementation(() => {});
   expect(() => render(<Probe />)).toThrow(/NarrationProvider/);
   console.error.mockRestore();
 });

@@ -5,7 +5,7 @@ import { MemoryRouter, Route } from "react-router-dom";
 import Bible from "../index";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 
-jest.mock("src/models/Utils", () => ({
+vi.mock("src/models/Utils", () => ({
   label: (key) => key,
   determineLanguage: () => "en",
 }));
@@ -13,9 +13,9 @@ jest.mock("src/models/Utils", () => ({
 // The Reader imports BoMOnlineAPI, whose Cache module touches indexedDB at
 // import time — absent in jsdom. Mock it out for controller routing tests.
 // CRA sets resetMocks: true, so the implementation is installed per test.
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
 }));
 
 beforeEach(() => {

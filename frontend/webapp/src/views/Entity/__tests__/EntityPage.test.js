@@ -6,9 +6,9 @@ import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { AppControllerProvider } from "src/contexts/AppControllerContext";
 import EntityPage from "../EntityPage";
 
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
   assetUrl: "https://media.bookofmormon.online",
 }));
 
@@ -35,7 +35,7 @@ const fixture = {
     ],
   },
   popUpData: {},
-  functions: { setPopUp: jest.fn(), closePopUp: jest.fn() },
+  functions: { setPopUp: vi.fn(), closePopUp: vi.fn() },
 };
 
 const renderAt = (path) =>
@@ -50,7 +50,7 @@ const renderAt = (path) =>
   );
 
 describe("EntityPage", () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => { vi.clearAllMocks(); });
 
   test("renders the entity as a page, with no modal chrome", async () => {
     BoMOnlineAPI.mockResolvedValue({ person: { noah2: NOAH } });

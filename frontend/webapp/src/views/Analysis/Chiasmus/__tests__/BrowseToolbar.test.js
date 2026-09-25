@@ -1,5 +1,5 @@
-jest.mock("src/models/BoMOnlineAPI", () => ({
-  __esModule: true, default: jest.fn(), assetUrl: "https://media.test", ApiBaseUrl: "",
+vi.mock("src/models/BoMOnlineAPI", () => ({
+  __esModule: true, default: vi.fn(), assetUrl: "https://media.test", ApiBaseUrl: "",
 }));
 
 import React from "react";
@@ -40,7 +40,7 @@ const SPEAKERS = [
 // depthCounts is keyed by bucket, "+" being the deepest; depthOrder sorts it last.
 const baseProps = () => ({
   state: { ...DEFAULTS },
-  set: jest.fn(),
+  set: vi.fn(),
   speakers: SPEAKERS,
   depthCounts: { 2: 145, 3: 91, "+": 11 },
   resultCount: 12,

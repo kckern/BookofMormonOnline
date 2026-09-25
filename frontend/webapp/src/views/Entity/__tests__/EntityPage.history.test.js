@@ -6,9 +6,9 @@ import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { AppControllerProvider } from "src/contexts/AppControllerContext";
 import EntityPage from "../EntityPage";
 
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
   assetUrl: "https://media.bookofmormon.online",
 }));
 
@@ -24,7 +24,7 @@ const fixture = {
   states: { popUp: { open: false, type: null, ids: [], activeId: null } },
   preLoad: {},
   popUpData: {},
-  functions: { setPopUp: jest.fn(), closePopUp: jest.fn() },
+  functions: { setPopUp: vi.fn(), closePopUp: vi.fn() },
 };
 
 const renderDoc = (slug) =>
@@ -39,7 +39,7 @@ const renderDoc = (slug) =>
   );
 
 describe("EntityPage — history documents", () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => { vi.clearAllMocks(); });
 
   test("renders the document itself, not a redirect to the reception hub", async () => {
     BoMOnlineAPI.mockResolvedValue({ history: { [DOC.slug]: DOC } });

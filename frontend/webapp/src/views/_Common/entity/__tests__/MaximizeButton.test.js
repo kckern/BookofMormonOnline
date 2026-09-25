@@ -10,13 +10,13 @@ const fixture = () => ({
   states: { popUp: { open: true, type: "people", ids: ["noah2"], activeId: "noah2" } },
   preLoad: {},
   popUpData: {},
-  functions: { setPopUp: jest.fn(), closePopUp: jest.fn() },
+  functions: { setPopUp: vi.fn(), closePopUp: vi.fn() },
 });
 
 const renderAt = (type, path, appController) => {
   const history = createMemoryHistory({ initialEntries: [path] });
-  jest.spyOn(history, "replace");
-  jest.spyOn(history, "push");
+  vi.spyOn(history, "replace");
+  vi.spyOn(history, "push");
   // The component reads window.location, because the address bar (written by
   // the OTHER history instance) is the source of truth for the entity URL.
   window.history.replaceState({}, "", path);

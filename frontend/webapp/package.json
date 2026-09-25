@@ -4,7 +4,6 @@
   "private": true,
   "dependencies": {
     "@ckeditor/ckeditor5-build-classic": "^31.0.0",
-    "@dhaiwat10/react-link-preview": "^1.13.1",
     "@fortawesome/fontawesome-svg-core": "^1.2.36",
     "@fortawesome/free-solid-svg-icons": "^5.15.4",
     "@fortawesome/react-fontawesome": "^0.1.16",
@@ -12,10 +11,8 @@
     "@rpldy/upload-drop-zone": "^0.15.0",
     "@rpldy/upload-url-input": "^0.15.0",
     "@rpldy/uploady": "^0.15.0",
-    "@sentry/react": "^6.18.0",
-    "@sentry/tracing": "^6.18.0",
     "@testing-library/user-event": "^12.8.3",
-    "@tinymce/tinymce-react": "^3.13.0",
+    "@tinymce/tinymce-react": "^6.3.0",
     "axios": "^0.21.1",
     "bootstrap": "^5.0.1",
     "can-autoplay": "^3.0.2",
@@ -34,11 +31,10 @@
     "geolib": "^3.3.4",
     "highcharts": "^9.3.1",
     "highcharts-react-official": "^3.1.0",
-    "html-react-parser": "^1.2.7",
+    "html-react-parser": "^6.1.8",
     "install": "^0.13.0",
     "js-cookie": "^3.0.1",
     "js-md5": "^0.8.3",
-    "key-mirror": "^1.0.1",
     "leaflet": "^1.7.1",
     "moment": "^2.29.1",
     "moment-duration-format": "^2.3.2",
@@ -47,16 +43,16 @@
     "perfect-scrollbar": "^1.5.1",
     "rc-mentions": "^1.6.1",
     "rctx-contextmenu": "^1.4.1",
-    "react": "^18.3.1",
+    "react": "^19.3.0",
     "react-audio-player": "^0.17.0",
     "react-bootstrap-sweetalert": "^5.2.0",
     "react-bootstrap-switch": "^15.5.3",
-    "react-calendar-heatmap": "^1.9.0",
-    "react-circular-progressbar": "^2.0.4",
-    "react-confetti": "^6.0.1",
+    "react-calendar-heatmap": "^1.10.0",
+    "react-circular-progressbar": "^2.2.0",
+    "react-confetti": "^6.4.0",
     "react-cropper": "^2.1.8",
-    "react-dom": "^18.3.1",
-    "react-draggable": "^4.4.3",
+    "react-dom": "^19.3.0",
+    "react-draggable": "^4.7.2",
     "react-dropzone": "^11.4.2",
     "react-expanding-textarea": "^2.3.2",
     "react-facebook-pixel": "^1.0.4",
@@ -69,15 +65,15 @@
     "react-modern-drawer": "^1.0.1",
     "react-multi-select-component": "^4.3.4",
     "react-player": "^2.9.0",
-    "react-qr-code": "^2.0.3",
-    "react-quill": "^2.0.0",
+    "react-qr-code": "^2.2.0",
+    "react-quill-new": "^3.8.3",
     "react-recaptcha": "^2.3.10",
     "react-reveal-text": "^0.1.1",
     "react-router-dom": "^5.2.0",
     "react-toastify": "^7.0.4",
     "react-tooltip": "^4.2.21",
     "react-visibility-sensor": "^5.1.1",
-    "reactstrap": "^8.9.0",
+    "reactstrap": "^9.2.3",
     "redux-persist": "^6.0.0",
     "redux-thunk": "^2.3.0",
     "scripture-guide": "^1.0.97",
@@ -95,41 +91,116 @@
     "start": "vite",
     "build": "vite build",
     "postbuild": "node scripts/stamp-sw-version.js",
-    "test": "NODE_ENV=test BABEL_ENV=test jest",
+    "test": "vitest run",
     "lint": "eslint src --ext .js,.jsx --ignore-pattern \"**/__tests__/**\" --ignore-pattern \"**/*.test.*\" --ignore-pattern \"**/*.spec.*\"",
     "compile-sass": "node-sass ./src/assets/scss/paper-dashboard.scss src/assets/css/paper-dashboard.css",
     "minify-sass": "node-sass ./src/assets/scss/paper-dashboard.scss src/assets/css/paper-dashboard.min.css --output-style compressed",
-    "map-sass": "node-sass ./src/assets/scss/paper-dashboard.scss src/assets/css/paper-dashboard.css --source-map true"
+    "map-sass": "node-sass ./src/assets/scss/paper-dashboard.scss src/assets/css/paper-dashboard.css --source-map true",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@babel/types": "^7.23.3",
     "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^14.3.1",
+    "@testing-library/react": "^16.3.3",
     "@vitejs/plugin-react": "^5.2.0",
-    "babel-jest": "^27.5.1",
+    "@vitest/coverage-v8": "^3.2.7",
     "babel-polyfill": "^6.26.0",
     "babel-preset-react-app": "^10.1.0",
     "buffer": "^6.0.3",
     "camelcase": "^6.3.0",
     "eslint": "^8.57.1",
-    "eslint-config-react-app": "^7.0.1",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^4.6.0",
     "http-proxy-middleware": "^3.0.5",
-    "identity-obj-proxy": "^3.0.0",
-    "jest": "^27.5.1",
     "jest-environment-jsdom": "^27.5.1",
-    "jest-watch-typeahead": "^1.1.0",
     "js-yaml": "^4.3.2",
+    "jsdom": "^27.4.0",
     "process": "^0.11.10",
-    "react-app-polyfill": "^3.0.0",
     "sass": "^1.105.0",
     "stream": "^0.0.2",
-    "vite": "^7.3.6"
+    "vite": "^7.3.6",
+    "vitest": "^3.2.7"
   },
   "eslintConfig": {
+    "root": true,
+    "parserOptions": {
+      "ecmaVersion": 2022,
+      "sourceType": "module",
+      "ecmaFeatures": {
+        "jsx": true
+      }
+    },
+    "env": {
+      "browser": true,
+      "es2022": true
+    },
+    "settings": {
+      "react": {
+        "version": "detect"
+      }
+    },
+    "plugins": [
+      "react",
+      "react-hooks",
+      "jsx-a11y"
+    ],
     "extends": [
-      "react-app"
-    ]
+      "eslint:recommended",
+      "plugin:react/recommended",
+      "plugin:react/jsx-runtime",
+      "plugin:jsx-a11y/recommended"
+    ],
+    "rules": {
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
+      "react/prop-types": "off",
+      "no-unused-vars": [
+        "warn",
+        {
+          "args": "none",
+          "ignoreRestSiblings": true
+        }
+      ],
+      "jsx-a11y/click-events-have-key-events": "warn",
+      "jsx-a11y/alt-text": "warn",
+      "jsx-a11y/no-static-element-interactions": "warn",
+      "jsx-a11y/no-noninteractive-element-interactions": "warn",
+      "jsx-a11y/anchor-is-valid": "warn",
+      "jsx-a11y/no-autofocus": "warn",
+      "jsx-a11y/label-has-associated-control": "warn",
+      "jsx-a11y/media-has-caption": "warn",
+      "jsx-a11y/no-noninteractive-element-to-interactive-role": "warn",
+      "jsx-a11y/iframe-has-title": "warn",
+      "jsx-a11y/heading-has-content": "warn",
+      "jsx-a11y/no-redundant-roles": "warn",
+      "react/no-unknown-property": "warn",
+      "no-empty": "warn",
+      "no-useless-escape": "warn",
+      "no-extra-semi": "warn",
+      "react/jsx-key": "warn",
+      "no-unsafe-optional-chaining": "warn",
+      "no-unreachable": "warn",
+      "no-mixed-spaces-and-tabs": "warn",
+      "react/no-unescaped-entities": "warn",
+      "jsx-a11y/no-noninteractive-tabindex": "warn",
+      "no-extra-boolean-cast": "warn",
+      "no-case-declarations": "warn",
+      "no-constant-condition": "warn",
+      "jsx-a11y/interactive-supports-focus": "warn",
+      "no-empty-pattern": "warn",
+      "no-prototype-builtins": "warn",
+      "react/display-name": "warn",
+      "react/jsx-no-target-blank": "warn"
+    },
+    "globals": {
+      "global": "readonly",
+      "process": "readonly"
+    }
+  },
+  "overrides": {
+    "react": "$react",
+    "react-dom": "$react-dom"
   }
 }

@@ -4,20 +4,20 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { GroupPopUp } from "../PopUp";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 
-jest.mock("src/models/BoMOnlineAPI", () => ({ __esModule: true, default: jest.fn(), assetUrl: "" }));
+vi.mock("src/models/BoMOnlineAPI", () => ({ __esModule: true, default: vi.fn(), assetUrl: "" }));
 // react-markdown is ESM-only; CRA's jest doesn't transform node_modules.
-jest.mock("react-markdown", () => ({ __esModule: true, default: ({ children }) => children }));
-jest.mock("src/models/Utils", () => ({
+vi.mock("react-markdown", () => ({ __esModule: true, default: ({ children }) => children }));
+vi.mock("src/models/Utils", () => ({
   label: (k) => k, isMobile: () => false, determineLanguage: () => "en",
   processName: (n) => n, replaceNumbers: (n) => n, snapSelectionToWord: () => {}, log: () => {},
 }));
 
 const mockController = {
   states: { popUp: { open: true, type: "group", ids: ["nephites"], activeId: "nephites", top: 0, left: 0 } },
-  functions: { setPopUp: jest.fn(), closePopUp: jest.fn() },
+  functions: { setPopUp: vi.fn(), closePopUp: vi.fn() },
   popUpData: {},
 };
-jest.mock("src/contexts/AppControllerContext", () => ({
+vi.mock("src/contexts/AppControllerContext", () => ({
   useAppController: () => mockController,
 }));
 
@@ -29,8 +29,8 @@ const groupData = {
 describe("GroupPopUp", () => {
   beforeEach(() => {
     mockController.popUpData = {};
-    mockController.functions.setPopUp = jest.fn();
-    mockController.functions.closePopUp = jest.fn();
+    mockController.functions.setPopUp = vi.fn();
+    mockController.functions.closePopUp = vi.fn();
     BoMOnlineAPI.mockImplementation(() =>
       Promise.resolve({ group: { nephites: groupData } })
     );

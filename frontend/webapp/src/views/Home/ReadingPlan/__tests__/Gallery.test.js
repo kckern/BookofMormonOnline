@@ -1,16 +1,16 @@
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-jest.mock('src/models/BoMOnlineAPI', () => ({ __esModule: true, default: jest.fn(), ApiBaseUrl: 'http://t' }));
-jest.mock('src/models/Utils', () => ({ label: (k) => k }));
-jest.mock('react-toastify', () => ({ toast: { error: jest.fn() } }));
+vi.mock('src/models/BoMOnlineAPI', () => ({ __esModule: true, default: vi.fn(), ApiBaseUrl: 'http://t' }));
+vi.mock('src/models/Utils', () => ({ label: (k) => k }));
+vi.mock('react-toastify', () => ({ toast: { error: vi.fn() } }));
 import BoMOnlineAPI from 'src/models/BoMOnlineAPI';
 import Gallery from '../Gallery';
 
 const programs = { p1: { slug: 'p1', title: 'Program One', description: 'desc', durationLabel: '30 days', config: '{}' } };
 
 test('start flow: pick program → confirm → startReadingPlan called → onStarted', async () => {
-  const onStarted = jest.fn();
+  const onStarted = vi.fn();
   BoMOnlineAPI.mockImplementation((q) => {
     if (q.readingplanprograms !== undefined) return Promise.resolve({ readingplanprograms: programs });
     if (q.startReadingPlan) return Promise.resolve({ startReadingPlan: { isSuccess: true, msg: 'OK' } });
@@ -26,7 +26,7 @@ test('start flow: pick program → confirm → startReadingPlan called → onSta
 });
 
 test('ACTIVE_PLAN_EXISTS shows the friendly error (no onStarted)', async () => {
-  const onStarted = jest.fn();
+  const onStarted = vi.fn();
   BoMOnlineAPI.mockImplementation((q) => {
     if (q.readingplanprograms !== undefined) return Promise.resolve({ readingplanprograms: programs });
     if (q.startReadingPlan) return Promise.resolve({ startReadingPlan: { isSuccess: false, msg: 'ACTIVE_PLAN_EXISTS' } });

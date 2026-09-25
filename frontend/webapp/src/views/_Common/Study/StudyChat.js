@@ -21,8 +21,8 @@ import {
 import { LikeButton, CommentInput } from "./Study.js";
 import ReactTooltip from "react-tooltip";
 import { TextInFeed } from "./StudyInFeed.js";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
 import sendicon from "src/views/_Common/Study/svg/send.svg";
 import typing from "src/views/_Common/Study/svg/typing.svg";
 import TagList from "./TagList.js";

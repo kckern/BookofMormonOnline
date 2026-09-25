@@ -7,9 +7,9 @@ import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { AppControllerProvider } from "src/contexts/AppControllerContext";
 import ArtPage from "../ArtPage";
 
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
   assetUrl: "https://media.bookofmormon.online",
 }));
 
@@ -27,12 +27,12 @@ const fixture = {
   states: { popUp: { open: false, type: null, ids: [], activeId: null } },
   preLoad: {},
   popUpData: {},
-  functions: { setPopUp: jest.fn(), closePopUp: jest.fn(), requestImageActivation: jest.fn() },
+  functions: { setPopUp: vi.fn(), closePopUp: vi.fn(), requestImageActivation: vi.fn() },
 };
 
 const renderArt = (path, routePath) => {
   const history = createMemoryHistory({ initialEntries: [path] });
-  jest.spyOn(history, "replace");
+  vi.spyOn(history, "replace");
   render(
     <AppControllerProvider appController={fixture}>
       <Router history={history}>
@@ -46,7 +46,7 @@ const renderArt = (path, routePath) => {
 };
 
 describe("ArtPage", () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => { vi.clearAllMocks(); });
 
   test("renders the artwork, title and artist", async () => {
     BoMOnlineAPI.mockResolvedValue({ image: { 1000: ART } });
