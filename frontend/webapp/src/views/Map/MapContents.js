@@ -618,7 +618,11 @@ const drawMap = ()=>{
 			} 
 			},[mapslug,activePlace?.slug])
 
-    useEffect(async () => {
+    // An async arrow returns a PROMISE, and React 18 calls whatever an effect
+    // returns as its cleanup — "n is not a function", which took the entire
+    // /map route down. Keep the await-ing work in an inner function.
+    useEffect(() => {
+      const run = async () => {
         //wait 500ms for the map to be drawn
         //set slug into global space
         const markers = map.current.getLayers().getArray()[1].getSource().getFeatures();
@@ -672,6 +676,8 @@ const drawMap = ()=>{
 				});
 				}
 
+      };
+      run();
     }, [mapController.panelContents.slug,activeStyleIcons.icons.length,mapslug]);
 
     return <>
