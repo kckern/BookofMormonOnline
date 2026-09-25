@@ -279,10 +279,19 @@ fi
 # otherwise fail with "no space left on device" mid-layer. Pruning here (not just
 # after the switch) is safe: image prune -a keeps every image referenced by any
 # running OR stopped container, so both live slots and the retained rollback slot
-# survive. 24h retention is plenty — rollback is pinned by the stopped slot's
-# container, not by image age.
+# survive — rollback is pinned by the stopped slot's container, not by image age.
+# That is also why the age filter below is NOT the thing protecting rollback, and
+# why the unfiltered dangling prune beneath it is safe.
 log "reclaiming disk before pull"
 docker builder prune -af >/dev/null 2>&1 || true
+# Untagged orphans first, with NO age filter. Each deploy leaves the previous
+# image untagged once its slot is reused, so on a day with several deploys the
+# 24h sweep below matches none of them and disk climbs ~1GB per deploy — enough
+# to reach the 90% guard, which reclaims space by GIVING UP THE ROLLBACK SLOT.
+# A dangling image is by definition referenced by no container, and the retained
+# rollback is pinned by its stopped container, so this cannot touch it: measured
+# on prod, 9 dangling images pruned to 2 and both live slots' images survived.
+docker image prune -f >/dev/null 2>&1 || true
 docker image prune -a -f --filter 'until=24h' >/dev/null 2>&1 || true
 emergency_prune_if_needed
 
@@ -386,6 +395,9 @@ if [ -n "$active" ] && [ "$active" != "$next" ] && container_running "$active"; 
   log "stopped previous slot $active (retained for rollback until the next deployment)"
 fi
 
+# Same pairing as before the pull: unfiltered for this deploy's own orphan,
+# age-filtered for unused tagged service images.
+docker image prune -f >/dev/null 2>&1 || true
 docker image prune -a -f --filter 'until=24h' >/dev/null 2>&1 || true
 report_deploy_outcome 0
 log "deployment complete"
