@@ -116,9 +116,9 @@ describe('OpenAiAdapter', () => {
     expect(result).toBeNull();
   });
 
-  it('returns null when OPENAI_API_KEY is absent (no client injected)', async () => {
-    const savedKey = process.env['OPENAI_API_KEY'];
-    delete process.env['OPENAI_API_KEY'];
+  it('returns null when OPENAI_BOT_API_KEY is absent (no client injected)', async () => {
+    const savedKey = process.env['OPENAI_BOT_API_KEY'];
+    delete process.env['OPENAI_BOT_API_KEY'];
     try {
       const adapter = new OpenAiAdapter();
       const result = await adapter.generate({
@@ -127,7 +127,7 @@ describe('OpenAiAdapter', () => {
       });
       expect(result).toBeNull();
     } finally {
-      if (savedKey !== undefined) process.env['OPENAI_API_KEY'] = savedKey;
+      if (savedKey !== undefined) process.env['OPENAI_BOT_API_KEY'] = savedKey;
     }
   });
 
@@ -225,7 +225,7 @@ describe('getLlmGateway()', () => {
   });
 
   it('returns an object that satisfies the LlmGateway interface', () => {
-    // Inject a known fake so the factory does not need OPENAI_API_KEY.
+    // Inject a known fake so the factory does not need OPENAI_BOT_API_KEY.
     const fake: LlmGateway = {
       generate: async () => 'test',
     };
@@ -251,17 +251,17 @@ describe('getLlmGateway()', () => {
 
     resetLlmGateway(null);
     // After reset the factory will try to build OpenAiAdapter.
-    // We set OPENAI_API_KEY to something so the adapter is created successfully,
+    // We set OPENAI_BOT_API_KEY to something so the adapter is created successfully,
     // or we just confirm getLlmGateway() doesn't throw.
-    const savedKey = process.env['OPENAI_API_KEY'];
-    process.env['OPENAI_API_KEY'] = 'sk-test';
+    const savedKey = process.env['OPENAI_BOT_API_KEY'];
+    process.env['OPENAI_BOT_API_KEY'] = 'sk-test';
     try {
       const second = getLlmGateway();
       expect(second).not.toBe(first);
       expect(typeof second.generate).toBe('function');
     } finally {
-      if (savedKey !== undefined) process.env['OPENAI_API_KEY'] = savedKey;
-      else delete process.env['OPENAI_API_KEY'];
+      if (savedKey !== undefined) process.env['OPENAI_BOT_API_KEY'] = savedKey;
+      else delete process.env['OPENAI_BOT_API_KEY'];
       resetLlmGateway(null);
     }
   });

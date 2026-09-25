@@ -1,20 +1,20 @@
 /**
  * Bot model resolution for the Mastra agent runtime.
  *
- * - OPENAI_API_KEY set  → the Vercel AI SDK OpenAI provider (real generation).
+ * - OPENAI_BOT_API_KEY set → a dedicated Vercel AI SDK OpenAI provider.
  * - BOT_LLM_MOCK set    → a deterministic MockLanguageModel that still runs
  *                          THROUGH the Mastra agent (instructions/tools/pipeline)
  *                          so the bot framework is exercised without a key.
  * - neither             → null (caller skips generation).
  */
-import { openai } from '@ai-sdk/openai';
+import { createOpenAI } from '@ai-sdk/openai';
 import { MockLanguageModelV3 } from 'ai/test';
 
 const DEFAULT_MODEL = process.env['BOT_LLM_MODEL'] || 'gpt-5-mini';
 
 /** A model (real or mock) is available. */
 export function hasLlmProvider(): boolean {
-  return !!process.env['OPENAI_API_KEY'] || !!process.env['BOT_LLM_MOCK'];
+  return !!process.env['OPENAI_BOT_API_KEY'] || !!process.env['BOT_LLM_MOCK'];
 }
 
 /** Resolve a model for a bot agent, or null when nothing is configured. */
@@ -33,6 +33,7 @@ export function resolveBotModel(modelId?: string | null, opts?: { mockVoice?: st
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
   }
-  if (process.env['OPENAI_API_KEY']) return openai(modelId || DEFAULT_MODEL);
+  const apiKey = process.env['OPENAI_BOT_API_KEY'];
+  if (apiKey) return createOpenAI({ apiKey })(modelId || DEFAULT_MODEL);
   return null;
 }

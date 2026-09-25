@@ -3,16 +3,16 @@
  * bot's Mastra agent (persona + tools + model). Returns null when no agent/model
  * is available so callers (scheduler, botResponder) can skip gracefully.
  *
- * Fully traced: emits generate.start (with the full prompt), generate.done
- * (with the full output, latency, token usage, sentence count) and
- * generate.fail via the structured bot logger. Pass a correlated child logger
- * + label via `ctx` so a whole discussion is reconstructable from logs.
+ * Emits generate.start/done/fail metadata through the structured bot logger.
+ * Prompt and output content are excluded unless explicitly enabled for local
+ * debugging, preventing user content from becoming a second secret store.
  */
 import type { Kysely } from 'kysely';
 import type { DB } from '../../codegen/db.js';
 import { getBotAgent } from './mastra/agents.js';
 import { assertBotOutputRights } from './mastra/rag.js';
 import { botLog, countSentences, type BotLogger } from './logger.js';
+import { consumeBotGenerationBudget } from './budget.js';
 
 export interface BotTurn {
   role: 'user' | 'assistant';
@@ -26,6 +26,11 @@ export interface GenerateCtx {
   label?: string;
   /** Model id, for log fidelity (generation itself uses the agent's model). */
   model?: string;
+}
+
+function boundedInt(name: string, fallback: number, min: number, max: number): number {
+  const value = Number.parseInt(process.env[name] || '', 10);
+  return Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : fallback;
 }
 
 /** Best-effort token usage extraction across AI-SDK / Mastra result shapes. */
@@ -48,9 +53,12 @@ export async function generateBotReply(
 ): Promise<string | null> {
   const log = ctx.log ?? botLog;
   // Reasoning models (gpt-5.x / gpt-5.6-luna) take a reasoning effort via the
-  // OpenAI provider options. Default 'high'; override BOT_LLM_REASONING_EFFORT
+  // OpenAI provider options. Default 'medium'; override BOT_LLM_REASONING_EFFORT
   // (none|low|medium|high|xhigh|max). Harmless for non-reasoning models.
-  const reasoningEffort = process.env['BOT_LLM_REASONING_EFFORT'] || 'high';
+  const reasoningEffort = process.env['BOT_LLM_REASONING_EFFORT'] || 'medium';
+  const maxOutputTokens = boundedInt('BOT_LLM_MAX_OUTPUT_TOKENS', 600, 64, 2_000);
+  const timeoutMs = boundedInt('BOT_LLM_TIMEOUT_MS', 60_000, 5_000, 120_000);
+  const logContent = process.env['BOT_LOG_CONTENT'] === 'true' && process.env['NODE_ENV'] !== 'production';
   const promptChars = messages.reduce((n, m) => n + m.content.length, 0);
 
   const agent = await getBotAgent(db, botId);
@@ -59,19 +67,29 @@ export async function generateBotReply(
     return null;
   }
 
+  const budget = await consumeBotGenerationBudget();
+  if (!budget.allowed) {
+    log.warn({ event: 'generate.skip', botId, label: ctx.label, reason: budget.reason }, 'bot generate blocked by budget guard');
+    return null;
+  }
+
   const t0 = Date.now();
   log.info(
     {
       event: 'generate.start', botId, label: ctx.label, model: ctx.model,
-      reasoningEffort, msgCount: messages.length, promptChars,
-      prompt: messages.map((m) => ({ role: m.role, content: m.content })),
+      reasoningEffort, maxOutputTokens, timeoutMs, msgCount: messages.length, promptChars,
+      ...(logContent ? { prompt: messages.map((m) => ({ role: m.role, content: m.content })) } : {}),
     },
     'bot generate start',
   );
   try {
     const result = await agent.generate(
       messages.map((m) => ({ role: m.role, content: m.content })),
-      { providerOptions: { openai: { reasoningEffort } } },
+      {
+        providerOptions: { openai: { reasoningEffort } },
+        modelSettings: { maxOutputTokens },
+        abortSignal: AbortSignal.timeout(timeoutMs),
+      },
     );
     const text = (result && (result.text ?? result.output)) as string | undefined;
     const trimmed = text?.trim();
@@ -85,7 +103,8 @@ export async function generateBotReply(
       {
         event: 'generate.done', botId, label: ctx.label, model: ctx.model, reasoningEffort,
         latencyMs, outputChars: trimmed.length, sentences: countSentences(trimmed),
-        usage: extractUsage(result), output: trimmed,
+        usage: extractUsage(result),
+        ...(logContent ? { output: trimmed } : {}),
       },
       'bot generate done',
     );
