@@ -126,11 +126,10 @@ export default defineConfig(({ mode }) => {
     preview: { port: 8299, strictPort: true, proxy },
 
     build: {
-      // Three source files are CommonJS (views/Analysis/Bible/data.js,
-      // views/Map/MapMarkers.js, and setupProxy.js which only CRA loads).
-      // Webpack's interop let `import { index } from ".../data"` reach a
-      // `module.exports = {...}` object; Vite runs its CJS transform on
-      // dependencies only, so src has to be opted in rather than rewritten.
+      // Kept as a safety net for any CommonJS that reappears under src/.
+      // Note it only applies to `vite build` — Vite's dev server serves native
+      // ESM, so a CJS source file breaks dev even when the build succeeds.
+      // That is why Bible/data.js and MapMarkers.js were converted to ESM.
       commonjsOptions: { include: [/node_modules/, /src\//] },
       outDir: "build",
       assetsDir: "static",

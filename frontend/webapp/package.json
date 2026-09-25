@@ -48,7 +48,6 @@
     "rc-mentions": "^1.6.1",
     "rctx-contextmenu": "^1.4.1",
     "react": "^18.3.1",
-    "react-app-rewired": "^2.2.1",
     "react-audio-player": "^0.17.0",
     "react-bootstrap-sweetalert": "^5.2.0",
     "react-bootstrap-switch": "^15.5.3",
@@ -77,7 +76,6 @@
     "react-redux": "^7.2.4",
     "react-reveal-text": "^0.1.1",
     "react-router-dom": "^5.2.0",
-    "react-scripts": "^5.0.1",
     "react-toastify": "^7.0.4",
     "react-tooltip": "^4.2.21",
     "react-visibility-sensor": "^5.1.1",
@@ -97,14 +95,10 @@
   "scripts": {
     "prestart": "node scripts/gen-features.js",
     "prebuild": "node scripts/gen-features.js",
-    "start": "react-app-rewired start",
-    "start:vite": "vite",
-    "build": "react-app-rewired build",
-    "build:vite": "vite build",
-    "postbuild:vite": "node scripts/stamp-sw-version.js",
+    "start": "vite",
+    "build": "vite build",
     "postbuild": "node scripts/stamp-sw-version.js",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
+    "test": "NODE_ENV=test BABEL_ENV=test jest",
     "compile-sass": "node-sass ./src/assets/scss/paper-dashboard.scss src/assets/css/paper-dashboard.css",
     "minify-sass": "node-sass ./src/assets/scss/paper-dashboard.scss src/assets/css/paper-dashboard.min.css --output-style compressed",
     "map-sass": "node-sass ./src/assets/scss/paper-dashboard.scss src/assets/css/paper-dashboard.css --source-map true"
@@ -113,19 +107,6 @@
     "extends": [
       "react-app",
       "react-app/jest"
-    ]
-  },
-  "jest": {
-    "moduleNameMapper": {
-      "^src/(.*)$": "<rootDir>/src/$1",
-      "^views/(.*)$": "<rootDir>/src/views/$1",
-      "^components/(.*)$": "<rootDir>/src/components/$1",
-      "^models/(.*)$": "<rootDir>/src/models/$1",
-      "^yet-another-react-lightbox/styles.css$": "<rootDir>/node_modules/yet-another-react-lightbox/dist/styles.css"
-    },
-    "transformIgnorePatterns": [
-      "[/\\\\]node_modules[/\\\\](?!yet-another-react-lightbox)(.+)\\.(js|mjs|jsx|ts|tsx)$",
-      "^.+\\.module\\.(css|sass|scss)$"
     ]
   },
   "browserslist": {
@@ -146,13 +127,21 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^14.3.1",
     "@vitejs/plugin-react": "^5.2.0",
+    "babel-jest": "^27.5.1",
     "babel-polyfill": "^6.26.0",
+    "babel-preset-react-app": "^10.1.0",
     "buffer": "^6.0.3",
+    "camelcase": "^6.3.0",
     "css-loader": "^6.8.1",
     "eslint-plugin-react-hooks": "^4.6.0",
     "http-proxy-middleware": "^3.0.5",
+    "identity-obj-proxy": "^3.0.0",
+    "jest": "^27.5.1",
+    "jest-environment-jsdom": "^27.5.1",
+    "jest-watch-typeahead": "^1.1.0",
     "js-yaml": "^4.3.2",
     "process": "^0.11.10",
+    "react-app-polyfill": "^3.0.0",
     "sass": "^1.105.0",
     "stream": "^0.0.2",
     "vite": "^7.3.6"

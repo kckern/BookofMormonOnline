@@ -1,5 +1,4 @@
 import { randomHex } from "./randomHex";
-import { lang } from "moment";
 import { isMessengerEnabled } from './featureFlags';
 import { migratePreferences } from "./preferenceMigration";
 import { determineLanguage, tokenImage } from "./Utils.js";

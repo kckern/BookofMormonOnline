@@ -5,7 +5,8 @@
 // old matrix code destructured these with reversed names — do not copy it.
 
 import { generateReference } from "scripture-guide";
-import { index } from "./data";
+import bibleData from "./data";
+const { index } = bibleData;
 import { canons, bookOfVid } from "./canon";
 
 const pairMap = new Map(); // "2 Nephi|Isaiah" -> {total, quotes}

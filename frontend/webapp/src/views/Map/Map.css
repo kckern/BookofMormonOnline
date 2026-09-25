@@ -1,4 +1,7 @@
-@import "node_modules/ol/ol.css";
+/* Package specifier, not a node_modules path: the latter only resolved
+   under webpack's css-loader and silently failed to resolve otherwise,
+   which would have shipped /map without OpenLayers' own styling. */
+@import "ol/ol.css";
 #map {
   position: absolute !important;
   height: calc(100vh - 60px);

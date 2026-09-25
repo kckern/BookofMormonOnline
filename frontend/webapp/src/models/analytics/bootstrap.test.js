@@ -1,11 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 
-// Two HTML templates exist while react-scripts and Vite coexist: Vite's root
-// index.html and config/cra-index.html (react-scripts', moved out of public/ so
-// it cannot shadow Vite's entry). Assert against every template present, which
-// also catches the two drifting apart. After the cutover only index.html remains.
-const TEMPLATES = ['../../../index.html', '../../../config/cra-index.html']
+// One template since react-scripts was removed: Vite's root index.html. The
+// list survives so a second template (e.g. an SSR shell) would be checked too.
+const TEMPLATES = ['../../../index.html']
   .map((rel) => path.resolve(__dirname, rel))
   .filter((abs) => fs.existsSync(abs));
 

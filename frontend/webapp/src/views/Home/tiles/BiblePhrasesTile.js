@@ -4,7 +4,8 @@ import DiffMatchPatch from "diff-match-patch";
 import { generateReference } from "scripture-guide";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { label, determineLanguage } from "src/models/Utils";
-import { index } from "src/views/Analysis/Bible/data";
+import bibleData from "src/views/Analysis/Bible/data";
+const { index } = bibleData;
 import RefPill from "./RefPill";
 import TileDeepLink from "./_ds/TileDeepLink";
 
