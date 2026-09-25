@@ -6,8 +6,7 @@ After=network.target
 Type=simple
 WorkingDirectory=%h/BookofMormonOnline/frontend/next
 Environment=PATH=/home/bom/.nvm/versions/node/v24.15.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-EnvironmentFile=%t/bom-dev.env
-ExecStart=/home/bom/.nvm/versions/node/v24.15.0/bin/npm run dev
+ExecStart=%h/BookofMormonOnline/scripts/run-with-infisical-env.sh frontend %t/bom-frontend.env /home/bom/.nvm/versions/node/v24.15.0/bin/npm run dev
 Restart=on-failure
 RestartSec=5s
 StandardOutput=journal

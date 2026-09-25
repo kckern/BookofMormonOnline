@@ -28,6 +28,11 @@ export const openScripture = (ref, opts = {}) =>
 export default function ScripturePopup() {
   const [ref, setRef] = useState(null);
   const [anchorX, setAnchorX] = useState(0);
+  // Whether the current ref resolved to actual Book of Mormon content. The
+  // "Read" CTA links into the Read experience, which only serves BoM — so it
+  // stays hidden for Bible-only refs (and while loading). ScriptureExcerpt
+  // reports this once its fetch resolves.
+  const [hasBoM, setHasBoM] = useState(false);
   const cardRef = useRef(null);
   const [tx, setTx] = useState(0);
 
@@ -39,6 +44,8 @@ export default function ScripturePopup() {
       const nextAnchor = typeof d === "object" && d ? d.anchorX || 0 : 0;
       setRef(nextRef || null);
       setAnchorX(nextAnchor);
+      // Hide the Read CTA until the new ref's fetch confirms BoM content.
+      setHasBoM(false);
     };
     window.addEventListener("samplerScripture", open);
     return () => window.removeEventListener("samplerScripture", open);
@@ -105,9 +112,9 @@ export default function ScripturePopup() {
       </div>
       {/* .read-content scope makes the Read.scss styles apply */}
       <div className="samplerScriptureBody read-content scriptureExcerptCompact">
-        <ScriptureExcerpt refText={ref} onNavigate={() => setRef(null)} />
+        <ScriptureExcerpt refText={ref} onNavigate={() => setRef(null)} onBoMSections={setHasBoM} />
       </div>
-      {to ? (
+      {to && hasBoM ? (
         <div className="samplerScriptureFoot">
           <Link className="samplerScriptureReadLink tileMoreLink" to={to} onClick={() => setRef(null)}>
             {label("read")}

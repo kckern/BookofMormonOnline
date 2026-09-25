@@ -34,10 +34,15 @@ Book of Mormon Online - an interactive scripture study platform for the Book of 
 ### On this dev host (the one CLAUDE.md lives on)
 ```bash
 systemctl --user status bom-dev          # is it running?
-systemctl --user restart bom-dev         # bounce frontend + backend together
+systemctl --user status bom-greenfield   # backend status
+systemctl --user restart bom-dev         # bounce the CRA frontend
+systemctl --user restart bom-greenfield  # bounce the backend
 journalctl --user -u bom-dev -f          # tail logs
 ```
-The unit's `ExecStartPre=/usr/local/bin/bom-load-env` pulls fresh secrets from local Infisical (`http://localhost:8070`, `bom-dev` machine identity in `~/infisical/`) into `$XDG_RUNTIME_DIR/bom-dev.env` (tmpfs, mode 600) before each start.
+The service commands run through `scripts/run-with-infisical-env.sh`, which pulls
+a service-specific allowlist from local Infisical (`http://localhost:8070`,
+`bom-dev` machine identity in `~/infisical/`) into mode-600 files under
+`$XDG_RUNTIME_DIR`. Frontend profiles receive no backend secrets.
 
 ### On a developer laptop
 ```bash

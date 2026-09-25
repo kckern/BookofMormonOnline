@@ -24,6 +24,8 @@ log.sql
 !test/run-regression.sh
 !.githooks/*.sh
 !scripts/install-git-hooks.sh
+!scripts/load-infisical-env.sh
+!scripts/run-with-infisical-env.sh
 *.log
 /.claude
 .worktrees/

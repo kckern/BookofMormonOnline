@@ -42,6 +42,8 @@ grep -E  -- '(AKIA|ASIA)[0-9A-Z]{16}'                                           
 grep -E  -- '(ghp|gho|ghu|ghs|ghr)_[0-9A-Za-z]{36}|github_pat_[0-9A-Za-z_]{20,}'  "$work" | emit "GitHub token"
 grep -E  -- 'xox[baprs]-[0-9A-Za-z-]{8,}'                                         "$work" | emit "Slack token"
 grep -E  -- 'AIza[0-9A-Za-z_-]{35}'                                               "$work" | emit "Google API key"
+grep -E  -- 'sk-(proj-|svcacct-)?[0-9A-Za-z_-]{20,}'                              "$work" | emit "OpenAI API key"
+grep -E  -- "(mysql|postgres(ql)?):\/\/[^[:space:]\"']+:[^[:space:]\"']+@"       "$work" | emit "Database URL with credentials"
 
 # --- Hardcoded credential assignment (best-effort; excludes env refs / placeholders) --
 grep -Ei -- '(password|passwd|secret|api[_-]?key|access[_-]?key|client_secret|auth[_-]?token|bearer)[a-z_]*["'"'"' ]*[:=]["'"'"' ]*[^"'"'"' <$)]{8,}' "$work" \

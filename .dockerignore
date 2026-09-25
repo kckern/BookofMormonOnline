@@ -4,6 +4,14 @@
 **/dist
 **/.shadow
 **/test-results
+**/.env
+**/.env.*
+**/*.env
+**/*.env.*
+**/*secret*
+**/*credential*
+.claude
+.codex
 _deprecated
 docs
 .git

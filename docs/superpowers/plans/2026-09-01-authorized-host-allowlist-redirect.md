@@ -328,10 +328,20 @@ git commit -m "feat(next): 301 unauthorized hosts to canonical English before SS
 ## Task 3: Tighten `safeHost()` to the single registry
 
 **Files:**
-- Modify: `frontend/next/lib/seo.ts` (`safeHost`, lines 113-118)
-- Test: `frontend/next/test/unit/seo.test.ts` (create)
+- Modify: `frontend/next/lib/locales.ts` (add `safeHost`, next to `isAuthorizedHost`)
+- Modify: `frontend/next/lib/seo.ts` (remove local `safeHost`, import it from `./locales`; drop now-unused `HOST_LANG` import)
+- Test: `frontend/next/test/unit/locales.test.ts` (add `safeHost` describe)
 
 Rationale: unauthorized hosts no longer reach SSR (Task 2), but `safeHost` still trusts any `*.bookofmormon.online` for canonical/og:url. Route it through `isAuthorizedHost` so there is one definition of "authorized" (defense-in-depth for infra hosts that do reach SSR).
+
+**Deviation from original plan (discovered during execution):** `safeHost` cannot be
+unit-tested from `lib/seo.ts` — that module transitively imports React's `cache()`
+at load (via `lib/labels.ts`), which throws in the Playwright unit-test context
+(`No tests found`). Rather than shim React or lazy-init `cache`, `safeHost` moves to
+`lib/locales.ts` (the pure host module with no server-only imports), which is also the
+natural home for host-authorization logic and lets it share `CANONICAL_EN_HOST` as the
+fallback. `seo.ts` imports it from there. Output behavior (port/case preservation,
+apex fallback) is unchanged.
 
 - [ ] **Step 1: Write the failing unit test**
 

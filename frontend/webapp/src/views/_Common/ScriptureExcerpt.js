@@ -73,7 +73,7 @@ const highlightPhrase = (text, phrase) => {
   ];
 };
 
-export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = false, refAsPopup = false, highlight = null }) {
+export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = false, refAsPopup = false, highlight = null, onBoMSections = null }) {
   const anchor = cleanPhrase(highlight);
   const ref = refText ? canonical(refText) : null;
   // One entry per compound segment, IN ORDER — each is either a BoM result
@@ -134,6 +134,11 @@ export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = fals
     ).then((results) => {
       if (cancelled) return;
       setSegments(results);
+      // Report whether any segment resolved to actual Book of Mormon content
+      // (a Read `sections` result, not a Bible `passages` fallback). The Read
+      // experience only serves BoM, so callers use this to hide a "Read" CTA
+      // for Bible-only references.
+      if (onBoMSections) onBoMSections(results.some((s) => s.sections?.length > 0));
     });
     return () => { cancelled = true; };
   }, [ref]);
