@@ -131,6 +131,18 @@ export default defineConfig(({ mode }) => {
       // ESM, so a CJS source file breaks dev even when the build succeeds.
       // That is why Bible/data.js and MapMarkers.js were converted to ESM.
       commonjsOptions: { include: [/node_modules/, /src\//] },
+      // Explicit, because this decides who can use the site and should not be an
+      // invisible framework default. These are Vite 7's own
+      // "baseline-widely-available" values, pinned so a Vite upgrade cannot
+      // silently move them.
+      //
+      // NOT derived from the old browserslist query (">0.2%, not dead"): that
+      // resolves to chrome109/firefox120/safari18.5 today, which is NARROWER
+      // than this. The package.json browserslist field was removed rather than
+      // wired up, because honouring it would have REDUCED compatibility.
+      // CSS vendor prefixing follows this target via esbuild (verified: the
+      // built CSS carries more -webkit- rules than the source does).
+      target: ["chrome107", "edge107", "firefox104", "safari16"],
       outDir: "build",
       assetsDir: "static",
       emptyOutDir: true,

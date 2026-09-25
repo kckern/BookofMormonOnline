@@ -6,8 +6,11 @@
 
 import { generateReference } from "scripture-guide";
 import bibleData from "./data";
-const { index } = bibleData;
 import { canons, bookOfVid } from "./canon";
+
+// data.js is ESM with a default export (it was CommonJS); destructure after
+// the imports so import/first stays satisfied.
+const { index } = bibleData;
 
 const pairMap = new Map(); // "2 Nephi|Isaiah" -> {total, quotes}
 const totals = { bom: new Map(), kjv: new Map() };

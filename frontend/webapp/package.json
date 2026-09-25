@@ -99,27 +99,10 @@
     "build": "vite build",
     "postbuild": "node scripts/stamp-sw-version.js",
     "test": "NODE_ENV=test BABEL_ENV=test jest",
+    "lint": "eslint src --ext .js,.jsx --ignore-pattern \"**/__tests__/**\" --ignore-pattern \"**/*.test.*\" --ignore-pattern \"**/*.spec.*\"",
     "compile-sass": "node-sass ./src/assets/scss/paper-dashboard.scss src/assets/css/paper-dashboard.css",
     "minify-sass": "node-sass ./src/assets/scss/paper-dashboard.scss src/assets/css/paper-dashboard.min.css --output-style compressed",
     "map-sass": "node-sass ./src/assets/scss/paper-dashboard.scss src/assets/css/paper-dashboard.css --source-map true"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
@@ -133,6 +116,8 @@
     "buffer": "^6.0.3",
     "camelcase": "^6.3.0",
     "css-loader": "^6.8.1",
+    "eslint": "^8.57.1",
+    "eslint-config-react-app": "^7.0.1",
     "eslint-plugin-react-hooks": "^4.6.0",
     "http-proxy-middleware": "^3.0.5",
     "identity-obj-proxy": "^3.0.0",
@@ -145,5 +130,10 @@
     "sass": "^1.105.0",
     "stream": "^0.0.2",
     "vite": "^7.3.6"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app"
+    ]
   }
 }

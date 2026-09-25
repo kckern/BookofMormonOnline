@@ -27,11 +27,18 @@ jobs:
       # is the same failure the prod image build would hit.
       - name: Build backend (tsc)
         run: cd backend && npm ci && npm run build
-      - name: Build CRA (frontend/webapp)
-        # CI=false to mirror the Docker/prod build: react-scripts turns lint
-        # warnings into errors when CI=true (GH Actions default), but the prod
-        # image builds without CI set. Real build breaks (bad imports, etc.) still
-        # hard-fail here; we only avoid failing on warnings prod already tolerates.
-        run: cd frontend/webapp && npm ci && CI=false GENERATE_SOURCEMAP=false npm run build
+      - name: Build frontend (frontend/webapp)
+        # Vite, since react-scripts was removed. CI/GENERATE_SOURCEMAP are no
+        # longer meaningful: those were react-scripts knobs (CI=true made its
+        # bundled eslint fail the build on warnings). Lint now runs as its own
+        # step below instead of inside the bundler.
+        run: cd frontend/webapp && npm ci && npm run build
+      - name: Lint frontend source
+        # Application source only — test files are excluded because
+        # eslint-config-react-app/jest no longer loads (its jest env fails under
+        # eslint 8.57 now that react-scripts does not pin the chain). Source is
+        # at 0 errors, so this gates on real breakage (undefined identifiers,
+        # unresolved or phantom imports) while its ~650 warnings stay advisory.
+        run: cd frontend/webapp && npm run lint
       - name: Build Next (frontend/next)
         run: cd frontend/next && npm ci && npm run build

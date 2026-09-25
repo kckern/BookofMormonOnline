@@ -5,9 +5,12 @@ import { generateReference } from "scripture-guide";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { label, determineLanguage } from "src/models/Utils";
 import bibleData from "src/views/Analysis/Bible/data";
-const { index } = bibleData;
 import RefPill from "./RefPill";
 import TileDeepLink from "./_ds/TileDeepLink";
+
+// data.js is ESM with a default export (it was CommonJS); destructure after
+// the imports so import/first stays satisfied.
+const { index } = bibleData;
 
 const dmp = new DiffMatchPatch();
 
