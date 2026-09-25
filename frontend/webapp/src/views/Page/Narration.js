@@ -295,7 +295,9 @@ function idsWithComments(type, narrationController) {
   return idsWithComments;
 }
 
-function LightBox({ setOpenLightBox }) {
+// Exported for __tests__/LightBox.test.js, which pins the slide list, start
+// index and close wiring of the yet-another-react-lightbox port.
+export function LightBox({ setOpenLightBox }) {
   const narrationController = useNarration();
   const activeImageId = narrationController.states.activeImageId;
 
