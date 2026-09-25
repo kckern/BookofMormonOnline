@@ -137,35 +137,29 @@ test("heading's accessible name separates and labels the total count", async () 
   expect(heading).toBeInTheDocument();
 });
 
-test("rail legend shows when grouped by book, hidden otherwise", async () => {
-  const history = renderAt("/analysis/chiasmus");           // default group=book
-  await screen.findByRole("button", { name: /first chiasm/i });
-  expect(screen.getByText(/small plates/i)).toBeInTheDocument();
-  act(() => history.replace("/analysis/chiasmus?group=speaker"));
-  expect(screen.queryByText(/small plates/i)).not.toBeInTheDocument();
-});
+/**
+ * Three tests are deliberately gone from here: "rail legend shows when grouped
+ * by book", "speaker grouping drops the redundant per-card speaker line" and
+ * "group headers show a parenthesized count".
+ *
+ * Unlike the URL-driven panel tests above — which described real behaviour lost
+ * in the b85e46cf merge and have been restored — these describe grouping that
+ * c2b72ec2 removed ON PURPOSE: "flat list (no book separators)" is that
+ * redesign's stated intent, and `group` survives in DEFAULTS only to keep old
+ * URLs valid. Restoring them would reverse a deliberate product decision, so
+ * they are retired rather than ported.
+ *
+ * The positive speaker assertion below is kept: with the flat list, cards show
+ * the speaker name and avatar unconditionally, which is still worth pinning.
+ */
 
 test("non-speaker grouping keeps the per-card speaker name and avatar", async () => {
-  // positive counterpart to the speaker-grouping test below: a regression
-  // that hid speakers everywhere would pass an absence-only assertion
-  renderAt("/analysis/chiasmus"); // default group=book
+  // With the flat list every card carries its speaker; a regression that hid
+  // speakers everywhere is what this pins.
+  renderAt("/analysis/chiasmus");
   await screen.findByRole("button", { name: /first chiasm/i });
   expect(document.querySelectorAll(".speaker-name").length).toBe(2);
   expect(document.querySelectorAll(".speaker-avatar").length).toBe(2);
-});
-
-test("speaker grouping drops the redundant per-card speaker line", async () => {
-  renderAt("/analysis/chiasmus?group=speaker");
-  await screen.findByRole("button", { name: /first chiasm/i });
-  expect(screen.getByRole("heading", { name: /nephi/i })).toBeInTheDocument(); // group header
-  expect(document.querySelectorAll(".speaker-name").length).toBe(0);           // not on cards
-  expect(document.querySelectorAll(".speaker-avatar").length).toBe(0);
-});
-
-test("group headers show a parenthesized count", async () => {
-  renderAt("/analysis/chiasmus"); // default group=book → 1 Nephi (1), Alma (1)
-  await screen.findByRole("button", { name: /first chiasm/i });
-  expect(screen.getAllByText("(1)")).toHaveLength(2);
 });
 
 test("browsing produces no duplicate-key warnings (audit §2.3 canary)", async () => {

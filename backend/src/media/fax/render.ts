@@ -1,4 +1,5 @@
 import sharp from 'sharp';
+import type { OverlayOptions, Sharp } from 'sharp';
 import type { Fragment } from './types.js';
 import { DIM_OPACITY, JPEG_QUALITY } from './constants.js';
 
@@ -14,7 +15,7 @@ export async function renderFragmentCrop(scan: Buffer, frag: Fragment, notch: No
   const cw = Math.min(frag.w, (meta.width ?? frag.x + frag.w) - frag.x);
   const ch = Math.min(frag.h, (meta.height ?? frag.y + frag.h) - frag.y);
   const base = sharp(scan).extract({ left: frag.x, top: frag.y, width: cw, height: ch });
-  const overlays: sharp.OverlayOptions[] = [];
+  const overlays: OverlayOptions[] = [];
   if (notch.tl && notch.tl.w > 0 && notch.tl.h > 0) {
     overlays.push({
       input: { create: { width: Math.min(notch.tl.w, cw), height: Math.min(notch.tl.h, ch), channels: 3, background: notch.paper } },
@@ -39,7 +40,7 @@ export interface Rect { x: number; y: number; w: number; h: number; }
 export async function renderPageDimmed(
   scan: Buffer, width: number, height: number, rects: Rect[], opacity: number,
 ): Promise<Buffer> {
-  const darkLayer: sharp.OverlayOptions = {
+  const darkLayer: OverlayOptions = {
     input: { create: { width, height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: opacity } } },
     top: 0, left: 0,
   };
@@ -51,8 +52,8 @@ export async function renderPageDimmed(
     return {
       input: await sharp(scan).extract({ left: r.x, top: r.y, width: w, height: h }).png().toBuffer(),
       top: r.y, left: r.x,
-    } as sharp.OverlayOptions;
-  }))).filter((o): o is sharp.OverlayOptions => o !== null);
+    } as OverlayOptions;
+  }))).filter((o): o is OverlayOptions => o !== null);
   return sharp(dimmed).composite(overlays).png().toBuffer();
 }
 
@@ -103,7 +104,7 @@ function scaleFragment(f: Fragment, k: number): Fragment {
   };
 }
 
-const encode = (img: sharp.Sharp, ext: 'jpg' | 'webp') =>
+const encode = (img: Sharp, ext: 'jpg' | 'webp') =>
   (ext === 'webp' ? img.webp({ quality: JPEG_QUALITY }) : img.jpeg({ quality: JPEG_QUALITY })).toBuffer();
 
 const downscale = async (buf: Buffer, width: number | 'full'): Promise<Buffer> => {

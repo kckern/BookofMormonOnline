@@ -35,6 +35,32 @@ export default function Home() {
     return () => document.body.classList.remove("community-view");
   }, [mobile, activeTab]);
 
+  // /home/feed is the unlisted beta entry point, so it must not be indexed.
+  // Restored from 50c521a0; ac6a8fe6's rewrite of this file dropped the effect
+  // while keeping `unlistedBeta` itself, so the route silently lost its
+  // noindex. The Next front door already answers crawler user-agents with
+  // 404 + noindex, which is why nothing broke visibly — this covers the case
+  // that misses: a scraper presenting a browser UA and executing JS, which is
+  // served the CRA shell instead. The cleanup restores whatever was there
+  // before, so leaving /home/feed cannot strip another view's robots tag.
+  useEffect(() => {
+    if (!unlistedBeta) return undefined;
+    let robots = document.querySelector('meta[name="robots"]');
+    const created = !robots;
+    const previous = robots?.getAttribute('content');
+    if (!robots) {
+      robots = document.createElement('meta');
+      robots.setAttribute('name', 'robots');
+      document.head.appendChild(robots);
+    }
+    robots.setAttribute('content', 'noindex,nofollow,noarchive');
+    return () => {
+      if (created) robots.remove();
+      else if (previous == null) robots.removeAttribute('content');
+      else robots.setAttribute('content', previous);
+    };
+  }, [unlistedBeta]);
+
   return (
     // `--tabs` modifier (desktop only) lets the stylesheet own the fixed-header
     // clearance + tab-bar offset without affecting the mobile layout.

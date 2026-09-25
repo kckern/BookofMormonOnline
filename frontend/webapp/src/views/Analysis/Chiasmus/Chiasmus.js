@@ -5,10 +5,14 @@ import ChiasmGlyph from "../../_Common/ChiasmGlyph";
 import "./Chiasmus.css";
 import Chiasm from "./Chiasm";
 import { label, determineLanguage } from 'src/models/Utils';
-import { useRouteMatch, useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { useRouteMatch, useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { enrichChiasmus, applyBrowseState } from "./chiasmUtils";
 import useBrowseState, { DEFAULTS } from "./useBrowseState";
 import { t } from "./t";
+
+// Index-page document title — set on mount and restored when the detail panel
+// closes (Chiasm.js owns the title while a chiasm is open).
+const indexDocTitle = () => t("chiasms_doc_title", "Chiasmus") + " | " + label("home_title");
 
 // Depth buckets in display order: numeric ascending, the "+" (deepest) last.
 const depthOrder = (keys) => keys.slice().sort((a, b) => {
@@ -214,7 +218,7 @@ const ChiasmCard = memo(function ChiasmCard({ chiasm, active, onSelect, onVoice,
 
 function Chiasmus({ enriched, flat, state, set, setChiasmusId, activeChiasmus }) {
 
-    useEffect(() => { document.title = t("chiasms_doc_title", "Chiasms") + " | " + label("home_title"); }, []);
+    useEffect(() => { document.title = indexDocTitle(); }, []);
 
     // one filter avatar per speaker present in the data, most-quoted first
     const speakers = useMemo(() => {
@@ -279,11 +283,20 @@ function Chiasmus({ enriched, flat, state, set, setChiasmusId, activeChiasmus })
 
 function Container() {
     const [chiasmus, setChiasmus] = useState(null);
-    // deep link: /analysis/chiasmus/<chiasmus_id> opens that chiasm directly
+    // The URL is the single source of truth for which chiasm is open, so
+    // /analysis/chiasmus/<chiasmus_id> deep-links AND Back/Forward work. This
+    // was lost when b85e46cf merged the browse redesign over the URL-driven
+    // panel (restored from a0797ed2); before the restore, opening a chiasm
+    // never changed the URL, so the app read deep links it could not produce.
     const { params } = useRouteMatch();
-    const [, urlChiasmId] = params?.value?.split("/") || [];
-    const [chiasmus_id, setChiasmusId] = useState(urlChiasmId || null);
-    const { replace } = useHistory();
+    const chiasmus_id = params?.value?.split("/")[1] || null;
+    const { replace, push } = useHistory();
+    // Router search, not window.location.search: under a memory history the two
+    // diverge, and window.location can be stale right after a filter change.
+    // Read through a ref so the mount-only keydown effect's closures stay right.
+    const { search } = useLocation();
+    const searchRef = useRef(search);
+    useEffect(() => { searchRef.current = search; }, [search]);
     const lang = determineLanguage();
 
     // Browse state lives here (Container is inside the Router context) so the
@@ -292,14 +305,39 @@ function Container() {
     const enriched = useMemo(() => enrichChiasmus(Array.isArray(chiasmus) ? chiasmus : [], lang), [chiasmus, lang]);
     const { flat } = useMemo(() => applyBrowseState(enriched, state), [enriched, state]);
 
-    // stable across renders: setChiasmusId and replace are both stable, and
-    // window.location is read at call time, so the mount-only keydown effect
-    // below can close over this safely. The query string is preserved so
-    // closing a chiasm doesn't wipe the browse state out of the URL.
-    const closeChiasm = () => { setChiasmusId(null); replace("/analysis/chiasmus" + window.location.search); };
-    const chiasmusIdRef = useRef(chiasmus_id); // Create a ref
+    // Mirrors the URL-derived chiasmus_id for the mount-only keydown effect
+    // (kept in sync by the effect below; written eagerly in setChiasmusId).
+    const chiasmusIdRef = useRef(chiasmus_id);
+
+    // First open from the index PUSHES one history entry (so Back closes the
+    // panel); prev/next/arrow browsing while open REPLACES (no history spam);
+    // close REPLACES back to the index. The browse query string is preserved so
+    // opening or closing a chiasm doesn't wipe filters out of the URL.
+    // useCallback over refs + stable history fns: identity is stable across
+    // renders, so the mount-only keydown effect can close over it safely and
+    // ChiasmCard's memo isn't defeated by a fresh onSelect every render.
+    const setChiasmusId = useCallback((id) => {
+        const qs = searchRef.current;
+        const wasOpen = !!chiasmusIdRef.current;
+        // Eager ref write: the sync effect below is passive, so a second call
+        // landing before it flushes (rapid raw keydowns) would see a stale ref
+        // and push twice. Back/Forward still rely on the effect.
+        chiasmusIdRef.current = id;
+        if (!id) { replace("/analysis/chiasmus" + qs); return; }
+        if (wasOpen) replace(`/analysis/chiasmus/${id}` + qs);
+        else push(`/analysis/chiasmus/${id}` + qs);
+    }, [replace, push]);
+    const closeChiasm = () => setChiasmusId(null);
+
+    // Chiasm.js owns the title while the panel is open; restore the index title
+    // when it closes.
     useEffect(() => {
-        chiasmusIdRef.current = chiasmus_id; // Update the ref whenever chiasmus_id changes
+        if (!chiasmus_id) document.title = indexDocTitle();
+    }, [chiasmus_id]);
+
+    // keep the ref following Back/Forward, and centre the now-active card
+    useEffect(() => {
+        chiasmusIdRef.current = chiasmus_id;
         //scroll into view in chiasmus_list
         const activeElement = document.querySelector(".chiasmus.active");
         if(activeElement){
@@ -383,7 +421,19 @@ function Container() {
 
 
     return <div className="container">
-         <h3 className="title lg-4 text-center">{t("chiasmus_page_title", "Chiasmus in the Book of Mormon")}</h3>
+         <h3 className="title lg-4 text-center chiasmus_title">
+            {t("chiasmus_page_title", "Chiasmus in the Book of Mormon")}
+            {enriched.length > 0 && (
+                // JSX strips the whitespace before this span, so without the
+                // hidden separators the heading's accessible name reads
+                // "…Book of Mormon367" — glued on and unlabeled.
+                <span className="total_count" title={t("total_chiasms", "$1 chiasms total", [enriched.length])}>
+                    <span className="visually-hidden"> — </span>
+                    {enriched.length}
+                    <span className="visually-hidden">{t("total_chiasms_sr", " chiasms")}</span>
+                </span>
+            )}
+         </h3>
          <div className="innerChiasmContainer">
         {indexPanel}
         {singlePanel}
@@ -394,4 +444,9 @@ function Container() {
 
 
 
+// Named export for BrowseToolbar.test.js. This existed until c2b72ec2's browse
+// redesign rewrote the file and dropped it, which silently broke that suite —
+// the test kept importing `undefined`, so React reported only "Element type is
+// invalid" with no clue which element. Nothing in the app imports it.
+export { BrowseToolbar };
 export default Container;

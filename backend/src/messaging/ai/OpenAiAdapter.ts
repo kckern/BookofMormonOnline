@@ -6,7 +6,7 @@
  *
  * Behaviour
  * ---------
- * - Reads OPENAI_API_KEY from process.env; if absent returns null without
+ * - Reads OPENAI_BOT_API_KEY from process.env; if absent returns null without
  *   throwing (silent degradation — the channel still works, bots just go quiet).
  * - Model from OPENAI_MODEL env, default 'gpt-3.5-turbo' (matches legacy usage
  *   in src/api/studybuddy.ts and src/api/virtualgroup.ts).
@@ -18,6 +18,12 @@
 
 import OpenAI from 'openai';
 import type { LlmGateway, GenerateOpts } from './LlmGateway.js';
+import { consumeBotGenerationBudget } from '../../bots/budget.js';
+
+function boundedInt(name: string, fallback: number, min: number, max: number): number {
+  const value = Number.parseInt(process.env[name] || '', 10);
+  return Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : fallback;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Adapter
@@ -26,19 +32,21 @@ import type { LlmGateway, GenerateOpts } from './LlmGateway.js';
 export class OpenAiAdapter implements LlmGateway {
   private client: OpenAI | null = null;
   private model: string;
+  private enforceBudget: boolean;
 
   /**
    * @param clientOverride — injectable for testing (pass a fake OpenAI client).
    */
   constructor(clientOverride?: OpenAI) {
     this.model = process.env['OPENAI_MODEL'] ?? 'gpt-3.5-turbo';
+    this.enforceBudget = clientOverride === undefined;
 
     if (clientOverride !== undefined) {
       this.client = clientOverride;
       return;
     }
 
-    const apiKey = process.env['OPENAI_API_KEY'];
+    const apiKey = process.env['OPENAI_BOT_API_KEY'];
     if (!apiKey) {
       // No key → keep client null; generate() will return null immediately.
       return;
@@ -53,13 +61,15 @@ export class OpenAiAdapter implements LlmGateway {
     }
 
     try {
+      if (this.enforceBudget && !(await consumeBotGenerationBudget()).allowed) return null;
       const completion = await this.client.chat.completions.create({
         model: this.model,
+        max_tokens: boundedInt('BOT_LLM_MAX_OUTPUT_TOKENS', 600, 64, 2_000),
         messages: [
           { role: 'system', content: opts.system },
           ...opts.messages.map((m) => ({ role: m.role, content: m.content })),
         ],
-      });
+      }, { timeout: boundedInt('BOT_LLM_TIMEOUT_MS', 60_000, 5_000, 120_000) });
 
       const text = completion.choices[0]?.message?.content ?? null;
       return text && text.trim().length > 0 ? text : null;

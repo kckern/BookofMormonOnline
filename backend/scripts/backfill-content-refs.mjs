@@ -40,14 +40,17 @@ async function legacyTextToVerseId(slug, ordinal) {
   const [[u]] = await c.query("SELECT min_verse_id FROM bom_text WHERE page=? AND link=? LIMIT 1", [page, ordinal]);
   return u?.min_verse_id ? Number(u.min_verse_id) : null;
 }
-const verseSlugCache = new Map();
-async function verseIdToSlug(vid) {
-  if (verseSlugCache.has(vid)) return verseSlugCache.get(vid);
-  // bom_text unit for the verse -> page guid -> PG slug
-  const [[u]] = await c.query("SELECT page FROM bom_text WHERE min_verse_id=? LIMIT 1", [vid]);
-  let slug = null;
-  if (u?.page) { const [[s]] = await c.query("SELECT slug FROM bom_slug WHERE link=? AND type='PG' LIMIT 1", [u.page]); slug = s?.slug ?? null; }
-  verseSlugCache.set(vid, slug); return slug;
+const verseDispCache = new Map();
+async function verseIdToDisplay(vid) {
+  if (verseDispCache.has(vid)) return verseDispCache.get(vid);
+  // bom_text unit for the verse -> page guid + link(ordinal) -> PG slug
+  const [[u]] = await c.query("SELECT page, link FROM bom_text WHERE min_verse_id=? LIMIT 1", [vid]);
+  let disp = null;
+  if (u?.page) {
+    const [[s]] = await c.query("SELECT slug FROM bom_slug WHERE link=? AND type='PG' LIMIT 1", [u.page]);
+    if (s?.slug) disp = { slug: s.slug, ordinal: Number(u.link) };
+  }
+  verseDispCache.set(vid, disp); return disp;
 }
 
 const [rows] = await c.query(
@@ -60,7 +63,7 @@ for (const m of rows) {
   const refs = [];
   if (m.link_type === 'text') {
     const vid = await legacyTextToVerseId(m.custom_type, Number(m.link_target));
-    if (vid) { refs.push({ type: 'verse', id: vid, role }); stats.verse++; }
+    if (vid) { refs.push({ type: 'verse', id: vid, slug: m.custom_type, ordinal: Number(m.link_target), role }); stats.verse++; }
     else { refs.push({ type: 'legacy_text', slug: m.custom_type, ordinal: Number(m.link_target), role }); stats.legacyText++; }
   } else if (m.link_type === 'com') { refs.push({ type: 'commentary', id: Number(m.link_target), role }); stats.com++; }
   else if (m.link_type === 'img') { refs.push({ type: 'image', id: Number(m.link_target), role }); stats.img++; }
@@ -76,9 +79,10 @@ for (const m of rows) {
     const vids = refStr ? (lookupReference(String(refStr).replace(/[–—]/g,'-'))?.verse_ids ?? []) : [];
     if (vids.length) {
       const vid = [...new Set(vids)].sort((a,z)=>a-z)[0];
-      refs.push({ type: 'verse', id: vid, role: 'subject' });
+      const disp = await verseIdToDisplay(vid);
+      refs.push({ type: 'verse', id: vid, slug: disp?.slug, ordinal: disp?.ordinal, role: 'subject' });
       stats.inlineDetected++;
-      if (!anchor) { const s = await verseIdToSlug(vid); if (s) anchor = s; }
+      if (!anchor && disp?.slug) anchor = disp.slug;
     }
   }
   // highlights

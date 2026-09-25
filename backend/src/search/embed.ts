@@ -1,11 +1,13 @@
 import { embed, embedMany } from 'ai';
-import { openai } from '@ai-sdk/openai';
+import { createOpenAI } from '@ai-sdk/openai';
 import { getSearchConfig } from './config.js';
 
 /** Default embedding model from config. Passed explicitly in tests for mocking. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function defaultEmbedModel(): any {
-  return openai.textEmbeddingModel(getSearchConfig().embedModel);
+  const apiKey = process.env['OPENAI_EMBED_API_KEY'];
+  if (!apiKey) throw new Error('OPENAI_EMBED_API_KEY is required for semantic search');
+  return createOpenAI({ apiKey }).textEmbeddingModel(getSearchConfig().embedModel);
 }
 
 /** Embed a single string → vector. */

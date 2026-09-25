@@ -532,6 +532,11 @@ select.tb_control { padding-right: .4rem; }
     border: 1px solid var(--text-muted);
 }
 
+/* Corpus total beside the page heading: present but unstyled after b85e46cf
+   dropped this rule along with the markup (restored from a0797ed2). Only the
+   count is styled here — the heading keeps its existing size and centring. */
+.chiasmus_title .total_count { font-size: .8em; font-weight: 400; color: var(--text-muted); margin-left: 1ex; }
+
 .innerChiasmContainer{
     display: flex;
     flex-direction: row;

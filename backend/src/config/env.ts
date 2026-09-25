@@ -8,6 +8,14 @@ const optionalNonEmptyString = z.preprocess(
 
 export const envSchema = z.object({
   PORT: z.coerce.number().default(5006),
+  // Interface the Fastify server binds. Default 0.0.0.0, NOT loopback: the
+  // nginx gateway is a SEPARATE container and proxies to <slot>:5005 across the
+  // docker network (ops/production/gateway/default.conf.template), so a
+  // loopback bind makes /graphql, /api and /messenger unreachable in prod.
+  // This is not an exposure: the app container publishes no host ports, so
+  // 0.0.0.0 inside it is only reachable on the docker network. Override to
+  // 127.0.0.1 when running the backend directly on a host.
+  BIND_HOST: z.string().min(1).default('0.0.0.0'),
   MYSQL_HOST: z.string().min(1),
   MYSQL_PORT: z.coerce.number().default(3306),
   MYSQL_USER: z.string().min(1),

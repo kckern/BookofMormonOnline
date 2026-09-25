@@ -118,10 +118,23 @@ describe("XrelSection", () => {
     expect(mockSetPopUp).toHaveBeenCalledWith({ type: "people", ids: ["nephi"], underSlug: "people" });
   });
 
-  test("group rows render as a tag rather than a dead link", () => {
-    render(<XrelSection xrels={[{ ...srcRow, dst_type: "group", dst_name: "lamanites" }]} />);
-    expect(document.querySelector(".xrel a")).toBeNull();
-    expect(document.querySelector(".xrel-tag")).toBeInTheDocument();
+  // This used to assert that group rows rendered as an inert tag, because at
+  // the time nothing opened for a group. popUpTargetFor now maps `group` to the
+  // group popup ("no thumbnail but does have a popup", per its comment), so the
+  // row is a real control and the dead-link concern no longer applies.
+  test("group rows open the group popup", () => {
+    render(<XrelSection xrels={[{ ...srcRow, dst_type: "group", dst_slug: "lamanites", dst_name: "lamanites" }]} />);
+    const card = document.querySelector(".xrel");
+    expect(card).toHaveClass("clickable");
+    expect(card).toHaveAttribute("tabindex", "0");
+    fireEvent.click(card);
+    expect(mockSetPopUp).toHaveBeenCalledWith({ type: "group", ids: ["lamanites"], underSlug: "group" });
+  });
+
+  test("a group row still renders no thumbnail", () => {
+    // ASSET_PATH deliberately has no `group` entry — groups have no artwork.
+    render(<XrelSection xrels={[{ ...srcRow, dst_type: "group", dst_slug: "lamanites", dst_name: "lamanites" }]} />);
+    expect(document.querySelector(".xrel img")).toBeNull();
   });
 
   test("rows are grouped by relation verb with a count", () => {

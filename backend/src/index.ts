@@ -157,7 +157,7 @@ process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
 app
-  .listen({ port: env.PORT, host: '0.0.0.0' })
+  .listen({ port: env.PORT, host: env.BIND_HOST })
   .then(async () => {
     app.log.info(`bom-backend listening on :${env.PORT}`);
     // Cutover gate: messaging real-time is on by default; set MESSENGER_ENABLED=false
@@ -170,7 +170,7 @@ app
     }
     // Bot cron (proactive bot posting). Off by default — opt in with
     // BOT_SCHEDULER_ENABLED=true so it never auto-posts to live channels by
-    // accident. Requires a model provider (OPENAI_API_KEY or BOT_LLM_MOCK).
+    // accident. Requires a model provider (OPENAI_BOT_API_KEY or BOT_LLM_MOCK).
     if (process.env.BOT_SCHEDULER_ENABLED === 'true') {
       startBotScheduler();
     }

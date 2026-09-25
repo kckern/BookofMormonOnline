@@ -88,22 +88,31 @@ after emergency prune; refusing image pull`. Worth knowing why:
   containers now get `--log-opt max-size=20m --log-opt max-file=3` explicitly
   from the deploy script.
 
-### Pending: the daemon-wide default needs a docker restart
+### Daemon-wide log cap: DONE 2026-09-25
 
-`/etc/docker/daemon.json` was tightened from `max-size: 100m` to `20m` on
-2026-09-24 (backup alongside it as `daemon.json.bak-<date>`). **It is not in
-effect yet.** `log-driver`/`log-opts` are NOT part of Docker's live-reload set —
-verified empirically: after `systemctl reload docker`, a freshly created
-container still inherited `100m`. Applying it needs `systemctl restart docker`,
-which bounces every container on the box, so it should be scheduled rather than
-done during a deploy.
+`/etc/docker/daemon.json` is `json-file` with `max-size: 20m`, `max-file: 3`
+(backup alongside it as `daemon.json.bak-<date>`), and it is **in effect** — a
+container created after the restart inherits those values. Applying it required
+`systemctl restart docker`, because `log-driver`/`log-opts` are NOT part of
+Docker's live-reload set: after a SIGHUP reload a new container still inherited
+the old `100m`.
 
-Note also that Docker bakes the *resolved* default into a container's
-`HostConfig` at creation time, so existing containers keep whatever default was
-current when they were created. The long-lived BoMDocker containers were created
-before any `log-opts` existed and report an empty `max-size` — genuinely
-unbounded until they are next recreated. Until then the deploy guard's log
-truncation is the safety net for them.
+Note that Docker bakes the *resolved* default into a container's `HostConfig`
+at creation time, so containers created before this keep `100m` (or nothing at
+all, for the oldest ones) until they are next recreated. The deploy guard's log
+truncation remains the safety net for those.
+
+**Restarting the daemon drops `vector`.** It exits 137: it retries against
+`victorialogs` (also restarting, so refusing connections), does not finish
+shutting down inside the grace period, gets SIGKILLed, and `unless-stopped`
+then treats it as deliberately stopped and leaves it down. Its policy is now
+`always`, which survives a daemon restart. If you restart the daemon again,
+still check `docker ps | grep vector` — a dead shipper is silent, and the only
+symptom is VictoriaLogs going quiet.
+
+Everything else came back on its own policy. The one container that stays down
+by design is the inactive blue-green slot (`policy=no`, exited), which is the
+rollback image.
 
 ### Known-bad commit: 15a5559d
 

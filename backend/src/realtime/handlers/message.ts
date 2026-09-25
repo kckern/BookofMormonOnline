@@ -151,7 +151,9 @@ export function register(socket: Socket, _io: Server): void {
         emitPublicChannelEvent('unread_count_changed', payload.channelUrl, { channelUrl: payload.channelUrl });
 
         // Fire-and-forget bot reply (no await — must not block the ack).
-        if (!access.explicit) void maybeBotReply(db, payload.channelUrl, msg);
+        if (process.env['BOT_REALTIME_RESPONDER_ENABLED'] === 'true' && !access.explicit) {
+          void maybeBotReply(db, payload.channelUrl, msg);
+        }
 
         // A reply notifies the parent message's author (per-user push, in-place
         // bell patch). Fire-and-forget; self-replies are filtered downstream.
