@@ -1,0 +1,34 @@
+/* Compact switch indicator, sized to match the old library's size="xs" and
+   coloured to match its onstyle="success". House style keeps the checked state
+   green here because that is what the filter UI already used; gold is reserved
+   for links and accents elsewhere. */
+.fpSwitch {
+  display: inline-flex;
+  align-items: center;
+  min-height: 0;
+  margin: 0 0.4rem 0 0;
+  padding: 0;
+}
+
+.fpSwitch .form-check-input {
+  width: 1.75rem;
+  height: 0.95rem;
+  margin: 0;
+  cursor: inherit;
+  flex-shrink: 0;
+}
+
+.fpSwitch .form-check-input:checked {
+  background-color: #198754;
+  border-color: #198754;
+}
+
+/* The row is the control; the indicator must not draw a focus ring of its own. */
+.fpSwitch .form-check-input:focus {
+  box-shadow: none;
+  border-color: rgba(0, 0, 0, 0.25);
+}
+
+.fpSwitch .form-check-input:checked:focus {
+  border-color: #198754;
+}

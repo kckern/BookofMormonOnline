@@ -14,13 +14,10 @@
     "@rpldy/uploady": "^0.15.0",
     "@sentry/react": "^6.18.0",
     "@sentry/tracing": "^6.18.0",
-    "@testing-library/jest-dom": "^5.14.1",
-    "@testing-library/react": "^11.2.7",
     "@testing-library/user-event": "^12.8.3",
     "@tinymce/tinymce-react": "^3.13.0",
     "axios": "^0.21.1",
     "bootstrap": "^5.0.1",
-    "bootstrap-switch-button-react": "^1.2.0",
     "can-autoplay": "^3.0.2",
     "caniuse-lite": "^1.0.30001319",
     "canvasjs": "^1.8.3",
@@ -50,19 +47,16 @@
     "perfect-scrollbar": "^1.5.1",
     "rc-mentions": "^1.6.1",
     "rctx-contextmenu": "^1.4.1",
-    "react": "^17.0.2",
+    "react": "^18.3.1",
     "react-app-rewired": "^2.2.1",
     "react-audio-player": "^0.17.0",
-    "react-avatar-editor": "^12.0.0",
-    "react-big-calendar": "^0.33.6",
     "react-bootstrap-sweetalert": "^5.2.0",
     "react-bootstrap-switch": "^15.5.3",
     "react-calendar-heatmap": "^1.9.0",
-    "react-chartjs-2": "^3.0.4",
     "react-circular-progressbar": "^2.0.4",
     "react-confetti": "^6.0.1",
     "react-cropper": "^2.1.8",
-    "react-dom": "^17.0.2",
+    "react-dom": "^18.3.1",
     "react-draggable": "^4.4.3",
     "react-dropzone": "^11.4.2",
     "react-expanding-textarea": "^2.3.2",
@@ -84,8 +78,6 @@
     "react-reveal-text": "^0.1.1",
     "react-router-dom": "^5.2.0",
     "react-scripts": "^5.0.1",
-    "react-select": "^4.3.1",
-    "react-slick": "^0.28.1",
     "react-toastify": "^7.0.4",
     "react-tooltip": "^4.2.21",
     "react-visibility-sensor": "^5.1.1",
@@ -94,13 +86,13 @@
     "redux-persist": "^6.0.0",
     "redux-thunk": "^2.3.0",
     "scripture-guide": "^1.0.97",
-    "simple-react-lightbox": "^3.6.9-0",
     "slick-carousel": "^1.8.1",
     "socket.io-client": "^4.8.1",
     "string-similarity": "^4.0.4",
     "tinymce": "^5.10.1",
     "use-sound": "^4.0.1",
-    "web-vitals": "^1.1.2"
+    "web-vitals": "^1.1.2",
+    "yet-another-react-lightbox": "^3.32.2"
   },
   "scripts": {
     "prestart": "node scripts/gen-features.js",
@@ -125,8 +117,13 @@
       "^src/(.*)$": "<rootDir>/src/$1",
       "^views/(.*)$": "<rootDir>/src/views/$1",
       "^components/(.*)$": "<rootDir>/src/components/$1",
-      "^models/(.*)$": "<rootDir>/src/models/$1"
-    }
+      "^models/(.*)$": "<rootDir>/src/models/$1",
+      "^yet-another-react-lightbox/styles.css$": "<rootDir>/node_modules/yet-another-react-lightbox/dist/styles.css"
+    },
+    "transformIgnorePatterns": [
+      "[/\\\\]node_modules[/\\\\](?!yet-another-react-lightbox)(.+)\\.(js|mjs|jsx|ts|tsx)$",
+      "^.+\\.module\\.(css|sass|scss)$"
+    ]
   },
   "browserslist": {
     "production": [
@@ -143,6 +140,8 @@
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@babel/types": "^7.23.3",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^14.3.1",
     "babel-polyfill": "^6.26.0",
     "buffer": "^6.0.3",
     "crypto-browserify": "^3.12.0",

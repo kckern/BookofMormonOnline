@@ -9,7 +9,8 @@ import "./Narration.css";
 import "./TextContent.css";
 import { snapSelectionToWord, chronoLabel, replaceNumbers, label, determineLanguage } from "src/models/Utils";
 import { analytics } from "../../models/analytics/index.js";
-import { SRLWrapper } from "simple-react-lightbox";
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
 import { getSearchSlug } from "src/models/searchSlug";
 import fullscreen from "src/views/Page/svg/fullscreen.png";
 import {Spinner} from "../_Common/Loader";
@@ -294,20 +295,9 @@ function idsWithComments(type, narrationController) {
   return idsWithComments;
 }
 
-function LightBox({ setOpenLightBox, imgClicker }) {
+function LightBox({ setOpenLightBox }) {
   const narrationController = useNarration();
   const activeImageId = narrationController.states.activeImageId;
-  const activeImg = document.querySelector(`.img-${activeImageId}`);
-  const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    imgClicker.click();
-    if (activeImg && !isOpen) {
-      setTimeout(() => {
-        activeImg.click();
-      }, 100);
-    }
-  }, [activeImageId, activeImg]);
 
   if (!activeImageId) return null;
 
@@ -316,60 +306,41 @@ function LightBox({ setOpenLightBox, imgClicker }) {
     return null;
   }
 
-  const options = {
-    buttons: {
-      showNextButton:
-        narrationController.states.panelImageIds.length > 1 ? true : false,
-      showPrevButton:
-        narrationController.states.panelImageIds.length > 1 ? true : false,
-    },
-  };
+  // simple-react-lightbox was replaced here (React ^17.0.2 peer, unmaintained).
+  // It could only discover images by scraping the DOM, so this component used to
+  // render a `display: none` div of <img> tags and then SYNTHETICALLY CLICK one
+  // (plus the fullscreen icon) on a 100ms timeout to make the gallery open, and
+  // recover the current image id by regex from the slide's src.
+  //
+  // yet-another-react-lightbox takes the slides directly, so all of that is
+  // gone: the ids we already hold become the slide list, and `view` reports the
+  // index instead of a URL to parse.
+  const ids = narrationController.states.panelImageIds.length
+    ? narrationController.states.panelImageIds
+    : [activeImageId];
+  const slides = ids.map((id) => ({
+    src: `${assetUrl}/art/${id}`,
+    alt: narrationController.supplement.image?.[id]?.title || "Artwork",
+    description: narrationController.supplement.image?.[id]?.title || undefined,
+  }));
+  const startIndex = Math.max(0, ids.findIndex((id) => String(id) === String(activeImageId)));
 
-  const callbacks = {
-    onSlideChange: ({ slides }) => {
-      const regexp = /-?\d+(\.\d+)?/g;
-      const id = slides.current.source.match(regexp);
-      if (id) narrationController.functions.setActiveImageId(id);
-    },
-    onLightboxOpened: () => {
-      setIsOpen(true);
-    },
-    onLightboxClosed: () => {
-      setIsOpen(false);
-      setOpenLightBox(false);
-    },
-  };
-
-  let panelImages = null;
-
-  if (narrationController.states.panelImageIds.length > 1) {
-    panelImages = narrationController.states.panelImageIds.map((id) => {
-      const caption =
-        narrationController.supplement.image?.[id]?.title || "Artwork";
-      return (
-        <img
-          className={`img-${id}`}
-          src={assetUrl + "/art/" + id}
-          alt={caption}
-        />
-      );
-    });
-  }
-
-  const caption = narrationController.supplement.image?.[activeImageId]?.title || "Artwork";
   return (
-    <SRLWrapper options={options} callbacks={callbacks}>
-      <div className="lightbox-wrapper" style={{ display: "none" }}>
-        {panelImages === null && (
-          <img
-            className={`img-${activeImageId}`}
-            src={`${assetUrl}/art/` + activeImageId}
-            alt={caption}
-          />
-        )}
-        {panelImages}
-      </div>
-    </SRLWrapper>
+    <Lightbox
+      open
+      close={() => setOpenLightBox(false)}
+      index={startIndex}
+      slides={slides}
+      // Match the old options: arrows only when there is more than one image.
+      carousel={{ finite: ids.length <= 1 }}
+      render={ids.length > 1 ? undefined : { buttonPrev: () => null, buttonNext: () => null }}
+      on={{
+        view: ({ index }) => {
+          const id = ids[index];
+          if (id != null) narrationController.functions.setActiveImageId(id);
+        },
+      }}
+    />
   );
 }
 
@@ -463,7 +434,6 @@ function ImagePanel() {
     //Load Supplement explicity
     narrationController.functions.preLoadSupplement(narrationController);
   }
-  const imgClicker = document.querySelector(".fullscreen-image");
   return (
     <div
       ref={panelRef}
@@ -500,10 +470,7 @@ function ImagePanel() {
         linkData={{ img: narrationController.states.activeImageId }}
       />
       {openLightBox && (
-        <LightBox
-          setOpenLightBox={setOpenLightBox}
-          imgClicker={imgClicker}
-        />
+        <LightBox setOpenLightBox={setOpenLightBox} />
       )}
     </div>
   );
@@ -641,7 +608,7 @@ function ScripturePanel() {
   const [activeRef, setActiveRef] = useState(null);
 
   useEffect(() => {
-    if(!refs?.length) return false;
+    if(!refs?.length) return;
     const siteLang = determineLanguage();
     const textRefs = refs.map(({verse_id})=> ({ref:generateReference(verse_id, siteLang),verse_id}));
     setTextRefs(textRefs);
@@ -738,7 +705,7 @@ export function ScripturePanelSingle({ scriptureData, closeButton, onClose, setP
   ) : null;
 
   useEffect(() => {
-    if(!ref) return false;
+    if(!ref) return;
     let timer = setTimeout(()=> {
       setPassages([]);
     },200);
@@ -805,7 +772,7 @@ function FacsimilePanel() {
     const { initOpen, pageSlug } = narrationController.pageController.states;
     let initOpenVersion = initOpen.faxVersion;
     let fromURL = pageSlug + "/" + initOpen.textId;
-    if (narrationController.data.text.slug !== fromURL) return false;
+    if (narrationController.data.text.slug !== fromURL) return;
     if (
       narrationController.states.faxList?.includes(initOpenVersion)
     ) {

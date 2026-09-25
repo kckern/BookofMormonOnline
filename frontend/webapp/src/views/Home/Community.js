@@ -101,7 +101,7 @@ function Community({ unlistedBeta = false }) {
     setActiveMessage(urlFeedMessage);
   }, [params]);
 
-  useEffect(() => (document.title = label("community")), []);
+  useEffect(() => { document.title = label("community"); }, []);
 
   return false ? null : (
     <div className={`home container${unlistedBeta ? " home-feed" : ""}`}>

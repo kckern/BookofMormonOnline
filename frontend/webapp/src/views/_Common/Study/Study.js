@@ -648,7 +648,7 @@ function ThreadedMessages({
   };
 
   useEffect(() => {
-    if (parentMessage.messageId === undefined) return false;
+    if (parentMessage.messageId === undefined) return;
     window.addEventListener(
       "addMessageToThread" + parentMessage.messageId,
       addMessageToThread,

@@ -304,9 +304,9 @@ function TheaterWrapper() {
         case "Tab":
           e.preventDefault();
           const commentFeed = document.querySelector(".theater-comment-feed");
-          if (!commentFeed) return false;
+          if (!commentFeed) return;
           const lastComment = commentFeed.querySelector(".comment:last-child");
-          if (!lastComment) return false;
+          if (!lastComment) return;
           lastComment.click();
           break;
 				case "KeyM":
@@ -1900,10 +1900,10 @@ const Comment = ({ com }) => {
 
   useEffect(() => {
     const commentFeed = document.querySelector(".theater-comment-feed");
-    if (!commentFeed) return false;
+    if (!commentFeed) return;
 
     //if feed is hovered, don't scroll
-    if (commentFeed.matches(":hover")) return false;
+    if (commentFeed.matches(":hover")) return;
 
     commentFeed.scrollTo({ top: commentFeed.scrollHeight, behavior: "smooth" });
   }, [isNew]);

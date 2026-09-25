@@ -1053,7 +1053,7 @@ function LiveMessageDM({ liveMessage, userObject }) {
     sound.preload = "auto";
     return sound;
   });
-  useEffect(() => playSound(soundEffect), []);
+  useEffect(() => { playSound(soundEffect); }, []);
 
   return (
     <DropdownItem onClick={handleClick}>
@@ -1077,7 +1077,7 @@ function LiveMessageStudy({
     sound.preload = "auto";
     return sound;
   });
-  useEffect(() => liveMessage.messageId && playSound(soundEffect), []);
+  useEffect(() => { if (liveMessage.messageId) playSound(soundEffect); }, []);
 
   const handleClick = (e) => {
     if (liveMessage.customType !== "comment") return false;

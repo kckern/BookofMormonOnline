@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "reactstrap";
-import BootstrapSwitchButton from "bootstrap-switch-button-react";
+import FilterSwitch from "../FilterSwitch";
 import { isMobile, label, tr } from "src/models/Utils";
 import { SearchPopUp } from "src/views/_Common/SearchPopUp";
 import { useAppController } from "src/contexts/AppControllerContext";
@@ -89,13 +89,7 @@ export default function FilterPanel({ heading, axes, value, onChange, search, ex
               {exclusive ? (
                 <input type="radio" className="fpRadio" name={`fp-${axis.name}`} checked={on} readOnly />
               ) : (
-                <BootstrapSwitchButton
-                  checked={on}
-                  onstyle="success"
-                  offlabel={label("off")}
-                  onlabel={label("on")}
-                  size="xs"
-                />
+                <FilterSwitch checked={on} />
               )}
               {opt.label}
             </li>

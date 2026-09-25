@@ -1,6 +1,6 @@
 import React from "react";
 import "@testing-library/jest-dom";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import WitnessLifeHeatmap from "../WitnessLifeHeatmap";
 
@@ -327,7 +327,11 @@ describe("heatmap accessibility", () => {
     const cellA = screen.getByRole("gridcell", { name: /June 1885, 1 source/i });
     const cellB = screen.getByRole("gridcell", { name: /March 1837, 1 source/i });
 
-    cellA.focus();
+    // React 18 batches updates that originate outside React's event system, so
+    // a raw .focus() (and user-event v12's sync click) no longer flushes before
+    // the next line. act() restores the flush. See
+    // docs/specs/2026-09-24-react-18-upgrade.md §6.
+    act(() => cellA.focus());
     expect(hover().textContent).toMatch(/June 1885/);
 
     fireEvent.mouseEnter(cellB);
@@ -625,12 +629,16 @@ describe("ARIA grid conformance: role=row, roving tabindex, arrow-key navigation
     // coverage above to stand in for it.
     const { container } = crossSetup();
     const center = cellNamed(/^June 1850/);
-    center.focus();
+    // React 18 batches updates that originate outside React's event system, so
+    // a raw .focus() (and user-event v12's sync click) no longer flushes before
+    // the next line. act() restores the flush. See
+    // docs/specs/2026-09-24-react-18-upgrade.md §6.
+    act(() => center.focus());
     expect(center.getAttribute("tabindex")).toBe("0");
 
     const right = cellNamed(/^June 1851/);
     expect(right.getAttribute("tabindex")).toBe("-1");
-    userEvent.click(right);
+    act(() => userEvent.click(right));
     expect(right.getAttribute("tabindex")).toBe("0");
     expect(center.getAttribute("tabindex")).toBe("-1");
     const clickable = [...container.querySelectorAll(".cell.is-clickable")];
@@ -688,7 +696,11 @@ describe("ARIA grid conformance: role=row, roving tabindex, arrow-key navigation
         selectedYearMonth={null} onSelectYearMonth={jest.fn()} />
     );
     const center = screen.getByRole("gridcell", { name: /^June 1850/ });
-    center.focus();
+    // React 18 batches updates that originate outside React's event system, so
+    // a raw .focus() (and user-event v12's sync click) no longer flushes before
+    // the next line. act() restores the flush. See
+    // docs/specs/2026-09-24-react-18-upgrade.md §6.
+    act(() => center.focus());
     expect(center.getAttribute("tabindex")).toBe("0");
 
     rerender(

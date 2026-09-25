@@ -21,7 +21,7 @@ function SearchComponent() {
   const match = useRouteMatch();
   const location = useLocation();
   const mode = parseMode(location.search);
-  useEffect(() => document.title = label("menu_search") + " | " + label("home_title"), [])
+  useEffect(() => { document.title = label("menu_search") + " | " + label("home_title"); }, [])
   const { push } = useHistory(),
     [keyword, setKeyWord] = useState(getSearchValue(match.params?.value)),
     [content, setContent] = useState(<Loader />);

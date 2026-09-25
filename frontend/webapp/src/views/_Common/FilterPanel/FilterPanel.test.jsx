@@ -15,10 +15,9 @@ jest.mock("src/views/_Common/SearchPopUp", () => ({
       </div>
     ) : null,
 }));
-jest.mock("bootstrap-switch-button-react", () => ({
-  __esModule: true,
-  default: ({ checked }) => <span data-testid="switch" data-checked={checked ? "1" : "0"} />,
-}));
+// The switch is no longer mocked: FilterSwitch, which replaced the old
+// bootstrap switch package, exposes the same data-testid/data-checked hooks, so
+// these assertions now exercise the real component.
 const mockSetPopUp = jest.fn();
 const mockCtx = {
   states: { popUp: { type: null }, user: { social: { user_id: "u1" } } },

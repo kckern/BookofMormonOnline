@@ -21,7 +21,7 @@ export default function MobileStudy() {
 
     useEffect(() => {
         const group = appController?.states?.studyGroup?.activeGroup;
-        if(!group || ranOnce) return false;
+        if(!group || ranOnce) return;
         setRanOnce(true);
         if(params.channelId)  appController.functions.setMobileChat(true);
 
@@ -64,7 +64,7 @@ export default function MobileStudy() {
         if (appController.states.studyGroup.isMobileChat) {
 
             history.push(`/group/${appController?.states?.studyGroup?.activeGroup.url}`)
-            return false;
+            return;
         }
         else
         {

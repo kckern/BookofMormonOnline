@@ -1,6 +1,6 @@
 import React from "react";
 import "@testing-library/jest-dom";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route } from "react-router-dom";
 
@@ -653,8 +653,14 @@ describe("breadcrumb dropdown", () => {
 
     it("exposes other witnesses as navigable links", async () => {
         renderWitness("/history/witnesses/david-whitmer");
-        userEvent.click(await screen.findByRole("button", { name: /David Whitmer/ }));
-        expect(document.querySelectorAll(".bc-dropdown .witness-option").length).toBeGreaterThan(15);
+        const trigger = await screen.findByRole("button", { name: /David Whitmer/ });
+        // React 18 batches the click's state update (user-event v12 is sync and
+        // not act-wrapped), so the menu is not in the DOM on the next line.
+        // See docs/specs/2026-09-24-react-18-upgrade.md §6.
+        act(() => userEvent.click(trigger));
+        await waitFor(() =>
+            expect(document.querySelectorAll(".bc-dropdown .witness-option").length).toBeGreaterThan(15)
+        );
     });
 
     it("returns focus to the trigger button when Escape closes the menu", async () => {

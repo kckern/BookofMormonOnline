@@ -40,7 +40,7 @@ import FilterPanel from "src/views/_Common/FilterPanel/FilterPanel";
 function PeopleComponent() {
   const appController = useAppController();
 
-  useEffect(() => document.title = label("menu_people") + " | " + label("home_title"), [])
+  useEffect(() => { document.title = label("menu_people") + " | " + label("home_title"); }, [])
   const [peopleList, setPersonList] = useState(null);
 
 

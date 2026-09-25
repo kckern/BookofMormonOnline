@@ -1,11 +1,10 @@
 import './polyfills/randomUUID'; // must be first — secure-context polyfill
 // import 'babel-polyfill';
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import * as Sentry from "@sentry/react";
 import { BrowserTracing } from "@sentry/tracing";
 import App from './App';
-import SimpleReactLightbox from 'simple-react-lightbox'
 import { analytics } from './models/analytics/index.js';
 import "./views/_Common/Header.css";
 import "./views/_Common/Main.css";
@@ -79,4 +78,8 @@ if ('serviceWorker' in navigator) {
   });
 }
   
-ReactDOM.render(<SimpleReactLightbox><App /></SimpleReactLightbox>,document.getElementById('root'));
+// React 18 root API. The lightbox provider that used to wrap the app is gone:
+// yet-another-react-lightbox is rendered where it is used (views/Page/Narration.js)
+// and needs no provider. StrictMode is deliberately NOT introduced here — see
+// docs/specs/2026-09-24-react-18-upgrade.md.
+createRoot(document.getElementById('root')).render(<App />);

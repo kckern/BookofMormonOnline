@@ -1,7 +1,7 @@
 /** @format */
 
 import React, { useState } from "react";
-import BootstrapSwitchButton from "bootstrap-switch-button-react";
+import FilterSwitch from "../_Common/FilterSwitch";
 import { label } from "src/models/Utils";
 import { formsByGroup, subformsByForm } from "./mattersFilterData";
 import "./MatterDetailColumn.css";
@@ -104,13 +104,7 @@ export function MatterDetailColumn({ matterFilters, setFilter, kind }) {
         return (
           <React.Fragment key={f.tag}>
             <li className="item" onClick={() => toggleForm(f.tag)}>
-              <BootstrapSwitchButton
-                checked={on}
-                onstyle="success"
-                offlabel={label("off")}
-                onlabel={label("on")}
-                size="xs"
-              />
+              <FilterSwitch checked={on} />
               <span>
                 <img src={FORM_ICON[f.tag] || grey} alt="" /> {t(f.key, f.label)}
               </span>

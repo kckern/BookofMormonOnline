@@ -295,7 +295,7 @@ export function FaxInFeed({ textData, version, hasStar }) {
 export function ImageInFeed({ imageData, hasStar }) {
   const appController = useAppController();
   useEffect(() => {
-    if (!imageData || imageData.width) return false;
+    if (!imageData || imageData.width) return;
     let viewerRatio =
       document.getElementsByClassName("coverImage")[0].offsetHeight /
       document.getElementsByClassName("coverImage")[0].offsetWidth;

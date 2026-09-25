@@ -299,7 +299,7 @@ function Facsimiles() {
   const match = useParams();
   const history = useHistory();
   const activeFax = FaxList?.[match.faxVersion];
-  useEffect(() => document.title = (activeFax?.title || label("menu_fax")) + " | " + label("home_title"), [activeFax?.code])
+  useEffect(() => { document.title = (activeFax?.title || label("menu_fax")) + " | " + label("home_title"); }, [activeFax?.code])
 
   // Route is PURE TAXONOMY (no query params): the path segment is a page number,
   // a roman front-matter slug, a scripture ref ("3.nephi.11.5"), or an out-of-range

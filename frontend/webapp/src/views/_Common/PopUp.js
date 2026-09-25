@@ -78,7 +78,7 @@ function PopUp() {
     const val = Array.isArray(appController.states.popUp.activeId)
       ? appController.states.popUp.activeId.shift()
       : appController.states.popUp.activeId;
-    if (!key || !val || currentKeyVal === `${key}.${val}`) return false;
+    if (!key || !val || currentKeyVal === `${key}.${val}`) return;
     log({ appController, key, val });
     setCurrentKeyVal(`${key}.${val}`);
   }, [appController.states.popUp.type, appController.states.popUp.activeId]);
@@ -127,7 +127,7 @@ export function LegalNotice({ commentaryData, showLegal }) {
       let text = result.markdown.access_notice.markdown;
       if (typeof text.replace !== "function") {
         console.log({ result });
-        return false;
+        return;
       }
       let usage = result.sourceUsage[0];
       text = text.replace(
