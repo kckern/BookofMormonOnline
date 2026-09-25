@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export const DEFAULTS = {
   q: "",            // search text (legacy — no UI, kept so the URL/selector stay valid)
@@ -15,7 +15,7 @@ export const DEFAULTS = {
 // back-button-safe. Values equal to DEFAULTS are omitted for clean URLs.
 export default function useBrowseState() {
   const { search, pathname } = useLocation();
-  const { replace } = useHistory();
+  const navigate = useNavigate();
 
   const state = useMemo(() => {
     const p = new URLSearchParams(search);
@@ -43,9 +43,9 @@ export default function useBrowseState() {
       if (next.speaker) p.set("sp", next.speaker);
       const qs = p.toString();
       // replace, not push — filter browsing must not spam history
-      replace(pathname + (qs ? `?${qs}` : ""));
+      navigate(pathname + (qs ? `?${qs}` : ""), { replace: true });
     },
-    [state, pathname, replace]
+    [state, pathname, navigate]
   );
 
   return { state, set };

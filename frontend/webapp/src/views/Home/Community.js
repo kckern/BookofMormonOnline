@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useLayoutEffect, useCallback } from "react";
-import { useParams, useHistory, useRouteMatch, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
+import { useLegacyParams } from "src/models/routeParams";
 import moment from "moment";
 import ProgressBox from "../User/ProgressBox.js";
 import SignIn from "../User/SignIn.js";
@@ -84,7 +85,7 @@ const privateStyle = (nickname) => {
 };
 
 function Community({ unlistedBeta = false }) {
-  const match = useRouteMatch();
+  const match = { params: useLegacyParams(), url: useLocation().pathname };
   const params = match.params;
   const isCommunity = isCommunityPath(match.url);
 
@@ -313,7 +314,7 @@ function GroupBrowser({ activeGroup, setActiveGroup }) {
 
 function RecentFinishers({ finishers }) {
   const titleFormatter = (phrase, data) => `<b>${phrase}: </b>${data}</br>`;
-  const history = useHistory();
+  const navigate = useNavigate();
   return (
     <div className="leaderboard">
       <ReactTooltip id="leaderBoardItem-tip" place="bottom" effect="solid" />
@@ -322,7 +323,7 @@ function RecentFinishers({ finishers }) {
           className="leaderBoardItem"
           key={i}
           data-for="leaderBoardItem-tip"
-          onClick={() => history.push(`/${m.bookmark}`)}
+          onClick={() => navigate(`/${m.bookmark}`)}
           data-tip={
             titleFormatter(label("last_seen").replace(/:\s*$/, ""), timeAgoString(m.lastseen)) +
             titleFormatter(label("last_studied"), m.laststudied)
@@ -374,7 +375,6 @@ function LeaderBoard({ leaders }) {
           lastseen
           laststudied
           bookmark*/
-  const history = useHistory();
   const titleFormatter = (phrase, data) => `<b>${phrase}: </b>${data}</br>`;
   return (
     <div className="leaderboard">
@@ -383,7 +383,7 @@ function LeaderBoard({ leaders }) {
         <div
           className="leaderBoardItem"
           key={i}
-          onClick={() => history.push(`/${m.bookmark}`)}
+          onClick={() => navigate(`/${m.bookmark}`)}
           data-for="leaderBoardItem-tip"
           data-tip={
             titleFormatter(label("last_seen").replace(/:\s*$/, ""), timeAgoString(m.lastseen)) +

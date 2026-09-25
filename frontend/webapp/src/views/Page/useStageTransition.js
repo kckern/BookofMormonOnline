@@ -1,7 +1,7 @@
 // Stage-swap page transition previously copy-pasted between Connection and
 // PageLink. The ready-poll is now bounded (the old `while` could spin forever
 // if the next page never reached .content.ready).
-import { useHistory } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { usePageController } from "src/contexts/PageControllerContext";
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -33,7 +33,7 @@ export async function runStageTransition({
 // Returns handleClick(slug, direction) → click handler.
 export function useStageTransition() {
   const pageController = usePageController();
-  const history = useHistory();
+  const navigate = useNavigate();
   return (slug, direction) => async (event) => {
     const { setStageClass } = pageController?.functions || {};
     if (!setStageClass) return;
@@ -41,7 +41,7 @@ export function useStageTransition() {
     await runStageTransition({
       setStageClass,
       direction,
-      navigate: () => history.push(`/${slug}`),
+      navigate: () => navigate(`/${slug}`),
       isReady: () => !!document.querySelector(".content.ready"),
     });
   };

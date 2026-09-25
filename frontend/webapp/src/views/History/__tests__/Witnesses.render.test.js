@@ -2,7 +2,7 @@ import React from "react";
 import "@testing-library/jest-dom";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 
 /**
  * Render harness for the Witnesses view.
@@ -177,9 +177,9 @@ const renderWitness = (path = "/history/witnesses/david-whitmer", { months = [] 
     mockSelectableMonths.current = months;
     return render(
         <MemoryRouter initialEntries={[path]}>
-            <Route path={WITNESS_ROUTE}>
-                <Witnesses />
-            </Route>
+            <Routes>
+              <Route path={WITNESS_ROUTE} element={<Witnesses />} />
+            </Routes>
         </MemoryRouter>
     );
 };

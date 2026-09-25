@@ -12,14 +12,15 @@ import {
   Input,
 } from "reactstrap";
 import Masonry from "react-masonry-css";
-import { useLocation, useParams, useRouteMatch } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
+import { useLegacyParams } from "src/models/routeParams";
 import axios from "axios";
 import { label } from "src/models/Utils";
 import ReactMarkdown from "react-markdown";
 import official from "./icons/official.svg";
 
 function About() {
-  const match = useRouteMatch();
+  const match = { params: useLegacyParams(), url: useLocation().pathname };
   const [aboutPageData, setAboutPageData] = useState(null);
 
   useEffect(() => {

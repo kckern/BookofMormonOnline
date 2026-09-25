@@ -1,7 +1,8 @@
 
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation, useParams, useRouteMatch } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
+import { useLegacyParams } from "src/models/routeParams";
 import {
   Button,
   ButtonGroup,
@@ -35,7 +36,7 @@ function History() {
   useEffect(()=>document.title = label("menu_history") + " | " + label("home_title"),[])
 
 
-  const match = useRouteMatch();
+  const match = { params: useLegacyParams(), url: useLocation().pathname };
   const [dateFilter, setDate] = useState(1829);
   const [docList, setDocList] = useState(null);
   const [introText, setIntro] = useState(null);

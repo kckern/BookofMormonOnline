@@ -1,7 +1,7 @@
 import React from "react";
 import "@testing-library/jest-dom";
 import { render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter, Route } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { AppControllerProvider } from "src/contexts/AppControllerContext";
 import EntityPage from "../EntityPage";
@@ -31,9 +31,9 @@ const renderDoc = (slug) =>
   render(
     <AppControllerProvider appController={fixture}>
       <MemoryRouter initialEntries={[`/history/${slug}`]}>
-        <Route path="/history/:slug">
-          <EntityPage type="history" />
-        </Route>
+        <Routes>
+          <Route path="/history/:slug" element={<EntityPage type="history" />} />
+        </Routes>
       </MemoryRouter>
     </AppControllerProvider>,
   );

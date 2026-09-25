@@ -1,4 +1,5 @@
-import { useRouteMatch, Link, useHistory } from "react-router-dom";
+import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
+import { useLegacyParams } from "src/models/routeParams";
 import "./Read.scss";
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import BoMOnlineAPI from "../../models/BoMOnlineAPI";
@@ -71,8 +72,8 @@ const fetchPassageNotesForSections = async (sectionVerseIdsMap, signal) => {
 };
 
 export default function ReadScripture() {
-    const match = useRouteMatch();
-    const history = useHistory();
+    const match = { params: useLegacyParams(), url: useLocation().pathname };
+    const navigate = useNavigate();
 
     // Concurrency hook
     const { 
@@ -173,17 +174,17 @@ export default function ReadScripture() {
         const nextSlug = slugify(nextChapterRef);
         if (nextSlug) {
             handleExplicitChapterNavigation(nextChapterRef);
-            history.push(`/read/${nextSlug}`);
+            navigate(`/read/${nextSlug}`);
         }
-    }, [nextChapterRef, history, handleExplicitChapterNavigation]);
+    }, [nextChapterRef, navigate, handleExplicitChapterNavigation]);
 
     const goToPreviousChapter = useCallback(() => {
         const prevSlug = slugify(prevChapterRef);
         if (prevSlug) {
             handleExplicitChapterNavigation(prevChapterRef);
-            history.push(`/read/${prevSlug}`);
+            navigate(`/read/${prevSlug}`);
         }
-    }, [prevChapterRef, history, handleExplicitChapterNavigation]);
+    }, [prevChapterRef, navigate, handleExplicitChapterNavigation]);
 
     // ---------------------------------------------------------
     // Load the next chapter: can be called automatically or manually
@@ -328,9 +329,9 @@ export default function ReadScripture() {
         const verseElement = verseRefs.current.get(verseId);
         if (verseElement) {
             verseElement.scrollIntoView({ behavior: "smooth", block: "center" });
-            history.push(`/read/${verseIdToSlug([verseId])}`);
+            navigate(`/read/${verseIdToSlug([verseId])}`);
         }
-    }, [history]);
+    }, [navigate]);
 
     const handleKeyDown = useCallback((e) => {
         if (
@@ -362,7 +363,7 @@ export default function ReadScripture() {
             }
             case "Escape": {
                 const slug = slugify(activeChapterRef);
-                history.push(`/read/${slug}`);
+                navigate(`/read/${slug}`);
                 break;
             }
             default:
@@ -534,9 +535,9 @@ export default function ReadScripture() {
         const urlSlug = match.url.replace(/^\/read\//, "");
         const idealSlug = verseIdToSlug(debouncedHighlightedVersesForUrl) || slugify(activeChapterRef);
         if (idealSlug && idealSlug !== urlSlug) {
-            history.push(`/read/${idealSlug}`);
+            navigate(`/read/${idealSlug}`);
         }
-    }, [debouncedHighlightedVersesForUrl, activeChapterRef, history, match.url]);
+    }, [debouncedHighlightedVersesForUrl, activeChapterRef, navigate, match.url]);
 
     // ---------------------------------------------------------
     // Render all chapters - memoized to prevent unnecessary re-renders

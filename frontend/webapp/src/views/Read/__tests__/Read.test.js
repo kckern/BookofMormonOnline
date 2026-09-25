@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { lookupReference } from "scripture-guide";
 import ReadScripture from "../Read";
 import BoMOnlineAPI from "../../../models/BoMOnlineAPI";
@@ -45,9 +45,9 @@ const renderRead = (path) =>
   render(
     <AppControllerProvider appController={appController}>
       <MemoryRouter initialEntries={[path]}>
-        <Route path="/read/:bookCh?/:verseNum?">
-          <ReadScripture />
-        </Route>
+        <Routes>
+          <Route path="/read/:bookCh?/:verseNum?" element={<ReadScripture />} />
+        </Routes>
       </MemoryRouter>
     </AppControllerProvider>
   );

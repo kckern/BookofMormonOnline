@@ -1,7 +1,7 @@
 import React from "react";
 import "@testing-library/jest-dom";
 import { render, fireEvent, within } from "@testing-library/react";
-import { MemoryRouter, Route } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 
 /**
  * Isolated in its own file ON PURPOSE.
@@ -101,7 +101,7 @@ describe("witness index — comparator mutation", () => {
         const dropdownOrder = async (path) => {
             const result = render(
                 <MemoryRouter initialEntries={[path]}>
-                    <Route path={WITNESS_ROUTE}><Witnesses /></Route>
+                    <Routes><Route path={WITNESS_ROUTE} element={<Witnesses />} /></Routes>
                 </MemoryRouter>
             );
             const trigger = await within(result.container).findByRole("button", { name: /Martin Harris/ });
@@ -123,7 +123,7 @@ describe("witness index — comparator mutation", () => {
         // the module-level arrays in place.
         const indexRender = render(
             <MemoryRouter initialEntries={["/history/witnesses"]}>
-                <Route path={WITNESS_ROUTE}><Witnesses /></Route>
+                <Routes><Route path={WITNESS_ROUTE} element={<Witnesses />} /></Routes>
             </MemoryRouter>
         );
         await within(indexRender.container).findByText("Three Witnesses");

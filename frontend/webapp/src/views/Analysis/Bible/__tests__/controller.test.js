@@ -1,7 +1,7 @@
 import React from "react";
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
-import { MemoryRouter, Route } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import Bible from "../index";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 
@@ -25,9 +25,9 @@ beforeEach(() => {
 const at = (path) =>
   render(
     <MemoryRouter initialEntries={[path]}>
-      <Route path="/analysis/:value*">
-        <Bible />
-      </Route>
+      <Routes>
+        <Route path="/analysis/*" element={<Bible />} />
+      </Routes>
     </MemoryRouter>
   );
 

@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect, useReducer, useState } from "react";
-import { Switch, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { toast } from 'react-toastify';
 import Cookies from 'js-cookie';
 
@@ -180,13 +180,20 @@ function Main(props) {
             <>
               <PopUp />
               <Suspense fallback={<Loader />}>
-                <Switch>
+                <Routes>
                   {routes.map((x, i) => (
-                    <Route key={i}  keyProp={i} exact={x.exact} path={x.path}>
-                      <x.component />
-                    </Route>
-                  ))}
-                </Switch>
+                      // v7 takes `element`, not children, and matches exactly by
+                      // default (v5's `exact` prop is gone). Paths using v5
+                      // multi-segment or regex params were converted to splats in
+                      // models/Routes.js; the components recover the fields via
+                      // parsePagePath / parseMapPath.
+                      <Route
+                        key={i}
+                        path={x.path}
+                        element={<x.component keyProp={i} />}
+                      />
+                    ))}
+                </Routes>
               </Suspense>
               <BottomMenu />
             </>

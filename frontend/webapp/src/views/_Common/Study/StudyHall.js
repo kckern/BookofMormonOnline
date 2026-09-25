@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Link, useHistory, useParams } from "react-router-dom"
+import { Link, useNavigate, useParams } from "react-router-dom"
 import ReactTooltip from "react-tooltip"
 import {
   StudyGroupUserCircle,
@@ -272,7 +272,7 @@ export function StudyGroupChatPanel({ channel, setPanel }) {
   const [chatLinkedContent, setChatLinkedContent] = useState({})
   const [loader, setLoader] = useState(false)
   const [parentMessage, setThreadMessage] = useState(false)
-  const history = useHistory()
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (channel.lastMessage?.parentMessageId && !params.messageId) {
@@ -297,7 +297,7 @@ export function StudyGroupChatPanel({ channel, setPanel }) {
       setThreadMessage(appController.states.parentMessage.message)
     return () => {
       appController.functions.setParentMessage(false)
-      history.push("/home")
+      navigate("/home")
     }
   }, [appController.states.parentMessage.message])
 

@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Switch, Route, Redirect, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { isMobile } from "src/models/Utils";
 import { isMessengerEnabled } from "src/models/featureFlags";
 import HomeTabs, { activeTabFor } from "./HomeTabs";
@@ -9,10 +9,19 @@ import User from "../User/User";
 import PublicBotProfile from "../User/PublicBotProfile";
 
 // Unified Home shell (spec: docs/specs/2026-07-17-unified-tabbed-home.md).
-// Owns the desktop tab bar + an inner Switch that renders the existing Sampler /
+// Owns the desktop tab bar + an inner Routes that renders the existing Sampler /
 // Community / User views as pure content. Param names are preserved so those
 // components keep reading their own useParams/useRouteMatch. The shell does not
 // remount when tabs change — only the matched child swaps.
+/**
+ * v5 used <Route render={({ match }) => <Redirect ... />} />. v7 has no `render`
+ * prop, so the redirect is a component that reads the param itself.
+ */
+function LegacyChannelRedirect() {
+  const { legacyChannelId } = useParams();
+  return <Navigate to={`/home/community/${legacyChannelId}`} replace />;
+}
+
 export default function Home() {
   const useMessenger = isMessengerEnabled();
   const mobile = isMobile();
@@ -66,36 +75,43 @@ export default function Home() {
     // clearance + tab-bar offset without affecting the mobile layout.
     <div className={shellClass}>
       {!mobile && !unlistedBeta && <HomeTabs />}
-      <Switch>
-        <Route path="/home/profile/:userId"><PublicBotProfile /></Route>
-        <Route path="/home/user/:value?"><User /></Route>
+      <Routes>
+        <Route path="profile/:userId" element={<PublicBotProfile />} />
+        <Route path="user/:value?" element={<User />} />
 
-        <Route path="/home/feed/:channelId/:messageId(\d+)"><Community unlistedBeta /></Route>
-        <Route path="/home/feed/:channelId"><Community unlistedBeta /></Route>
-        <Route exact path="/home/feed"><Community unlistedBeta /></Route>
+        {/* v7 has no regex params, so the numeric :messageId is a plain segment
+            now. Community looks the id up and falls back to the channel when it
+            is not a real message, so the constraint was belt-and-braces. */}
+        <Route path="feed/:channelId/:messageId" element={<Community unlistedBeta />} />
+        <Route path="feed/:channelId" element={<Community unlistedBeta />} />
+        <Route path="feed" element={<Community unlistedBeta />} />
 
         {useMessenger ? (
-          <Route path="/home/community/:channelId/:messageId(\d+)"><Community /></Route>
+          <Route path="community/:channelId/:messageId" element={<Community />} />
         ) : null}
         {useMessenger ? (
-          <Route path="/home/community/:channelId"><Community /></Route>
+          <Route path="community/:channelId" element={<Community />} />
         ) : null}
         {useMessenger ? (
-          <Route exact path="/home/community"><Community /></Route>
+          <Route path="community" element={<Community />} />
         ) : (
-          <Route path="/home/community"><Redirect to="/home" /></Route>
+          // Two routes, not one: v5's non-exact <Route path="community">
+          // also swallowed /home/community/<channel>, but v7 matches that path
+          // exactly, so a deep link would fall through to the page catch-all
+          // instead of redirecting when messenger is off.
+          <>
+            <Route path="community" element={<Navigate to="/home" replace />} />
+            <Route path="community/*" element={<Navigate to="/home" replace />} />
+          </>
         )}
 
-        <Route exact path="/home"><Sampler /></Route>
+        {/* /home itself. `index` is v7's way to say "the parent path". */}
+        <Route index element={<Sampler />} />
 
-        {/* Legacy bare /home/:channelId messenger deep links → community tab. */}
-        <Route
-          path="/home/:legacyChannelId"
-          render={({ match }) => (
-            <Redirect to={`/home/community/${match.params.legacyChannelId}`} />
-          )}
-        />
-      </Switch>
+        {/* Legacy bare /home/:channelId deep links -> community tab. v7 dropped
+            the `render` prop, so the redirect reads its own param. */}
+        <Route path=":legacyChannelId" element={<LegacyChannelRedirect />} />
+      </Routes>
     </div>
   );
 }

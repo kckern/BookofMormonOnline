@@ -22,7 +22,8 @@ import { StudyHistory } from "./History";
 import { HistoryList } from "./HistoryList";
 import { Profile } from "./Profile";
 import { Col, Row } from "reactstrap";
-import { useRouteMatch } from "react-router";
+import { useParams, useLocation } from "react-router-dom";
+import { useLegacyParams } from "src/models/routeParams";
 import MobileUser from "./MobileUser";
 import { Spinner } from "../_Common/Loader";
 import { useAppController } from "src/contexts/AppControllerContext";
@@ -37,7 +38,7 @@ export default function User() {
         label("home_title")),
     [],
   );
-  const match = useRouteMatch();
+  const match = { params: useLegacyParams(), url: useLocation().pathname };
   const [viewPrefs, setViewPrefs] = useState(
     match.params.value === "preferences",
   );

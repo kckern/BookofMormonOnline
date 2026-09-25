@@ -5,7 +5,8 @@ import ChiasmGlyph from "../../_Common/ChiasmGlyph";
 import "./Chiasmus.css";
 import Chiasm from "./Chiasm";
 import { label, determineLanguage } from 'src/models/Utils';
-import { useRouteMatch, useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
+import { useLegacyParams } from "src/models/routeParams";
 import { enrichChiasmus, applyBrowseState } from "./chiasmUtils";
 import useBrowseState, { DEFAULTS } from "./useBrowseState";
 import { t } from "./t";
@@ -288,9 +289,11 @@ function Container() {
     // was lost when b85e46cf merged the browse redesign over the URL-driven
     // panel (restored from a0797ed2); before the restore, opening a chiasm
     // never changed the URL, so the app read deep links it could not produce.
-    const { params } = useRouteMatch();
+    // useLegacyParams, not useParams: /analysis/:value* became /analysis/* for
+    // v7, and this still wants the old `value` name ("chiasmus/<id>").
+    const params = useLegacyParams();
     const chiasmus_id = params?.value?.split("/")[1] || null;
-    const { replace, push } = useHistory();
+    const navigate = useNavigate();
     // Router search, not window.location.search: under a memory history the two
     // diverge, and window.location can be stale right after a filter change.
     // Read through a ref so the mount-only keydown effect's closures stay right.
@@ -323,10 +326,10 @@ function Container() {
         // landing before it flushes (rapid raw keydowns) would see a stale ref
         // and push twice. Back/Forward still rely on the effect.
         chiasmusIdRef.current = id;
-        if (!id) { replace("/analysis/chiasmus" + qs); return; }
-        if (wasOpen) replace(`/analysis/chiasmus/${id}` + qs);
-        else push(`/analysis/chiasmus/${id}` + qs);
-    }, [replace, push]);
+        if (!id) { navigate("/analysis/chiasmus" + qs, { replace: true }); return; }
+        if (wasOpen) navigate(`/analysis/chiasmus/${id}` + qs, { replace: true });
+        else navigate(`/analysis/chiasmus/${id}` + qs);
+    }, [navigate]);
     const closeChiasm = () => setChiasmusId(null);
 
     // Chiasm.js owns the title while the panel is open; restore the index title

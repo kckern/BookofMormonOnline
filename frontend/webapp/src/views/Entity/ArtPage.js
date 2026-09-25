@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useHistory, useLocation, useParams } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 import { Spinner } from "src/views/_Common/Loader";
@@ -26,15 +26,15 @@ function text(key, fallback) {
 export default function ArtPage() {
   const { imageId } = useParams();
   const { pathname } = useLocation();
-  const routerHistory = useHistory();
+  const navigate = useNavigate();
   const [state, setState] = useState({ data: null, status: "loading" });
 
   // /image/<id> canonicalizes to /art/<id>. Pre-existing contract, asserted by
   // e2e/deeplink-image.spec.js, and it matches the canonical SSR path
   // (frontend/next/app/art/[id]).
   useEffect(() => {
-    if (pathname.startsWith("/image/")) routerHistory.replace(`/art/${imageId}`);
-  }, [pathname, imageId, routerHistory]);
+    if (pathname.startsWith("/image/")) navigate(`/art/${imageId}`, { replace: true });
+  }, [pathname, imageId, navigate]);
 
   useEffect(() => {
     let cancelled = false;

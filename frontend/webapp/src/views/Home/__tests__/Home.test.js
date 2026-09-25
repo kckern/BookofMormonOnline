@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom";
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import { MemoryRouter, Route } from "react-router-dom";
+import { MemoryRouter, useLocation, Routes, Route } from "react-router-dom";
 
 vi.mock("../Sampler", () => ({ default: () => <div>SAMPLER</div> }));
 vi.mock("../Community", () => ({ default: () => <div>COMMUNITY</div> }));
@@ -19,12 +19,25 @@ import { isMessengerEnabled } from "src/models/featureFlags";
 import { isMobile } from "src/models/Utils";
 import Home from "../Home";
 
+// v7 dropped the `render` prop, so the location probe is a component that reads
+// useLocation directly. It needs no <Route> — it just has to sit inside the
+// Router.
+function LocationProbe({ onChange }) {
+  const l = useLocation();
+  onChange(l);
+  return null;
+}
+
 const renderAt = (path) => {
   let location;
   const view = render(
     <MemoryRouter initialEntries={[path]}>
-      <Home />
-      <Route path="*" render={({ location: l }) => { location = l; return null; }} />
+      {/* Home must be mounted UNDER /home/* : its inner <Routes> are relative
+          now, because a descendant Routes in v7 matches the remaining path. */}
+      <Routes>
+        <Route path="/home/*" element={<Home />} />
+      </Routes>
+      <LocationProbe onChange={(l) => { location = l; }} />
     </MemoryRouter>
   );
   return { view, getLocation: () => location };

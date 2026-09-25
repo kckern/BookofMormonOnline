@@ -3,7 +3,8 @@ import { isMessengerNavigationEnabled } from '../../models/featureFlags'
 import { resolveBottomSelection } from './bottomNavSelection'
 import group_icon from './svg/group_icon.svg'
 import { label } from 'src/models/Utils'
-import { useRouteMatch, Link } from 'react-router-dom'
+import { Link, useParams, useLocation } from "react-router-dom"
+import { useLegacyParams } from "src/models/routeParams";
 import React, { useState, useEffect } from 'react'
 import HomeIcon from './Icons/HomeIcon'
 import UserIcon from './Icons/UserIcon'
@@ -16,7 +17,7 @@ const USE_MESSENGER = isMessengerNavigationEnabled();
 
 export function BottomMenu() {
   const appController = useAppController();
-  const match = useRouteMatch()
+  const match = { params: useLegacyParams(), url: useLocation().pathname }
 
   const determineSelection = () =>
     resolveBottomSelection(window.location.pathname, USE_MESSENGER)

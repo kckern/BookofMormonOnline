@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useHistory } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 import { renderHighlighted } from "./highlight";
@@ -8,7 +8,7 @@ import { useAppController } from "src/contexts/AppControllerContext";
 
 export default function VerseResult({ item, keyword, semantic, keywordRender }) {
   const appController = useAppController();
-  const history = useHistory();
+  const navigate = useNavigate();
   const { reference, text, slug, page, section, speaker, voice } = item;
   const [range, ref] = useHighlightRange(keyword, text, !!semantic);
 
@@ -16,7 +16,7 @@ export default function VerseResult({ item, keyword, semantic, keywordRender }) 
     e.preventDefault(); e.stopPropagation();
     const chapterSlug = reference.split(":")[0];
     const verse = reference.split(":")[1];
-    history.push("/read/" + chapterSlug + "/" + verse);
+    navigate("/read/" + chapterSlug + "/" + verse);
   };
   const handleImgClick = (e) => {
     e.preventDefault(); e.stopPropagation();

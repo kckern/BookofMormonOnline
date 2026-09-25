@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { HomeFeed } from "../../Home/Feed";
 import { Button, Card, CardBody, CardFooter, CardHeader } from "reactstrap";
 import BoMOnlineAPI, { assetUrl } from 'src/models/BoMOnlineAPI';
-import { Link ,useHistory} from "react-router-dom/cjs/react-router-dom.min";
+import { Link ,useNavigate} from "react-router-dom";
 import { ReadingPlan } from "../../Home/ReadingPlan";
 import logo from "src/views/_Common/svg/logo.svg";
 
@@ -114,10 +114,10 @@ function ShowCasePanel({title, video, link, isActive})
     const onMouseLeave = () => setIsPlaying(false);
 
     const onClick = () => {
-        history.push(`/${link}`);
+        navigate(`/${link}`);
     }
 
-    const history = useHistory();
+    const navigate = useNavigate();
 
     return <Card className={`showcase-panel ${isActive ? "active" : ""}`} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onClick={onClick}>
         <CardHeader className="showcase-panel-header" display="flex" style={{justifyContent: 'space-between'}}>

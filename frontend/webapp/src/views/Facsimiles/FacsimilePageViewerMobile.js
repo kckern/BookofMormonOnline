@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { useParams, useHistory, useLocation } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import "./FacsimilePageViewer.scss";
 import { lookupReference } from "scripture-guide";
 import { useFaxHighlight } from "./useFaxHighlight";
@@ -23,7 +23,7 @@ const RAIL_H = 34;   // px — inline rail above each page
 const BUFFER = 2;    // rows rendered beyond the viewport each side
 
 function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = [], currentVolumeIndex = -1 }) {
-  const history = useHistory();
+  const navigate = useNavigate();
   const { pageNumber } = useParams();
   const location = useLocation();
 
@@ -190,8 +190,8 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
     setOpenVerse(v);
     setOpenList(deepLink.verses);
     const slug = (v.ref || "").replace(/[ :]+/g, ".").toLowerCase();
-    if (slug && slug !== pageNumber) { lastWrittenSlug.current = slug; history.replace(`/fax/${item.slug}/${slug}`); }
-  }, [urlVerseId, deepLink, openVerse, pageNumber, history, item.slug]);
+    if (slug && slug !== pageNumber) { lastWrittenSlug.current = slug; navigate(`/fax/${item.slug}/${slug}`, { replace: true }); }
+  }, [urlVerseId, deepLink, openVerse, pageNumber, navigate, item.slug]);
 
   // While the verse drawer is open, hold the ref permalink in the URL — don't let the
   // scroll-sync overwrite it with the page number (read via ref so the sync effect,
@@ -214,7 +214,7 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
       syncTimer.current = setTimeout(() => {
         if (openVerseRef.current) return; // keep the ref permalink while the drawer is open
         lastWrittenSlug.current = `${slug}`;
-        history.replace(`/fax/${item.slug}/${slug}`);
+        navigate(`/fax/${item.slug}/${slug}`, { replace: true });
       }, 180);
     }
   }, [scrollTop, viewportH, ROW, ready, total]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -256,12 +256,12 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
         if (!next) return;
         e.preventDefault();
         const slug = currentLeaf?.pageSlugLeaf;
-        history.push(slug ? `/fax/${next.slug}/${slug}` : `/fax/${next.slug}`);
+        navigate(slug ? `/fax/${next.slug}/${slug}` : `/fax/${next.slug}`);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [volumeOrder, currentVolumeIndex, history, currentLeaf?.pageSlugLeaf]);
+  }, [volumeOrder, currentVolumeIndex, navigate, currentLeaf?.pageSlugLeaf]);
 
   const renderRow = (i) => {
     const leaf = leafIndex[i];
@@ -357,7 +357,7 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
           version={item.slug}
           onPrev={openList.findIndex((v) => v.verse_id === openVerse.verse_id) > 0 ? () => navVerse("prev") : undefined}
           onNext={openList.findIndex((v) => v.verse_id === openVerse.verse_id) < openList.length - 1 ? () => navVerse("next") : undefined}
-          onRead={(v) => { const rp = readPath(v.ref); if (rp) history.push(rp); }}
+          onRead={(v) => { const rp = readPath(v.ref); if (rp) navigate(rp); }}
           onClose={() => setOpenVerse(null)}
         />
       )}

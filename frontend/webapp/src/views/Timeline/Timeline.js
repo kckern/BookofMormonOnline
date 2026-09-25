@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react"
 import ReactDOMServer from 'react-dom/server';
 import Parser from "html-react-parser";
 import leaflet from "leaflet"
-import { Link, useRouteMatch, BrowserRouter as Router } from "react-router-dom"
+import { Link, BrowserRouter as Router, useParams, useLocation } from "react-router-dom"
 // BROWSER HISTORY
 import { history } from "../../models/routeHistory"
 // media base url of BookOfMormon
@@ -26,7 +26,16 @@ function TimeLine(props) {
   useEffect(()=>document.title = label("menu_timeline") + " | " + label("home_title"),[])
   const [timelineData, setTimelineData] = useState(null),
     map = useRef(null),
-    match = useRouteMatch()
+    // /timeline/* is one Route (so the grid never remounts when the info box
+    // opens); the splat IS the marker slug that v5 matched as :markerSlug.
+    rawTimelineParams = useParams(),
+    match = {
+      params:
+        rawTimelineParams["*"] != null
+          ? { ...rawTimelineParams, markerSlug: rawTimelineParams["*"] || undefined }
+          : rawTimelineParams,
+      url: useLocation().pathname,
+    }
 
   
 

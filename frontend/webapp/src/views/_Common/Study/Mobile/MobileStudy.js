@@ -6,14 +6,15 @@ import back from "./back.svg";
 
 import groupicon from "src/views/User/svg/group.svg";
 import { history } from "src/models/routeHistory";
-import { useParams, useHistory, useRouteMatch, Link } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
+import { useLegacyParams } from "src/models/routeParams";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { useMessenger } from "src/contexts/MessengerContext";
 export default function MobileStudy() {
     const appController = useAppController();
     const messenger = useMessenger();
 
-    const match = useRouteMatch();
+    const match = { params: useLegacyParams(), url: useLocation().pathname };
     const params = match.params;
     const base = match.url.split("/")[1];
     const [ranOnce, setRanOnce] = useState(false);

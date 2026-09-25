@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { isMessengerNavigationEnabled, HIDE_HOME_NAV, HIDE_MATTERS_NAV, HIDE_HISTORY_NAV } from '../../models/featureFlags';
-import { Link, NavLink, useHistory, useRouteMatch } from "react-router-dom";
+import { Link, NavLink, useNavigate, useParams, useLocation } from "react-router-dom";
+import { useLegacyParams } from "src/models/routeParams";
 import { Nav, Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import "./Sidebar.css";
 import { breakCache, determineLanguage, label, tokenImage } from "src/models/Utils.js";
@@ -129,7 +130,7 @@ export function loadMenu(){
 function SearchBox({setActivePath}) {
 
   const appController = useAppController();
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
@@ -137,7 +138,7 @@ function SearchBox({setActivePath}) {
       appController.functions.closePopUp();
       setActivePath("/search");
       let searchSlug = getSearchSlug(e.target.value);
-      history.push("/search/" + searchSlug);
+      navigate("/search/" + searchSlug);
       e.preventDefault();
     }
   };
@@ -247,7 +248,7 @@ function useSidebarFit(ref, itemCount) {
 
 function Sidebar(props) {
   const appController = useAppController();
-  const match = useRouteMatch();
+  const match = { params: useLegacyParams(), url: useLocation().pathname };
 
   const menu = loadMenu();
   const menuRef = useRef(null);

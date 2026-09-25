@@ -1,6 +1,6 @@
 import { randomHex } from "src/models/randomHex";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useHistory } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   ImageInFeed,
   SectionInFeed,
@@ -397,7 +397,7 @@ export function StudyGroupChat({
   const [messages, setMessages] = useState([]);
   const [lastElement, setLastElement] = useState(null);
   const [myLastRead, setMyLastRead] = useState(channel.myLastRead);
-  const history = useHistory();
+  const navigate = useNavigate();
   // Guard against setState after unmount: rapid panel switching (Discussion →
   // DM → Progress → Admin) unmounts this component while the async message
   // loaders below are still in flight. Each post-await setState checks this ref.
@@ -443,7 +443,7 @@ export function StudyGroupChat({
     channel.markAsRead();
     return () => {
       observer.disconnect();
-      history.push(appController.states.studyGroup.slug);
+      navigate(appController.states.studyGroup.slug);
     };
   }, [lastElement]);
 

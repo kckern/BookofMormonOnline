@@ -1,7 +1,8 @@
 
 
 import React, { useEffect, useState } from "react";
-import { useParams, useHistory, useRouteMatch, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
+import { useLegacyParams } from "src/models/routeParams";
 import { isMobile } from "src/models/Utils";
 import Home from "../Home/Community";
 import MobileStudy from "./Study/Mobile/MobileStudy";
@@ -13,7 +14,7 @@ export default function Group({ isReady }) {
 
     const appController = useAppController();
     const messenger = useMessenger();
-    const match = useRouteMatch();
+    const match = { params: useLegacyParams(), url: useLocation().pathname };
     const params = match.params;
     const base = match.url.split("/")[1];
 

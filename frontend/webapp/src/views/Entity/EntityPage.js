@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useHistory, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { label } from "src/models/Utils";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { resolveSlug } from "src/models/slugVariants";
@@ -39,13 +39,13 @@ function text(key, fallback) {
  *
  * Only ever mounts on DIRECT arrival. In-app clicks push through
  * models/routeHistory.js, an instance the Router does not listen to, so a click
- * never re-renders <Switch> — the modal opens over whatever was already there.
+ * never re-renders <Routes> — the modal opens over whatever was already there.
  * See docs/specs/2026-09-24-entity-url-presentation-model.md.
  */
 export default function EntityPage({ type }) {
   const cfg = TYPES[type];
   const params = useParams();
-  const routerHistory = useHistory();
+  const navigate = useNavigate();
   const appController = useAppController();
   const requested = params[cfg.param];
   const { data, status } = useEntityData(type, requested);
@@ -58,10 +58,10 @@ export default function EntityPage({ type }) {
 
   // Page → page: clicking a related entity navigates the Router, so the visitor
   // stays in page presentation instead of getting a modal over a stale page.
-  const onEntityClick = (slug) => routerHistory.push(`${cfg.base}/${slug}`);
+  const onEntityClick = (slug) => navigate(`${cfg.base}/${slug}`);
   const onMapClick = (e, mapSlug, placeSlug) => {
     e?.preventDefault?.();
-    routerHistory.push(`/map/${mapSlug}/place/${placeSlug}`);
+    navigate(`/map/${mapSlug}/place/${placeSlug}`);
   };
 
   const backLink = (
@@ -89,7 +89,7 @@ export default function EntityPage({ type }) {
 
     // A non-canonical spelling or a lone variant resolves straight through.
     if (resolution.kind === "exact" || resolution.kind === "redirect") {
-      routerHistory.replace(`${cfg.base}/${resolution.slug}`);
+      navigate(`${cfg.base}/${resolution.slug}`, { replace: true });
       return loading;
     }
 
