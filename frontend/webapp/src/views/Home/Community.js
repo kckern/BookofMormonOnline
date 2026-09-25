@@ -365,6 +365,7 @@ function RecentFinishers({ finishers }) {
 }
 
 function LeaderBoard({ leaders }) {
+  const navigate = useNavigate();
   /*
 
           user_id

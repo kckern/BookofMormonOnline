@@ -458,6 +458,7 @@ if(isMobile()) return null;
 
 function MapStoryPanel()
 {
+	const navigate = useNavigate();
     const mapController = useMapController();
     const {selectedStory, moveSeq, currentMap, panelContents} = mapController;
     const [scripture, setScripture] = useState(null);

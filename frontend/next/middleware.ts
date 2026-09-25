@@ -14,7 +14,9 @@ import { ANDROID_ASSET_LINKS, PWA_MANIFEST } from '@/lib/android'
 const CRA_ORIGIN = 'http://localhost:8201'
 const BACKEND_ORIGIN = 'http://localhost:5005'
 const CRA_ASSET_PATHS = new Set(['/sw.js', '/asset-manifest.json'])
-const CRA_ASSET_PREFIXES = ['/static/', '/font/', '/icons/', '/img/', '/md/', '/screenshots/', '/tinymce/']
+// '/tinymce/' removed with the vendored copy: nothing in the app loaded it, yet
+// it served tinymce 5.10.2 publicly, advisories and all.
+const CRA_ASSET_PREFIXES = ['/static/', '/font/', '/icons/', '/img/', '/md/', '/screenshots/']
 const FAX_BACKEND_PREFIXES = ['/fax/boxes/', '/fax/render/', '/fax/text/']
 const STUDY_EDITION_PATHS = new Set(['/studyedition', '/특별반', '/%ED%8A%B9%EB%B3%84%EB%B0%98'])
 
