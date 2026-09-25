@@ -156,17 +156,13 @@ test.describe('classify — unknown clients default to SSR', () => {
   }
 })
 
-test.describe('classify — tripwires', () => {
-  test('browser POST is not suspect (non-nav)', () => {
+test.describe('classify — non-navigations never route to CRA', () => {
+  test('browser POST → isNav false, renderMode ssr, still classed browser', () => {
     const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     const d = classify({ method: 'POST', ua })
     expect(d.isNav).toBe(false)
     expect(d.renderMode).toBe('ssr') // non-nav never routes to CRA
-    expect(d.suspect).toBe(false)
-  })
-  test('leak is always false (structural invariant)', () => {
-    const uas = ['Mozilla/5.0 (compatible; Googlebot/2.1)', 'Mozilla/5.0 (Macintosh) Safari/605.1.15', 'curl/8.4.0']
-    for (const ua of uas) expect(classify({ method: 'GET', ua }).leak).toBe(false)
+    expect(d.clientClass).toBe('browser')
   })
 })
 
@@ -174,6 +170,10 @@ test.describe('classify — isMobile from header or UA', () => {
   test('sec-ch-ua-mobile: ?1 → isMobile even on a desktop-looking UA', () => {
     const d = classify({ method: 'GET', ua: 'Mozilla/5.0 (X11; Linux) Chrome/120 Safari/537.36', secChUaMobile: '?1' })
     expect(d.isMobile).toBe(true)
+  })
+  test('sec-ch-ua-mobile: ?0 on a desktop UA → not mobile', () => {
+    const d = classify({ method: 'GET', ua: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36', secChUaMobile: '?0' })
+    expect(d.isMobile).toBe(false)
   })
   test('iPhone UA → isMobile', () => {
     const d = classify({ method: 'GET', ua: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_1) AppleWebKit/605.1.15 Mobile Safari/604.1' })
@@ -196,6 +196,9 @@ Create `frontend/next/lib/classify.ts`:
 ```ts
 import { isbot } from 'isbot'
 
+// The full set of served modes the middleware can emit. classify() only ever
+// RECOMMENDS 'ssr' | 'cra' (see Decision.renderMode); 'asset'/'analytics' are
+// middleware-level serve modes.
 export type RenderMode = 'ssr' | 'cra' | 'asset' | 'analytics'
 export type ClientClass = 'browser' | 'known-crawler' | 'unknown'
 export type CrawlerFamily =
@@ -218,9 +221,13 @@ export interface Decision {
   isbotHit: boolean
   browserUa: boolean
   signal: 'isbot' | 'browser-ua' | 'applewebkit' | 'no-browser-ua' | 'non-nav'
-  suspect: boolean
-  leak: boolean
 }
+// NOTE: the `suspect`/`leak` tripwires are NOT here. They depend on the ACTUAL
+// served mode (asset/SEO overrides mean the middleware can serve differently
+// than classify() recommends), so they are computed at log time in the
+// middleware's logRenderDecision (Task 3). Computing them here would make
+// `suspect` structurally always-false (the conditions that would set it force
+// renderMode='cra').
 
 // A real browser engine token. `applewebkit` is included so iOS/Android in-app
 // WebViews (Facebook, Instagram, Naver, KakaoTalk) — which end in
@@ -277,13 +284,7 @@ export function classify(input: ClassifyInput): Decision {
   else if (browserUa) signal = CLASSIC_BROWSER_RE.test(ua) ? 'browser-ua' : 'applewebkit'
   else signal = 'no-browser-ua'
 
-  // Tripwires. suspect = the human→SSR direction UA can actually see. leak is a
-  // structural invariant (isbot→ssr always) kept as a cheap logic-bug assertion;
-  // the real bot→CRA leak signal lives on the IP-bearing NPM access stream.
-  const suspect = isNav && renderMode === 'ssr' && browserUa && !isbotHit
-  const leak = renderMode === 'cra' && isbotHit
-
-  return { renderMode, clientClass, crawlerFamily, isMobile, isNav, isbotHit, browserUa, signal, suspect, leak }
+  return { renderMode, clientClass, crawlerFamily, isMobile, isNav, isbotHit, browserUa, signal }
 }
 ```
 
@@ -354,6 +355,13 @@ test.describe('HTML responses vary by User-Agent (cache safety)', () => {
     const r = await request.get('/', { headers: { 'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15' } })
     expect((r.headers()['vary'] || '').toLowerCase()).toContain('user-agent')
   })
+  test('SSR page sets Cache-Control no-store (app-router default)', async ({ request }) => {
+    const r = await request.get('/lehites', { headers: { 'user-agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' } })
+    const cc = (r.headers()['cache-control'] || '').toLowerCase()
+    // Next.js app-router overrides the middleware's `private, no-cache` with its
+    // own `no-store` — but both forbid shared-cache storage, which is what matters.
+    expect(cc).toMatch(/no-store|no-cache/)
+  })
 })
 ```
 
@@ -417,10 +425,17 @@ function logRenderDecision(
   if (process.env.BOM_LOG_RENDER_DECISION === '0') return
   if (!decision.isNav) return
   const h = request.headers
+  // Serve-time tripwires — computed against the ACTUAL served mode (only the
+  // middleware knows it; classify() only recommends). suspect = a browser
+  // navigation that still landed on SSR (human→SSR regression); leak = a crawler
+  // that reached the CRA (bot→CRA regression). Both should be ~0; a non-zero
+  // count is a routing regression to investigate (see the LogsQL query set).
+  const suspect = servedMode === 'ssr' && decision.browserUa && !decision.isbotHit
+  const leak = servedMode === 'cra' && decision.isbotHit
   console.log(JSON.stringify({
     tag: 'render-decision',
-    suspect: decision.suspect,
-    leak: decision.leak,
+    suspect,
+    leak,
     render: servedMode,
     class: decision.clientClass,
     crawlerFamily: decision.crawlerFamily,
@@ -482,7 +497,10 @@ function logRenderDecision(
   const ssrMode: RenderMode = isSeoAsset ? 'asset' : 'ssr'
   if (!isSeoAsset) logRenderDecision(request, decision, ssrMode, pathname)
   markResponse(res, clientClass, ssrMode)
-  if (!isSeoAsset) {
+  // Only real page NAVIGATIONS are UA-varied HTML. Gate on decision.isNav too so
+  // non-nav requests that fall through to SSR (e.g. an API POST to /{lang}) don't
+  // get a spurious `Vary: User-Agent` on a non-HTML response.
+  if (!isSeoAsset && decision.isNav) {
     // Merge, not clobber: the app-router may set its own Vary (RSC/Next-Router-*).
     const ssrVary = res.headers.get('Vary')
     res.headers.set('Vary', ssrVary ? `${ssrVary}, User-Agent` : 'User-Agent')
@@ -706,12 +724,20 @@ here is a real false-positive worth fixing.
 Shows how often isbot vs the browser-UA test vs the applewebkit (in-app WebView)
 path drives the decision.
 
-## 8. Bot→CRA leak proxy — on the NPM ACCESS stream (has client IPs)
-`leak` in the render-decision log is a structural invariant (always false): a
-scraper spoofing a clean Chrome UA is undetectable from UA alone. Its signal is
-IP-based, on the `bom_access` stream. That stream is parsed AT INGEST
-(`parse_json!(.message)` in vector.yaml), so `client_class`/`client_ip`/`crawler_family`
-are already first-class fields — do NOT `unpack_json` here (its `_msg` is a URI):
+## 8. Bot→CRA leaks (two layers)
+**(a) Routing regression.** `leak` is computed at serve-time
+(`servedMode==='cra' && isbotHit`), so a hit means a known crawler actually
+reached the CRA — a middleware routing bug. Should be 0 (isbot→SSR by
+construction):
+
+    … | filter leak:true | stats by (ua) count() n
+
+**(b) UA-spoofing leak.** A scraper sending a clean Chrome UA is classified
+`browser` and correctly not flagged — that residual signal is undetectable from
+UA alone and is IP-based, on the `bom_access` stream. That stream is parsed AT
+INGEST (`parse_json!(.message)` in vector.yaml), so `client_class`/`client_ip`/
+`crawler_family` are already first-class fields — do NOT `unpack_json` here (its
+`_msg` is a URI):
 
     _stream:{source_type="bom_access"} | filter client_class:browser | stats by (client_ip) count() n | sort by (n desc) | limit 50
 Cross-reference high-volume IPs against known datacenter ASNs.
