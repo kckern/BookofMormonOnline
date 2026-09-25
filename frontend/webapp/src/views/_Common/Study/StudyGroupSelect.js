@@ -1,4 +1,4 @@
-import crypto from "crypto-browserify";
+import { randomHex } from "src/models/randomHex";
 import { isMessengerNavigationEnabled } from '../../../models/featureFlags';
 import React, { useEffect, useState } from "react";
 import {
@@ -798,10 +798,7 @@ function NewStudyGroup() {
       .value;
     let type =
       document.querySelector("input[type=radio]:checked").value || "private";
-    let url = crypto
-      .createHash("md5")
-      .update(crypto.randomBytes(20).toString("hex"))
-      .digest("hex");
+    let url = randomHex(16);
     let inputData = { name, description, type, url, groupImage };
     if (inputData.name === "") {
       toast.error(label("no_name"));

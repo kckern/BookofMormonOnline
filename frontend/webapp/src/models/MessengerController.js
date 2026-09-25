@@ -8,7 +8,6 @@
  */
 
 import { io } from 'socket.io-client';
-import crypto from 'crypto-browserify';
 import { refreshChannel, tokenImage } from './Utils';
 import { shapeUser, shapeMember, shapeMessage, shapeChannelFields, shapeThreadInfo } from './messengerShapes';
 

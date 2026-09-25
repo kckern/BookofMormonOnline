@@ -20,7 +20,6 @@ import { StudyHall } from "src/views/_Common/Study/StudyHall.js";
 import { StudyGroupSelect } from "./StudyGroupSelect";
 import "./StudyGroupBar.scss";
 import { ActionBubble } from "./ActionBubble";
-import crypto from "crypto-browserify";
 import { breakCache, diffMap, label, playSound } from "src/models/Utils";
 
 import green from "src/views/User/svg/green.svg";

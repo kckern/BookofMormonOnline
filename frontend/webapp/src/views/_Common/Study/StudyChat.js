@@ -1,3 +1,4 @@
+import { randomHex } from "src/models/randomHex";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useHistory } from "react-router-dom";
 import {
@@ -19,7 +20,6 @@ import {
 } from "src/models/Utils";
 import { LikeButton, CommentInput } from "./Study.js";
 import ReactTooltip from "react-tooltip";
-import crypto from "crypto-browserify";
 import { TextInFeed } from "./StudyInFeed.js";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
@@ -724,10 +724,7 @@ export function StudyGroupThread({
   );
 
   const [threadHash] = useState(
-    crypto
-      .createHash("md5")
-      .update(crypto.randomBytes(20).toString("hex"))
-      .digest("hex"),
+    randomHex(16),
   );
 
   const [threadInputVal, setThreadInputVal] = useState(null);
@@ -958,7 +955,7 @@ function BaseMessage({
   const appController = useAppController();
   const [isEdit, setIsEdit] = useState(false);
   const inputRef = useRef(null);
-  const [tooltip_id] = useState(crypto.randomBytes(20).toString("hex"));
+  const [tooltip_id] = useState(randomHex(20));
   const [replies, setReplies] = useState(() => {
     if (message.threadInfo && message.threadInfo.replyCount) {
       let replyCount = message.threadInfo.replyCount;

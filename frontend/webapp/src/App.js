@@ -1,3 +1,4 @@
+import { randomHex } from "./models/randomHex";
 import React from "react";
 import { Router } from 'react-router';
 import { Route } from 'react-router-dom';
@@ -15,7 +16,6 @@ import "./assets/theme/scss/darkmode.scss";
 // sheets lets bootstrap/paper-dashboard/darkmode override the nav styling.
 import MainLayout from "./views/_Common/Main";
 //import Cohere from "cohere-js";
-import crypto from "crypto-browserify";
 import { AppModal } from "./views/_Common/AppModal";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
@@ -33,7 +33,7 @@ const containerStyle = {
 //Generate Device Token and Save to Local Storage
 if (localStorage.getItem("token") === null) {
   let cookie = Cookies.get("u") || null;
-  localStorage.setItem('token', cookie || crypto.createHash('md5').update(crypto.randomBytes(20).toString('hex')).digest("hex"));
+  localStorage.setItem('token', cookie || randomHex(16));
   if (cookie) window.location.reload();
 }
 export default function App() {

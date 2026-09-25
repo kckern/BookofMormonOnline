@@ -1,5 +1,6 @@
+import md5lib from "js-md5";
+import { randomHex } from "./randomHex";
 import React, { useState, useEffect, useCallback } from "react";
-import crypto from "crypto-browserify";
 import date from "date-and-time";
 import axios from "axios";
 import Parser from "html-react-parser";
@@ -151,17 +152,18 @@ export function makeLabelDictionary(r, fromCache = false) {
   return r;
 }
 
+// NOTE: this has always ignored its arguments and returned a random 32-hex
+// string — callers like md5(userId) never hashed anything. Behaviour preserved
+// verbatim; only the implementation changed.
 export function md5() {
-  return crypto
-    .createHash("md5")
-    .update(crypto.randomBytes(20).toString("hex"))
-    .digest("hex");
+  return randomHex(16);
 }
+// A REAL md5, unlike md5() above: UserAvatar derives the S3 key
+// profiles/<md5(username)>.jpg from this, so its output must stay byte-identical
+// to what the upload side produces. js-md5 was verified to match
+// crypto-browserify exactly for username/email/url/empty inputs.
 export function md5hash(string) {
-  return crypto
-    .createHash("md5")
-    .update(string)
-    .digest("hex");
+  return md5lib(string);
 }
 
 export function moveCaretToEnd(el) {
@@ -279,7 +281,7 @@ export function renderHTMLContentInFeed(content, highlights) {
 }
 
 export function BlankWord() {
-  const [key] = useState(crypto.randomBytes(20).toString("hex"));
+  const [key] = useState(randomHex(20));
   const [width] = useState(Math.round(1 + Math.random() * 8));
 
   return (

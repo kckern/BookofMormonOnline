@@ -1,3 +1,4 @@
+import { randomHex } from "src/models/randomHex";
 import React, {
   useEffect,
   useState,
@@ -7,7 +8,6 @@ import React, {
 } from "react";
 import Textarea from "react-expanding-textarea";
 import { Button } from "reactstrap";
-import crypto from "crypto-browserify";
 import ReactTooltip from "react-tooltip";
 import TagList from "./TagList";
 import "views/_Common/Study/Study.css";
@@ -60,16 +60,10 @@ export default function Comments({
   const [threadInputVal, setThreadInputVal] = useState(null);
   const [addComments, setAddComments] = useState(false);
   const [threadHash] = useState(
-    crypto
-      .createHash("md5")
-      .update(crypto.randomBytes(20).toString("hex"))
-      .digest("hex"),
+    randomHex(16),
   );
   const [locationHash] = useState(
-    crypto
-      .createHash("md5")
-      .update(crypto.randomBytes(20).toString("hex"))
-      .digest("hex"),
+    randomHex(16),
   );
 
   useEffect(() => {
@@ -1206,7 +1200,7 @@ export function LikeButton({ type, message }) {
     messageReacters(message, memberMap),
   );
 
-  const [tooltip_id] = useState(crypto.randomBytes(20).toString("hex"));
+  const [tooltip_id] = useState(randomHex(20));
 
   // Live reaction updates. Registered in an effect (NOT the render body — the
   // old render-body pattern stacked a fresh duplicate listener on every render

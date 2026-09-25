@@ -1,9 +1,9 @@
+import { randomHex } from "./randomHex";
 import { lang } from "moment";
 import { isMessengerEnabled } from './featureFlags';
 import { migratePreferences } from "./preferenceMigration";
 import { determineLanguage, tokenImage } from "./Utils.js";
 import { analytics, GOALS } from "./analytics/index.js";
-import crypto from "crypto-browserify";
 import { history } from "./routeHistory.js";
 import { setPopDocTitle } from "src/views/_Common/PopUp.js";
 
@@ -691,10 +691,7 @@ export const appFunctions = {
     appController.states.user.email = null;
     localStorage.setItem(
       "token",
-      crypto
-        .createHash("md5")
-        .update(crypto.randomBytes(20).toString("hex"))
-        .digest("hex")
+      randomHex(16)
     );
     appController.states.user.progress = appController.states.user.progress || {};
     appController.states.user.token = localStorage.getItem("token");

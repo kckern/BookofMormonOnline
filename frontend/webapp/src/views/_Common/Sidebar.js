@@ -6,7 +6,6 @@ import "./Sidebar.css";
 import { breakCache, determineLanguage, label, tokenImage } from "src/models/Utils.js";
 import { analytics, GOALS } from "../../models/analytics/index.js";
 import { getSearchSlug } from "src/models/searchSlug";
-import crypto from "crypto-browserify";
 import UserAvatar from "src/components/UserAvatar";
 
 import soundOn from "src/views/User/svg/sound-on.svg"

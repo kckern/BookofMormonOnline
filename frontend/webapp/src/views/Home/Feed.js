@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useHistory, Link, useRouteMatch } from "react-router-dom";
-import crypto from "crypto-browserify";
 import ProgressBox from "../User/ProgressBox.js";
 import { Card, CardHeader, CardBody, CardFooter, Button } from "reactstrap";
 
