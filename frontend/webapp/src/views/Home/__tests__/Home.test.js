@@ -99,3 +99,43 @@ describe("Home shell messenger gate", () => {
     expect(getLocation().pathname).toBe("/home");
   });
 });
+
+// The noindex effect's cleanup is the half that fails silently: if it removed
+// the tag unconditionally, leaving /home/feed would strip a robots tag another
+// view had set. ac6a8fe6 dropped this effect entirely and nothing caught it,
+// so both directions are pinned here.
+describe("/home/feed noindex", () => {
+  afterEach(() => {
+    document.querySelectorAll('meta[name="robots"]').forEach((m) => m.remove());
+  });
+
+  test("an indexable route adds no robots tag", () => {
+    renderAt("/home");
+    expect(document.querySelector('meta[name="robots"]')).toBeNull();
+  });
+
+  test("leaving /home/feed removes a tag the effect created", () => {
+    const { view } = renderAt("/home/feed");
+    expect(document.querySelector('meta[name="robots"]')).toHaveAttribute(
+      "content", "noindex,nofollow,noarchive"
+    );
+    view.unmount();
+    expect(document.querySelector('meta[name="robots"]')).toBeNull();
+  });
+
+  test("leaving /home/feed restores a tag that was already there", () => {
+    const existing = document.createElement("meta");
+    existing.setAttribute("name", "robots");
+    existing.setAttribute("content", "index,follow");
+    document.head.appendChild(existing);
+
+    const { view } = renderAt("/home/feed");
+    expect(document.querySelector('meta[name="robots"]')).toHaveAttribute(
+      "content", "noindex,nofollow,noarchive"
+    );
+    view.unmount();
+    expect(document.querySelector('meta[name="robots"]')).toHaveAttribute(
+      "content", "index,follow"
+    );
+  });
+});
