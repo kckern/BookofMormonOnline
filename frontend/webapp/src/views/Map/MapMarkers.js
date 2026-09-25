@@ -154,4 +154,8 @@ const renderMarker = ({ name, label, icon, isActive }) => {
     ];
 };
 
-module.exports = { CanvasMarker };
+// ESM rather than `module.exports = { CanvasMarker }`: MapContents imports this
+// by name, and a CommonJS source file's named export does not survive a modern
+// bundler's interop — CanvasMarker arrived undefined and `new CanvasMarker()`
+// took the whole /map route down.
+export { CanvasMarker };

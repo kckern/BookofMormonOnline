@@ -98,7 +98,10 @@
     "prestart": "node scripts/gen-features.js",
     "prebuild": "node scripts/gen-features.js",
     "start": "react-app-rewired start",
+    "start:vite": "vite",
     "build": "react-app-rewired build",
+    "build:vite": "vite build",
+    "postbuild:vite": "node scripts/stamp-sw-version.js",
     "postbuild": "node scripts/stamp-sw-version.js",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
@@ -142,6 +145,7 @@
     "@babel/types": "^7.23.3",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^14.3.1",
+    "@vitejs/plugin-react": "^5.2.0",
     "babel-polyfill": "^6.26.0",
     "buffer": "^6.0.3",
     "css-loader": "^6.8.1",
@@ -149,7 +153,8 @@
     "http-proxy-middleware": "^3.0.5",
     "js-yaml": "^4.3.2",
     "process": "^0.11.10",
-    "sass": "^1.69.5",
-    "stream": "^0.0.2"
+    "sass": "^1.105.0",
+    "stream": "^0.0.2",
+    "vite": "^7.3.6"
   }
 }

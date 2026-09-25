@@ -1,6 +1,6 @@
 const path = require('path');
 const thisDir = path.resolve(__dirname);
-module.exports = function override(config, env) {
+function override(config, env) {
   config.resolve.modules.push(`${thisDir}/src`);
   config.resolve.modules.push(`${thisDir}`);
 
@@ -28,4 +28,17 @@ module.exports = function override(config, env) {
   }
 
   return config;
+}
+
+// react-app-rewired's object form: `webpack` keeps the overrides above, `paths`
+// tells CRA where its HTML template lives now. The template moved OUT of
+// public/ so that Vite (added alongside CRA during the migration off
+// react-scripts) can own the root index.html — Vite serves publicDir at /, so a
+// public/index.html would shadow its own entry template in dev.
+module.exports = {
+  webpack: override,
+  paths: (paths) => ({
+    ...paths,
+    appHtml: path.resolve(__dirname, 'config/cra-index.html'),
+  }),
 };

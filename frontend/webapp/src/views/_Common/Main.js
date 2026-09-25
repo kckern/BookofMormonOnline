@@ -24,7 +24,9 @@ import nowifi from "./svg/no-wifi.svg";
 //
 import "./BottomNav.css";
 import { BottomMenu } from "./BottomNav";
-import { getCache, getSingleCache, getSingleCacheFromKey, setCache } from "../../models/Cache";
+// getSingleCache was imported here but never existed in Cache.js and was never
+// called; webpack quietly bound it to undefined, esbuild/Rollup reject it.
+import { getCache, getSingleCacheFromKey, setCache } from "../../models/Cache";
 
 
 
