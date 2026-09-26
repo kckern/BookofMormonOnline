@@ -6,8 +6,8 @@ import { chapterCounts } from "../aggregate";
 
 describe("Rail", () => {
   const setup = (props = {}) => {
-    const onAnchor = jest.fn();
-    const onChapter = jest.fn();
+    const onAnchor = vi.fn();
+    const onChapter = vi.fn();
     render(
       <Rail
         canon="bom"
@@ -65,9 +65,9 @@ describe("Rail", () => {
   });
 
   test("only the anchored book's group is expanded; other groups collapse to headers", () => {
-    const onAnchor = jest.fn();
+    const onAnchor = vi.fn();
     render(
-      <Rail canon="bom" book="Alma" chapter={undefined} onAnchor={onAnchor} onChapter={jest.fn()} />
+      <Rail canon="bom" book="Alma" chapter={undefined} onAnchor={onAnchor} onChapter={vi.fn()} />
     );
     // Alma lives in "Plates of Mormon" — its sibling Mosiah is visible
     expect(screen.getByRole("button", { name: /^Mosiah,/ })).toBeInTheDocument();
@@ -86,7 +86,7 @@ describe("Rail", () => {
     expect(idx).toBeGreaterThanOrEqual(0); // sanity: such a chapter exists in the data
     const ch = idx + 1;
     render(
-      <Rail canon="bom" book="2 Nephi" chapter={undefined} partner="Isaiah" onAnchor={jest.fn()} onChapter={jest.fn()} />
+      <Rail canon="bom" book="2 Nephi" chapter={undefined} partner="Isaiah" onAnchor={vi.fn()} onChapter={vi.fn()} />
     );
     expect(
       screen.getByRole("radio", { name: new RegExp(`^Chapter ${ch}, ${scoped[idx]} references$`) })
@@ -98,7 +98,7 @@ describe("Rail", () => {
     const idx = all.findIndex((c) => c > 0);
     const ch = idx + 1;
     render(
-      <Rail canon="bom" book="2 Nephi" chapter={undefined} onAnchor={jest.fn()} onChapter={jest.fn()} />
+      <Rail canon="bom" book="2 Nephi" chapter={undefined} onAnchor={vi.fn()} onChapter={vi.fn()} />
     );
     expect(
       screen.getByRole("radio", { name: new RegExp(`^Chapter ${ch}, ${all[idx]} references$`) })
@@ -110,7 +110,7 @@ describe("Rail", () => {
     // observable: rail 200px tall, anchored book 40px, sitting at offsetTop 500.
     // Expected scrollTop = 500 - 200/2 + 40/2 = 420.
     try {
-      jest.spyOn(HTMLElement.prototype, "clientHeight", "get").mockImplementation(
+      vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockImplementation(
         function () {
           return this.classList?.contains("anchored") ? 40 : 200;
         }
@@ -122,12 +122,12 @@ describe("Rail", () => {
         },
       });
       render(
-        <Rail canon="kjv" book="Isaiah" onAnchor={jest.fn()} onChapter={jest.fn()} />
+        <Rail canon="kjv" book="Isaiah" onAnchor={vi.fn()} onChapter={vi.fn()} />
       );
       expect(screen.getByRole("navigation").scrollTop).toBe(420);
     } finally {
       delete HTMLElement.prototype.offsetTop;
-      jest.restoreAllMocks();
+      vi.restoreAllMocks();
     }
   });
 });

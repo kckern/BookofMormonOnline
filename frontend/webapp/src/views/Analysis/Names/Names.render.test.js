@@ -4,13 +4,13 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Names from "./Names";
 
-jest.mock("src/models/Utils", () => ({ label: (k) => k }));
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/Utils", () => ({ label: (k) => k }));
+vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
   default: () => new Promise(() => {}),
 }));
-jest.mock("src/contexts/AppControllerContext", () => ({
-  useAppController: () => ({ functions: { setPopUp: jest.fn() } }),
+vi.mock("src/contexts/AppControllerContext", () => ({
+  useAppController: () => ({ functions: { setPopUp: vi.fn() } }),
 }));
 
 const renderAt = (path) =>

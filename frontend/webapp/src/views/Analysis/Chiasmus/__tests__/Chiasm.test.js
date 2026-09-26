@@ -1,13 +1,13 @@
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
   assetUrl: "https://media.test",
   ApiBaseUrl: "http://localhost:5005",
 }));
-jest.mock("../../../Home/tiles/ScripturePopup", () => ({
+vi.mock("../../../Home/tiles/ScripturePopup", () => ({
   __esModule: true,
   default: () => null,
-  openScripture: jest.fn(),
+  openScripture: vi.fn(),
 }));
 
 import React from "react";
@@ -35,7 +35,7 @@ const fixture = {
 const renderChiasm = () =>
   render(
     <MemoryRouter initialEntries={["/analysis/chiasmus/x1"]}>
-      <Chiasm chiasm_id="x1" setChiasmusId={jest.fn()} closeChiasm={jest.fn()} nextId={null} prevId={null} />
+      <Chiasm chiasm_id="x1" setChiasmusId={vi.fn()} closeChiasm={vi.fn()} nextId={null} prevId={null} />
     </MemoryRouter>
   );
 
@@ -45,7 +45,7 @@ const pinButton = (letter) => screen.getAllByRole("button", { name: `Pin the ${l
 describe("Chiasm detail panel", () => {
   beforeEach(() => {
     __clearChiasmCache();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     BoMOnlineAPI.mockResolvedValue({ chiasm: { x1: fixture } });
   });
 
@@ -106,14 +106,20 @@ describe("Chiasm detail panel", () => {
   });
 
   test("times out to the error state if the fetch never settles", async () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     try {
       BoMOnlineAPI.mockReturnValueOnce(new Promise(() => {})); // never resolves
       renderChiasm();
-      act(() => { jest.advanceTimersByTime(16000); });
-      expect(await screen.findByText(/couldn't load this chiasm/i)).toBeInTheDocument();
+      // advanceTimersByTimeAsync + a sync getByText: RTL's findBy* polls on
+      // real timers and only knows how to drive JEST's fake clock, so under
+      // vi.useFakeTimers it waited forever until the 15s test limit — which
+      // also meant `finally` never ran, leaking fake timers into the two
+      // tests after it. The async variant flushes microtasks between timers,
+      // so the state update lands before we assert.
+      await act(async () => { await vi.advanceTimersByTimeAsync(16000); });
+      expect(screen.getByText(/couldn't load this chiasm/i)).toBeInTheDocument();
     } finally {
-      jest.useRealTimers();
+      vi.useRealTimers();
     }
   });
 
@@ -129,32 +135,20 @@ describe("Chiasm detail panel", () => {
     expect(await screen.findByText(/couldn't load this chiasm/i)).toBeInTheDocument();
   });
 
-  test("times out to the error state if the fetch never settles", async () => {
-    jest.useFakeTimers();
-    try {
-      BoMOnlineAPI.mockReturnValueOnce(new Promise(() => {})); // never resolves
-      renderChiasm();
-      act(() => { jest.advanceTimersByTime(16000); });
-      expect(await screen.findByText(/couldn't load this chiasm/i)).toBeInTheDocument();
-    } finally {
-      jest.useRealTimers();
-    }
-  });
-
   test("failsafe firing after a successful load does not clobber the content", async () => {
     // Pins the functional updater (c => c === null ? undefined : c): if the
     // failsafe were simplified to setChiasm(undefined), a loaded chiasm would
     // flip to the error state 15s after opening.
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     try {
       renderChiasm();
       await act(async () => { await Promise.resolve(); }); // let the mocked fetch settle
       expect(screen.getByText("Test Chiasm")).toBeInTheDocument();
-      act(() => { jest.advanceTimersByTime(16000); });
+      act(() => { vi.advanceTimersByTime(16000); });
       expect(screen.getByText("Test Chiasm")).toBeInTheDocument();
       expect(screen.queryByText(/couldn't load this chiasm/i)).not.toBeInTheDocument();
     } finally {
-      jest.useRealTimers();
+      vi.useRealTimers();
     }
   });
 
@@ -169,10 +163,10 @@ describe("Chiasm detail panel", () => {
 
   test("header has prev/next that follow visible order and hint at arrow keys", async () => {
     BoMOnlineAPI.mockResolvedValue({ chiasm: { x1: fixture } });
-    const setChiasmusId = jest.fn();
+    const setChiasmusId = vi.fn();
     render(
       <MemoryRouter>
-        <Chiasm chiasm_id="x1" setChiasmusId={setChiasmusId} closeChiasm={jest.fn()} nextId="x2" prevId={null} />
+        <Chiasm chiasm_id="x1" setChiasmusId={setChiasmusId} closeChiasm={vi.fn()} nextId="x2" prevId={null} />
       </MemoryRouter>
     );
     await screen.findByText("Test Chiasm");
@@ -191,7 +185,7 @@ describe("Chiasm detail panel", () => {
     BoMOnlineAPI.mockResolvedValue({ chiasm: { x1: fixture } });
     render(
       <MemoryRouter>
-        <Chiasm chiasm_id="x1" setChiasmusId={jest.fn()} closeChiasm={jest.fn()} nextId={null} prevId="x0" />
+        <Chiasm chiasm_id="x1" setChiasmusId={vi.fn()} closeChiasm={vi.fn()} nextId={null} prevId="x0" />
       </MemoryRouter>
     );
     await screen.findByText("Test Chiasm");
@@ -202,10 +196,10 @@ describe("Chiasm detail panel", () => {
 
   test("header × calls closeChiasm", async () => {
     BoMOnlineAPI.mockResolvedValue({ chiasm: { x1: fixture } });
-    const closeChiasm = jest.fn();
+    const closeChiasm = vi.fn();
     render(
       <MemoryRouter>
-        <Chiasm chiasm_id="x1" setChiasmusId={jest.fn()} closeChiasm={closeChiasm} nextId={null} prevId={null} />
+        <Chiasm chiasm_id="x1" setChiasmusId={vi.fn()} closeChiasm={closeChiasm} nextId={null} prevId={null} />
       </MemoryRouter>
     );
     await screen.findByText("Test Chiasm");

@@ -1,7 +1,7 @@
 
 import Parser from "html-react-parser";
 import React, { useEffect, useRef, useState } from "react";
-import { useHistory } from 'react-router';
+import { useNavigate } from 'react-router';
 import spinner from "../_Common/svg/loadbar.svg";
 import placesIcon from "../_Common/svg/places.svg";
 // AACTION TYPES
@@ -57,7 +57,7 @@ export function MapPanel() {
   const [place, setPlace] = useState(places?.find((place) => place.slug === slug));
   const [placeDetails, setPlaceDetails] = useState({});
 
-	const history = useHistory();
+	const navigate = useNavigate();
 
   useEffect(() => {
     // First useEffect logic
@@ -111,7 +111,7 @@ export function MapPanel() {
     if (mapController.moveSeq == null && story.moves?.length) {
       const firstSeq = story.moves[0]?.seq;
       if (firstSeq != null) {
-        history.replace(`/map/${currentMap?.slug}/story/${story.slug}/move/${firstSeq}`);
+        navigate(`/map/${currentMap?.slug}/story/${story.slug}/move/${firstSeq}`, { replace: true });
       }
     }
   }, [mapController.storySlug, currentMap?.slug, currentMap?.stories?.length]);
@@ -145,7 +145,7 @@ export function MapPanel() {
     {!!storyCount && <NavItem onClick={() =>{
         if(storyCount===1) {
             const firstAndOnlyStory = matchingStories[0];
-            history.push(`/map/${currentMap?.slug}/story/${firstAndOnlyStory.slug}`);
+            navigate(`/map/${currentMap?.slug}/story/${firstAndOnlyStory.slug}`);
         }else setActiveTab("2")
         }} className={activeTab === "2" ? "active" : ""}>
       <div><span className="counter">{storyCount}</span></div>
@@ -164,7 +164,7 @@ export function MapPanel() {
     <TabPane tabId="2">
     {matchingStories.map((story, i) => {
     return <div key={i} className="map_story" onClick={()=>{
-        history.push(`/map/${currentMap?.slug}/story/${story.slug}`);
+        navigate(`/map/${currentMap?.slug}/story/${story.slug}`);
         }}>
             <h6>{story.title}</h6>
             <p>{story.description}</p>
@@ -431,7 +431,7 @@ if(isMobile()) return null;
           className="closePanelButton"
           onClick={()=>{
 						setPanelContents(false)
-						history.push({
+						navigate({
 							pathname:`/map/${currentMap.slug}`
 						})
 						}}
@@ -458,11 +458,11 @@ if(isMobile()) return null;
 
 function MapStoryPanel()
 {
+	const navigate = useNavigate();
     const mapController = useMapController();
     const {selectedStory, moveSeq, currentMap, panelContents} = mapController;
     const [scripture, setScripture] = useState(null);
 	  const parserOptions = getHtmlScriptureLinkParserOptions(setScripture);
-    const history = useHistory();
     const fenceRefs = useRef({});
     const cardBodyRef = useRef(null);
     const [avatarTop, setAvatarTop] = useState(0);
@@ -493,9 +493,9 @@ function MapStoryPanel()
         m.startPlace.slug === placeSlug || m.endPlace.slug === placeSlug
       );
       if (placeBelongsToStory) {
-        history.push(`/map/${mapSlug}/place/${placeSlug}`);
+        navigate(`/map/${mapSlug}/place/${placeSlug}`);
       } else {
-        history.push(`/map/${mapSlug}`);
+        navigate(`/map/${mapSlug}`);
       }
     };
 
@@ -548,7 +548,7 @@ function MapStoryPanel()
                         hideTravelers={hideTravelers}
                         miles={miles}
                         parserOptions={parserOptions}
-                        onClick={() => history.push(`/map/${currentMap?.slug}/story/${selectedStory.slug}/move/${m.seq}`)}
+                        onClick={() => navigate(`/map/${currentMap?.slug}/story/${selectedStory.slug}/move/${m.seq}`)}
                         refCallback={(el) => { if (el) fenceRefs.current[m.seq] = el; }}
                       />
                     );

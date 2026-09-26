@@ -29,7 +29,7 @@ export async function fetchHighlightRange(query, text) {
   }
 }
 
-// Internal pointer so tests can replace fetchHighlightRange via jest.mock and have the
+// Internal pointer so tests can replace fetchHighlightRange via vi.mock and have the
 // hook pick up the replacement (babel-jest mock replaces the export binding, not the
 // module-internal closure; this cell is re-read on each hook invocation).
 export const _api = { fetchHighlightRange };

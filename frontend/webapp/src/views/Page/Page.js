@@ -12,7 +12,8 @@ import {
   playSound,
   isMobile,
 } from "src/models/Utils";
-import { useRouteMatch, useHistory } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useLegacyParams } from "src/models/routeParams";
 import { analytics, GOALS } from "../../models/analytics/index.js";
 
 import { Floaters } from "./Floaters";
@@ -27,6 +28,7 @@ import { usePageComments } from "./usePageComments";
 import { setBaseDocTitle, pushDocTitle, popDocTitle } from "./docTitle";
 import { createScrollSpy, step } from "src/scroll";
 import { appFunctions } from "src/models/appController";
+import { parsePagePath } from "src/models/pagePath";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { PageControllerProvider } from "src/contexts/PageControllerContext";
 import ReactTooltip from "react-tooltip";
@@ -55,9 +57,16 @@ function prepareInitOpen(params) {
 
 export default function Page() {
   const appController = useAppController();
-  const match = useRouteMatch();
-  const history = useHistory();
-  let routeParams = match.params;
+  const match = { params: useLegacyParams(), url: useLocation().pathname };
+  const navigate = useNavigate();
+  // The page/textblock/fax routes collapsed into one splat for v7, so recover
+  // pageSlug/textId/faxVersion from it. Routes that still carry named params
+  // (/commentary/:commentaryId, /image/:imageId) have no splat and pass through.
+  const rawRouteParams = match.params;
+  let routeParams =
+    rawRouteParams["*"] != null
+      ? { ...rawRouteParams, ...parsePagePath(rawRouteParams["*"]) }
+      : rawRouteParams;
   if (routeParams.pageSlug === "study") {
     let parts = localStorage
       .getItem("studybookmark")
@@ -456,7 +465,7 @@ export default function Page() {
     }
 
     if (!response.page[index]?.sections) {
-      return history.push("/contents");
+      return navigate("/contents");
     }
 
     pageController.functions.setPageSlugId({

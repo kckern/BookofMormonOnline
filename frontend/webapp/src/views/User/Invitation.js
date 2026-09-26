@@ -15,9 +15,10 @@ import {
 } from "reactstrap";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import "./Invitation.css";
-import { Link, useHistory } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useLegacyParams } from "src/models/routeParams";
 import { isMobile, label, testJSON } from "src/models/Utils";
-import { useRouteMatch } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import SignIn from "./SignIn"
 import { SignUp } from "./SignUp.js"
 import solo from "src/views/_Common/Study/svg/solo.svg"
@@ -36,7 +37,6 @@ import noaccess from "./svg/noaccess.svg"
 import moment from "moment";
 import Loader from "../_Common/Loader";
 import SocialSignIn from "./SocialSignIn";
-import { history } from "src/models/routeHistory";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { useMessenger } from "src/contexts/MessengerContext";
 
@@ -44,8 +44,8 @@ export default function Invitation() {
   const appController = useAppController();
   const messenger = useMessenger();
 
-  const match = useRouteMatch();
-  const history = useHistory();
+  const match = { params: useLegacyParams(), url: useLocation().pathname };
+  const navigate = useNavigate();
   const userToken = appController.states.user.token;
   const hash = match.params.hash;
   const [group, setGroup] = useState(null);
@@ -82,7 +82,7 @@ export default function Invitation() {
         appController.functions.setStudyGroups(list);
         appController.functions.setStudyMode(true);
         appController.functions.setActiveStudyGroup(group);
-        if(isMobile()) history.push(`/group/${group.url}/leaderboard`) 
+        if(isMobile()) navigate(`/group/${group.url}/leaderboard`) 
         else appController.functions.openDrawer(true);
 
         //check if active study group is the new group, if not, set it every 5 seconds until it is, max 10 times
@@ -117,19 +117,19 @@ export default function Invitation() {
         );
         
         if (groupChannel) {
-          history.push("/home/user");
+          navigate("/home/user");
           return {channel_url, group: groupChannel, results};
         } else {
           throw new Error("Group channel not found");
         }
       } else {
-        history.push("/home");
+        navigate("/home");
         return {channel_url: null, group: null, results:{}}
       }
     } catch (error) {
       console.log({error});
       // Handle error appropriately
-      history.push("/home");
+      navigate("/home");
       return {channel_url: null, group: null, results:false}
     }
   }

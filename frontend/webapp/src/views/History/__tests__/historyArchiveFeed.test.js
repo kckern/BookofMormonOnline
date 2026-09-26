@@ -7,8 +7,8 @@ import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { useAppController } from "src/contexts/AppControllerContext";
 import HistoryArchiveFeed, { groupByYearAscending, groupByDecadeAscending, principalOptions, shouldPackFeed } from "../HistoryArchiveFeed";
 
-jest.mock("src/models/BoMOnlineAPI", () => ({ __esModule: true, default: jest.fn() }));
-jest.mock("src/contexts/AppControllerContext");
+vi.mock("src/models/BoMOnlineAPI", () => ({ __esModule: true, default: vi.fn(), assetUrl: "https://media.test" }));
+vi.mock("src/contexts/AppControllerContext");
 
 const MULTI = [
   { slug: "a", id: 1, event_year: 1830, seq: 2, date: "1830-03-26", principal: "Joseph Smith, Jr.", document: "Doc A", citation: "Cite A.", money_quote: "I translated by the gift of God", quote_speaker: "Joseph Smith, Jr.", quote_is_witness_voice: true },
@@ -57,7 +57,7 @@ describe("archive feed helpers", () => {
 });
 
 describe("HistoryArchiveFeed view", () => {
-  const setPopUp = jest.fn();
+  const setPopUp = vi.fn();
   beforeEach(() => {
     useAppController.mockReturnValue({ functions: { setPopUp } });
   });

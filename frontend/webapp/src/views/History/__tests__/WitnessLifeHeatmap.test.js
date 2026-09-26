@@ -51,7 +51,7 @@ const sources = [
 
 const setup = (props = {}) => render(
     <WitnessLifeHeatmap witness={WHITMER} sources={sources}
-        selectedYearMonth={null} onSelectYearMonth={jest.fn()} {...props} />
+        selectedYearMonth={null} onSelectYearMonth={vi.fn()} {...props} />
 );
 
 describe("heatmap meta strip", () => {
@@ -127,7 +127,7 @@ describe("heatmap cells", () => {
             slug: "f", archive: "witnesses", year: 1880, date: "2003",
             event_year: 1880, event_date: "1880-07-15",
         };
-        const onSelect = jest.fn();
+        const onSelect = vi.fn();
         const { container } = setup({ sources: [reprintCaseB], onSelectYearMonth: onSelect });
         const filled = container.querySelectorAll(".cell:not(.bucket-0)");
         expect(filled).toHaveLength(1);
@@ -190,7 +190,7 @@ describe("heatmap accessibility", () => {
     expect(screen.getByRole("gridcell", { name: /June 1885, 1 source/i })).toBeInTheDocument();
   });
   it("filters on Enter", () => {
-    const onSelect = jest.fn();
+    const onSelect = vi.fn();
     setup({ onSelectYearMonth: onSelect });
     const cell = screen.getByRole("gridcell", { name: /June 1885, 1 source/i });
     cell.focus();
@@ -204,7 +204,7 @@ describe("heatmap accessibility", () => {
     expect(onSelect).toHaveBeenCalledTimes(1);
   });
   it("filters on Space", () => {
-    const onSelect = jest.fn();
+    const onSelect = vi.fn();
     setup({ onSelectYearMonth: onSelect });
     const cell = screen.getByRole("gridcell", { name: /June 1885, 1 source/i });
     cell.focus();
@@ -242,7 +242,7 @@ describe("heatmap accessibility", () => {
     // above COMFORT_CELL_PX and never actually compresses, so the sanity check below
     // (compression is active) would fail; 300px keeps per-cell width under the comfort
     // threshold with the shorter axis too.
-    const rectSpy = jest.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({
+    const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({
       width: 300, height: 0, top: 0, left: 0, right: 0, bottom: 0, x: 0, y: 0, toJSON() {},
     });
     try {
@@ -403,7 +403,7 @@ describe("coarse-pointer cell floor", () => {
   let originalMatchMedia;
 
   const mockMatchMedia = (coarse) => {
-    window.matchMedia = jest.fn().mockImplementation((query) => ({
+    window.matchMedia = vi.fn().mockImplementation((query) => ({
       matches: coarse && query === "(pointer: coarse)",
       media: query,
       addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, dispatchEvent() {},
@@ -419,7 +419,7 @@ describe("coarse-pointer cell floor", () => {
     // (80 - 14 - 8 = 58, / 8 columns) computes to a raw 6px cell -- comfortably below the
     // 12px floor, so the floor has visible, unclamped work to do (unlike a wider stub, which
     // would clamp to CELL_PX_MAX=16 regardless of the floor and test nothing).
-    rectSpy = jest.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({
+    rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({
       width: 80, height: 0, top: 0, left: 0, right: 0, bottom: 0, x: 0, y: 0, toJSON() {},
     });
     originalMatchMedia = window.matchMedia;
@@ -484,7 +484,7 @@ describe("coarse-pointer cell floor", () => {
     mockMatchMedia(true);
     const coarse = render(
       <WitnessLifeHeatmap witness={WHITMER} sources={sources}
-        selectedYearMonth={null} onSelectYearMonth={jest.fn()} />
+        selectedYearMonth={null} onSelectYearMonth={vi.fn()} />
     );
     const coarseCompressedCells = coarse.container.querySelectorAll(".cell.era-compressed").length;
     coarse.unmount();
@@ -492,7 +492,7 @@ describe("coarse-pointer cell floor", () => {
     mockMatchMedia(false);
     const fine = render(
       <WitnessLifeHeatmap witness={WHITMER} sources={sources}
-        selectedYearMonth={null} onSelectYearMonth={jest.fn()} />
+        selectedYearMonth={null} onSelectYearMonth={vi.fn()} />
     );
     const fineCompressedCells = fine.container.querySelectorAll(".cell.era-compressed").length;
 
@@ -519,7 +519,7 @@ describe("ARIA grid conformance: role=row, roving tabindex, arrow-key navigation
   ];
   const crossSetup = (props = {}) => render(
     <WitnessLifeHeatmap witness={CROSS_WITNESS} sources={crossSources}
-      selectedYearMonth={null} onSelectYearMonth={jest.fn()} {...props} />
+      selectedYearMonth={null} onSelectYearMonth={vi.fn()} {...props} />
   );
   const cellNamed = (re) => screen.getByRole("gridcell", { name: re });
 
@@ -558,7 +558,7 @@ describe("ARIA grid conformance: role=row, roving tabindex, arrow-key navigation
       <div>
         <button>before</button>
         <WitnessLifeHeatmap witness={CROSS_WITNESS} sources={crossSources}
-          selectedYearMonth={null} onSelectYearMonth={jest.fn()} />
+          selectedYearMonth={null} onSelectYearMonth={vi.fn()} />
       </div>
     );
     screen.getByText("before").focus();
@@ -657,7 +657,7 @@ describe("ARIA grid conformance: role=row, roving tabindex, arrow-key navigation
   });
 
   it("stays put at a row edge (no cell further right) without crashing or selecting", () => {
-    const onSelect = jest.fn();
+    const onSelect = vi.fn();
     crossSetup({ onSelectYearMonth: onSelect });
     const right = cellNamed(/^June 1851/); // rightmost clickable cell in the June row
     right.focus();
@@ -677,7 +677,7 @@ describe("ARIA grid conformance: role=row, roving tabindex, arrow-key navigation
   });
 
   it("arrow keys never activate a cell -- only Enter/Space call onSelectYearMonth", () => {
-    const onSelect = jest.fn();
+    const onSelect = vi.fn();
     crossSetup({ onSelectYearMonth: onSelect });
     const center = cellNamed(/^June 1850/);
     center.focus();
@@ -693,7 +693,7 @@ describe("ARIA grid conformance: role=row, roving tabindex, arrow-key navigation
     // left with zero tab stops (Tab-in from outside would then skip the grid altogether).
     const { container, rerender } = render(
       <WitnessLifeHeatmap witness={CROSS_WITNESS} sources={crossSources}
-        selectedYearMonth={null} onSelectYearMonth={jest.fn()} />
+        selectedYearMonth={null} onSelectYearMonth={vi.fn()} />
     );
     const center = screen.getByRole("gridcell", { name: /^June 1850/ });
     // React 18 batches updates that originate outside React's event system, so
@@ -706,7 +706,7 @@ describe("ARIA grid conformance: role=row, roving tabindex, arrow-key navigation
     rerender(
       <WitnessLifeHeatmap witness={CROSS_WITNESS}
         sources={crossSources.filter(s => s.slug !== "center")}
-        selectedYearMonth={null} onSelectYearMonth={jest.fn()} />
+        selectedYearMonth={null} onSelectYearMonth={vi.fn()} />
     );
     const clickable = [...container.querySelectorAll(".cell.is-clickable")];
     expect(clickable.length).toBeGreaterThan(0); // sanity: still cells to fall back to
@@ -719,7 +719,7 @@ describe("ARIA grid conformance: role=row, roving tabindex, arrow-key navigation
   it("renders with no crash and no tab stop when the grid has zero clickable cells", () => {
     const { container } = render(
       <WitnessLifeHeatmap witness={CROSS_WITNESS} sources={[]}
-        selectedYearMonth={null} onSelectYearMonth={jest.fn()} />
+        selectedYearMonth={null} onSelectYearMonth={vi.fn()} />
     );
     expect(container.querySelectorAll(".cell.is-clickable")).toHaveLength(0);
     const anyZero = [...container.querySelectorAll(".cell")].some(c => c.getAttribute("tabindex") === "0");
@@ -729,7 +729,7 @@ describe("ARIA grid conformance: role=row, roving tabindex, arrow-key navigation
   it("gives compressed-run cells a gridcell role and a real, matching label", () => {
     const originalRO = global.ResizeObserver;
     global.ResizeObserver = class { observe() {} unobserve() {} disconnect() {} };
-    const rectSpy = jest.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({
+    const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({
       width: 300, height: 0, top: 0, left: 0, right: 0, bottom: 0, x: 0, y: 0, toJSON() {},
     });
     try {

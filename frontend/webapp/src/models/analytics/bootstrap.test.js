@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import fs from "node:fs";
+import path from "node:path";
 
 // One template since react-scripts was removed: Vite's root index.html. The
 // list survives so a second template (e.g. an SSR shell) would be checked too.

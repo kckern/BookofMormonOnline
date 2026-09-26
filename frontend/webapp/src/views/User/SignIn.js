@@ -7,7 +7,6 @@ import {
   Alert,
   CardBody,
   Input,
-  InputGroupAddon,
   InputGroupText,
   InputGroup,
 } from "reactstrap";
@@ -66,20 +65,16 @@ export default function SignIn() {
       <div className="loginGroup">
         <h5>{label("password_login")}</h5>
         <InputGroup>
-          <InputGroupAddon addonType="prepend">
             <InputGroupText>
               👤
             </InputGroupText>
-          </InputGroupAddon>
           <Input placeholder={label("username")} type="text" disabled={loadingButton} onChange={() => setNoSignUp(true)}
             id="username" />
         </InputGroup>
         <InputGroup>
-          <InputGroupAddon addonType="prepend">
             <InputGroupText>
               🔑
             </InputGroupText>
-          </InputGroupAddon>
           <Input
             id="password"
             placeholder={label("password")}

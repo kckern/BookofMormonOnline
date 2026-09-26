@@ -1,14 +1,14 @@
 import React from "react";
 import "@testing-library/jest-dom";
 import { render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter, Route } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { AppControllerProvider } from "src/contexts/AppControllerContext";
 import EntityPage from "../EntityPage";
 
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
   assetUrl: "https://media.bookofmormon.online",
 }));
 
@@ -24,22 +24,22 @@ const fixture = {
   states: { popUp: { open: false, type: null, ids: [], activeId: null } },
   preLoad: {},
   popUpData: {},
-  functions: { setPopUp: jest.fn(), closePopUp: jest.fn() },
+  functions: { setPopUp: vi.fn(), closePopUp: vi.fn() },
 };
 
 const renderDoc = (slug) =>
   render(
     <AppControllerProvider appController={fixture}>
       <MemoryRouter initialEntries={[`/history/${slug}`]}>
-        <Route path="/history/:slug">
-          <EntityPage type="history" />
-        </Route>
+        <Routes>
+          <Route path="/history/:slug" element={<EntityPage type="history" />} />
+        </Routes>
       </MemoryRouter>
     </AppControllerProvider>,
   );
 
 describe("EntityPage — history documents", () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => { vi.clearAllMocks(); });
 
   test("renders the document itself, not a redirect to the reception hub", async () => {
     BoMOnlineAPI.mockResolvedValue({ history: { [DOC.slug]: DOC } });

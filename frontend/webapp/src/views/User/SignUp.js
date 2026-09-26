@@ -7,7 +7,6 @@ import {
   Alert,
   CardBody,
   Input,
-  InputGroupAddon,
   InputGroupText,
   InputGroup,
 } from "reactstrap";
@@ -112,43 +111,33 @@ export function SignUp({ username, cancel, callback }) {
       <h5>{label("sign_up")}</h5>
       <div className="helpmsg">{label("privacy_policy_review_x", [<Link to="/about/privacy">{label("privacy_policy")}</Link>])}</div>
       <InputGroup className={(validatonMode && !inputs.username) ? "req" : null}>
-        <InputGroupAddon addonType="prepend">
           <InputGroupText>
             👤
           </InputGroupText>
-        </InputGroupAddon>
         <Input id="username" placeholder={label("username")} defaultValue={username} disabled={loading} type="text" onChange={(e) => handleChange("username", e)} />
       </InputGroup>
       <InputGroup className={(validatonMode && !inputs.name) ? "req" : null}>
-        <InputGroupAddon addonType="prepend">
           <InputGroupText>
             🏷️
           </InputGroupText>
-        </InputGroupAddon>
         <Input id="name" placeholder={label("name")} disabled={loading} type="text" onChange={(e) => handleChange("name", e)} />
       </InputGroup>
       <InputGroup className={(validatonMode && !inputs.email) ? "req" : null}>
-        <InputGroupAddon addonType="prepend">
           <InputGroupText>
             ✉️
           </InputGroupText>
-        </InputGroupAddon>
         <Input id="email" placeholder={label("email")} disabled={loading} type="text" onChange={(e) => handleChange("email", e)} />
       </InputGroup>
       <InputGroup>
-        <InputGroupAddon addonType="prepend">
           <InputGroupText>
             📍
           </InputGroupText>
-        </InputGroupAddon>
         <Input id="zip" placeholder={label("zip_code")} disabled={loading} type="text" onChange={(e) => handleChange("zip", e)} />
       </InputGroup>
       <InputGroup className={(validatonMode && !inputs.pass) ? "req" : null}>
-        <InputGroupAddon addonType="prepend">
           <InputGroupText>
             🔑
           </InputGroupText>
-        </InputGroupAddon>
         <Input
           id="password"
           placeholder={label("password")}
@@ -157,11 +146,9 @@ export function SignUp({ username, cancel, callback }) {
         />
       </InputGroup>
       <InputGroup className={(validatonMode && !inputs.pass_match) ? "req" : null}>
-        <InputGroupAddon addonType="prepend">
           <InputGroupText>
             🔑
           </InputGroupText>
-        </InputGroupAddon>
         <Input
           placeholder={label("confirm_password")}
           disabled={loading}

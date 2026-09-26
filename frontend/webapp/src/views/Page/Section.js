@@ -8,7 +8,7 @@ import Comments from "../_Common/Study/Study";
 import { addHighlightTagSelectively } from "./TextContent";
 //import theater svg
 import theater from "../_Common/svg/theater.svg";
-import { Link } from "react-router-dom/cjs/react-router-dom.min";
+import { Link } from "react-router-dom";
 import { label } from "../../models/Utils";
 
 function Section({ sectionData, sectionIndex }) {

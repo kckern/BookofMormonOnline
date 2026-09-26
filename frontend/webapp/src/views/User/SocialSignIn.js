@@ -6,7 +6,6 @@ import {
     Alert,
     CardBody,
     Input,
-    InputGroupAddon,
     InputGroupText,
     InputGroup,
 } from "reactstrap";

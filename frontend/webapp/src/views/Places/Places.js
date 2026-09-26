@@ -5,7 +5,8 @@ import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI"
 import Loader, { Spinner } from "../_Common/Loader"
 import Masonry from "react-masonry-css"
 import { isMobile, label, processName, replaceNumbers } from "src/models/Utils"
-import { Link, useRouteMatch } from "react-router-dom"
+import { Link, useParams, useLocation } from "react-router-dom"
+import { useLegacyParams } from "src/models/routeParams";
 import {
   Card,
   CardHeader,
@@ -49,7 +50,7 @@ function PlacesComponent() {
     search: null,
   })
 
-  const match = useRouteMatch()
+  const match = { params: useLegacyParams(), url: useLocation().pathname }
   useEffect(() => {
     if (match?.params?.placeName) {
       appController.functions.setPopUp({

@@ -1,14 +1,14 @@
 import React from "react";
 import "@testing-library/jest-dom";
 import { render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter, Route } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { AppControllerProvider } from "src/contexts/AppControllerContext";
 import EntityPage from "../EntityPage";
 
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
   assetUrl: "https://media.bookofmormon.online",
 }));
 
@@ -35,22 +35,22 @@ const fixture = {
     ],
   },
   popUpData: {},
-  functions: { setPopUp: jest.fn(), closePopUp: jest.fn() },
+  functions: { setPopUp: vi.fn(), closePopUp: vi.fn() },
 };
 
 const renderAt = (path) =>
   render(
     <AppControllerProvider appController={fixture}>
       <MemoryRouter initialEntries={[path]}>
-        <Route path="/people/:personName">
-          <EntityPage type="people" />
-        </Route>
+        <Routes>
+          <Route path="/people/:personName" element={<EntityPage type="people" />} />
+        </Routes>
       </MemoryRouter>
     </AppControllerProvider>,
   );
 
 describe("EntityPage", () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => { vi.clearAllMocks(); });
 
   test("renders the entity as a page, with no modal chrome", async () => {
     BoMOnlineAPI.mockResolvedValue({ person: { noah2: NOAH } });

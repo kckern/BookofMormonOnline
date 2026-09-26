@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import fs from "node:fs";
+import path from "node:path";
 const read = (p) => fs.readFileSync(path.join(__dirname, p), 'utf8');
 test('Utils.js no longer defines clickyUser', () => {
   expect(read('../Utils.js')).not.toMatch(/export function clickyUser/);

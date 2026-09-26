@@ -5,9 +5,9 @@ import { MemoryRouter } from "react-router-dom";
 import { AppControllerProvider } from "src/contexts/AppControllerContext";
 import PersonBody, { PersonChooser } from "../PersonBody";
 
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
-  default: jest.fn(() => Promise.resolve({})),
+  default: vi.fn(() => Promise.resolve({})),
   assetUrl: "https://media.bookofmormon.online",
 }));
 
@@ -27,7 +27,7 @@ const fixture = {
   states: { popUp: { open: false, type: null, ids: [], activeId: null } },
   preLoad: {},
   popUpData: {},
-  functions: { setPopUp: jest.fn(), closePopUp: jest.fn() },
+  functions: { setPopUp: vi.fn(), closePopUp: vi.fn() },
 };
 
 const wrap = (ui) =>
@@ -62,7 +62,7 @@ describe("PersonBody", () => {
   });
 
   test("chooser lists each candidate and reports the clicked slug", () => {
-    const onEntityClick = jest.fn();
+    const onEntityClick = vi.fn();
     wrap(
       <PersonChooser
         requested="noah"

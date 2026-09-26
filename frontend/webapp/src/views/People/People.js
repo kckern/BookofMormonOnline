@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 
 import Loader, { Spinner } from "../_Common/Loader";
 import { Card, CardHeader, CardBody, CardFooter, Input } from "reactstrap";
-import { Link, useRouteMatch } from 'react-router-dom';
+import { Link, useParams, useLocation } from "react-router-dom";
+import { useLegacyParams } from "src/models/routeParams";
 import Masonry from 'react-masonry-css'
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { isMobile, label, processName, replaceNumbers } from "src/models/Utils";
@@ -53,7 +54,7 @@ function PeopleComponent() {
 
 
 
-  const match = useRouteMatch();
+  const match = { params: useLegacyParams(), url: useLocation().pathname };
   useEffect(() => {
     if (match?.params?.personName) {
       appController.functions.setPopUp({ type: "people", ids: [match.params.personName],

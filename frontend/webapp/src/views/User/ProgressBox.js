@@ -13,7 +13,7 @@ import {
 } from "reactstrap";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import "./ProgressBox.css";
-import { Link, useHistory } from "react-router-dom";
+import { Link } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
 import blue from "./svg/blue.svg";
 import green from "./svg/green.svg";
@@ -336,7 +336,7 @@ function ProgressPanel({ item }) {
   });
 
   if (progressPages.slug !== item.slug) {
-    //After Switch
+    //After Routes
     let shell = progressShell(appController);
     if (!Array.isArray(shell)) shell = Object.values(shell);
     setDetails({

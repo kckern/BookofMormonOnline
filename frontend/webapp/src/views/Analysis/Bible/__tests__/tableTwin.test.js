@@ -5,7 +5,7 @@ import TableTwin from "../TableTwin";
 
 describe("TableTwin", () => {
   test("filter narrows rows by either book name", () => {
-    render(<TableTwin navigate={jest.fn()} />);
+    render(<TableTwin navigate={vi.fn()} />);
     const before = screen.getAllByTestId("xref-pairrow").length;
     fireEvent.change(screen.getByRole("searchbox", { name: /filter/i }), {
       target: { value: "isaiah" },
@@ -16,7 +16,7 @@ describe("TableTwin", () => {
   });
 
   test("a row link opens the reader for its pair", () => {
-    const navigate = jest.fn();
+    const navigate = vi.fn();
     render(<TableTwin navigate={navigate} />);
     fireEvent.change(screen.getByRole("searchbox", { name: /filter/i }), {
       target: { value: "isaiah" },
@@ -28,7 +28,7 @@ describe("TableTwin", () => {
   });
 
   test("active sort column exposes aria-sort", () => {
-    render(<TableTwin navigate={jest.fn()} />);
+    render(<TableTwin navigate={vi.fn()} />);
     expect(screen.getByRole("columnheader", { name: /refs/i })).toHaveAttribute(
       "aria-sort",
       "descending"
@@ -36,7 +36,7 @@ describe("TableTwin", () => {
   });
 
   test("the BoM and Bible cell buttons have distinct accessible names", () => {
-    const { container } = render(<TableTwin navigate={jest.fn()} />);
+    const { container } = render(<TableTwin navigate={vi.fn()} />);
     const firstRow = container.querySelector("[data-testid='xref-pairrow']");
     const labels = [...firstRow.querySelectorAll(".xref-rowlink")].map((b) =>
       b.getAttribute("aria-label")
@@ -46,7 +46,7 @@ describe("TableTwin", () => {
   });
 
   test("the Bible column is a link that opens the reader", () => {
-    const navigate = jest.fn();
+    const navigate = vi.fn();
     const { container } = render(<TableTwin navigate={navigate} />);
     const rows = container.querySelectorAll("[data-testid='xref-pairrow']").length;
     // one rowlink per cell that navigates: BoM + Bible = 2 per row

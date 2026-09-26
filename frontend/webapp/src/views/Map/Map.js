@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react"
 import { useParams } from "react-router-dom"
+import { parseMapPath } from "src/models/mapPath"
 // VIEW
 import Loader from "../_Common/Loader"
 // AACTION TYPES
@@ -21,7 +22,11 @@ function MapContainer() {
 
   const appController = useAppController();
   const messenger = useMessenger();
-  const params = useParams(),
+  // /map/* is one Route so Map never unmounts between variants; parseMapPath
+  // recovers what v5's path array used to supply. /maps has its own Route and
+  // no splat, so it yields an empty object here.
+  const rawParams = useParams(),
+    params = rawParams["*"] != null ? parseMapPath(rawParams["*"]) : rawParams,
     [currentMap, setCurrentMap] = useState(null),
     [mapName, setMapName] = useState(""),
     [placeName, setPlaceName] = useState(params.placeName),

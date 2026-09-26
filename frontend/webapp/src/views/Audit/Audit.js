@@ -1,6 +1,7 @@
 import React, { Suspense, useCallback, useEffect, useState, useRef } from "react";
 import Loader from "../_Common/Loader";
-import { useRouteMatch, useHistory, Link } from "react-router-dom";
+import { useNavigate, Link, useParams, useLocation } from "react-router-dom";
+import { useLegacyParams } from "src/models/routeParams";
 import "./Audit.css";
 import axios from "axios";
 
@@ -141,8 +142,8 @@ export default function  Audit()
     const appController = useAppController();
 
     const {user} = appController.states.user;
-    const history = useHistory();
-    const match = useRouteMatch();
+    const navigate = useNavigate();
+    const match = { params: useLegacyParams(), url: useLocation().pathname };
     const {key} = match?.params;
     let slugIndex = bom_types.findIndex(i=>i.slug === key);
     if(slugIndex === -1) slugIndex = 0;
@@ -159,7 +160,7 @@ export default function  Audit()
             setRefkey(type.refkey);
             loadItems(type.table, type.refkey, user).then(setItems);
             //set history to slug
-            history.push(`/audit/${type.slug}`);
+            navigate(`/audit/${type.slug}`);
         };
     
         return (

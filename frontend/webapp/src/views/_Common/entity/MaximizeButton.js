@@ -1,5 +1,5 @@
 import React from "react";
-import { useHistory } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { label } from "src/models/Utils";
 
@@ -25,7 +25,7 @@ function text(key, fallback) {
 }
 
 export default function MaximizeButton({ type }) {
-  const routerHistory = useHistory();
+  const navigate = useNavigate();
   const appController = useAppController();
   if (!PAGE_ELIGIBLE.has(type)) return null;
 
@@ -41,7 +41,7 @@ export default function MaximizeButton({ type }) {
     // rewrite the address bar back to the index — the one thing maximize must
     // not do, since the page it reveals is identified by this very URL.
     appController.functions.closePopUp({ keepSlug: true });
-    routerHistory.replace(target);
+    navigate(target, { replace: true });
   };
 
   return (

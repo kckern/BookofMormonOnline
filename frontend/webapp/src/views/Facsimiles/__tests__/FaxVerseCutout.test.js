@@ -34,22 +34,22 @@ describe("FaxVerseCutout", () => {
   });
 
   test("hover fires onHover; leave fires onLeave after the grace window", () => {
-    jest.useFakeTimers();
-    const onHover = jest.fn(), onLeave = jest.fn();
+    vi.useFakeTimers();
+    const onHover = vi.fn(), onLeave = vi.fn();
     const { container } = setup({ onHover, onLeave });
     const spot = container.querySelector(".faxHotspot");
     fireEvent.mouseEnter(spot);
     expect(onHover).toHaveBeenCalledWith(100);
     fireEvent.mouseLeave(spot);
     expect(onLeave).not.toHaveBeenCalled();       // deferred by the grace window (anti-flash)
-    act(() => { jest.advanceTimersByTime(160); });
+    act(() => { vi.advanceTimersByTime(160); });
     expect(onLeave).toHaveBeenCalledWith(100);    // verse-scoped leave
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   test("click fires onOpen and stops propagation (so the page does not turn)", () => {
-    const onOpen = jest.fn();
-    const pageTurn = jest.fn();
+    const onOpen = vi.fn();
+    const pageTurn = vi.fn();
     const { container } = render(
       <div onClick={pageTurn}>
         <FaxVerseCutout verses={verses} pageScale={700} displayedWidth={1400} idSuffix={5}
@@ -115,13 +115,13 @@ describe("FaxVerseCutout", () => {
   });
 
   test("pending hover-intent timer does not fire after unmount", () => {
-    jest.useFakeTimers();
-    const onHover = jest.fn();
+    vi.useFakeTimers();
+    const onHover = vi.fn();
     const { container, unmount } = setup({ onHover, hoverIntentMs: 100 });
     fireEvent.mouseEnter(container.querySelector(".faxHotspot"));
     unmount();
-    jest.runOnlyPendingTimers();
+    vi.runOnlyPendingTimers();
     expect(onHover).not.toHaveBeenCalled();
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 });

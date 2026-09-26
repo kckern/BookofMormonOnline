@@ -4,7 +4,7 @@ import { Spinner } from "../../_Common/Loader";
 import Parser from "html-react-parser";
 import { label } from 'src/models/Utils';
 import { t } from "./t";
-import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { useNavigate } from "react-router-dom";
 import { escapeRegex, formatSpeakerName } from "./chiasmUtils";
 import ChiasmGlyph from "../../_Common/ChiasmGlyph";
 import { openScripture } from "../../Home/tiles/ScripturePopup";

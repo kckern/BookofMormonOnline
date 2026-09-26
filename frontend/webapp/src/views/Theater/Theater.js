@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from "react";
 import Parser from "html-react-parser";
 import Loader from "../_Common/Loader";
-import { useRouteMatch, useHistory, Link } from "react-router-dom";
+import { useNavigate, Link, useParams, useLocation } from "react-router-dom";
+import { useLegacyParams } from "src/models/routeParams";
 import { label } from "src/models/Utils";
 import { analytics, GOALS } from "../../models/analytics/index.js";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
@@ -24,7 +25,7 @@ import prev from "./svg/prev.svg";
 import crossroads from "./svg/crossroads.svg";
 import detour from "./svg/detour.svg";
 import again from "./svg/again.svg";
-import Switch from "react-bootstrap-switch";
+import Routes from "react-bootstrap-switch";
 import { lookup } from "scripture-guide";
 
 
@@ -68,7 +69,7 @@ const playAudioElement = (id) => {
 function TheaterWrapper() {
 
   const appController = useAppController();
-  let match = useRouteMatch();
+  let match = { params: useLegacyParams(), url: useLocation().pathname };
   let slug = match?.params?.slug || null;
 
   const slugIsRef = ((slug)=>{
@@ -882,7 +883,7 @@ function TheaterControls({ visible }) {
   } = theaterController;
 
 
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const [playerCanPlay, setPlayerCanPlay] = useState(false);
 
@@ -909,7 +910,7 @@ function TheaterControls({ visible }) {
     document.title = `${title}`;
     // Queue advancement is not user navigation — don't grow history;
     // Back should leave the theater, not replay every passage.
-    history.replace(`/theater/${slug}`);
+    navigate(`/theater/${slug}`, { replace: true });
 
     return () => {
       if (logTimerRef.current) {
@@ -1651,7 +1652,7 @@ function PlaybackSettings({setShowPlaybackSettings}){
 
     <div className="theater-config-container">
         <div className="background-music-label">{label("background_music")}:</div>
-        <div><Switch 
+        <div><Routes 
                             id="audioSwitch"
                             onText={label("on")}
                             offText={label("off")}

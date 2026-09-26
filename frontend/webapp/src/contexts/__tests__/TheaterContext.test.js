@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { TheaterProvider, useTheater } from "../TheaterContext";
 
-const fixture = { isPlaying: false, pause: jest.fn() };
+const fixture = { isPlaying: false, pause: vi.fn() };
 
 function Probe() {
   const theaterController = useTheater();
@@ -20,7 +20,7 @@ test("useTheater returns the provided controller", () => {
 });
 
 test("useTheater throws a helpful error without a provider", () => {
-  jest.spyOn(console, "error").mockImplementation(() => {});
+  vi.spyOn(console, "error").mockImplementation(() => {});
   expect(() => render(<Probe />)).toThrow(/TheaterProvider/);
   console.error.mockRestore();
 });

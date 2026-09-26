@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { MultiSelect } from "react-multi-select-component";
-import { useHistory, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { label } from 'src/models/Utils';
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import { useAppController } from "src/contexts/AppControllerContext";
@@ -34,7 +34,7 @@ const FACET_META = {
 };
 
 function Container() {
-  const history = useHistory();
+  const navigate = useNavigate();
   const location = useLocation();
   const appController = useAppController();
   const [filters, setFilters] = useState(() => queryToFilters(location.search));
@@ -58,7 +58,7 @@ function Container() {
     if (detailName) p.set("name", detailName);
     const s = p.toString();
     const q = s ? "?" + s : "";
-    if (q !== location.search) history.replace({ pathname: location.pathname, search: q });
+    if (q !== location.search) navigate({ pathname: location.pathname, search: q }, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, detailName]);
 

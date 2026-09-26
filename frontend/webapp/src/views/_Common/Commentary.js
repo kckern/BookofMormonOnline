@@ -19,7 +19,7 @@ import { lastScriptureRef } from "./ATV/lastScriptureRef";
 import { ATVApparatus } from "./ATV/ATVApparatus";
 import { getHtmlScriptureLinkParserOptions, getDetectedScripturesHtml } from "./ViewUtils";
 import SweetAlert from "react-bootstrap-sweetalert";
-import { Link } from "react-router-dom/cjs/react-router-dom.min";
+import { Link } from "react-router-dom";
 import { useAppController } from "src/contexts/AppControllerContext";
 //
 

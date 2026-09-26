@@ -1,9 +1,9 @@
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-jest.mock('src/models/BoMOnlineAPI', () => ({ __esModule: true, default: jest.fn(), ApiBaseUrl: 'http://t' }));
-jest.mock('src/models/Utils', () => ({ label: (k) => k }));
-jest.mock('react-toastify', () => ({ toast: { error: jest.fn() } }));
+vi.mock('src/models/BoMOnlineAPI', () => ({ __esModule: true, default: vi.fn(), ApiBaseUrl: 'http://t' }));
+vi.mock('src/models/Utils', () => ({ label: (k) => k }));
+vi.mock('react-toastify', () => ({ toast: { error: vi.fn() } }));
 import BoMOnlineAPI from 'src/models/BoMOnlineAPI';
 import Wizard from '../Wizard';
 
@@ -15,7 +15,6 @@ const preview = { parts: 3, enddate: '2026-08-14', warnings: [], segments: [
   { period: 'Day 1', ref: '1 Nephi 1-2', duedate: '2026-07-16', blocks: 4 }] };
 
 beforeEach(() => {
-  BoMOnlineAPI.mockReset();
   BoMOnlineAPI.mockImplementation((q) => {
     if (q.contents !== undefined) return Promise.resolve({ contents });
     if (q.readingplanpreview) return Promise.resolve({ readingplanpreview: [preview] });
@@ -25,8 +24,8 @@ beforeEach(() => {
 });
 
 test('walks scope → pace → confirm → start', async () => {
-  const onStarted = jest.fn();
-  const onClose = jest.fn();
+  const onStarted = vi.fn();
+  const onClose = vi.fn();
   render(<Wizard token="tkn" onClose={onClose} onStarted={onStarted} />);
   await waitFor(() => screen.getByText('Page A'));
   fireEvent.click(screen.getByLabelText(/Page A/));
@@ -43,7 +42,7 @@ test('walks scope → pace → confirm → start', async () => {
 });
 
 test('blocks Next on empty scope', async () => {
-  render(<Wizard token="tkn" onClose={jest.fn()} onStarted={jest.fn()} />);
+  render(<Wizard token="tkn" onClose={vi.fn()} onStarted={vi.fn()} />);
   await waitFor(() => screen.getByText('Page A'));
   fireEvent.click(screen.getByText(/rp_next/));
   expect(screen.getByText(/rp_empty_scope/)).toBeInTheDocument();
@@ -55,7 +54,7 @@ test('shows clamp warning from preview', async () => {
     if (q.readingplanpreview) return Promise.resolve({ readingplanpreview: [{ ...preview, parts: 2, warnings: [{ code: 'PARTS_CLAMPED', detail: 2 }] }] });
     return Promise.resolve({});
   });
-  render(<Wizard token="tkn" onClose={jest.fn()} onStarted={jest.fn()} />);
+  render(<Wizard token="tkn" onClose={vi.fn()} onStarted={vi.fn()} />);
   await waitFor(() => screen.getByText('Page A'));
   fireEvent.click(screen.getByLabelText(/Page A/));
   fireEvent.click(screen.getByText(/rp_next/));
@@ -65,8 +64,8 @@ test('shows clamp warning from preview', async () => {
 });
 
 test('books tab compiles a canonical verse range (hardcoded, no lookup freeze)', async () => {
-  const onStarted = jest.fn();
-  render(<Wizard token="tkn" onClose={jest.fn()} onStarted={onStarted} />);
+  const onStarted = vi.fn();
+  render(<Wizard token="tkn" onClose={vi.fn()} onStarted={onStarted} />);
   await waitFor(() => screen.getByText(/rp_tab_books/));
   fireEvent.click(screen.getByText(/rp_tab_books/));
   fireEvent.click(screen.getByLabelText(/Mosiah/));

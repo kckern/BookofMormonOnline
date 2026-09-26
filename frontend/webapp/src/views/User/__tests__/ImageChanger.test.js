@@ -9,26 +9,26 @@ import {
 } from "../imageEditorUtils";
 
 const mockCropper = {
-  getImageData: jest.fn(() => ({ ratio: 0.5 })),
-  zoomTo: jest.fn(),
-  rotate: jest.fn(),
-  reset: jest.fn(),
-  getCroppedCanvas: jest.fn(() => ({ canvas: true })),
+  getImageData: vi.fn(() => ({ ratio: 0.5 })),
+  zoomTo: vi.fn(),
+  rotate: vi.fn(),
+  reset: vi.fn(),
+  getCroppedCanvas: vi.fn(() => ({ canvas: true })),
 };
 
-jest.mock("react-cropper", () => function MockCropper(props) {
-  const MockReact = require("react");
+vi.mock("react-cropper", () => ({ default: function MockCropper(props) {
+  const MockReact = React;
   MockReact.useEffect(() => props.onInitialized(mockCropper), [props]);
   return <div data-testid="cropper" data-aspect={props.aspectRatio} />;
-});
+} }));
 
-jest.mock("../imageEditorUtils", () => {
-  const actual = jest.requireActual("../imageEditorUtils");
+vi.mock("../imageEditorUtils", async () => {
+  const actual = await vi.importActual("../imageEditorUtils");
   return {
     ...actual,
-    prepareWorkingImage: jest.fn(),
-    canvasToBlob: jest.fn(),
-    blobToDataUrl: jest.fn(),
+    prepareWorkingImage: vi.fn(),
+    canvasToBlob: vi.fn(),
+    blobToDataUrl: vi.fn(),
   };
 });
 
@@ -61,7 +61,7 @@ beforeEach(() => {
   mockCropper.rotate.mockClear();
   mockCropper.reset.mockClear();
   mockCropper.getCroppedCanvas.mockReturnValue({ canvas: true });
-  prepareWorkingImage.mockResolvedValue({ src: "blob:working", revoke: jest.fn() });
+  prepareWorkingImage.mockResolvedValue({ src: "blob:working", revoke: vi.fn() });
   canvasToBlob.mockResolvedValue(new Blob(["jpeg"], { type: "image/jpeg" }));
   blobToDataUrl.mockResolvedValue("data:image/jpeg;base64,dGVzdA==");
 });
@@ -97,7 +97,7 @@ async function chooseImage() {
 }
 
 test("opens an accessible dialog and restores focus after Escape", async () => {
-  render(<PictureWithOverlay kind="profile" fallbackUserId="alice" onCommit={jest.fn()} />);
+  render(<PictureWithOverlay kind="profile" fallbackUserId="alice" onCommit={vi.fn()} />);
   const trigger = screen.getByRole("button", { name: "Change profile photo" });
   trigger.focus();
   fireEvent.click(trigger);
@@ -109,7 +109,7 @@ test("opens an accessible dialog and restores focus after Escape", async () => {
 });
 
 test("uses a fixed-square crop and returns a bounded JPEG result", async () => {
-  const onCommit = jest.fn().mockResolvedValue(undefined);
+  const onCommit = vi.fn().mockResolvedValue(undefined);
   render(<PictureWithOverlay kind="profile" fallbackUserId="alice" onCommit={onCommit} />);
   fireEvent.click(screen.getByRole("button", { name: "Change profile photo" }));
   await chooseImage();
@@ -129,7 +129,7 @@ test("uses a fixed-square crop and returns a bounded JPEG result", async () => {
 
 test("keeps the dialog open and shows an actionable validation error", async () => {
   prepareWorkingImage.mockRejectedValueOnce(new ImageEditorError("image_type_unsupported"));
-  render(<PictureWithOverlay kind="profile" fallbackUserId="alice" onCommit={jest.fn()} />);
+  render(<PictureWithOverlay kind="profile" fallbackUserId="alice" onCommit={vi.fn()} />);
   fireEvent.click(screen.getByRole("button", { name: "Change profile photo" }));
   fireEvent.change(document.querySelector(".imageEditor-fileInput"), {
     target: { files: [new File(["gif"], "photo.gif", { type: "image/gif" })] },
@@ -139,7 +139,7 @@ test("keeps the dialog open and shows an actionable validation error", async () 
 });
 
 test("group images use the group fallback and stage a File without a personal user id", async () => {
-  const onCommit = jest.fn().mockResolvedValue(undefined);
+  const onCommit = vi.fn().mockResolvedValue(undefined);
   render(<PictureWithOverlay kind="group" fallbackUserId="alice" onCommit={onCommit} />);
   const avatar = document.querySelector(".editableImage-avatar");
   expect(avatar.getAttribute("src")).not.toContain("6384e2b2184bcbf58eccf10ca7a6563c");

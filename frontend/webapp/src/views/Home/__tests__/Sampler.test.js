@@ -5,9 +5,9 @@ import { AppControllerProvider } from "src/contexts/AppControllerContext";
 import Sampler, { assemblePayload } from "../Sampler";
 import { tileRegistry } from "../tiles/registry";
 
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
   assetUrl: "https://media.test",
   ApiBaseUrl: "http://localhost:5005",
 }));
@@ -44,7 +44,7 @@ const renderSampler = () =>
   );
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
   sessionStorage.clear();
   localStorage.clear(); // isolate the sampler cache between tests
 });

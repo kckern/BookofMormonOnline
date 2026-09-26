@@ -36,7 +36,7 @@
  * move no counts. The parser was UNCHANGED and stays clean corpus-wide (0 throws,
  * 0 warnings, 0 empty segments, 0 unglossed codes, max depth 4).
  */
-import fs from "fs";
+import fs from "node:fs";
 import { parseApparatus } from "../parseATV";
 
 const CORPUS = process.env.ATV_CORPUS;

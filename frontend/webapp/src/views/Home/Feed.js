@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams, useHistory, Link, useRouteMatch } from "react-router-dom";
+import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
+import { useLegacyParams } from "src/models/routeParams";
 import ProgressBox from "../User/ProgressBox.js";
 import { Card, CardHeader, CardBody, CardFooter, Button } from "reactstrap";
 
@@ -30,7 +31,6 @@ import activityfeed from "src/views/_Common/svg/activityfeed.svg";
 import { label, ParseMessage } from "src/models/Utils";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI.js";
 import { analytics, GOALS } from "../../models/analytics/index.js";
-import VisibilitySensor from "react-visibility-sensor";
 import { prepareQuery } from "../_Common/Study/StudyChat.js";
 import like from "../_Common/Study/svg/like.svg";
 import comment from "../_Common/Study/svg/comment.svg";
@@ -356,6 +356,31 @@ function HomeFeedItem({
     }
   };
 
+  // Was <VisibilitySensor>, which resolves its child through
+  // ReactDOM.findDOMNode — removed in React 19, so this threw and took the
+  // WHOLE community feed down (/home/community rendered nothing).
+  // IntersectionObserver does the same job natively: no dependency, no
+  // findDOMNode, and no extra wrapper element to disturb the feed layout.
+  const cardRef = useRef(null);
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return undefined;
+    if (typeof IntersectionObserver === "undefined") {
+      // jsdom and very old browsers: load rather than never load.
+      handleVisibilityChange(true);
+      return undefined;
+    }
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) handleVisibilityChange(true);
+      },
+      { threshold: 0 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [comments?.length, item.replycount]);
+
   // Live replies (backlog #12): the controller dispatches
   // addMessageToThread<parentId> for every socket-delivered thread reply, so
   // other users' comments appear in place instead of waiting for a
@@ -415,8 +440,8 @@ function HomeFeedItem({
   <div className="progress bot">{label("bot")}</div> :
   <div className="progress">{item.user.progress}%</div>;
   return (
-    <VisibilitySensor key={item.id} onChange={handleVisibilityChange}>
-      <Card className="homeFeed" key={item.id}>
+    <>
+      <Card className="homeFeed" innerRef={cardRef} key={item.id}>
         <CardHeader className="homeFeedHeader group noselect" key={item.id}>
           <div className="topLine" key={item.id}>
             <Link
@@ -485,7 +510,7 @@ function HomeFeedItem({
           memberMap={memberMap}
         />
       </Card>
-    </VisibilitySensor>
+    </>
   );
 }
 
@@ -820,7 +845,7 @@ function Comments({ comments, count, item, group, memberMap, sbChannel, fetchCom
 
 function Comment({ comment }) {
   const appController = useAppController();
-  const match = useRouteMatch();
+  const match = { params: useLegacyParams(), url: useLocation().pathname };
   const urlMatch = parseInt(match.params?.messageId || 0) || 0;
   if (!comment) return null;
   let finished = comment.user.finished;

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Comments from "./Study/Study";
 import Draggable from "react-draggable";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
-import { Link, useHistory } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Victory } from "src/views/User/Victory";
 import XrelSection from "./XrelSection";
 import "./PopUp.css";
@@ -280,7 +280,7 @@ function Place() {
   const [showOptions, setShowOptions] = useState(false);
   const [PopUpRef,setPopUpRef] = useState(null)
   const [showMapsDropDown, showMapsDropDownSet] = useState(false),
-    { push } = useHistory();
+    navigate = useNavigate();
 
   if (appController.popUpData[appController.states.popUp.activeId] === undefined) {
     BoMOnlineAPI({ places: appController.states.popUp.ids }).then(
@@ -304,7 +304,7 @@ function Place() {
     event.place = place;
     window.dispatchEvent(event);
     //
-    push(`/map/${map}/place/${place}`);
+    navigate(`/map/${map}/place/${place}`);
   };
   
   let place = appController.popUpData[appController.states.popUp.activeId];

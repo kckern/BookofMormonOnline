@@ -125,6 +125,40 @@ export default defineConfig(({ mode }) => {
     // app can be exercised against the backend without the Next front door.
     preview: { port: 8299, strictPort: true, proxy },
 
+    // Vitest replaces the CRA-era jest 27 setup (jest.config.js + the vendored
+    // transforms in config/jest/). It runs through this very Vite config, so the
+    // resolve.alias block above is the single source of truth for module
+    // resolution — bundler and test runner can no longer drift, which the old
+    // moduleNameMapper duplication made easy.
+    //
+    // Why the switch was forced rather than cosmetic: jest 27 cannot parse
+    // ESM-only packages, and html-react-parser 6 (needed for React 19) is
+    // ESM-only. 74 suites died on "Cannot use import statement outside a
+    // module". Vitest consumes ESM natively, so transformIgnorePatterns and the
+    // yet-another-react-lightbox exports-map workaround are both gone.
+    test: {
+      globals: true,
+      environment: "jsdom",
+      // Mirrors CRA's testMatch. Every file under a __tests__ dir here is a
+      // real test — verified, no fixtures — so this stays equivalent.
+      include: [
+        "src/**/__tests__/**/*.{js,jsx,ts,tsx}",
+        "src/**/*.{spec,test}.{js,jsx,ts,tsx}",
+      ],
+      // LOAD-BEARING, carried over from jest's `resetMocks: true`: 164 test
+      // files were written assuming mocks reset between cases without doing it
+      // themselves. Dropping this silently cross-contaminates tests.
+      mockReset: true,
+      // Same 15s the jest config carried, and for the same reason: the heaviest
+      // jsdom tests render a full chapter and blow a 5s budget under parallel
+      // load. Vitest's default is also 5s, so this must be restated or the
+      // ImageChanger/Read-class tests flake again.
+      testTimeout: 15000,
+      // CSS imports are no-ops, matching what CRA's cssTransform did. There are
+      // no *.module.css files, so no class-name mapping is needed either.
+      css: false,
+    },
+
     build: {
       // Kept as a safety net for any CommonJS that reappears under src/.
       // Note it only applies to `vite build` — Vite's dev server serves native

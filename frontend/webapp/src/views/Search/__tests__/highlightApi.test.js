@@ -1,12 +1,14 @@
 import { fetchHighlightRange, __clearHighlightCache } from '../highlightApi';
 
-jest.mock('axios', () => ({ __esModule: true, default: jest.fn() }));
+vi.mock('axios', () => ({ __esModule: true, default: vi.fn() }));
 import axios from 'axios';
 
-jest.mock('src/models/BoMOnlineAPI', () => ({ GraphQLApiUrl: 'http://api.test/graphql' }));
-jest.mock('src/models/Utils', () => ({ determineLanguage: () => 'en' }));
+vi.mock('src/models/BoMOnlineAPI', () => ({ GraphQLApiUrl: 'http://api.test/graphql' }));
+vi.mock('src/models/Utils', () => ({ determineLanguage: () => 'en' }));
 
-beforeEach(() => { axios.mockReset(); __clearHighlightCache(); });
+// mockReset comes from vite.config.mjs globally; calling it on a module mock
+// makes Vitest invoke that mock once more with no arguments.
+beforeEach(() => { __clearHighlightCache(); });
 
 test('posts a highlight query and returns the range', async () => {
   axios.mockResolvedValue({ data: { data: { highlight: { start: 2, end: 9 } } } });

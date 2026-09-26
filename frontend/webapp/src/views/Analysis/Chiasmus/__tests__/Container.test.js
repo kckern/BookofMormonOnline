@@ -1,20 +1,19 @@
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
   assetUrl: "https://media.test",
   ApiBaseUrl: "",
 }));
-jest.mock("../../../Home/tiles/ScripturePopup", () => ({
+vi.mock("../../../Home/tiles/ScripturePopup", () => ({
   __esModule: true,
   default: () => null,
-  openScripture: jest.fn(),
+  openScripture: vi.fn(),
 }));
 
 import React from "react";
 import "@testing-library/jest-dom";
 import { render, screen, act, fireEvent } from "@testing-library/react";
-import { Router, Route } from "react-router-dom";
-import { createMemoryHistory } from "history";
+import { MemoryRouter, Route, Routes, useLocation, useNavigate, useNavigationType } from "react-router-dom";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import Container from "../Chiasmus";
 import { __clearChiasmCache } from "../Chiasm";
@@ -39,12 +38,12 @@ const DETAIL = (id) => ({
 
 beforeAll(() => {
   // jsdom has no scrollIntoView; Container's active-card effect calls it
-  Element.prototype.scrollIntoView = jest.fn();
+  Element.prototype.scrollIntoView = vi.fn();
 });
 
 beforeEach(() => {
   __clearChiasmCache();
-  jest.clearAllMocks();
+  vi.clearAllMocks();
   BoMOnlineAPI.mockImplementation((input) =>
     input.chiasmus
       ? Promise.resolve({ chiasmus: LIST })
@@ -54,17 +53,55 @@ beforeEach(() => {
   );
 });
 
-// Real route pattern from src/models/Routes.js: { path: "/analysis/:value*" }
+// Real route pattern from src/models/Routes.js: { path: "/analysis/*" }.
+//
+// react-router 7 has no injectable history — BrowserRouter/MemoryRouter own it —
+// so these tests can no longer hold a `history` object. This probe rebuilds the
+// two things they assert on: the current location, and whether a navigation was
+// a PUSH or a REPLACE. useNavigationType() reports that directly, which is a
+// more precise instrument than the old `history.length` arithmetic: length only
+// implied "a push happened" by growing.
+//
+// `length` is therefore synthesised as 1 + (number of PUSH navigations), which
+// is exactly what a memory history reported for these cases.
+function HistoryProbe({ sink }) {
+  const location = useLocation();
+  const navigationType = useNavigationType();
+  const navigate = useNavigate();
+  sink.location = location;
+  sink.navigate = navigate;
+  if (sink.lastKey !== location.key) {
+    sink.lastKey = location.key;
+    if (navigationType === "PUSH") sink.pushes += 1;
+    sink.types.push(navigationType);
+  }
+  return null;
+}
+
 const renderAt = (path) => {
-  const history = createMemoryHistory({ initialEntries: [path] });
+  const sink = { pushes: 0, lastKey: null, types: [] };
   render(
-    <Router history={history}>
-      <Route path="/analysis/:value*">
-        <Container />
-      </Route>
-    </Router>
+    <MemoryRouter initialEntries={[path]}>
+      <Routes>
+        <Route path="/analysis/*" element={<Container />} />
+      </Routes>
+      <HistoryProbe sink={sink} />
+    </MemoryRouter>
   );
-  return history;
+  return {
+    get location() {
+      return sink.location;
+    },
+    get length() {
+      return 1 + sink.pushes;
+    },
+    get types() {
+      return sink.types;
+    },
+    goBack: () => sink.navigate(-1),
+    push: (to) => sink.navigate(to),
+    replace: (to) => sink.navigate(to, { replace: true }),
+  };
 };
 
 test("deep link opens the detail panel without navigating", async () => {
@@ -163,7 +200,7 @@ test("non-speaker grouping keeps the per-card speaker name and avatar", async ()
 });
 
 test("browsing produces no duplicate-key warnings (audit §2.3 canary)", async () => {
-  const errSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+  const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
   const history = renderAt("/analysis/chiasmus");
   fireEvent.click(await screen.findByRole("button", { name: /first chiasm/i }));
   await screen.findByText("Detail x1");

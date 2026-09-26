@@ -1,23 +1,23 @@
 import { lazy } from "react";
 import { isMessengerNavigationEnabled } from './featureFlags';
 import { determineLanguage } from "./Utils.js";
-import { Redirect, useParams } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 
 // Feature flag - messaging disabled until Phase 5 data migration
 const USE_MESSENGER = isMessengerNavigationEnabled();
 
-// Redirect component for disabled routes
-const DisabledRedirect = () => <Redirect to="/" />;
+// Navigate component for disabled routes
+const DisabledRedirect = () => <Navigate to="/" />;
 
 // Legacy /community/* and /user/* now live under the unified Home.
 export const CommunityRedirect = () => {
   const { channelId, messageId } = useParams();
   const tail = channelId ? `/${channelId}${messageId ? `/${messageId}` : ""}` : "";
-  return <Redirect to={`/home/community${tail}`} />;
+  return <Navigate to={`/home/community${tail}`} />;
 };
 export const UserRedirect = () => {
   const { value } = useParams();
-  return <Redirect to={`/home/user${value ? `/${value}` : ""}`} />;
+  return <Navigate to={`/home/user${value ? `/${value}` : ""}`} />;
 };
 
 // COMPONENTS
@@ -66,14 +66,16 @@ const routes = [
   },
   {
     // Unified tabbed Home: /home (Explore), /home/community, /home/user.
-    // Non-exact so the Home shell handles all sub-paths. (spec:
+    // Splat so the Home shell handles all sub-paths. v5 achieved this by being
+    // non-exact; v7 matches "/home" exactly, which left /home/user and friends
+    // falling through to the page catch-all. (spec:
     // docs/specs/2026-07-17-unified-tabbed-home.md)
-    path: "/home",
+    path: "/home/*",
     component: Home,
   },
   // Legacy redirects into the unified Home (most specific first).
   {
-    path: "/community/:channelId/:messageId(\\d+)",
+    path: "/community/:channelId/:messageId",
     component: CommunityRedirect,
   },
   {
@@ -94,7 +96,7 @@ const routes = [
     component: USE_MESSENGER ? Group : DisabledRedirect,
   },
   {
-    path: "/group/:channelId/:messageId(\\d+)",
+    path: "/group/:channelId/:messageId",
     component: USE_MESSENGER ? Group : DisabledRedirect,
   },
   {
@@ -118,7 +120,7 @@ const routes = [
     component: Welcome,
   },
   {
-    path: "/welcome/:welcomeId+",
+    path: "/welcome/*",
     component: Welcome,
   },
   {
@@ -126,7 +128,7 @@ const routes = [
     component: Facsimiles,
   },
   {
-    path: "/fax/:faxVersion+",
+    path: "/fax/*",
     component: Facsimiles,
   },
   {
@@ -146,11 +148,11 @@ const routes = [
     component: ReadScripture,
   },
   {
-    path: "/theater/:slug*",
+    path: "/theater/*",
     component: Theater,
   },
   {
-    path: "/audit/:key*",
+    path: "/audit/*",
     component: Audit,
   },
   {
@@ -162,7 +164,7 @@ const routes = [
     component: KRSEB,
   },
   {
-    path: "/analysis/:value*",
+    path: "/analysis/*",
     component: Analysis,
   },
   {
@@ -272,55 +274,54 @@ const routes = [
     component: Matters,
   },
   {
-    // Single Route (path array, specific first) so <Switch> never unmounts
+    // Single Route (path array, specific first) so <Routes> never unmounts
     // TimeLine when opening/closing the info-box (/timeline ↔ /timeline/:slug).
     // Otherwise the whole grid remounts on every modal toggle, discarding the
     // memoized fill layer and scroll position.
-    path: ["/timeline/:markerSlug", "/timeline"],
+    path: "/timeline/*",
     component: TimeLine,
   },
   {
-    // Single Route for all map URLs so <Switch> never unmounts Map when
-    // navigating between place/story/event/move variants. Order matters:
-    // path-to-regexp tries each in turn, so more specific patterns come first.
-    path: [
-      "/map/:mapType/story/:storySlug/move/:moveSeq(\\d+)",
-      "/map/:mapType/story/:storySlug",
-      "/map/:mapType/event/:storySlug/move/:moveSeq(\\d+)",
-      "/map/:mapType/event/:storySlug",
-      "/map/:mapType/place/:placeName",
-      "/map/:mapType",
-      "/maps",
-      "/map",
-    ],
+    // Was one element of the v5 path array; "/map/*" does not match "/maps",
+    // so it needs its own entry or it falls through to the page catch-all.
+    path: "/maps",
     component: Map,
   },
   {
-    path: "/commentary/:commentaryId(\\d+)",
+    // Single Route for all map URLs so <Routes> never unmounts Map when
+    // navigating between place/story/event/move variants. Order matters:
+    // path-to-regexp tries each in turn, so more specific patterns come first.
+    path: "/map/*",
+    component: Map,
+  },
+  {
+    path: "/commentary/:commentaryId",
     component: Page,
   },
   {
-    path: "/image/:imageId(\\d+)",
+    path: "/image/:imageId",
     component: ArtPage,
     exact: true,
   },
   {
-    path: "/art/:imageId(\\d+)",
+    path: "/art/:imageId",
     component: ArtPage,
     exact: true,
   },
   {
-    path: "/:pageSlug+/:textId(\\d+)/fax/:faxVersion+",
+    // Catch-all for scripture pages, text blocks and facsimile views:
+    //   /<slug...>              -> page
+    //   /<slug...>/<n>          -> text block
+    //   /<slug...>/<n>/fax/<v>  -> facsimile
+    // v7 cannot express v5's ":pageSlug+/:textId(\\d+)" — it has no
+    // multi-segment params and no regex — and the slug genuinely can be several
+    // segments (the Next SSR classifier calls it "leading segments" and reads a
+    // numeric tail as a text block). So one splat replaces all three entries and
+    // Page derives pageSlug/textId/faxVersion with parsePagePath(). v7 ranks a
+    // splat LAST and picks the best match rather than the first, so this cannot
+    // shadow the explicit routes above.
+    path: "*",
     component: Page,
-  },
-  {
-    path: "/:pageSlug+/:textId(\\d+)",
-    component: Page,
-  },
-  {
-    path: "/:pageSlug+",
-    component: Page,
-    exact: true,
   },
 
 

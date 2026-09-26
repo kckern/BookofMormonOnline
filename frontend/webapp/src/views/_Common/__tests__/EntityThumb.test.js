@@ -3,7 +3,7 @@ import "@testing-library/jest-dom";
 import { render, screen, fireEvent } from "@testing-library/react";
 import EntityThumb from "../EntityThumb";
 
-jest.mock("src/models/BoMOnlineAPI", () => ({ assetUrl: "https://cdn.test" }));
+vi.mock("src/models/BoMOnlineAPI", () => ({ assetUrl: "https://cdn.test" }));
 
 describe("EntityThumb", () => {
   test("renders an img pointing at the asset path for its type", () => {

@@ -7,7 +7,7 @@ import ArchiveDocTile from "../ArchiveDocTile";
 import TranslationTile from "../TranslationTile";
 import JosephSmithTile from "../JosephSmithTile";
 
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
   assetUrl: "https://media.test",
 }));
 

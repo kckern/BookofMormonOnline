@@ -2,7 +2,7 @@ import React from "react";
 import { render } from "@testing-library/react";
 import { FaxCrop } from "../FaxCrop";
 
-jest.mock("src/models/BoMOnlineAPI", () => ({ renderBaseUrl: "http://render.test" }));
+vi.mock("src/models/BoMOnlineAPI", () => ({ renderBaseUrl: "http://render.test" }));
 
 test("builds the crop URL from version + selector + width", () => {
   const { container } = render(<FaxCrop version="1837" selector="ids/31103" width={400} alt="1837 Kirtland" />);

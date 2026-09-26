@@ -1,6 +1,6 @@
 // FaxCrop is mocked so nothing hits the network; the mock echoes the props the
 // modal passes so we can assert version + selector without an <img> load.
-jest.mock("../FaxCrop", () => ({
+vi.mock("../FaxCrop", () => ({
   FaxCrop: (p) => (
     <img
       data-testid="crop"
@@ -66,7 +66,7 @@ test("an omission reading is captioned 'these words do not appear'", () => {
 
 test("close button, Escape, and backdrop click all call onClose", () => {
   const unit = unitOf("[<em>x</em> A|<em>y</em> B]");
-  const onClose = jest.fn();
+  const onClose = vi.fn();
   render(<VariantCompare unit={unit} verseId={1} reference="r" onClose={onClose} />);
   fireEvent.click(screen.getByRole("button", { name: /close/i }));
   fireEvent.keyDown(document, { key: "Escape" });

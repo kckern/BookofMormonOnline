@@ -6,7 +6,7 @@ import { makeScriptureLinkReplacer } from "../scriptureLinkReplacer";
 const HTML = 'see <a className="scripture_link">Alma 5:2</a> here';
 
 test("turns scripture_link anchors into clickable elements passing the ref text", () => {
-  const onClick = jest.fn();
+  const onClick = vi.fn();
   const replacer = makeScriptureLinkReplacer({ onClick });
   render(<div>{Parser(HTML, { replace: replacer })}</div>);
   const link = screen.getByText("Alma 5:2");

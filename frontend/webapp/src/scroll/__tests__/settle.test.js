@@ -15,13 +15,13 @@ const setScrollY = (y) =>
   Object.defineProperty(window, "scrollY", { value: y, configurable: true, writable: true });
 
 beforeEach(() => {
-  jest.useFakeTimers();
+  vi.useFakeTimers();
   rafQueue = [];
   window.requestAnimationFrame = (cb) => rafQueue.push(cb) && rafQueue.length;
   window.cancelAnimationFrame = () => {};
   setScrollY(0);
 });
-afterEach(() => jest.useRealTimers());
+afterEach(() => { vi.useRealTimers(); });
 
 test("resolves settled when position is stable near the target", async () => {
   setScrollY(500);
@@ -50,7 +50,7 @@ test("times out when never stable", async () => {
   let y = 0;
   const p = awaitScrollSettled(10_000, { timeoutMs: 1000 });
   const drift = setInterval(() => setScrollY((y += 50)), 10);
-  jest.advanceTimersByTime(1001);
+  vi.advanceTimersByTime(1001);
   clearInterval(drift);
   await expect(p).resolves.toBe("timeout");
 });

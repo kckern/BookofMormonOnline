@@ -4,7 +4,8 @@ import React, { useState, useEffect } from "react";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import { Spinner } from "../_Common/Loader";
 import { isMobile, label, processName, replaceNumbers, tr } from "src/models/Utils";
-import { Link, useRouteMatch } from "react-router-dom";
+import { Link, useParams, useLocation } from "react-router-dom";
+import { useLegacyParams } from "src/models/routeParams";
 import { Card, CardHeader, CardBody, CardFooter, Button } from "reactstrap";
 import "./Matters.css";
 import "../Places/Places.css";
@@ -80,7 +81,7 @@ function MattersComponent() {
     setFilterRaw(result);
   };
 
-  const match = useRouteMatch();
+  const match = { params: useLegacyParams(), url: useLocation().pathname };
   const routeParam = match?.params?.matterSlug;
   // A group keyword seeds the Category axis; anything else is a real slug → popup.
   const activeGroup = routeParam && CATEGORY_TEST[routeParam] ? routeParam : null;

@@ -3,8 +3,8 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
-jest.mock("src/models/featureFlags", () => ({ isMessengerEnabled: jest.fn(() => true) }));
-jest.mock("src/models/Utils", () => ({ label: (k) => k }));
+vi.mock("src/models/featureFlags", () => ({ isMessengerEnabled: vi.fn(() => true) }));
+vi.mock("src/models/Utils", () => ({ label: (k) => k }));
 
 import { isMessengerEnabled } from "src/models/featureFlags";
 import HomeTabs, { activeTabFor } from "../HomeTabs";
@@ -13,7 +13,7 @@ const renderAt = (path) =>
   render(<MemoryRouter initialEntries={[path]}><HomeTabs /></MemoryRouter>);
 
 describe("HomeTabs", () => {
-  beforeEach(() => isMessengerEnabled.mockReturnValue(true));
+  beforeEach(() => { isMessengerEnabled.mockReturnValue(true); });
 
   test("shows all three tabs when messenger on", () => {
     renderAt("/home");

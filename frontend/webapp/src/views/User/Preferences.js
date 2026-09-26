@@ -2,7 +2,7 @@
 import { Alert, Button, Card, CardBody, CardFooter, CardHeader, Label } from "reactstrap"
 import { isMessengerNavigationEnabled } from '../../models/featureFlags';
 import { label } from "src/models/Utils"
-import Switch from "react-bootstrap-switch";
+import Routes from "react-bootstrap-switch";
 import { useEffect, useState } from "react";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import "./Preferences.css"
@@ -176,7 +176,7 @@ export default function User() {
                 <h5 className="title">
                     <Label className="audio_narration"><img src={audio} />
                         {label("audio_narration")}
-                        <Switch
+                        <Routes
                             id="audioSwitch"
                             onText={label("on")}
                             offText={label("off")}
@@ -191,7 +191,7 @@ export default function User() {
                 <h5 className="title">
                     <Label className="auto_play"><img src={autoplay} />
                         {label("auto_play")}
-                        <Switch
+                        <Routes
                             id="audioSwitch"
                             onText={label("on")}
                             offText={label("off")}
@@ -207,7 +207,7 @@ export default function User() {
                 <h5 className="title">
                     <Label className="canned_responses"><img src={chat} />
                         {label("message_hints")}
-                        <Switch
+                        <Routes
                             onText={label("on")}
                             offText={label("off")}
                             onChange={toggleChat}
@@ -223,7 +223,7 @@ export default function User() {
                 <h5 className="title">
                     <Label className="dark_mode"><img src={darkmode} />
                         {label("dark_mode")}
-                        <Switch
+                        <Routes
                             onText={label("on")}
                             offText={label("off")}
                             onChange={toggleDarkMode}
@@ -237,7 +237,7 @@ export default function User() {
                 <h5 className="title">
                     <Label className="sound_effects"><img src={sound} />
                         {label("sound_effects")}
-                        <Switch
+                        <Routes
                             onText={label("on")}
                             offText={label("off")}
                             onChange={toggleSound}
@@ -252,7 +252,7 @@ export default function User() {
                 <h5 className="title">
                     <Label className="illustrations"><img src={illustrations} />
                         {label("art")}
-                        <Switch
+                        <Routes
                             onText={label("on")}
                             offText={label("off")}
                             onChange={toggleArt}
@@ -269,7 +269,7 @@ export default function User() {
                 {(!lang || lang==="en") && <><hr/><h5 className="title">
                     <Label className="fax_select"><img src={facsimiles} />
                         {label("facsimiles")}
-                        <Switch
+                        <Routes
                             onText={label("on")}
                             offText={label("off")}
                             onChange={toggleFax}
@@ -334,7 +334,7 @@ function EmailNotificationPreferences({ token }) {
         {EMAIL_CATEGORIES.map(category => <h5 className="title" key={category}>
             <Label className={`email_notification_${category}`}>
                 {label(`email_notification_${category}`)}
-                <Switch
+                <Routes
                     onText={label("on")}
                     offText={label("off")}
                     onChange={() => toggle(category)}
@@ -374,7 +374,7 @@ function Publications({pubs,toggleControversialCommentary,toggleCommentary}){
     <h5 className="title">
                     <Label className="commentary_select"><img src={commentary} />
                         {label("commentary_singular")}
-                        <Switch
+                        <Routes
                             onText={label("on")}
                             offText={label("off")}
                             onChange={toggleCommentary}
@@ -389,7 +389,7 @@ function Publications({pubs,toggleControversialCommentary,toggleCommentary}){
                     {rpubs.length && <h5 className="title">
                     <Label className="fax_select"><img src={commentary} />
                         {label("controversial_commentaries")}
-                        <Switch
+                        <Routes
                             onText={label("Hide")}
                             offText={label("Show")}
                             onChange={toggleControversialCommentary}

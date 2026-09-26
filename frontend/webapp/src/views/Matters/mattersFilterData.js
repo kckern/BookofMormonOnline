@@ -172,7 +172,7 @@ export const subformsByForm = {
   ],
 };
 
-// Switch columns inside the selector box, left → right. Category is the canonical
+// Routes columns inside the selector box, left → right. Category is the canonical
 // three-group taxonomy and stays put; the Form/Subform detail column (below) is
 // added as an extra column once a Kind is on.
 export const filterAxes = [

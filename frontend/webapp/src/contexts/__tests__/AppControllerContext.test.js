@@ -26,7 +26,7 @@ test("useAppController returns the provided controller", () => {
 });
 
 test("useAppController throws a helpful error without a provider", () => {
-  jest.spyOn(console, "error").mockImplementation(() => {});
+  vi.spyOn(console, "error").mockImplementation(() => {});
   expect(() => render(<Probe />)).toThrow(/AppControllerProvider/);
   console.error.mockRestore();
 });

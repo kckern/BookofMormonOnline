@@ -49,7 +49,7 @@ import moment from "moment";
 import momentDurationFormatSetup from "moment-duration-format";
 import { Link } from "react-router-dom";
 import { history } from "src/models/routeHistory";
-import { Switch } from "react-router-dom/cjs/react-router-dom.min";
+import { Routes } from "react-router-dom";
 import BoMOnlineAPI from "../../../models/BoMOnlineAPI";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { useMessenger } from "src/contexts/MessengerContext";

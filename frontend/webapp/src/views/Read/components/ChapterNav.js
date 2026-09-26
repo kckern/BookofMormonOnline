@@ -1,5 +1,5 @@
 import React, { useMemo, memo } from 'react';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import ReactTooltip from 'react-tooltip';
 import { slugify, memoizedLookupReference } from '../../../utils/scriptureUtils';
 import { label, determineLanguage } from '../../../models/Utils';
@@ -12,7 +12,7 @@ const lang = determineLanguage();
  * @param {Function} onChapterClick - Callback when chapter is clicked
  */
 export const ChapterNav = memo(({ chapterRef, onChapterClick }) => {
-    const history = useHistory();
+    const navigate = useNavigate();
     
     // Static data - these never change
     const chapterCounts = [22,33,7,1,1,1,1,29,63,16,30,1,9,15,10];
@@ -78,7 +78,7 @@ export const ChapterNav = memo(({ chapterRef, onChapterClick }) => {
                     if (onChapterClick) {
                         onChapterClick(chapter);
                     }
-                    history.push(`/read/${slugify(chapter)}`);
+                    navigate(`/read/${slugify(chapter)}`);
                 };
                 
                 result.push(
@@ -97,7 +97,7 @@ export const ChapterNav = memo(({ chapterRef, onChapterClick }) => {
             bookIndex++;
         }
         return result;
-    }, [bookNames, bookFirsts, chapterCounts, allChapterVerseIds, currentChapterFirstVerseId, onChapterClick, history]);
+    }, [bookNames, bookFirsts, chapterCounts, allChapterVerseIds, currentChapterFirstVerseId, onChapterClick, navigate]);
 
     return (
         <div className="chapter-nav">

@@ -1,7 +1,7 @@
 import React from "react";
 import "@testing-library/jest-dom";
 import { render, fireEvent, within } from "@testing-library/react";
-import { MemoryRouter, Route } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 
 /**
  * Isolated in its own file ON PURPOSE.
@@ -26,13 +26,13 @@ import { MemoryRouter, Route } from "react-router-dom";
  * run order flags, or future edits to the sibling file.
  */
 
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
     __esModule: true,
-    default: jest.fn(() => Promise.resolve({ history: [] })),
+    default: vi.fn(() => Promise.resolve({ history: [] })),
     assetUrl: "https://assets.test",
 }));
 
-jest.mock("src/models/Utils", () => ({
+vi.mock("src/models/Utils", () => ({
     // Real en labels (see docs/plans/2026-08-07-history-translation.md) -- displayDate
     // formats through these, so a naive identity mock would feed moment.format() the
     // literal key string instead of a format token and produce garbage dates.
@@ -43,14 +43,14 @@ jest.mock("src/models/Utils", () => ({
     }[k] ?? k),
 }));
 
-jest.mock("src/contexts/AppControllerContext", () => ({
-    useAppController: () => ({ functions: { setPopUp: jest.fn() } }),
+vi.mock("src/contexts/AppControllerContext", () => ({
+    useAppController: () => ({ functions: { setPopUp: vi.fn() } }),
 }));
 
 // Not exercised here (sources resolve to [] so the heatmap never mounts), but
 // stubbed anyway to keep this file's import graph as light as the sibling
 // harness's and avoid coupling to WitnessLifeHeatmap's own internals.
-jest.mock("../WitnessLifeHeatmap", () => ({
+vi.mock("../WitnessLifeHeatmap", () => ({
     __esModule: true,
     default: () => null,
 }));
@@ -101,7 +101,7 @@ describe("witness index — comparator mutation", () => {
         const dropdownOrder = async (path) => {
             const result = render(
                 <MemoryRouter initialEntries={[path]}>
-                    <Route path={WITNESS_ROUTE}><Witnesses /></Route>
+                    <Routes><Route path={WITNESS_ROUTE} element={<Witnesses />} /></Routes>
                 </MemoryRouter>
             );
             const trigger = await within(result.container).findByRole("button", { name: /Martin Harris/ });
@@ -123,7 +123,7 @@ describe("witness index — comparator mutation", () => {
         // the module-level arrays in place.
         const indexRender = render(
             <MemoryRouter initialEntries={["/history/witnesses"]}>
-                <Route path={WITNESS_ROUTE}><Witnesses /></Route>
+                <Routes><Route path={WITNESS_ROUTE} element={<Witnesses />} /></Routes>
             </MemoryRouter>
         );
         await within(indexRender.container).findByText("Three Witnesses");

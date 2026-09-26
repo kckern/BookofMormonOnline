@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import Parser from "html-react-parser";
 // COMPONENTS
 import Loader from "../_Common/Loader";
-import { useRouteMatch, useHistory, useLocation, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link, useParams } from "react-router-dom";
+import { useLegacyParams } from "src/models/routeParams";
 import { parseMode, buildSearchPath, shouldOfferRich, isRichDegraded, VERSE_CAP } from "./searchMode";
 import { label } from "src/models/Utils";
 import { HIDE_MATTERS_NAV } from "src/models/featureFlags";
@@ -17,12 +18,12 @@ import "./Search.css";
 
 function SearchComponent() {
 
-  const history = useHistory();
-  const match = useRouteMatch();
+  const navigate = useNavigate();
+  const match = { params: useLegacyParams(), url: useLocation().pathname };
   const location = useLocation();
   const mode = parseMode(location.search);
   useEffect(() => { document.title = label("menu_search") + " | " + label("home_title"); }, [])
-  const { push } = useHistory(),
+  const
     [keyword, setKeyWord] = useState(getSearchValue(match.params?.value)),
     [content, setContent] = useState(<Loader />);
 
@@ -50,7 +51,7 @@ function SearchComponent() {
 
   const searchFor = (keyword) => {
     if (keyword.trim() === "") return;
-    history.push(buildSearchPath(getSearchSlug(keyword), mode));
+    navigate(buildSearchPath(getSearchSlug(keyword), mode));
     document.querySelector(".nav .searchbox input").value = keyword;
   }
 
@@ -73,11 +74,11 @@ function SearchComponent() {
     <div className="search-mode-toggle">
       <button
         className={mode === "keyword" ? "active" : ""}
-        onClick={() => history.push(buildSearchPath(getSearchSlug(keyword), "keyword"))}
+        onClick={() => navigate(buildSearchPath(getSearchSlug(keyword), "keyword"))}
       >{(label("search_verses_only", [-1]) || "").trim() || "Verses"}</button>
       <button
         className={mode === "rich" ? "active" : ""}
-        onClick={() => history.push(buildSearchPath(getSearchSlug(keyword), "rich"))}
+        onClick={() => navigate(buildSearchPath(getSearchSlug(keyword), "rich"))}
       >{(label("search_everything", [-1]) || "").trim() || "Everything"}</button>
     </div>
   );
@@ -91,7 +92,7 @@ function SearchComponent() {
       if (r?.lookup) {
         let goTo = r?.lookup?.[0]?.slug || null;
         document.querySelector(".searchbox input").value = "";
-        if (goTo) push("/" + goTo); else toast.warning(label("no_results_for_x", [<span>{keyword}</span>]), { position: 'top-center' })
+        if (goTo) navigate("/" + goTo); else toast.warning(label("no_results_for_x", [<span>{keyword}</span>]), { position: 'top-center' })
       } else {
         if(!keyword || keyword.length===1) return setContent(<div>
           <h3 className="title lg-4 text-center">{label("search")}</h3>{toggle}{searchBox}</div>);
@@ -115,7 +116,7 @@ function SearchComponent() {
             <div className="search-rich-banner">
               {/* i18n TODO: seed `search_many_results` with a $1 placeholder, then route through label() */}
               {`${verseTotal} matches — showing the first ${VERSE_CAP}.`}{" "}
-              <button onClick={() => history.push(buildSearchPath(getSearchSlug(keyword), "rich"))}>
+              <button onClick={() => navigate(buildSearchPath(getSearchSlug(keyword), "rich"))}>
                 {label("search_try_topical", [-1]) || "Try topical search"}
               </button>
             </div>

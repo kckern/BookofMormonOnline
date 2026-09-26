@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo, useReducer } from "react";
-import { useParams, useHistory } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
 import { useSwipe } from "../../models/Utils";
 import { assetUrl, renderBaseUrl } from 'src/models/BoMOnlineAPI';
@@ -25,7 +25,7 @@ import { faxVerseReducer, initialFaxVerseState } from "./faxVerseState";
  * Displays pages in a book-like spread with left and right pages
  */
 function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], currentVolumeIndex = -1, onSeamOffset }) {
-  const history = useHistory();
+  const navigate = useNavigate();
   const { pageNumber } = useParams();
   
   // All hooks must be called at the top level before any conditionals
@@ -159,7 +159,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
       // drop the modal by rewriting the URL to the page number (no auto-open, no loader).
       if (suppressModal) {
         const leaf = leafIndex[idx];
-        if (leaf && leaf.pageSlugLeaf != null) history.replace(`/fax/${item.slug}/${leaf.pageSlugLeaf}`);
+        if (leaf && leaf.pageSlugLeaf != null) navigate(`/fax/${item.slug}/${leaf.pageSlugLeaf}`, { replace: true });
       }
       return;
     }
@@ -378,9 +378,9 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     const adjustedIndex = getAdjustedPageIndex(newIndex);
     const targetPage = leafIndex[adjustedIndex];
     if (targetPage) {
-      history.replace(`/fax/${item.slug}/${targetPage.pageSlugLeaf}`);
+      navigate(`/fax/${item.slug}/${targetPage.pageSlugLeaf}`, { replace: true });
     }
-  }, [history, item.slug, leafIndex, getAdjustedPageIndex, cancelFlip]);
+  }, [navigate, item.slug, leafIndex, getAdjustedPageIndex, cancelFlip]);
 
   // Resolve the left (even) leaf index a forward/back turn should land on,
   // preserving the pre-existing nav semantics (2 pages at a time, even-last clamp).
@@ -509,7 +509,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     const open = vstate.openVerse;
     if (!open) return; // closing reverts the URL via the modal's onClose, not here
     const slug = (open.ref || "").replace(/[ :]+/g, ".").toLowerCase();
-    if (slug && slug !== rawSlug) history.replace(`/fax/${item.slug}/${slug}`);
+    if (slug && slug !== rawSlug) navigate(`/fax/${item.slug}/${slug}`, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vstate.openVerse]);
 
@@ -538,7 +538,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
     const dest = (leftPage && leftPage.pageSlugLeaf != null)
       ? leftPage
       : leafIndex.find((l) => l && l.pageSlugLeaf != null);
-    if (dest) history.replace(`/fax/${item.slug}/${dest.pageSlugLeaf}`);
+    if (dest) navigate(`/fax/${item.slug}/${dest.pageSlugLeaf}`, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [faxVerses.ready, urlTargetsVerse, urlVerseId, spreadVerses, vstate.openVerse]);
 
@@ -644,12 +644,12 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
         
         // faxPageOnly: this is an edition switch, not a verse deep-link — the ref in
         // targetPath only picks the page; the viewer must land there without a modal.
-        history.push(targetPath, { faxPageOnly: true });
+        navigate(targetPath, { faxPageOnly: true });
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [handleSwipeLeft, handleSwipeRight, volumeOrder, currentVolumeIndex, history, cancelFlip, leftPage?.pageSlugLeaf, rightPage?.pageSlugLeaf, leftPage?.pageReference, rightPage?.pageReference]);
+  }, [handleSwipeLeft, handleSwipeRight, volumeOrder, currentVolumeIndex, navigate, cancelFlip, leftPage?.pageSlugLeaf, rightPage?.pageSlugLeaf, leftPage?.pageReference, rightPage?.pageReference]);
 
   // Slider interaction handlers
   const handleSliderChange = useCallback((e) => {
@@ -917,11 +917,11 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
               anchorX={vstate.openVerse ? window.innerWidth / 2 + seamAnchorFromDom() : null}
               onPrev={() => handleVerseNav("prev")}
               onNext={() => handleVerseNav("next")}
-              onRead={(v) => { const rp = readPath(v.ref); if (rp) history.push(rp); }}
+              onRead={(v) => { const rp = readPath(v.ref); if (rp) navigate(rp); }}
               onClose={() => {
                 vdispatch({ type: "CLOSE" });
                 // Revert a ref/verse-id path back to the page number on close.
-                if (urlTargetsVerse && leftPage) history.replace(`/fax/${item.slug}/${leftPage.pageSlugLeaf}`);
+                if (urlTargetsVerse && leftPage) navigate(`/fax/${item.slug}/${leftPage.pageSlugLeaf}`, { replace: true });
               }}
             />
           </div>

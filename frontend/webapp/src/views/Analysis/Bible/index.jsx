@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
-import { useRouteMatch, useHistory, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
+import { useLegacyParams } from "src/models/routeParams";
 import { parseValue, serialize } from "./urlState";
 import { label } from "src/models/Utils";
 import Overview from "./Overview";
@@ -8,11 +9,13 @@ import Reader from "./Reader";
 import "./crossref.css";
 
 export default function BibleCrossRef() {
-  const { params: { value } } = useRouteMatch();
-  const history = useHistory();
+  const { value } = useLegacyParams();
+  const routerNavigate = useNavigate();
   const location = useLocation();
   const state = parseValue(value, location.search);
-  const navigate = (next) => history.push(serialize(next));
+  // This file already had its own `navigate` helper wrapping history.push,
+  // so the router hook is bound under a different name.
+  const navigate = (next) => routerNavigate(serialize(next));
 
   useEffect(() => {
     const name =

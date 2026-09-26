@@ -46,7 +46,7 @@ describe("FaxVerseModal", () => {
   });
 
   test("prev/next buttons and arrow keys step verses", () => {
-    const onPrev = jest.fn(), onNext = jest.fn();
+    const onPrev = vi.fn(), onNext = vi.fn();
     render(<FaxVerseModal verse={verse} version="1830" pageScale={700} onPrev={onPrev} onNext={onNext} onClose={() => {}} />);
     fireEvent.click(document.querySelector(".faxVerseModal-nav.next"));
     expect(onNext).toHaveBeenCalledTimes(1);
@@ -59,7 +59,7 @@ describe("FaxVerseModal", () => {
   });
 
   test("the reference is a link that calls onRead", () => {
-    const onRead = jest.fn();
+    const onRead = vi.fn();
     render(<FaxVerseModal verse={verse} version="1830" pageScale={700} onRead={onRead} onClose={() => {}} />);
     expect(document.querySelector(".faxVerseModal-read")).toBeNull(); // no separate button
     fireEvent.click(document.querySelector(".faxVerseModal-ref.as-link"));
@@ -67,7 +67,7 @@ describe("FaxVerseModal", () => {
   });
 
   test("backdrop click and Escape both call onClose", () => {
-    const onClose = jest.fn();
+    const onClose = vi.fn();
     render(<FaxVerseModal verse={verse} version="1830" pageScale={700} onClose={onClose} />);
     fireEvent.click(document.querySelector(".faxVerseModal-backdrop"));
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -80,11 +80,11 @@ describe("FaxVerseModal", () => {
     beforeEach(() => {
       // Give every element a fixed 560px width so the height useLayoutEffect
       // (width -> px height via the aspect) actually runs under jsdom.
-      rectSpy = jest
+      rectSpy = vi
         .spyOn(HTMLElement.prototype, "getBoundingClientRect")
         .mockReturnValue({ width: 560, height: 0, top: 0, left: 0, right: 560, bottom: 0, x: 0, y: 0, toJSON: () => {} });
     });
-    afterEach(() => rectSpy.mockRestore());
+    afterEach(() => { rectSpy.mockRestore(); });
 
     const crossPageVerse = {
       verse_id: 108, ref: "Jacob 1:8", text: "verse text",

@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import fs from "node:fs";
+import path from "node:path";
 const files = [
   '../../views/User/SignUp.js', '../../views/_Common/Study/StudyChat.js',
   '../../views/_Common/Study/Study.js', '../../views/Home/Feed.js',

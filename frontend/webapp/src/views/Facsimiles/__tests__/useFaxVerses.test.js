@@ -3,9 +3,9 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { lookupReference } from "scripture-guide";
 import { useFaxVerses } from "../useFaxVerses";
 
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
-  default: jest.fn(() => Promise.resolve({ read: { "Alma 5": { sections: [] } } })),
+  default: vi.fn(() => Promise.resolve({ read: { "Alma 5": { sections: [] } } })),
   renderBaseUrl: "",
 }));
 
@@ -16,11 +16,11 @@ function Probe({ left, right }) {
 }
 
 describe("useFaxVerses", () => {
-  afterEach(() => { jest.clearAllMocks(); delete global.fetch; });
+  afterEach(() => { vi.clearAllMocks(); delete global.fetch; });
 
   test("chunks >40 ids into multiple /fax/boxes calls and hydrates versesByPage", async () => {
     const firstId = lookupReference("Alma 5:1").verse_ids[0];
-    global.fetch = jest.fn(() => Promise.resolve({
+    global.fetch = vi.fn(() => Promise.resolve({
       ok: true,
       json: () => Promise.resolve({
         pageScale: 700,
@@ -37,7 +37,7 @@ describe("useFaxVerses", () => {
   });
 
   test("no version or no ids -> empty state, no fetch", async () => {
-    global.fetch = jest.fn();
+    global.fetch = vi.fn();
     render(<Probe left={null} right={null} />);
     await waitFor(() => expect(screen.getByTestId("out").textContent).toBe("scale=700;page10=0"));
     expect(global.fetch).not.toHaveBeenCalled();

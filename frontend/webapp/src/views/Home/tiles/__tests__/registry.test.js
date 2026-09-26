@@ -1,8 +1,8 @@
 // Importing the registry pulls every tile component. Stub the API layer so no
 // module-level network/side effects fire during the import.
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
-  default: jest.fn(() => new Promise(() => {})),
+  default: vi.fn(() => new Promise(() => {})),
   assetUrl: "https://media.test",
   renderBaseUrl: "http://localhost:5006",
   ApiBaseUrl: "http://localhost:5005",

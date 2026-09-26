@@ -2,16 +2,15 @@ import React from 'react';
 import { render, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-jest.mock('../highlightApi', () => {
-  const actual = jest.requireActual('../highlightApi');
-  return { ...actual, fetchHighlightRange: jest.fn() };
+vi.mock('../highlightApi', async () => {
+  const actual = await vi.importActual('../highlightApi');
+  return { ...actual, fetchHighlightRange: vi.fn() };
 });
 import { fetchHighlightRange, _api, useHighlightRange } from '../highlightApi';
 
 const realIO = global.IntersectionObserver;
 afterEach(() => { global.IntersectionObserver = realIO; });
 beforeEach(() => {
-  fetchHighlightRange.mockReset();
   // Keep _api in sync so the hook (which calls _api.fetchHighlightRange) uses the mock.
   _api.fetchHighlightRange = fetchHighlightRange;
 });

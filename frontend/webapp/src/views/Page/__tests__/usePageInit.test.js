@@ -1,6 +1,6 @@
 import { buildInitSteps, buildOpenList, awaitTargetPresent } from "../usePageInit";
-jest.mock("src/utils/deepLinkInstrument", () => ({
-  recordDeepLinkEvent: jest.fn(),
+vi.mock("src/utils/deepLinkInstrument", () => ({
+  recordDeepLinkEvent: vi.fn(),
 }));
 import { recordDeepLinkEvent } from "src/utils/deepLinkInstrument";
 
@@ -103,15 +103,15 @@ const flushFrames = async (n) => {
 };
 
 beforeEach(() => {
-  jest.useFakeTimers();
+  vi.useFakeTimers();
   rafQueue = [];
   window.requestAnimationFrame = (cb) => { rafQueue.push(cb); return rafQueue.length; };
-  window.cancelAnimationFrame = jest.fn();
+  window.cancelAnimationFrame = vi.fn();
 });
 afterEach(() => {
-  jest.useRealTimers();
+  vi.useRealTimers();
   document.body.innerHTML = "";
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 });
 
 test("awaitTargetPresent resolves true immediately when selector already in DOM", async () => {
@@ -126,7 +126,7 @@ test("awaitTargetPresent resolves false after timeout when element never appears
   // Nothing in DOM for this selector
   const p = awaitTargetPresent(`[textid="lehites/missing"]`, { timeoutMs: 1000 });
   // Advance fake timers past the timeout
-  jest.advanceTimersByTime(1001);
+  vi.advanceTimersByTime(1001);
   // Drain any pending microtasks/rAF frames
   await flushFrames(2);
   await expect(p).resolves.toBe(false);

@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { MapProvider, useMapController } from "../MapContext";
 
-const fixture = { mapName: "test", setTooltip: jest.fn() };
+const fixture = { mapName: "test", setTooltip: vi.fn() };
 
 function Probe() {
   const mapController = useMapController();
@@ -20,7 +20,7 @@ test("useMapController returns the provided controller", () => {
 });
 
 test("useMapController throws a helpful error without a provider", () => {
-  jest.spyOn(console, "error").mockImplementation(() => {});
+  vi.spyOn(console, "error").mockImplementation(() => {});
   expect(() => render(<Probe />)).toThrow(/MapProvider/);
   console.error.mockRestore();
 });

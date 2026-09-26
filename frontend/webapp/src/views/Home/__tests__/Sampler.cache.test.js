@@ -6,9 +6,9 @@ import Sampler from "../Sampler";
 import { tileRegistry } from "../tiles/registry";
 import { write as writeCache } from "../tiles/homeSamplerCache";
 
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
   assetUrl: "https://media.test",
   ApiBaseUrl: "http://localhost:5005",
 }));
@@ -45,7 +45,7 @@ const sawSamplerFetch = () =>
   BoMOnlineAPI.mock.calls.some(([input]) => input && "homesampler" in input);
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
   sessionStorage.clear();
   localStorage.clear();
 });

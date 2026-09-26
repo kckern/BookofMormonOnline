@@ -5,11 +5,12 @@ import ReactTooltip from "react-tooltip";
 
 import { Card, CardHeader, CardBody, Alert } from "reactstrap";
 import { Link } from 'react-router-dom';
+import { useLegacyParams } from "src/models/routeParams";
 import Masonry from 'react-masonry-css'
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { assetUrl } from 'src/models/BoMOnlineAPI';
 import "./Facsimiles.scss"
-import { useParams, useHistory } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { label } from "src/models/Utils";
 import { isMobile, useSwipe } from "../../models/Utils";
 import FacsimilePageViewer from './FacsimilePageViewer';
@@ -20,8 +21,8 @@ import backIcon from '../_Common/svg/back.svg';
 import { resolvePgOffset, buildLeafIndex, getRefFromIndex } from "./faxGeometry";
 
 function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
-  const match = useParams();
-  const history = useHistory();
+  const match = useLegacyParams();
+  const navigate = useNavigate();
   const findLeafFromSlug = (leafIndex, match) => {
     return leafIndex.find((leaf) => `${leaf.pageSlugLeaf}` === `${match.pageNumber}`) || null;
   };
@@ -63,10 +64,10 @@ function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
   // Handle keypress for escape
   const handleKeyPress = useCallback((e) => {
     if (e.key === "Escape") {
-      history.push(match.pageNumber !== undefined ? `/fax/${item.slug}` : "/fax");
+      navigate(match.pageNumber !== undefined ? `/fax/${item.slug}` : "/fax");
     }
     // Left and right arrow keys can be added here if desired
-  }, [history, match.pageNumber, item.slug]);
+  }, [navigate, match.pageNumber, item.slug]);
 
   useEffect(() => {
     document.addEventListener("keydown", handleKeyPress);
@@ -285,6 +286,9 @@ export function PageOverlay({ pageLeaf }) {
 // - FacsimilePageViewerMobile.js for mobile
 
 function Facsimiles() {
+  // This component (not just FacsimileViewer above) redirects page=last,
+  // so it needs its own navigate binding.
+  const navigate = useNavigate();
   const [FaxList, setFaxList] = useState(null);
   const [loadError, setLoadError] = useState(false);
 
@@ -296,8 +300,7 @@ function Facsimiles() {
     return () => { cancelled = true; };
   }, []);
 
-  const match = useParams();
-  const history = useHistory();
+  const match = useLegacyParams();
   const activeFax = FaxList?.[match.faxVersion];
   useEffect(() => { document.title = (activeFax?.title || label("menu_fax")) + " | " + label("home_title"); }, [activeFax?.code])
 
@@ -315,9 +318,9 @@ function Facsimiles() {
     const totalPages = parseInt(fax?.pages, 10);
     const maxPage = Number.isFinite(totalPages) ? totalPages : null;
     if (rawPage === 'last' && maxPage && history?.replace) {
-      history.replace(`/fax/${edition}/${maxPage}`);
+      navigate(`/fax/${edition}/${maxPage}`, { replace: true });
     }
-  }, [FaxList, match.faxVersion, match.pageNumber, history]);
+  }, [FaxList, match.faxVersion, match.pageNumber, navigate]);
   const contentsUI = () => {
     const faxCount = Object.keys(FaxList).length;
     const breakpointColumnsObj = faxCount > 6 ? {

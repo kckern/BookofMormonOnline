@@ -1,9 +1,8 @@
 import { randomHex } from "./models/randomHex";
 import React from "react";
-import { Router } from 'react-router';
+import { BrowserRouter } from 'react-router-dom';
 import { Route } from 'react-router-dom';
 import { toast, ToastContainer } from "react-toastify";
-import { createBrowserHistory } from 'history';
 import Cookies from 'js-cookie';
 
 import "react-toastify/dist/ReactToastify.css";
@@ -24,7 +23,6 @@ const base64EncodedString = atob("NDA1MDg5ODg1Nzg3LWk5ODJoaW85M2xhYmJjY29jMWRvam
 const  REACT_APP_GOOGLE_CLIENT_ID  = process.env.REACT_APP_GOOGLE_CLIENT_ID || base64EncodedString;
 
 
-const history = createBrowserHistory();
 
 const containerStyle = {
   zIndex: 1999,
@@ -47,9 +45,9 @@ export default function App() {
       <ToastContainer autoClose={3000} style={containerStyle} limit={1} position={toast.POSITION.BOTTOM_LEFT} />
       <AppModal />
     <GoogleOAuthProvider clientId={REACT_APP_GOOGLE_CLIENT_ID}>
-        <Router history={history}>
+        <BrowserRouter>
           <MainLayout />
-        </Router>
+        </BrowserRouter>
       </GoogleOAuthProvider>
     </>
   );

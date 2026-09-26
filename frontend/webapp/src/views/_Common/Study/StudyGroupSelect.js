@@ -15,7 +15,7 @@ import {
   DropdownItem,
   ToastHeader,
 } from "reactstrap";
-import Switch from "react-bootstrap-switch";
+import Routes from "react-bootstrap-switch";
 import {
   breakCache,
   channelAtAGlance,
@@ -311,7 +311,7 @@ export function StudyGroupList() {
       <div className="topButtons">
         <Label className="studymode">
           {label("study_mode")}:{" "}
-          <Switch
+          <Routes
             onChange={setStudyMode}
             onText="On"
             offText="Off"

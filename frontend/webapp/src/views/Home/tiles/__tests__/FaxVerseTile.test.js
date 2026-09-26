@@ -3,14 +3,14 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import FaxVerseTile from "../FaxVerseTile";
 
-jest.mock("src/models/BoMOnlineAPI", () => ({
+vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
-  default: jest.fn(() => new Promise(() => {})),
+  default: vi.fn(() => new Promise(() => {})),
   assetUrl: "https://media.test",
   ApiBaseUrl: "http://localhost:5005",
   renderBaseUrl: "http://localhost:5006",
 }));
-jest.mock("src/views/_Common/ScriptureExcerpt", () => ({
+vi.mock("src/views/_Common/ScriptureExcerpt", () => ({
   __esModule: true,
   default: () => null,
 }));
