@@ -25,7 +25,7 @@ const USE_MESSENGER = isMessengerNavigationEnabled();
 export default function User() {
     const appController = useAppController();
 
-    useEffect(()=>document.title = label("preferences") + " | " + label("home_title"),[])
+    useEffect(() => { document.title = label("preferences") + " | " + label("home_title"); }, [])
 
     const lang = appController.states.preferences.lang;
     const userToken = appController.states.user.token;

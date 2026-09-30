@@ -13,7 +13,7 @@ import { label } from 'src/models/Utils';
 
 function Contents() {
   const [contents, setContents] = useState([]);
-  useEffect(()=>document.title = label("table_of_contents") + " | " + label("home_title"),[])
+  useEffect(() => { document.title = label("table_of_contents") + " | " + label("home_title"); }, [])
 
   // Load the table of contents once, guarded against setState after unmount
   // (was called directly in the render body — both a render-phase setState and

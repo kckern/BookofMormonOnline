@@ -23,7 +23,7 @@ import {
 
 
 function TimeLine(props) {
-  useEffect(()=>document.title = label("menu_timeline") + " | " + label("home_title"),[])
+  useEffect(() => { document.title = label("menu_timeline") + " | " + label("home_title"); }, [])
   const [timelineData, setTimelineData] = useState(null),
     map = useRef(null),
     // /timeline/* is one Route (so the grid never remounts when the info box

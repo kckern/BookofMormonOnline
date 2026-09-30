@@ -30,14 +30,12 @@ import { useAppController } from "src/contexts/AppControllerContext";
 export default function User() {
   const appController = useAppController();
   let name = appController.states.user.social?.nickname;
-  useEffect(
-    () =>
-      (document.title =
-        label("study_progress_for_x", [name ? name : label("guest")]) +
-        " | " +
-        label("home_title")),
-    [],
-  );
+  useEffect(() => {
+    document.title =
+      label("study_progress_for_x", [name ? name : label("guest")]) +
+      " | " +
+      label("home_title");
+  }, []);
   const match = { params: useLegacyParams(), url: useLocation().pathname };
   const [viewPrefs, setViewPrefs] = useState(
     match.params.value === "preferences",

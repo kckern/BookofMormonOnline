@@ -33,7 +33,7 @@ function History() {
   const appController = useAppController();
 
 
-  useEffect(()=>document.title = label("menu_history") + " | " + label("home_title"),[])
+  useEffect(() => { document.title = label("menu_history") + " | " + label("home_title"); }, [])
 
 
   const match = { params: useLegacyParams(), url: useLocation().pathname };

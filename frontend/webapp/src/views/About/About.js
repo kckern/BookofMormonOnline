@@ -26,7 +26,7 @@ import why from "./icons/why.svg";
 import contact from "./icons/contact.svg";
 import official from "./icons/official.svg";
 function About() {
-  useEffect(()=>document.title = label("menu_about") + " | " + label("home_title"),[])
+  useEffect(() => { document.title = label("menu_about") + " | " + label("home_title"); }, [])
   const match = { params: useLegacyParams(), url: useLocation().pathname };
   const [aboutPageData, setAboutPageData] = useState(null);
 

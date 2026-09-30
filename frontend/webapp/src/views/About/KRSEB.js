@@ -7,7 +7,7 @@ import "./KRSEB.css"
 
 
 export default function KRSEB() {
-    useEffect(()=>document.title =  "특별반 | " + label("home_title"),[])
+    useEffect(() => { document.title = "특별반 | " + label("home_title"); }, [])
     return (
         <div className="container krseb">
 
