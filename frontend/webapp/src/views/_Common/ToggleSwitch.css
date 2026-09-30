@@ -1,0 +1,69 @@
+.bomToggle {
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 0.75rem;
+  min-width: 4.2rem;
+  height: 1.9rem;
+  cursor: pointer;
+}
+
+/* The input covers the track so clicks, keyboard focus and screen readers hit it. */
+.bomToggle-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+  z-index: 1;
+}
+
+.bomToggle-track {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 0.6rem 0 2.1rem;
+  border-radius: 1rem;
+  background: #8a8a8a;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  transition: background-color 0.15s ease;
+}
+
+.bomToggle.is-on .bomToggle-track {
+  background: #198754;
+  justify-content: flex-end;
+  padding: 0 2.1rem 0 0.6rem;
+}
+
+.bomToggle-knob {
+  position: absolute;
+  top: 0.2rem;
+  left: 0.2rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s ease;
+}
+
+.bomToggle.is-on .bomToggle-knob {
+  left: auto;
+  right: 0.2rem;
+}
+
+.bomToggle-input:focus-visible + .bomToggle-track {
+  outline: 2px solid #c9a227;
+  outline-offset: 2px;
+}
+
+.bomToggle.is-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

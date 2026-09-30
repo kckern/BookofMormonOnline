@@ -25,7 +25,7 @@ import prev from "./svg/prev.svg";
 import crossroads from "./svg/crossroads.svg";
 import detour from "./svg/detour.svg";
 import again from "./svg/again.svg";
-import Routes from "react-bootstrap-switch";
+import ToggleSwitch from "../_Common/ToggleSwitch";
 import { lookup } from "scripture-guide";
 
 
@@ -1652,7 +1652,7 @@ function PlaybackSettings({setShowPlaybackSettings}){
 
     <div className="theater-config-container">
         <div className="background-music-label">{label("background_music")}:</div>
-        <div><Routes 
+        <div><ToggleSwitch 
                             id="audioSwitch"
                             onText={label("on")}
                             offText={label("off")}
