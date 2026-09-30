@@ -1,5 +1,5 @@
-import React, { Suspense, useEffect, useReducer, useState } from "react";
-import { Routes, Route } from "react-router-dom";
+import React, { Suspense, useEffect, useLayoutEffect, useReducer, useRef, useState } from "react";
+import { Routes, Route, useLocation, useNavigationType } from "react-router-dom";
 import { toast } from 'react-toastify';
 import Cookies from 'js-cookie';
 
@@ -27,9 +27,44 @@ import { BottomMenu } from "./BottomNav";
 // getSingleCache was imported here but never existed in Cache.js and was never
 // called; webpack quietly bound it to undefined, esbuild/Rollup reject it.
 import { getCache, getSingleCacheFromKey, setCache } from "../../models/Cache";
+import { scrollAction, resetScroll, restoreScroll } from "src/scroll/routeScrollReset";
 
 
 
+
+// Puts a newly opened page at the top and gives Back/Forward their position
+// back; the rules live in routeScrollReset. Positions are recorded per history
+// entry as the user scrolls, because by the time a route effect runs the new
+// content is already in and the old offset may have been clamped. Layout
+// effect so the reset lands before paint, and it sits ahead of <Routes> so it
+// runs before any view's own mount-time scroll (deep links, Read).
+function ScrollToTopOnPageChange() {
+  const location = useLocation();
+  const navigationType = useNavigationType();
+  const prev = useRef({ pathname: null, key: null });
+  const positions = useRef(new Map());
+  const restoring = useRef(null);
+
+  useEffect(() => {
+    const record = () => {
+      if (prev.current.key) positions.current.set(prev.current.key, window.scrollY);
+    };
+    window.addEventListener("scroll", record, { passive: true });
+    return () => window.removeEventListener("scroll", record);
+  }, []);
+
+  useLayoutEffect(() => {
+    const { pathname, hash, key } = location;
+    restoring.current?.abort("navigated");
+    restoring.current = null;
+    const action = scrollAction({ prevPathname: prev.current.pathname, pathname, hash, navigationType });
+    if (action === "top") resetScroll();
+    if (action === "restore") restoring.current = restoreScroll(positions.current.get(key));
+    prev.current = { pathname, key };
+  }, [location, navigationType]);
+
+  return null;
+}
 
 function Main(props) {
   
@@ -172,6 +207,7 @@ function Main(props) {
               appController.functions.openGroupList(false);
           }}
         >
+          <ScrollToTopOnPageChange />
           {/* /SHOW LOADER IN CASE DATA ARE FETCHING */}
           {!appController.preLoad ||
             (appController.states.user.user && appController.messenger === null) ? (
