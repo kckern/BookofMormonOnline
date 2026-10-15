@@ -1,0 +1,67 @@
+/* Shared by the entity bodies in both presentations (popup and page).
+   Selectors carry `button.<class>` so they outrank PopUp.css's
+   `.ppbody .refbox button`, which sizes the refbox's map buttons. */
+
+/* Reference items are buttons (they open the scripture popup); they render as
+   the plain black text they were as href-less anchors. */
+.ppbody .refbox button.ppref,
+button.ppref {
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  font: inherit;
+  color: #000;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* "Show all N" under a capped list: a gold-underlined text control. */
+.ppbody .refbox button.entity-show-all,
+button.entity-show-all {
+  align-self: flex-start;
+  width: auto;
+  height: auto;
+  margin: 0.5rem 0 1rem;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid #c9a24b;
+  border-radius: 0;
+  font: inherit;
+  font-size: 0.875rem;
+  color: #000;
+  cursor: pointer;
+}
+
+@media (pointer: coarse) {
+  .ppbody .refbox button.entity-show-all,
+  button.entity-show-all {
+    min-height: 44px;
+  }
+}
+
+button.ppref:focus-visible,
+button.entity-show-all:focus-visible,
+a.related_row:focus-visible {
+  outline: 2px solid #c9a24b;
+  outline-offset: 2px;
+}
+
+a.related_row,
+a.related_row:hover,
+a.related_row:focus {
+  color: #666;
+  text-decoration: none;
+}
+
+/* Dark theme: black text would vanish on the dark surfaces. */
+html[data-theme="dark"] button.ppref,
+html[data-theme="dark"] button.entity-show-all {
+  color: var(--text-primary);
+}
+html[data-theme="dark"] a.related_row {
+  color: var(--text-secondary);
+}

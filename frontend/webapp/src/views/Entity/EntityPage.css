@@ -51,9 +51,126 @@
   border-bottom: 1px solid #c9a24b;
 }
 
+/* Underline (not a border) so the gold rule stays under the text when the
+   touch padding grows the hit area. */
+.entity-page-crumb a {
+  color: #000;
+  text-decoration: underline;
+  text-decoration-color: #c9a24b;
+  text-underline-offset: 3px;
+}
+
+/* Breadcrumb-style way back, above the title so it is always above the fold. */
+.entity-page-crumb {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+}
+
+.entity-page-crumb a {
+  display: inline-block;
+  padding: 0.25rem 0;
+}
+
+@media (pointer: coarse) {
+  .entity-page-crumb {
+    margin: -0.5rem 0 0;
+  }
+  .entity-page-crumb a {
+    /* 44px tap target; the underline stays under the text. */
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0;
+  }
+}
+
+.entity-page-back a:focus-visible,
+.entity-page-crumb a:focus-visible {
+  outline: 2px solid #c9a24b;
+  outline-offset: 2px;
+}
+
+/* The name is the page's h1 (the popup keeps an h3). Match the old h3 look and
+   undo the theme's h1 <small> treatment (bold, uppercase, faded). */
+.entity-page .entity-name {
+  font-size: 2.625rem;
+  line-height: 1.15;
+  margin: 0 0 0.5rem;
+}
+
+/* One title block: name, then the subtitle directly under it. The <br> plus
+   the popup's 1ex line-height opened a ~60-95px dead gap. */
+.entity-page .entity-name br {
+  display: none;
+}
+
+.entity-page .entity-name .ppbody-title {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 1rem;
+  line-height: 1.3;
+  font-weight: 400;
+  text-transform: none;
+  opacity: 1;
+}
+
+/* House neutral gray: #aaa on the #eee ground was ~2:1. */
+.entity-page .ppbody-title,
+.entity-page .xrel-note,
+.entity-page .xrel-group-count {
+  color: #6b6b6b;
+}
+
+/* Phone: one column. The 18rem flex-basis became a height in a column flex
+   and the refbox kept a squeezed ~149px half-width column. Flatten both
+   columns (display: contents) so the portrait can sit right after the title,
+   then prose, then relationships and references at full width. */
 @media (max-width: 700px) {
   .entity-page .ppbody {
     flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 0;
+  }
+
+  .entity-page .ppbody .bodytext,
+  .entity-page .ppbody .refbox {
+    display: contents;
+  }
+
+  .entity-page .ppbody .bodytext > * {
+    order: 2;
+  }
+
+  .entity-page .ppbody .bodytext > .entity-name {
+    order: 0;
+  }
+
+  .entity-page .ppbody .refbox > * {
+    order: 3;
+    width: 100%;
+    margin-left: 0;
+    border-left: 0;
+  }
+
+  /* A modest portrait, not a full-width 330px square that pushes the prose
+     a whole screen down. */
+  .entity-page .ppbody .refbox > .ppimg {
+    order: 1;
+    width: min(100%, 12rem);
+    margin-bottom: 1rem;
+  }
+
+  .entity-page .ppbody .refbox > .entity-show-all {
+    width: auto;
+  }
+
+  /* Kept for any non-flattened fallback: full width, no rail rule. */
+  .entity-page .ppbody .refbox {
+    flex: none;
+    width: 100%;
+    margin-left: 0;
+    padding-left: 0;
+    border-left: 0;
   }
 }
 
@@ -83,4 +200,15 @@
   color: #000;
   text-decoration: none;
   border-bottom: 1px solid #c9a24b;
+}
+
+/* Dark theme: black links and #6b6b6b meta would fail on dark surfaces. */
+html[data-theme="dark"] .entity-page-back a,
+html[data-theme="dark"] .entity-page-crumb a {
+  color: var(--text-primary);
+}
+html[data-theme="dark"] .entity-page .ppbody-title,
+html[data-theme="dark"] .entity-page .xrel-note,
+html[data-theme="dark"] .entity-page .xrel-group-count {
+  color: var(--text-muted);
 }

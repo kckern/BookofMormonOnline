@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { label } from "src/models/Utils";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { resolveSlug } from "src/models/slugVariants";
@@ -64,9 +64,18 @@ export default function EntityPage({ type }) {
     navigate(`/map/${mapSlug}/place/${placeSlug}`);
   };
 
+  // Router links, not <a href>: a plain anchor reloaded the whole document.
+  // The top one is a breadcrumb above the title, so the way back is above the
+  // fold on every viewport; the bottom one stays for readers who reach the end.
+  const indexName = text(cfg.indexLabel, cfg.indexText);
+  const topBack = (
+    <nav className="entity-page-crumb" aria-label="Breadcrumb">
+      <Link to={cfg.base}>‹ {indexName}</Link>
+    </nav>
+  );
   const backLink = (
     <p className="entity-page-back">
-      <a href={cfg.base}>❮ {text(cfg.indexLabel, cfg.indexText)}</a>
+      <Link to={cfg.base}>❮ {indexName}</Link>
     </p>
   );
 
@@ -99,6 +108,7 @@ export default function EntityPage({ type }) {
       );
       return (
         <div className="entity-page">
+          {topBack}
           <cfg.Chooser requested={requested} candidates={candidates} onEntityClick={onEntityClick} />
           {backLink}
         </div>
@@ -107,6 +117,7 @@ export default function EntityPage({ type }) {
 
     return (
       <div className="entity-page">
+        {topBack}
         <div className="emptyState" style={{ padding: "2em", textAlign: "center" }}>
           {text("not_found", "Not found")}
         </div>
@@ -117,8 +128,10 @@ export default function EntityPage({ type }) {
 
   return (
     <div className="entity-page">
+      {topBack}
       <cfg.Body
         data={data}
+        headingLevel={1}
         setPopUpRef={setPopUpRef}
         PopUpRef={PopUpRef}
         onEntityClick={onEntityClick}
