@@ -5,6 +5,26 @@ import { useAppController } from "src/contexts/AppControllerContext";
 import { label } from "src/models/Utils";
 import { ReadingPlan } from "../ReadingPlan";
 import ReadingProgressTile from "./ReadingProgressTile";
+import { readPlanPreview, loadPlanPreview } from "./planPreviewCache";
+
+// Until the default program's preview lands (cold load only — it's cached
+// after that), reserve the grid at its final size: the default program is 52
+// weekly segments, and not-started bubbles are just numbered, so placeholders
+// look identical to the real grid and nothing below the tile moves.
+const PLACEHOLDER_SEGMENTS = Array.from({ length: 52 }, () => ({}));
+const NBSP = "\u00a0";
+
+/** The default program preview: cached synchronously, else fetched once. */
+function usePlanPreview(enabled = true) {
+  const [preview, setPreview] = useState(readPlanPreview);
+  useEffect(() => {
+    if (!enabled || preview) return undefined;
+    let cancelled = false;
+    loadPlanPreview().then((p) => { if (!cancelled && p) setPreview(p); });
+    return () => { cancelled = true; };
+  }, [enabled, preview]);
+  return preview;
+}
 
 /**
  * Compact bubble preview — the ONLY look this tile ever shows by default:
@@ -44,31 +64,12 @@ function PlanBubbles({ title, meta, segments, ctas }) {
  * plus Start Reading / Sign In. Structure over slogans.
  */
 function GuestPlanPreview() {
-  const [program, setProgram] = useState(null);
-  const [segments, setSegments] = useState([]);
-  useEffect(() => {
-    let c = false;
-    BoMOnlineAPI({ readingplanprograms: null })
-      .then(async (r) => {
-        const prog = Object.values(r?.readingplanprograms || {})[0] || null;
-        if (c || !prog) return;
-        setProgram(prog);
-        const pv = await BoMOnlineAPI({ readingplanpreview: { config: prog.config } }, { useCache: false });
-        const raw = pv?.readingplanpreview;
-        // key:0 queries resolve to the object itself; array/keyed shapes are fallbacks.
-        const p = raw?.segments || raw?.parts !== undefined ? raw
-          : Array.isArray(raw) ? raw[0] : Object.values(raw || {})[0];
-        if (!c) setSegments(p?.segments || []);
-      })
-      .catch((e) => console.warn("guestPlanPreview:", e?.message || e));
-    return () => { c = true; };
-  }, []);
-  if (!program) return <div className="samplerTileInner valuePropTile" />;
+  const preview = usePlanPreview();
   return (
     <PlanBubbles
-      title={program.title}
-      meta={`0% · ${program.durationLabel}`}
-      segments={segments.map((s) => ({ ref: s.ref }))}
+      title={preview?.title || NBSP}
+      meta={preview ? `0% · ${preview.durationLabel}` : NBSP}
+      segments={preview?.segments || PLACEHOLDER_SEGMENTS}
       ctas={
         <>
           <Link className="valuePropPrimary" to="/contents">{label("start_reading")}</Link>
@@ -88,7 +89,6 @@ function GuestPlanPreview() {
  */
 function SignedInPlanTile({ token }) {
   const [state, setState] = useState({ phase: "loading", plan: null });
-  const [preview, setPreview] = useState(null);
   const [chooser, setChooser] = useState(false);
 
   const load = () => {
@@ -108,21 +108,8 @@ function SignedInPlanTile({ token }) {
   };
   useEffect(load, [token]);
 
-  // No active plan → fetch the default program's preview bubbles (like guest).
-  useEffect(() => {
-    if (state.phase !== "none") return undefined;
-    let c = false;
-    BoMOnlineAPI({ readingplanprograms: null }).then(async (r) => {
-      const prog = Object.values(r?.readingplanprograms || {})[0] || null;
-      if (c || !prog) return;
-      const pv = await BoMOnlineAPI({ readingplanpreview: { config: prog.config } }, { useCache: false });
-      const raw = pv?.readingplanpreview;
-      const p = raw?.segments || raw?.parts !== undefined ? raw
-        : Array.isArray(raw) ? raw[0] : Object.values(raw || {})[0];
-      if (!c) setPreview({ title: prog.title, durationLabel: prog.durationLabel, segments: p?.segments || [] });
-    }).catch(() => {});
-    return () => { c = true; };
-  }, [state.phase]);
+  // No active plan → the default program's preview bubbles (like guest).
+  const preview = usePlanPreview(state.phase === "none" || state.phase === "error");
 
   // The chooser (Gallery/Wizard) — only when the user asks for it.
   if (chooser)
@@ -165,7 +152,7 @@ function SignedInPlanTile({ token }) {
     <PlanBubbles
       title={preview?.title || label("reading_plan")}
       meta={preview ? `0% · ${preview.durationLabel}` : null}
-      segments={(preview?.segments || []).map((s) => ({ ref: s.ref }))}
+      segments={preview?.segments || PLACEHOLDER_SEGMENTS}
       ctas={
         <button className="valuePropPrimary" onClick={() => setChooser(true)}>
           {label("start_reading")}

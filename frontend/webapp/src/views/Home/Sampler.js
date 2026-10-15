@@ -6,6 +6,8 @@ import { label } from "src/models/Utils";
 import Masonry from "react-masonry-css";
 import { tileRegistry, reservePool, batchTiles } from "./tiles/registry";
 import { read as readCache, write as writeCache, isFresh as cacheIsFresh } from "./tiles/homeSamplerCache";
+import { readSession, writeSession, clearSession } from "./tiles/samplerSession";
+import { singleColumnOrder } from "./tiles/samplerLayout";
 import "./Sampler.css";
 import "./Sampler.m.css";
 
@@ -40,6 +42,35 @@ const FIXED_TAIL = ["mapstory"];
 // `batchTiles`, imported from the registry.
 const MAX_BATCHES = 30; // backstop against a runaway fetch loop; effectively infinite for a reader
 const nextBatchSeed = (s) => ((s + 1013904223) % 2147483647) || 1;
+const BATCH_RETRY_MS = 1500;
+// label() echoes the key when the labels table lacks it; new keys fall back to
+// English until rows are added (home_feed_error, home_feed_end).
+const labelOr = (key, fallback) => {
+  const v = label(key);
+  return !v || v === key || v === " " ? fallback : v;
+};
+
+// Below this width the rail + masonry stack into one column (Sampler.m.css uses
+// the app's 900px breakpoint), so the sampler switches to a single curated order.
+const SINGLE_COLUMN_QUERY = "(max-width: 900px)";
+const singleColumnMql = () =>
+  typeof window !== "undefined" && window.matchMedia ? window.matchMedia(SINGLE_COLUMN_QUERY) : null;
+function useSingleColumn() {
+  const [single, setSingle] = useState(() => !!singleColumnMql()?.matches);
+  useEffect(() => {
+    const m = singleColumnMql();
+    if (!m) return undefined;
+    const on = () => setSingle(m.matches);
+    m.addEventListener?.("change", on);
+    return () => m.removeEventListener?.("change", on);
+  }, []);
+  return single;
+}
+
+const VARIABLE_DEFAULT = () =>
+  tileRegistry.filter((t) => !FIXED_LEFT.includes(t.key) && !FIXED_TOP.includes(t.key) && !FIXED_TAIL.includes(t.key));
+/** Registry entries for saved keys, dropping any that no longer exist. */
+const fromKeys = (keys, pool) => keys.map((k) => pool.find((t) => t.key === k)).filter(Boolean);
 
 /**
  * The cacheable content tiles. Public, seeded server-side — this is what the
@@ -110,11 +141,17 @@ export default function Sampler() {
   );
   // Seed of the current sampler payload — drives infinite-scroll batch seeds.
   const seed = samplerPayload?.seed || 0;
-  const [variableTiles, setVariableTiles] = useState(() =>
-    shuffle(tileRegistry.filter((t) => !FIXED_LEFT.includes(t.key) && !FIXED_TOP.includes(t.key) && !FIXED_TAIL.includes(t.key))),
-  );
+  // Coming back to Home (Back, a tab round-trip) rebuilds the SAME page: the
+  // snapshot for this seed carries the shuffle, the balancer's reserves and the
+  // revealed batches, so the route scroll-restore has the old page to land on.
+  const sessionRef = useRef(readSession(cachedRef.current?.payload?.seed));
+  const single = useSingleColumn();
+  const [variableTiles, setVariableTiles] = useState(() => {
+    const saved = sessionRef.current?.order;
+    return saved ? fromKeys(saved, VARIABLE_DEFAULT()) : shuffle(VARIABLE_DEFAULT());
+  });
   // Reserve tiles activated by the balancer: [{ key, side: "rail"|"main" }].
-  const [reserves, setReserves] = useState([]);
+  const [reserves, setReserves] = useState(() => sessionRef.current?.reserves || []);
   // Bumped a few times after load so the balancer re-measures once async
   // content (images, lazy tiles) has reflowed the columns.
   const [settleTick, setSettleTick] = useState(0);
@@ -126,12 +163,17 @@ export default function Sampler() {
   // A single batch is always prefetched into reserveRef ("reserve API call in
   // the background") so reveal is instant; refs hold the cross-callback state
   // so the IntersectionObserver never reads stale closures.
-  const [extraBatches, setExtraBatches] = useState([]);
+  const [extraBatches, setExtraBatches] = useState(() =>
+    (sessionRef.current?.batches || []).map((b) => ({ payload: b.payload, tiles: fromKeys(b.tiles, batchTiles) })),
+  );
   const [loadingMore, setLoadingMore] = useState(false);
+  // Feed terminus: null while the feed can grow, "error" after a batch fetch
+  // failed twice (offers a retry), "max" at MAX_BATCHES.
+  const [feedEnd, setFeedEnd] = useState(null);
   const reserveRef = useRef(null);      // { payload, tiles } prefetched, not yet shown
   const fetchingRef = useRef(false);
   const atBottomRef = useRef(false);
-  const batchSeedRef = useRef(0);
+  const batchSeedRef = useRef(sessionRef.current?.batchSeed || 0);
   const sentinelRef = useRef(null);
   const loadMoreRef = useRef(() => {}); // latest maybeLoadMore, for the observer
   const mountedRef = useRef(true);
@@ -174,11 +216,14 @@ export default function Sampler() {
   // Manual refresh: a fresh random seed → server-fresh sample, swap the view
   // (explicit action), overwrite the cache. Refitted variables + a fresh feed.
   const resample = () => {
+    clearSession();
+    sessionRef.current = null;
+    setFeedEnd(null);
     setSamplerPayload(null);
     setCommunity(null);
     setFailed(false);
     setReserves([]);
-    setVariableTiles(shuffle(tileRegistry.filter((t) => !FIXED_LEFT.includes(t.key) && !FIXED_TOP.includes(t.key) && !FIXED_TAIL.includes(t.key))));
+    setVariableTiles(shuffle(VARIABLE_DEFAULT()));
     // reset infinite-scroll accumulation so the fresh seed starts a fresh feed
     setExtraBatches([]);
     reserveRef.current = null;
@@ -205,7 +250,7 @@ export default function Sampler() {
   // and re-measure. Converges when the columns bottom out together (or the
   // pool/cap is hit). The map is masonry-only, so it lands below the fold.
   useLayoutEffect(() => {
-    if (!payload || reserves.length >= MAX_RESERVES) return;
+    if (!payload || single || reserves.length >= MAX_RESERVES) return;
     const railH = railRef.current?.offsetHeight || 0;
     const mainH = mainRef.current?.offsetHeight || 0;
     if (!railH || !mainH) return;
@@ -219,7 +264,7 @@ export default function Sampler() {
     );
     if (!next) return;
     setReserves((prev) => [...prev, { key: next.key, side: next.mainOnly ? "main" : shorter }]);
-  }, [payload, reserves, settleTick]);
+  }, [payload, reserves, settleTick, single]);
 
   // Re-measure a few times after load: images and the lazy map change column
   // heights after the first paint, so a single measurement can converge early.
@@ -247,21 +292,34 @@ export default function Sampler() {
   // Fetch the next batch (homesampler only — community/leaderboard don't repeat)
   // into reserveRef. If the reader is already waiting at the bottom when it
   // lands, reveal it immediately.
-  const prefetchBatch = () => {
+  const prefetchBatch = (attempt = 0) => {
     if (fetchingRef.current || reserveRef.current || extraBatches.length >= MAX_BATCHES) return;
     fetchingRef.current = true;
     setLoadingMore(true);
-    const bs = (batchSeedRef.current = nextBatchSeed(batchSeedRef.current || seed));
+    // a retry re-requests the same seed; only a fresh attempt advances it
+    const bs = attempt ? batchSeedRef.current : (batchSeedRef.current = nextBatchSeed(batchSeedRef.current || seed));
+    const fail = () => {
+      fetchingRef.current = false;
+      if (!mountedRef.current) return;
+      if (attempt < 1) {
+        // skeletons stay up through the one retry
+        setTimeout(() => mountedRef.current && prefetchBatch(attempt + 1), BATCH_RETRY_MS);
+        return;
+      }
+      setLoadingMore(false);
+      setFeedEnd("error");
+    };
     BoMOnlineAPI({ homesampler: { seed: bs, token } }, { useCache: false })
       .then((r) => {
+        if (r?.error || !Array.isArray(r?.homesampler)) return fail();
         fetchingRef.current = false;
         if (!mountedRef.current) return;
         setLoadingMore(false);
-        if (r?.error || !Array.isArray(r?.homesampler)) return;
         reserveRef.current = { payload: assembleSampler(r), tiles: shuffle(batchTiles) };
-        if (atBottomRef.current) maybeLoadMore();
+        // the latest closure: this one may predate a Retry that cleared feedEnd
+        if (atBottomRef.current) loadMoreRef.current();
       })
-      .catch(() => { fetchingRef.current = false; if (mountedRef.current) setLoadingMore(false); });
+      .catch(fail);
   };
 
   // Reveal the prefetched batch (appending it) and queue the next; or, if none
@@ -269,7 +327,8 @@ export default function Sampler() {
   // trip — the fetch guard paces it, so a reader parked at the bottom pulls in
   // batches steadily without a runaway loop.
   function maybeLoadMore() {
-    if (!payload || extraBatches.length >= MAX_BATCHES) return;
+    if (!payload || feedEnd) return;
+    if (extraBatches.length >= MAX_BATCHES) { setFeedEnd("max"); return; }
     if (reserveRef.current) {
       const batch = reserveRef.current;
       reserveRef.current = null;
@@ -304,7 +363,8 @@ export default function Sampler() {
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [payload]);
+    // the sentinel node is re-created when the layout flips or the feed ends/resumes
+  }, [payload, single, feedEnd]);
 
   const renderBatchTile = (bp, def, idx) => {
     if (!def.isReady(bp)) return null;
@@ -319,12 +379,22 @@ export default function Sampler() {
 
   useEffect(() => {
     document.title = label("home_title");
-    // Always open the home sampler at the top — arriving from a scrolled-down
-    // page (SPA nav preserves scroll) otherwise drops you mid-page.
-    window.scrollTo(0, 0);
-    const panel = document.getElementById("main-panel");
-    if (panel) panel.scrollTop = 0;
+    // Scroll is the shell's job (scroll/routeScrollReset): top on a push from
+    // another page, the saved offset on Back. Forcing top here undid the restore.
   }, []);
+
+  // Keep the session snapshot current so leaving and coming back rebuilds this
+  // exact page (see sessionRef above).
+  useEffect(() => {
+    if (!seed) return;
+    writeSession({
+      seed,
+      order: variableTiles.map((t) => t.key),
+      reserves,
+      batches: extraBatches.map((b) => ({ payload: b.payload, tiles: b.tiles.map((t) => t.key) })),
+      batchSeed: batchSeedRef.current,
+    });
+  }, [seed, variableTiles, reserves, extraBatches]);
 
   // Sampler stream — once on mount. A fresh cached entry already painted
   // synchronously, so skip the network entirely; a stale entry revalidates
@@ -479,12 +549,66 @@ export default function Sampler() {
   });
   // Skeleton loaders while the next batch is in flight — same 3-column
   // balancing so they appear right at the growing edge.
-  if (loadingMore && extraBatches.length < MAX_BATCHES) {
+  if (!single && loadingMore && extraBatches.length < MAX_BATCHES) {
     ["tile-art", "tile-commentary", "tile-history"].forEach((span, i) => {
       const node = <div key={`sk-${extraBatches.length}-${i}`} className={`tile skeleton ${span}`} />;
       if (railH <= mainColH) { railInfinite.push(node); railH += 12; }
       else { mainInfinite.push(node); mainColH += 6; }
     });
+  }
+
+  // End of the feed: a quiet terminus instead of skeletons that never resolve.
+  const retryFeed = () => { setFeedEnd(null); prefetchBatch(); };
+  const feedTerminus = feedEnd ? (
+    <div className="samplerFeedEnd" role="status">
+      {feedEnd === "error" ? (
+        <>
+          <span>{labelOr("home_feed_error", "Couldn’t load more right now.")}</span>
+          <button type="button" className="samplerFeedEndAction" onClick={retryFeed}>{label("rp_retry")}</button>
+        </>
+      ) : (
+        <>
+          <span>{labelOr("home_feed_end", "You’ve reached the end of this sample.")}</span>
+          <button type="button" className="samplerFeedEndAction" onClick={() => window.dispatchEvent(new Event("home:resample"))}>
+            {label("resample")}
+          </button>
+        </>
+      )}
+    </div>
+  ) : null;
+  const sentinel = payload && !feedEnd ? (
+    <div ref={sentinelRef} className="samplerSentinel" aria-hidden="true" />
+  ) : null;
+
+  // ---- single column (phone / narrow) --------------------------------------
+  // One curated order (samplerLayout.singleColumnOrder); no balancer, no rail.
+  // Commentary is spaced out as in the masonry, and batches append at the end.
+  if (single) {
+    const vars = variableTiles.filter((t) => !payload || t.isReady(payload));
+    const others = vars.filter((t) => !isCommentary(t));
+    const comms = vars.filter(isCommentary);
+    comms.forEach((c, i) => {
+      const at = Math.min(others.length, Math.round(((i + 0.5) / comms.length) * (others.length + comms.length)));
+      others.splice(at, 0, c);
+    });
+    const byKey = (k) => tileRegistry.find((t) => t.key === k);
+    const order = singleColumnOrder(others.map((t) => t.key)).map(byKey).filter(Boolean);
+    const batchNodes = extraBatches.flatMap((b, bi) => b.tiles.map((def, ti) => renderBatchTile(b.payload, def, `${bi}-${ti}`)));
+    return (
+      <div className="sampler container">
+        <div className="samplerSingle">
+          {order.map((t) => renderTile(t))}
+          {batchNodes}
+          {loadingMore && extraBatches.length < MAX_BATCHES
+            ? ["tile-art", "tile-commentary"].map((span, i) => (
+                <div key={`sk-${extraBatches.length}-${i}`} className={`tile skeleton ${span}`} />
+              ))
+            : null}
+        </div>
+        {feedTerminus}
+        {sentinel}
+      </div>
+    );
   }
 
   return (
@@ -524,9 +648,8 @@ export default function Sampler() {
       {/* Sentinel sits below the three columns; nearing it reveals the next
           prefetched batch and queues another. Skeletons above (inside the
           columns) cover the wait. */}
-      {payload ? (
-        <div ref={sentinelRef} className="samplerSentinel" aria-hidden="true" />
-      ) : null}
+      {feedTerminus}
+      {sentinel}
     </div>
   );
 }

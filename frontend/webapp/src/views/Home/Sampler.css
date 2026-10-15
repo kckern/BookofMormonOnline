@@ -63,6 +63,38 @@ html[data-theme="dark"] .samplerResample:hover { color: #fff; border-color: #999
 /* right-sized = content-sized: narration and contents render IN FULL (no
    scroll traps, no fade cuts) — the page grows vertically instead */
 .samplerLeftRail .tile { flex: 0 0 auto; }
+/* phone / narrow: one curated column (Sampler.js single-column branch). The
+   former rail fixtures keep the bounded height they had in the stacked rail. */
+.samplerSingle {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.samplerSingle .tile { flex: 0 0 auto; }
+.samplerSingle .tile-narration,
+.samplerSingle .tile-contents { max-height: 24rem; }
+/* end of the infinite feed: a quiet line, never stranded skeletons */
+.samplerFeedEnd {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 0 0.5rem;
+  color: #777;
+  font-size: 0.9rem;
+}
+.samplerFeedEndAction {
+  border: 1px solid #ccc;
+  background: transparent;
+  color: #222;
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  min-height: 44px;
+  cursor: pointer;
+}
+.samplerFeedEndAction:hover { border-color: #c9a24b; }
+html[data-theme="dark"] .samplerFeedEnd { color: #aaa; }
+html[data-theme="dark"] .samplerFeedEndAction { color: #eee; border-color: #555; }
 .samplerMain {
   flex: 1;
   min-width: 0;
