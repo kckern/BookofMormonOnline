@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 import green from "src/views/User/svg/green.svg";
 import yellow from "src/views/User/svg/yellow.svg";
@@ -10,6 +9,8 @@ import Breadcrumb from "src/views/_Common/Breadcrumb/Breadcrumb";
 import { flatten } from "./textUtils";
 import RefPill from "./RefPill";
 import TileDeepLink from "./_ds/TileDeepLink";
+import TileImage from "./_ds/TileImage";
+import labelOr from "./_ds/labelOr";
 
 const statusDot = { completed: green, started: yellow };
 
@@ -28,68 +29,90 @@ const sectionArt = (section, seed, count = 4) => {
   return Array.from({ length: count }, (_, i) => ids[(start + i) % ids.length]);
 };
 
-function NarrationList({ section }) {
+/**
+ * The beats. Each row: optional read-status dot, the block's scripture ref as
+ * a RefPill (popup), then the beat text as THE link into its block's study
+ * page (e.g. /ammon/22). The pill is a sibling of the link — never nested.
+ */
+function NarrationList({ section, showStatus }) {
   const items = narrationItems(section);
   if (!items.length) return null;
-  return items.map((n) => (
-    // Each beat deep-links to ITS block's study page (e.g. /ammon/22);
-    // heading = that bom_text block's heading, NOT the cross-reference list.
-    <Link to={`/${n.text?.slug || section.slug}`} key={n.guid} className="narrationItem">
-      <img src={statusDot[n.text?.status] || blank} alt="" className="narrationDot" />
-      <span className="narrationText">
-        {n.text?.heading ? <RefPill refText={n.text.heading} /> : null}
-        {flatten(n.description)}
-      </span>
-    </Link>
-  ));
+  return items.map((n) => {
+    const status = n.text?.status;
+    return (
+      <div key={n.guid} className="narrationItem">
+        {showStatus ? (
+          <img src={statusDot[status] || blank} alt="" className={`narrationDot${statusDot[status] ? "" : " isBlank"}`} />
+        ) : null}
+        <div className="narrationText">
+          {n.text?.heading ? <RefPill refText={n.text.heading} /> : null}
+          <Link to={`/${n.text?.slug || section.slug}`} className="narrationBeatLink">
+            {flatten(n.description)}
+          </Link>
+        </div>
+      </div>
+    );
+  });
 }
 
 /**
  * One sampled section's narration, listed in full with provenance (page ›
- * section), a strip of the section's art, per-beat read-status dots, and each
- * beat's bom_text heading. A short section leaves room — the NEXT section
- * continues the story; the list flex-fills the tile.
+ * section title), a strip of the section's art, read-status dots (only once
+ * the reader has progress in these beats), and each beat's bom_text ref. A
+ * short section leaves room — the NEXT section continues the story under a
+ * quieter "Next" divider. Layer 2: "See in context" → the section's page.
  */
 export default function NarrationTile({ data, next, seed = 0 }) {
   const items = narrationItems(data);
   if (!items.length) return null;
   const art = sectionArt(data, seed);
-  const showNext = items.length < 6 && narrationItems(next).length > 0;
+  const nextItems = narrationItems(next);
+  const showNext = items.length < 6 && nextItems.length > 0;
+  // A guest (or a reader new to these beats) would see a column of identical
+  // grey "not read" dots that says nothing — show status only when it informs.
+  const showStatus = [...items, ...(showNext ? nextItems : [])].some((n) => statusDot[n.text?.status]);
+  const artAlt = (i) => labelOr("art_for_x", "Art for $1", [data.title]) + (art.length > 1 ? ` (${i + 1})` : "");
   return (
     <div className="samplerTileInner narrationTile">
       <h3 className="tileHeading">{label("narration")}</h3>
-      <Breadcrumb
-        size="sm"
-        className="narrationCrumbs"
-        items={[
-          ...(data.page?.title ? [{ label: data.page.title, to: `/${data.page.slug}` }] : []),
-          { label: data.title, to: `/${data.slug}` },
-        ]}
-      />
+      {data.page?.title ? (
+        <Breadcrumb
+          size="sm"
+          className="narrationCrumbs"
+          items={[{ label: data.page.title, to: `/${data.page.slug}` }]}
+        />
+      ) : null}
+      {data.title ? <h4 className="narrationTileTitle">{data.title}</h4> : null}
       {art.length ? (
-        <div className={`narrationArtRow${art.length === 1 ? " single" : ""}`}>
-          {art.map((id) => (
+        <div className={`narrationArtRow${art.length === 1 ? " single" : ""}`} style={{ "--art-n": art.length }}>
+          {art.map((id, i) => (
             <Link key={id} to={`/art/${id}`} className="narrationArtLink">
-              <img
-                src={`${assetUrl}/art/${id}`}
-                alt=""
-                loading="lazy"
-                onError={(e) => (e.target.closest(".narrationArtLink").style.display = "none")}
+              <TileImage
+                path={`art/${id}`}
+                widths={[]}
+                alt={artAlt(i)}
+                onError={(e) => {
+                  const link = e.target.closest(".narrationArtLink");
+                  if (link) link.style.display = "none";
+                }}
               />
             </Link>
           ))}
         </div>
       ) : null}
       <div className="narrationTileList">
-        <NarrationList section={data} />
+        <NarrationList section={data} showStatus={showStatus} />
         {showNext ? (
           <>
-            <Link to={`/${next.slug}`} className="narrationTileTitle narrationNextTitle">{next.title}</Link>
-            <NarrationList section={next} />
+            <div className="narrationNext">
+              <span className="narrationNextLabel">{labelOr("next", "Next")}</span>
+              <Link to={`/${next.slug}`} className="narrationNextTitle">{next.title}</Link>
+            </div>
+            <NarrationList section={next} showStatus={showStatus} />
           </>
         ) : null}
       </div>
-      <TileDeepLink to={`/${data.slug}`} always>{label("view_more")}</TileDeepLink>
+      <TileDeepLink to={`/${data.slug}`} always verb="seeInContext" />
     </div>
   );
 }

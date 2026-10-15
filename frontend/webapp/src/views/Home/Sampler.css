@@ -1041,41 +1041,65 @@ html[data-theme="dark"] .samplerFooterLink:hover {
    NARRATION — one section's story beats, with provenance + refs + status dots
    ================================================================ */
 .narrationCrumbs {
-  margin-bottom: 0.45rem;
+  margin-bottom: 0.15rem;
 }
-a.narrationTileTitle {
+/* the sampled section is the tile's subject: a real title under its page crumb */
+.narrationTileTitle {
   font-weight: 800;
-  font-size: 0.95rem;
+  font-size: 0.98rem;
   line-height: 1.25;
-  color: #2a2a2a !important;
-  display: block;
-  margin-top: 0.1rem;
+  color: #2a2a2a;
+  margin: 0 0 0.5rem;
 }
-html[data-theme="dark"] a.narrationTileTitle { color: #f0f0f0 !important; }
-.narrationNextTitle { margin-top: 0.5rem; padding-top: 0.45rem; border-top: 1px solid #ececec; }
-html[data-theme="dark"] .narrationNextTitle { border-top-color: #3a3a3a; }
-/* the list FILLS the tall tile (no fixed cap → no orphan void) and scrolls */
+html[data-theme="dark"] .narrationTileTitle { color: #f0f0f0; }
+/* the continuation is demoted to a labeled divider ("Next · <title>") */
+.narrationNext {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  margin-top: 0.55rem;
+  padding: 0.5rem 0 0.2rem 0.6rem;
+  border-top: 1px solid #ececec;
+}
+html[data-theme="dark"] .narrationNext { border-top-color: #3a3a3a; }
+.narrationNextLabel {
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tile-eyebrow);
+}
+a.narrationNextTitle {
+  font-weight: 700;
+  font-size: 0.82rem;
+  line-height: 1.3;
+  color: #2a2a2a;
+  text-decoration: none;
+}
+a.narrationNextTitle:hover { text-decoration: underline; text-decoration-color: #c9a24b; }
+html[data-theme="dark"] a.narrationNextTitle { color: #f0f0f0; }
 .narrationTile { min-height: 0; }
 .narrationTileList {
   flex: 1 1 auto;
 }
-/* seeded strip of the section's art, under the provenance line */
+/* seeded strip of the section's art: equal cropped cells in one row (no
+   floating thumbs / ragged wraps); a lone image keeps its own aspect */
 .narrationArtRow {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(var(--art-n, 4), minmax(0, 1fr));
   gap: 0.35rem;
-  justify-content: space-around;
-  align-items: center;
-  margin: 0.15rem 0 0.5rem;
+  /* cells top out at 9rem so a wide (tablet) tile doesn't stretch them into slivers */
+  max-width: calc(var(--art-n, 4) * 9rem + (var(--art-n, 4) - 1) * 0.35rem);
+  margin: 0 0 0.55rem;
 }
-.narrationArtLink { display: inline-flex; }
-/* honor each image's OWN aspect ratio — fixed strip height, natural width
-   (the browser derives width from the image's real dimensions), NO crop.
-   Space-around distributes them; images wrap rather than overflow. */
+.narrationArtLink { display: block; min-width: 0; border-radius: 0.35rem; overflow: hidden; }
 .narrationArtRow img {
-  height: 4.6rem;
-  width: auto;
-  max-width: 100%;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  object-position: center 30%;
   display: block;
   border-radius: 0.35rem;
   border: 1px solid #e0e0e0;
@@ -1083,22 +1107,20 @@ html[data-theme="dark"] .narrationNextTitle { border-top-color: #3a3a3a; }
   transition: transform 0.15s ease;
 }
 html[data-theme="dark"] .narrationArtRow img { border-color: #444; background: #2a2a2a; }
-/* a lone image gets the full strip at its own aspect (bounded height) */
-.narrationArtRow.single { justify-content: center; }
-.narrationArtRow.single img { height: auto; width: auto; max-height: 11rem; max-width: 100%; }
+.narrationArtRow.single { display: flex; justify-content: center; }
+.narrationArtRow.single .narrationArtLink { width: auto; }
+.narrationArtRow.single img { height: auto; width: auto; max-height: 11rem; max-width: 100%; object-fit: contain; }
 .narrationArtLink:hover img { transform: scale(1.03); }
 .narrationItem {
   display: flex;
   align-items: flex-start;
   gap: 0.45rem;
-  padding: 0.28rem 0.25rem 0.28rem 0.6rem;
+  padding: 0.3rem 0.25rem 0.3rem 0.6rem;
   border-radius: 0.4rem;
-  color: inherit;
-  text-decoration: none;
   transition: background 0.15s ease;
 }
-.narrationItem:hover { background: rgba(0, 0, 0, 0.04); text-decoration: none; }
-html[data-theme="dark"] .narrationItem:hover { background: rgba(255, 255, 255, 0.06); }
+.narrationItem:has(.narrationBeatLink:hover) { background: rgba(0, 0, 0, 0.04); }
+html[data-theme="dark"] .narrationItem:has(.narrationBeatLink:hover) { background: rgba(255, 255, 255, 0.06); }
 .narrationDot {
   width: 0.7rem;
   height: 0.7rem;
@@ -1106,21 +1128,21 @@ html[data-theme="dark"] .narrationItem:hover { background: rgba(255, 255, 255, 0
   flex-shrink: 0;
 }
 .narrationText {
-  font-size: 0.78rem;
-  line-height: 1.42;
+  font-size: 0.8rem;
+  line-height: 1.45;
   color: #555;
   min-width: 0;
 }
 html[data-theme="dark"] .narrationText { color: #c4c4c4; }
-.narrationRef {
-  display: inline;
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: #333;
-  white-space: nowrap;
-  margin-left: 0.25rem;
+html[data-theme="dark"] a.narrationBeatLink { color: #cfcfcf; }
+html[data-theme="dark"] a.narrationBeatLink:hover { color: #fff; }
+/* >=44px touch targets without loosening the type rhythm: an invisible hit area */
+@media (pointer: coarse) {
+  .narrationCrumbs a,
+  a.narrationNextTitle { position: relative; }
+  .narrationCrumbs a::after,
+  a.narrationNextTitle::after { content: ""; position: absolute; left: -4px; right: -4px; top: 50%; height: 44px; transform: translateY(-50%); }
 }
-html[data-theme="dark"] .narrationRef { color: #ccc; }
 
 /* ================================================================
    HISTORY — one featured historical document
@@ -1146,12 +1168,15 @@ html[data-theme="dark"] .narrationRef { color: #ccc; }
   object-position: top center;
 }
 .historyTileThumb {
+html[data-theme="dark"] .narrationDot.isBlank { opacity: 0.3; }
   width: 100%;
   height: auto;
   object-fit: cover;
   border-radius: 0.35rem;
   border: 1px solid #ddd;
   background: #f4f1ea;
+a.narrationBeatLink { color: #3a3a3a; text-decoration: none; }
+a.narrationBeatLink:hover { color: #000; text-decoration: underline; text-decoration-color: rgba(201, 162, 75, 0.7); }
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
   flex-shrink: 0;
   align-self: flex-start;
