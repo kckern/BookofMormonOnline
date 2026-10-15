@@ -3,7 +3,7 @@ import Comments from "./Study/Study";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import Parser from "html-react-parser";
 import { parse } from "node-html-parser";
-import Draggable from "react-draggable";
+import DraggableWindow from "./DraggableWindow";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import "./Commentary.css";
 import { LegalNotice, Loading } from "./PopUp";
@@ -362,7 +362,7 @@ export default function Commentary() {
 
   return (
     <>
-      <Draggable handle=".card-header">
+      <DraggableWindow handle=".card-header">
         <div
           id="popUp"
           className="card popupwindow commentary"
@@ -471,7 +471,7 @@ export default function Commentary() {
             setCommentHighlights={setCommentHighlights}
           />
         </div>
-      </Draggable>
+      </DraggableWindow>
     </>
   );
 }

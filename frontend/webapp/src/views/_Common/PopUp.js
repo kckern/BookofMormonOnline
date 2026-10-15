@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import Comments from "./Study/Study";
-import Draggable from "react-draggable";
+import DraggableWindow from "./DraggableWindow";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { Link, useNavigate } from "react-router-dom";
 import { Victory } from "src/views/User/Victory";
@@ -228,7 +228,7 @@ function Person() {
 
   return (
     <>
-      <Draggable handle=".card-header">
+      <DraggableWindow handle=".card-header">
         <div
           id="popUp"
           className="card pp popupwindow"
@@ -267,7 +267,7 @@ function Person() {
           <ScripturePanelSingle scriptureData={{ref:PopUpRef}} closeButton={true} setPopUpRef={setPopUpRef} />
           <Comments />
         </div>
-      </Draggable>
+      </DraggableWindow>
     </>
   );
 }
@@ -343,7 +343,7 @@ function Place() {
   }
   //console.log(place.maps);
   return (
-    <Draggable handle=".card-header">
+    <DraggableWindow handle=".card-header">
       <div
         id="popUp"
         className="card pp popupwindow"
@@ -376,7 +376,7 @@ function Place() {
           <ScripturePanelSingle scriptureData={{ref:PopUpRef}} closeButton={true} setPopUpRef={setPopUpRef} />
         <Comments />
       </div>
-    </Draggable>
+    </DraggableWindow>
   );
 }
 
@@ -473,7 +473,7 @@ function MatterPopUp() {
   if (!obj) return <pre>{appController.popUp}</pre>;
 
   return (
-    <Draggable handle=".card-header">
+    <DraggableWindow handle=".card-header">
       <div
         id="popUp"
         className="card pp popupwindow"
@@ -502,7 +502,7 @@ function MatterPopUp() {
         <ScripturePanelSingle scriptureData={{ ref: PopUpRef }} closeButton={true} setPopUpRef={setPopUpRef} />
         <Comments />
       </div>
-    </Draggable>
+    </DraggableWindow>
   );
 }
 
@@ -553,7 +553,7 @@ export function GroupPopUp() {
   }
 
   return (
-    <Draggable handle=".card-header">
+    <DraggableWindow handle=".card-header">
       <div
         id="popUp"
         className="card pp popupwindow"
@@ -579,7 +579,7 @@ export function GroupPopUp() {
           </div>
         </div>
       </div>
-    </Draggable>
+    </DraggableWindow>
   );
 }
 
