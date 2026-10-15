@@ -267,9 +267,13 @@ a.theater-link img:hover
 }
 
 @media only screen and (max-width: 900px) {
-  html,
-  body {
-    overflow-x: hidden;
+  /* Scoped to the page, not html/body: this stylesheet stays loaded after the
+     reader leaves, and overflow-x:hidden on html+body made body the scroller
+     (overflow-y computes to auto), so Home lost its scroll position and the
+     window never scrolled again (audit R3 / Task 8). clip, unlike hidden,
+     creates no scroll container. */
+  .content.page {
+    overflow-x: clip;
   }
   body {
     position: relative;

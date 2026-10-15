@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, useRef } from "react"
 import { useParams } from "react-router-dom"
 import { parseMapPath } from "src/models/mapPath"
 // VIEW
@@ -77,7 +77,8 @@ function MapContainer() {
     // /story/:storySlug or /event/:storySlug segment in the URL.
     getMap(params.mapType, params.placeName, { skipUrlPush: true })
     if(params.placeName){
-      if(isMobile())  appController.functions.setPopUp({ type: "places", ids: [params.placeName] });
+      // Landing on the deeplink, not a second navigation: replace the URL.
+      if(isMobile())  appController.functions.setPopUp({ type: "places", ids: [params.placeName], replaceSlug: true });
       else setPanelContents({slug: params.placeName});
     }
   }, [appController.preLoad.placeList])
@@ -93,15 +94,21 @@ function MapContainer() {
 
 
   // get active map data
+  const getMapSeq = useRef(0);
   const getMap = useCallback((type = "internal", place, opts = {}) => {
     // update Url
     if(!type) return;
     if (!opts.skipUrlPush) {
-      updateUrl(`/map/${type}${place ? "/place/" + place : ""}`)
+      updateUrl(`/map/${type}${place ? "/place/" + place : ""}`, { replace: opts.replace === true })
     }
     setMapName(label("loading"))
 
+    // Latest request wins: a wrong-map deeplink fires the mount load and the
+    // redirect load back to back, and a late mount response used to overwrite
+    // the redirect's map (URL on neareast, internal map on screen).
+    const seq = ++getMapSeq.current;
     BoMOnlineAPI({ map: type, mapstories: [type] },{useCache:false}).then((result) => {
+      if (seq !== getMapSeq.current) return;
       if (!result?.map?.[type]) {
         console.error('Map data not found for type:', type);
         return;
@@ -115,8 +122,8 @@ function MapContainer() {
   }, [])
 
   // only update Url not redirect the page
-  const updateUrl = (pageUrl) => {
-    appController.functions.setSlug(pageUrl);
+  const updateUrl = (pageUrl, opts) => {
+    appController.functions.setSlug(pageUrl, opts);
   }
 
   const handleMapChange = ({ map, place }) => {
