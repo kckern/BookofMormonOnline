@@ -301,15 +301,28 @@ html[data-theme="dark"] .tile.skeleton { background: #2c2c2c; border-color: #3a3
 }
 
 /* ================================================================
-   PEOPLE — featured sample (portrait + index taste + ref chips)
-   over a compact face strip. Sampling, not a mosaic.
+   PEOPLE — one featured person (PersonFeature.js, shared with the
+   PersonProfile reserve) over a strip of face cards + a view-all
+   mosaic. Sampling, not a mosaic. Both tiles are size containers, so
+   the layout follows the TILE's width (narrow column, tablet, phone),
+   not the viewport's.
    ================================================================ */
+.peopleTile,
+.personProfileTile { container-type: inline-size; }
+
+/* featured: portrait | name + epithet / bio / [Read more · Open <name>] */
 .peopleFeature {
-  display: flex;
-  gap: 0.85rem;
+  display: grid;
+  grid-template-columns: 8rem auto minmax(0, 1fr);
+  grid-template-rows: auto auto 1fr;
+  grid-template-areas:
+    "img head head"
+    "img desc desc"
+    "img more open";
+  column-gap: 0.95rem;
   padding: 0.25rem;
 }
-.peopleFeatureImgLink { flex-shrink: 0; }
+.peopleFeatureImgLink { grid-area: img; align-self: start; display: block; }
 .peopleFeatureImg {
   width: 8rem;
   aspect-ratio: 3 / 4;
@@ -322,8 +335,9 @@ html[data-theme="dark"] .tile.skeleton { background: #2c2c2c; border-color: #3a3
 }
 .peopleFeatureImgLink:hover .peopleFeatureImg { transform: scale(1.02); }
 html[data-theme="dark"] .peopleFeatureImg { background: #333; border-color: #444; }
-.peopleFeatureBody { min-width: 0; display: flex; flex-direction: column; }
-.peopleFeatureNameLink { color: inherit; text-decoration: none; margin-bottom: 0.35rem; }
+.peopleFeatureHead { grid-area: head; min-width: 0; margin-bottom: 0.4rem; }
+.peopleFeatureNameLink { color: inherit; text-decoration: none; }
+.peopleFeatureNameLink:hover .peopleFeatureName { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.15em; }
 
 .peopleFeatureName {
   font-weight: 800;
@@ -334,49 +348,161 @@ html[data-theme="dark"] .peopleFeatureImg { background: #333; border-color: #444
 }
 html[data-theme="dark"] .peopleFeatureName { color: #f0f0f0; }
 .peopleFeatureTitle {
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   color: var(--tile-meta);
-  line-height: 1.2;
+  line-height: 1.25;
   display: block;
+  margin-top: 0.15rem;
 }
+/* ExpandableText's wrapper dissolves so its text + Read more pill land in the
+   grid next to the "Open <name>" CTA (one CTA row, no stacked pills). Type
+   inherits through display:contents. */
 .peopleFeatureDesc {
-  margin: 0 0 0.45rem;
+  display: contents;
   font-size: 0.8rem;
-  line-height: 1.42;
+  line-height: 1.45;
   color: #555;
 }
+.peopleFeatureDesc > div { grid-area: desc; min-width: 0; }
 html[data-theme="dark"] .peopleFeatureDesc { color: #c4c4c4; }
-.peopleFeatureRefs { margin-top: auto; }
-/* index entries: annotation text + its reference, one row each */
-.peopleIndexItem {
-  display: flex;
-  align-items: baseline;
-  gap: 0.4rem;
-  padding: 0.15rem 0;
-  color: inherit;
-  text-decoration: none;
+.peopleFeature .peopleFeatureDesc > .readMorePill { grid-area: more; justify-self: start; align-self: start; margin: 0.55rem 0 0; }
+.peopleFeature .peopleFeatureOpen {
+  grid-area: open;
+  justify-self: end;
+  align-self: start;
+  margin: 0.55rem 0 0 0.5rem;
+  max-width: 100%;
+  white-space: normal;
+  text-align: left;
 }
-.peopleIndexItem:hover .peopleIndexText { color: #323b4d; }
-.peopleIndexText {
-  font-size: 0.72rem;
-  line-height: 1.3;
-  color: #777;
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-html[data-theme="dark"] .peopleIndexText { color: #9a9a9a; }
-html[data-theme="dark"] .peopleIndexItem:hover .peopleIndexText { color: #ddd; }
-.peopleIndexItem .scripture_link { flex-shrink: 0; margin: 0; }
 
-/* face cards: the other 9 samples + a view-all mosaic — proper vertical cards
-   (3:4 portrait on top, name/title/index in a padded body), 6-up */
+/* failed portrait → monogram in the same box (never a blank hole) */
+.personMonogram {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #efe9dc;
+  color: #a08035;
+  font-family: "Scripture", Georgia, serif;
+  font-size: 2.4rem;
+  line-height: 1;
+  user-select: none;
+}
+.peopleFeatureImg.personMonogram { font-size: 3.2rem; }
+.peopleFaceImg.personMonogram { display: flex; padding-top: 0.6rem; }
+html[data-theme="dark"] .personMonogram { background: #33302a; color: #c9a24b; }
+
+/* narrow tile (phone, the 1/3-width PersonProfile column): the portrait
+   becomes a header avatar and the bio runs full width beneath it */
+@container (max-width: 520px) {
+  .peopleFeature {
+    grid-template-columns: 4.75rem auto minmax(0, 1fr);
+    grid-template-rows: auto;
+    grid-template-areas:
+      "img head head"
+      "desc desc desc"
+      "more more open";
+    row-gap: 0.65rem;
+  }
+  .peopleFeatureImg { width: 4.75rem; }
+  .peopleFeatureImg.personMonogram { font-size: 2.2rem; }
+  .peopleFeatureHead { align-self: center; margin: 0; }
+  .peopleFeatureName { font-size: 1.1rem; }
+  .peopleFeature .peopleFeatureDesc > .readMorePill,
+  .peopleFeature .peopleFeatureOpen { margin-top: 0; }
+}
+
+/* face cards: portrait (name chip top-left, title band bottom) + one index ref
+   below; 5-up × 2 rows (9 faces + view-all) on a wide tile */
 .peopleFaceRow {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 0.55rem;
-  margin-top: 0.6rem;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin-top: 0.8rem;
+}
+.peopleTile .peopleFaceCard { position: relative; }
+.peopleTile .peopleFaceLink { display: block; color: inherit; text-decoration: none; }
+/* the one link stretches over the whole card; the RefPill is raised above it */
+.peopleTile .peopleFaceLink::after { content: ""; position: absolute; inset: 0; z-index: 1; }
+.peopleTile .peopleFaceLink:focus-visible { outline: none; }
+.peopleTile .peopleFaceCard:has(.peopleFaceLink:focus-visible) { outline: 2px solid #c9a24b; outline-offset: 2px; }
+.peopleTile .peopleFaceCard:hover {
+  transform: translateY(-2px);
+  border-color: #c9c9c9;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+html[data-theme="dark"] .peopleTile .peopleFaceCard:hover { border-color: #555; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); }
+.peopleTile .peopleFaceImgWrap { display: block; }
+/* name chip: wraps to two lines (clamp on the inner span, so nothing leaks
+   through the chip's padding) instead of a mid-word one-line ellipsis */
+.peopleTile .peopleFaceName:not(.viewAllOverlay) {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  font-size: 0.78rem;
+  line-height: 1.2;
+  padding: 0.18rem 0.45rem;
+}
+.peopleFaceNameText,
+.peopleFaceTitleText {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.peopleTile .peopleFaceTitle {
+  display: block;
+  overflow: visible;
+  font-size: 0.7rem;
+  line-height: 1.25;
+  padding: 0.25rem 0.45rem 0.3rem;
+}
+.peopleTile .peopleFaceBody {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  padding: 0.45rem 0.5rem 0.55rem;
+}
+.peopleTile .peopleFaceBody .scripture_link {
+  position: relative;
+  z-index: 2;
+  max-width: 100%;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  padding: 0 0.7ex;
+  white-space: normal;
+  text-align: left;
+}
+@media (pointer: coarse) {
+  /* ≥44px tap target for the verse pill without changing its look */
+  .peopleTile .peopleFaceBody .scripture_link::after { content: ""; position: absolute; inset: -13px -6px; }
+}
+.peopleTile .peopleFaceIndexText {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--tile-meta);
+}
+.peopleTile .viewAllOverlay { font-size: 0.8rem; white-space: nowrap; }
+/* medium tile (tablet half-column, narrow desktop): 3-up × 3 — 8 faces + view-all */
+@container (max-width: 600px) {
+  .peopleFaceRow { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; }
+  .peopleFaceCard:nth-child(9):not(.viewAllCard) { display: none; }
+}
+/* phone: portrait + name + title only — the index body collapses to 1-word
+   fragments at ~100px card widths */
+@container (max-width: 440px) {
+  .peopleTile .peopleFaceBody { display: none; }
+  .peopleTile .peopleFaceName:not(.viewAllOverlay) { font-size: 0.74rem; }
+  .peopleTile .peopleFaceTitle { font-size: 0.68rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .peopleTile .peopleFaceCard:hover { transform: none; }
 }
 /* view-all end cells (people face strip + places grid) */
 .viewAllBox {
@@ -499,9 +625,8 @@ html[data-theme="dark"] .peopleFaceImgWrap { background: #333; }
   overflow: hidden;
   font-size: 0.62rem;
   line-height: 1.3;
-  color: #777;
+  color: var(--tile-meta);
 }
-html[data-theme="dark"] .peopleFaceIndexText { color: #9a9a9a; }
 .peopleFaceRef {
   display: inline;
   font-size: 0.62rem;

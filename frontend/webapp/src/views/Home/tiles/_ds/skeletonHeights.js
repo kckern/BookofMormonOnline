@@ -12,11 +12,12 @@
 const FALLBACK = "14rem";
 
 const DESKTOP = {
+
   "tile-readingplan": "233px",
   "tile-narration": "650px", // 4:3 art cells (rail fix) add ~35px
   "tile-contents": "560px", // 2026-10-15 rail fix: pages-only outline (was a 1000px section wall)
   "tile-community": "213px",
-  "tile-people": "680px",
+  "tile-people": "810px",
   "tile-text": "330px",
   "tile-commentary": "280px",
   "tile-history": "520px",
@@ -31,7 +32,7 @@ const DESKTOP = {
   "tile-art": "600px",
   "tile-notes": "440px",
   "tile-mapstory": "650px",
-  "tile-personProfile": "270px",
+  "tile-personProfile": "330px",
   "tile-placeProfile": "368px",
   "tile-matterProfile": "430px",
   "tile-witness": "195px",
@@ -39,9 +40,10 @@ const DESKTOP = {
 };
 
 const PHONE = {
+
   "tile-narration": "384px",
   "tile-contents": "384px", // bounded (BoundedTile) on phone
-  "tile-people": "732px",
+  "tile-people": "775px",
   "tile-text": "344px",
   "tile-commentary": "290px",
   "tile-history": "450px",

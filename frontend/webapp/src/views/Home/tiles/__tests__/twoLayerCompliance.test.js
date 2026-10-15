@@ -42,6 +42,8 @@ const EXEMPT = new Set([
   "HistoryTile.js",
   "TranslationTile.js",
   "JosephSmithTile.js",
+  // Delegates its featured block + "Open <name>" deeplink to PersonFeature.js.
+  "PersonProfileTile.js",
 ]);
 
 const tileFiles = fs

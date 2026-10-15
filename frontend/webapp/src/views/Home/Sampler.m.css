@@ -18,12 +18,8 @@
   .samplerGrid .tile-spotlight,
   .samplerGrid .tile-activity { grid-column: span 1 !important; }
 
-  /* featured person: smaller portrait, tighter body */
-  .peopleFeatureImg { width: 6rem; }
-  .peopleFeatureDesc { -webkit-line-clamp: 3; }
-
-  /* face strip drops to 4-up (2 rows of the remaining 7) */
-  .peopleFaceRow { grid-template-columns: repeat(4, 1fr); }
+  /* people: featured + face-strip layout follows the tile's own width via
+     container queries in Sampler.css (no viewport overrides here) */
 
   /* footer wraps comfortably */
   .samplerFooter { gap: 0.5rem; margin-top: 1.5rem; }
