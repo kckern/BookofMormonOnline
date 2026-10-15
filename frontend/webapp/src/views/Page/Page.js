@@ -199,7 +199,15 @@ export default function Page() {
         // Apply a Main slug change without a nested React dispatch — see
         // applySlug's note. auto opens replace (they're campaign-driven, not
         // user navigation) so Back leaves the page in one press.
-        applySlug(refs.current.appController, slug, { replace: auto === true });
+        // A /commentary/:id (or /image/:id) deeplink resolves to its host
+        // page by opening the host row, then re-asserts the note URL via the
+        // popup. Both are part of landing, not navigation: replace, so the
+        // tile deeplink costs one history entry (audit commentary E1).
+        const io = refs.current.states.initOpen || {};
+        const resolvingNoteLink =
+          !!(io.commentaryId || io.imageId) &&
+          /^\/(commentary|image)\//.test(window.location.pathname);
+        applySlug(refs.current.appController, slug, { replace: auto === true || resolvingNoteLink });
         localStorage.setItem("studybookmark", slug);
         dispatch({ fn: "setActiveRow", val: { slug, auto } });
         BoMOnlineAPI(
@@ -373,6 +381,7 @@ export default function Page() {
         pageController.appController.functions.setPopUp({
           type: "commentary",
           ids: [pageController.states.initOpen.commentaryId],
+          replaceSlug: true,
         })
     : pageController.states.initOpen.imageId
     ? () =>
