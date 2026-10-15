@@ -1832,7 +1832,8 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
 .mapStoryTitle {
   display: block;
   overflow: hidden;
-  color: #252a27;
+  color: #1f1f1f;
+  text-decoration: none;
   font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
   font-size: 1.18rem;
   font-weight: 750;
@@ -1840,10 +1841,10 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.mapStoryTitle:hover { color: #7f2d28; }
+.mapStoryTitle:hover { color: #000; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: #c9a24b; }
 .mapStoryCounts {
   flex: 0 0 auto;
-  color: #6c746e;
+  color: var(--tile-meta);
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.025em;
@@ -1853,7 +1854,7 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
   height: 292px;
   position: relative;
   isolation: isolate;
-  border: 1px solid rgba(49, 63, 55, 0.14);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 0.8rem;
   background: linear-gradient(145deg, #dce6d4, #b8c9ac);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
@@ -1861,7 +1862,7 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
 .mapStoryMap { position: absolute; inset: 0; }
 .mapStoryMap .mapTileCanvas { z-index: 0; outline: none; }
 .mapStoryMap .mapTileCanvas:focus-visible {
-  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.95), inset 0 0 0 5px #45679e;
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.95), inset 0 0 0 5px #c9a24b;
 }
 .mapStoryMapShade {
   position: absolute;
@@ -2005,7 +2006,7 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
   border: 3px solid #fff;
   border-radius: 50%;
   color: #fff;
-  background: #7d443c;
+  background: #5a5a5a;
   font-size: 0.75rem;
   font-weight: 800;
 }
@@ -2067,17 +2068,17 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
   margin-top: 0.55rem;
 }
 .mapStoryMoveState {
-  color: #8b2f29;
+  color: #333;
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.035em;
   text-transform: uppercase;
 }
-.mapStoryMoveState.isComplete { color: #2f6749; }
-.mapStoryLegend { display: flex; align-items: center; gap: 4px; color: #737b76; font-size: 0.58rem; }
+.mapStoryMoveState.isComplete { color: #333; }
+.mapStoryLegend { display: flex; align-items: center; gap: 4px; color: var(--tile-meta); font-size: 0.66rem; }
 .mapStoryLegend i { width: 7px; height: 7px; margin-left: 3px; border-radius: 50%; background: #9f3029; }
-.mapStoryLegend i.isVisited { background: #a97a75; }
-.mapStoryLegend i.isFuture { background: #718078; opacity: 0.55; }
+.mapStoryLegend i.isVisited { background: #a5524c; }
+.mapStoryLegend i.isFuture { background: #8a8a8a; opacity: 0.6; }
 
 .mapStoryControls { display: flex; align-items: center; gap: 0.4rem; }
 .mapStoryControlButton {
@@ -2087,16 +2088,16 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
   height: 44px;
   place-items: center;
   padding: 0;
-  border: 1px solid #d5dcd6;
+  border: 1px solid #d6d6d6;
   border-radius: 50%;
-  color: #35453c;
-  background: #f7f8f5;
+  color: #333;
+  background: #f7f7f7;
   cursor: pointer;
 }
-.mapStoryControlButton.isPrimary { color: #fff; border-color: #8b302a; background: #96362f; }
-.mapStoryControlButton:hover:not(:disabled) { border-color: #8b302a; transform: translateY(-1px); }
+.mapStoryControlButton.isPrimary { color: #1f1f1f; border-color: #b8913c; background: #c9a24b; }
+.mapStoryControlButton:hover:not(:disabled) { border-color: #8a8a8a; transform: translateY(-1px); }
+.mapStoryControlButton.isPrimary:hover:not(:disabled) { border-color: #9c7a2f; background: #d4b062; }
 .mapStoryControlButton:disabled { cursor: not-allowed; opacity: 0.34; }
-.mapStoryControlButton:focus-visible { outline: 3px solid rgba(69, 103, 158, 0.52); outline-offset: 2px; }
 .mapStoryControlIcon { display: block; font-family: Arial, sans-serif; font-size: 1.35rem; font-weight: 700; line-height: 1; }
 .mapStoryControlButton.isPrimary .mapStoryControlIcon { font-size: 0.88rem; }
 .mapStoryScrubberLabel { display: flex; flex: 1; min-width: 0; align-items: center; }
@@ -2112,10 +2113,10 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
 .mapStoryScrubber::-webkit-slider-runnable-track {
   height: 6px;
   border-radius: 999px;
-  background: linear-gradient(to right, #96362f 0 var(--map-story-progress), #d9ddd8 var(--map-story-progress) 100%);
+  background: linear-gradient(to right, #c9a24b 0 var(--map-story-progress), #dcdcdc var(--map-story-progress) 100%);
 }
-.mapStoryScrubber::-moz-range-track { height: 6px; border-radius: 999px; background: #d9ddd8; }
-.mapStoryScrubber::-moz-range-progress { height: 6px; border-radius: 999px; background: #96362f; }
+.mapStoryScrubber::-moz-range-track { height: 6px; border-radius: 999px; background: #dcdcdc; }
+.mapStoryScrubber::-moz-range-progress { height: 6px; border-radius: 999px; background: #c9a24b; }
 .mapStoryScrubber::-webkit-slider-thumb {
   width: 20px;
   height: 20px;
@@ -2124,7 +2125,7 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
   -webkit-appearance: none;
   border: 3px solid #fff;
   border-radius: 50%;
-  background: #96362f;
+  background: #c9a24b;
   box-shadow: 0 1px 5px rgba(35, 43, 38, 0.35);
 }
 .mapStoryScrubber::-moz-range-thumb {
@@ -2132,21 +2133,25 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
   height: 16px;
   border: 3px solid #fff;
   border-radius: 50%;
-  background: #96362f;
+  background: #c9a24b;
   box-shadow: 0 1px 5px rgba(35, 43, 38, 0.35);
 }
-.mapStoryScrubber:focus-visible { outline: 3px solid rgba(69, 103, 158, 0.52); outline-offset: 2px; border-radius: 999px; }
-.mapStoryInteractionHint { margin-top: 0.25rem; color: #68736d; font-size: 0.66rem; text-align: center; }
+.mapStoryScrubber:focus-visible { border-radius: 999px; }
+.mapStoryInteractionHint { margin-top: 0.25rem; color: var(--tile-meta); font-size: 0.66rem; text-align: center; }
 
 .mapStoryStage { min-width: 0; margin-top: 0.55rem; }
+/* B2: a FIXED reserve sized for the tallest beat (two-line place names, ref
+   row, 3-line description, traveler line), so autoplay never resizes the
+   tile and shifts its masonry column. */
 .mapStoryBeat {
   display: flex;
-  min-height: 116px;
+  box-sizing: border-box;
+  min-height: 11rem;
   gap: 0.65rem;
   padding: 0.7rem;
-  border: 1px solid #e2e6e1;
+  border: 1px solid #e6e6e6;
   border-radius: 0.68rem;
-  background: #f8f8f5;
+  background: #fafafa;
 }
 .mapStoryBeatIndex,
 .mapStoryCompleteMark {
@@ -2157,17 +2162,32 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
   place-items: center;
   border-radius: 50%;
   color: #fff;
-  background: #96362f;
+  background: #2a2a2a;
   font-size: 0.76rem;
   font-weight: 800;
 }
-.mapStoryCompleteMark { background: #397054; }
+.mapStoryCompleteMark { color: #1f1f1f; background: #c9a24b; }
 .mapStoryBeatBody { flex: 1 1 auto; min-width: 0; }
-.mapStoryLeg { display: flex; align-items: baseline; gap: 0.34rem; color: #28332d; font-size: 0.91rem; font-weight: 720; line-height: 1.2; }
-.mapStoryLeg span:first-child,
-.mapStoryLeg span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mapStoryLegPlace { display: flex; min-width: 0; align-items: center; gap: 0.34rem; overflow: hidden; }
-.mapStoryLegPlaceName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Leg row: two equal columns around the arrow; each place name may wrap to two
+   lines instead of ellipsizing both ends mid-word ("City of Za…"). */
+.mapStoryLeg {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.4rem;
+  color: #222;
+  font-size: 0.86rem;
+  font-weight: 720;
+  line-height: 1.18;
+}
+.mapStoryLegPlace { display: flex; min-width: 0; align-items: center; gap: 0.34rem; }
+.mapStoryLegPlaceName {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
+}
 .mapStoryPlaceThumb {
   flex: 0 0 auto;
   width: 28px;
@@ -2178,31 +2198,20 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
   box-shadow: 0 1px 4px rgba(24, 34, 28, 0.28);
   background: #d7ddd3;
 }
-.mapStoryArrow { flex: 0 0 auto; color: #9b3c35; }
+.mapStoryArrow { flex: 0 0 auto; color: var(--tile-meta); }
 .mapStoryBeatMeta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; margin-top: 0.25rem; }
-.mapStoryTile .mapStoryRef {
-  display: inline-flex;
-  align-items: center;
-  min-height: 24px;
-  /* Padding grows the tap target to the 24px minimum; the negative margin keeps
-     the ref visually flush in the wrapping meta row. */
-  padding: 0 0.25rem;
-  margin: 0 -0.25rem;
-  border: none;
-  color: #5f6670;
-  background: transparent;
-  cursor: pointer;
-  font-family: "Scripture", serif;
-  font-size: 0.72rem;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+/* The ref is the shared RefPill chip (.scripture_link); only its touch hit
+   area is tile-specific: an invisible ≥44px box around the small chip. */
+.mapStoryTile .mapStoryRef { position: relative; }
+@media (pointer: coarse) {
+  .mapStoryTile .mapStoryRef::after { content: ""; position: absolute; inset: -14px -6px; }
 }
-.mapStoryTile .mapStoryDuration { color: #707973; font-size: 0.68rem; }
+.mapStoryTile .mapStoryDuration { color: var(--tile-meta); font-size: 0.68rem; }
 .mapStoryTile .mapStoryDesc {
   display: -webkit-box;
   overflow: hidden;
   margin: 0.34rem 0 0;
-  color: #5f6762;
+  color: #555;
   font-size: 0.77rem;
   line-height: 1.35;
   -webkit-box-orient: vertical;
@@ -2210,19 +2219,20 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
 }
 .mapStoryDetached {
   padding: 0.08rem 0.35rem;
-  border: 1px dashed #8f6b66;
+  border: 1px dashed #999;
   border-radius: 999px;
-  color: #77534f;
+  color: #555;
   font-size: 0.56rem;
   font-weight: 700;
   letter-spacing: 0.035em;
   text-transform: uppercase;
 }
-.mapStoryTravelerText { margin: 0.35rem 0 0; color: #667069; font-size: 0.68rem; line-height: 1.25; }
-.mapStoryTravelerText > span { color: #96362f; font-size: 0.52rem; }
-.mapStoryTravelerText strong { color: #4d5751; }
-.mapStoryCompleteHeading { color: #2e5943; font-size: 0.9rem; font-weight: 800; }
-.mapStoryCompleteMeta { margin-top: 0.38rem; color: #68736c; font-size: 0.68rem; font-weight: 650; }
+.mapStoryTravelerText { margin: 0.35rem 0 0; color: #555; font-size: 0.7rem; line-height: 1.25; }
+.mapStoryTravelerText > span { margin-right: 0.25rem; color: #c9a24b; font-size: 0.52rem; }
+.mapStoryTravelerText strong { color: #333; }
+.mapStoryCompleteHeading { color: #222; font-size: 0.9rem; font-weight: 800; }
+/* The whole-journey card has the room: show more of the story before clamping. */
+.mapStoryComplete .mapStoryDesc { -webkit-line-clamp: 5; }
 
 .mapStoryFooter {
   display: flex;
@@ -2234,8 +2244,8 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
 .mapStoryFooter > span {
   min-width: 0;
   overflow: hidden;
-  color: #68716c;
-  font-size: 0.67rem;
+  color: var(--tile-meta);
+  font-size: 0.68rem;
   font-weight: 650;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2253,27 +2263,31 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
   border: 0 !important;
 }
 
-html[data-theme="dark"] .mapStoryTitle { color: #f1f2ee; }
-html[data-theme="dark"] .mapStoryTitle:hover { color: #efaaa3; }
+html[data-theme="dark"] .mapStoryTitle { color: #f0f0f0; }
+html[data-theme="dark"] .mapStoryTitle:hover { color: #fff; }
 html[data-theme="dark"] .mapStoryCounts,
 html[data-theme="dark"] .mapStoryLegend,
 html[data-theme="dark"] .mapStoryInteractionHint,
-html[data-theme="dark"] .mapStoryFooter > span { color: #aab4ad; }
-html[data-theme="dark"] .mapStoryTile .mapTileFrame { border-color: #435047; background: #26332b; }
+html[data-theme="dark"] .mapStoryArrow,
+html[data-theme="dark"] .mapStoryFooter > span { color: #a3a3a3; }
+html[data-theme="dark"] .mapStoryMoveState { color: #e0e0e0; }
+html[data-theme="dark"] .mapStoryTile .mapTileFrame { border-color: #444; background: #2a2f2b; }
 html[data-theme="dark"] .mapStoryMapShade { background: radial-gradient(circle at 50% 42%, transparent 52%, rgba(4, 8, 5, 0.3)); }
-html[data-theme="dark"] .mapStoryBeat { border-color: #3a453e; background: #282f2b; }
-html[data-theme="dark"] .mapStoryPlaceThumb { border-color: #3a453e; background: #333c36; }
-html[data-theme="dark"] .mapStoryLeg { color: #eef1ed; }
+html[data-theme="dark"] .mapStoryFallback { color: #e0e0e0; background: linear-gradient(145deg, #323a34, #262b27); }
+html[data-theme="dark"] .mapStoryBeat { border-color: #3a3a3a; background: #262626; }
+html[data-theme="dark"] .mapStoryBeatIndex { color: #1f1f1f; background: #e0e0e0; }
+html[data-theme="dark"] .mapStoryPlaceThumb { border-color: #3a3a3a; background: #333; }
+html[data-theme="dark"] .mapStoryLeg,
+html[data-theme="dark"] .mapStoryCompleteHeading { color: #f0f0f0; }
 html[data-theme="dark"] .mapStoryTile .mapStoryDesc,
 html[data-theme="dark"] .mapStoryTile .mapStoryDuration,
-html[data-theme="dark"] .mapStoryTravelerText,
-html[data-theme="dark"] .mapStoryCompleteMeta { color: #b8c0ba; }
-html[data-theme="dark"] .mapStoryTravelerText strong { color: #d9dfda; }
-html[data-theme="dark"] .mapStoryTile .mapStoryRef { color: #cfcfcf; }
-html[data-theme="dark"] .mapStoryControlButton { color: #dbe1dc; border-color: #465149; background: #29322c; }
-html[data-theme="dark"] .mapStoryControlButton.isPrimary { color: #fff; border-color: #b95850; background: #9f3932; }
-html[data-theme="dark"] .mapStoryScrubber::-webkit-slider-runnable-track { background: linear-gradient(to right, #c85a51 0 var(--map-story-progress), #4a554d var(--map-story-progress) 100%); }
-html[data-theme="dark"] .mapStoryScrubber::-moz-range-track { background: #4a554d; }
+html[data-theme="dark"] .mapStoryTravelerText { color: #c4c4c4; }
+html[data-theme="dark"] .mapStoryTravelerText strong { color: #e0e0e0; }
+html[data-theme="dark"] .mapStoryDetached { border-color: #777; color: #c4c4c4; }
+html[data-theme="dark"] .mapStoryControlButton { color: #ddd; border-color: #4a4a4a; background: #2a2a2a; }
+html[data-theme="dark"] .mapStoryControlButton.isPrimary { color: #1f1f1f; border-color: #c9a24b; background: #c9a24b; }
+html[data-theme="dark"] .mapStoryScrubber::-webkit-slider-runnable-track { background: linear-gradient(to right, #c9a24b 0 var(--map-story-progress), #4a4a4a var(--map-story-progress) 100%); }
+html[data-theme="dark"] .mapStoryScrubber::-moz-range-track { background: #4a4a4a; }
 /* Boxless labels read over map terrain identically in both themes — no dark override. */
 
 @media (prefers-reduced-motion: reduce) {
@@ -2289,8 +2303,8 @@ html[data-theme="dark"] .mapStoryScrubber::-moz-range-track { background: #4a554
   .mapStoryHeader { align-items: flex-start; }
   .mapStoryCounts { margin-top: 0.1rem; font-size: 0.62rem; }
   .mapStoryLegend { display: none; }
-  .mapStoryControlButton { flex-basis: 42px; width: 42px; height: 42px; }
-  .mapStoryBeat { min-height: 110px; }
+  /* transport keeps a full 44px target; the scrubber absorbs the squeeze */
+  .mapStoryControlButton { min-width: 44px; }
   .mapStoryFooter { align-items: flex-end; }
   .mapStoryFooter > span { white-space: normal; }
 }

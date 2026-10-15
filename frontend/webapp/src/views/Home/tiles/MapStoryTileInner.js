@@ -15,6 +15,9 @@ import * as Interaction from "ol/interaction";
 import "ol/ol.css";
 import { framedLegIndices, legVisibility, legsOf, stopsOf } from "./mapStoryPath";
 import { buildStoryOverlay, storyStepForStop, travelerPosition } from "./mapStoryLayout";
+import TileImage from "./_ds/TileImage";
+import labelOr from "./_ds/labelOr";
+import { supDigits } from "./textUtils";
 
 // Same FARMS "internal" model as the full map. These coordinates belong to
 // the model artwork; they are not claims about real-world geography.
@@ -64,16 +67,30 @@ const activeStyle = (detached) => [
   }),
 ];
 
-const participantName = (person) => person?.name || person?.slug;
+const participantName = (person) => supDigits(person?.name || person?.slug || "");
 
 const travelerLabel = (move) => {
   const people = (move?.people || []).filter((person) => person?.slug);
   if (people.length) {
-    const shown = people.slice(0, 2).map(participantName).join(" and ");
+    const shown = people.slice(0, 2).map(participantName).join(", ");
     const extra = people.length - 2;
-    return extra > 0 ? `${shown} and ${extra} more traveling` : `${shown} traveling`;
+    return extra > 0
+      ? labelOr("mapstory_travelers_more", "$1 and $2 more traveling", [shown, extra])
+      : labelOr("mapstory_travelers", "$1 traveling", [shown]);
   }
-  return move?.travelers ? `${move.travelers} traveling` : "Travelers moving to the next place";
+  return move?.travelers
+    ? labelOr("mapstory_travelers", "$1 traveling", [supDigits(move.travelers)])
+    : labelOr("mapstory_travelers_generic", "Travelers moving to the next place");
+};
+
+/** Clusters key on id + index: two clusters can share a first-stop id (duplicate React keys). */
+const clusterKey = (cluster, index) => `${cluster.id}-${index}`;
+
+/** Lazy ref init — the initializer runs once, not on every render (audit J3). */
+const useLazyRef = (init) => {
+  const ref = useRef(null);
+  if (ref.current === null) ref.current = init();
+  return ref;
 };
 
 /** Ref-callback: register a live overlay DOM node by key, or drop it on unmount. */
@@ -122,19 +139,19 @@ export default function MapStoryTileInner({
   const overlayRef = useRef({ markers: [], clusters: [], labels: [] });
   // DOM handles for the HTML/SVG overlay so a live map frame can retether them to
   // their map anchors without a React re-render (see syncOverlayRef).
-  const overlayNodesRef = useRef({
+  const overlayNodesRef = useLazyRef(() => ({
     markers: new Map(),
     labels: new Map(),
     clusters: new Map(),
     markerLeaders: new Map(),
     labelLeaders: new Map(),
     clusterLeaders: new Map(),
-  });
+  }));
   const layoutStateRef = useRef(null);
   const updateLayoutRef = useRef(() => {});
   const syncOverlayRef = useRef(() => {});
   // lat/lng → projected map coordinate; static per place, so project() once.
-  const projCacheRef = useRef(new Map());
+  const projCacheRef = useLazyRef(() => new Map());
   const fitStoryRef = useRef(() => {});
   const frameStepRef = useRef(() => {});
   const didMountRef = useRef(false);
@@ -225,16 +242,21 @@ export default function MapStoryTileInner({
       shiftLeader(nodes.markerLeaders.get(marker.slug), marker.leader, p[0] - marker.x, p[1] - marker.y);
     });
 
+    const frameW = mapElementRef.current?.clientWidth || 0;
     ov.labels.forEach((label) => {
       const p = px(label.lat, label.lng);
       if (!finite(p)) return;
       const offX = label.x - label.anchorX, offY = label.y - label.anchorY;
       const node = nodes.labels.get(label.slug);
-      if (node) { node.style.left = `${p[0] + offX}px`; node.style.top = `${p[1] + offY}px`; }
+      // Keep the label box inside the frame while the camera moves, so a stop
+      // near the edge never reads as a clipped fragment ("elek" for Melek).
+      let left = p[0] + offX;
+      if (frameW > label.width) left = Math.min(frameW - label.width - 4, Math.max(4, left));
+      if (node) { node.style.left = `${left}px`; node.style.top = `${p[1] + offY}px`; }
       shiftLeader(nodes.labelLeaders.get(label.slug), label.leader, p[0] - label.anchorX, p[1] - label.anchorY);
     });
 
-    ov.clusters.forEach((cluster) => {
+    ov.clusters.forEach((cluster, index) => {
       // A cluster sits at its members' pixel centroid (possibly nudged to dodge
       // overlaps). Translate it by how far that centroid has moved this frame.
       let layoutX = 0, layoutY = 0, liveX = 0, liveY = 0, n = 0;
@@ -245,9 +267,9 @@ export default function MapStoryTileInner({
       });
       if (!n) return;
       const dx = (liveX - layoutX) / n, dy = (liveY - layoutY) / n;
-      const node = nodes.clusters.get(cluster.id);
+      const node = nodes.clusters.get(clusterKey(cluster, index));
       if (node) { node.style.left = `${cluster.x + dx}px`; node.style.top = `${cluster.y + dy}px`; }
-      shiftLeader(nodes.clusterLeaders.get(cluster.id), cluster.leader, dx, dy);
+      shiftLeader(nodes.clusterLeaders.get(clusterKey(cluster, index)), cluster.leader, dx, dy);
     });
 
     // Keep the traveler party glued to its route point too (translate by the
@@ -616,7 +638,10 @@ export default function MapStoryTileInner({
         ref={mapElementRef}
         className="mapTileCanvas"
         tabIndex="0"
-        aria-label="Interactive journey map. Drag or zoom to explore, then use Recenter story to restore the journey view."
+        aria-label={labelOr(
+          "mapstory_map_aria",
+          "Interactive journey map. Drag or zoom to explore, then use Recenter story to restore the journey view.",
+        )}
         aria-describedby={describedBy}
       />
 
@@ -635,12 +660,12 @@ export default function MapStoryTileInner({
             />
           ) : null,
         )}
-        {overlay.clusters.map((cluster) =>
+        {overlay.clusters.map((cluster, index) =>
           cluster.leader ? (
             <line
               className="isSymbolLeader"
-              key={`cluster:${cluster.id}`}
-              ref={(el) => regNode(overlayNodesRef.current.clusterLeaders, cluster.id, el)}
+              key={`cluster:${clusterKey(cluster, index)}`}
+              ref={(el) => regNode(overlayNodesRef.current.clusterLeaders, clusterKey(cluster, index), el)}
               x1={cluster.leader.x1}
               y1={cluster.leader.y1}
               x2={cluster.leader.x2}
@@ -682,25 +707,31 @@ export default function MapStoryTileInner({
             onPointerDown={(event) => event.stopPropagation()}
             onClick={(event) => choosePlace(event, label)}
             title={label.name}
-            aria-label={`${label.name}; go to move ${storyStepForStop({ stop: label, moves, step, complete }) + 1}`}
+            aria-label={labelOr("mapstory_place_aria", "$1; go to move $2", [
+              label.name,
+              storyStepForStop({ stop: label, moves, step, complete }) + 1,
+            ])}
             aria-current={label.role === "active" ? "location" : undefined}
           >
             {label.name}
           </button>
         ))}
-        {overlay.clusters.map((cluster) => (
+        {overlay.clusters.map((cluster, index) => (
           <button
-            key={cluster.id}
-            ref={(el) => regNode(overlayNodesRef.current.clusters, cluster.id, el)}
+            key={clusterKey(cluster, index)}
+            ref={(el) => regNode(overlayNodesRef.current.clusters, clusterKey(cluster, index), el)}
             type="button"
             className="mapStoryCluster"
             style={{ left: cluster.x, top: cluster.y }}
             onClick={(event) => chooseCluster(event, cluster)}
-            aria-label={`${cluster.stops.length} future places; go to move ${cluster.firstStep + 1}`}
+            aria-label={labelOr("mapstory_cluster_aria", "$1 future places; go to move $2", [
+              cluster.stops.length,
+              cluster.firstStep + 1,
+            ])}
             title={cluster.stops.map((stop) => stop.name).join(", ")}
           >
             <strong>{cluster.stops.length}</strong>
-            <span>places</span>
+            <span>{labelOr("mapstory_places", "places")}</span>
           </button>
         ))}
       </div>
@@ -714,10 +745,13 @@ export default function MapStoryTileInner({
         {selectedPeople.length ? selectedPeople.map((person) => (
           <span className="mapStoryTravelerAvatar" key={person.slug} title={participantName(person)}>
             <span aria-hidden="true">{participantName(person).slice(0, 1)}</span>
-            <img
-              src={`${assetUrl}/people/${person.slug}`}
+            <TileImage
+              path={`people/${person.slug}`}
+              widths={[256]}
+              sizes="36px"
+              width={36}
+              height={36}
               alt=""
-              loading="lazy"
               onError={(event) => { event.currentTarget.style.display = "none"; }}
             />
           </span>
@@ -729,7 +763,7 @@ export default function MapStoryTileInner({
 
       {mapMoved ? (
         <button type="button" className="mapStoryRecenter" onClick={recenter}>
-          <span aria-hidden="true">⌖</span> Recenter story
+          <span aria-hidden="true">⌖</span> {labelOr("mapstory_recenter", "Recenter story")}
         </button>
       ) : null}
     </div>
