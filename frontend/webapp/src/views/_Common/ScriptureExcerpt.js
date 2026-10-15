@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI.js";
 import { lookup, generateReference } from "scripture-guide";
 import { label } from "src/models/Utils";
-import { slugify, getEnglishReference } from "src/utils/scriptureUtils";
+import { slugify, getEnglishReference, verseIdToSlug } from "src/utils/scriptureUtils";
 import "../Read/Read.scss";
 import "./ScriptureExcerpt.css";
 
@@ -16,10 +16,29 @@ export const canonical = (ref) => {
   }
 };
 
-/** "Alma 17:7" → /read/alma-17/7 (first verse for ranges). */
+/**
+ * "Alma 17:7" → /read/alma.17/7 (first verse for ranges); "Alma 17" →
+ * /read/alma.17. Emits the SAME slug Read canonicalizes to (verseIdToSlug /
+ * slugify, see useCanonicalReadSlug), so a deeplink never re-navigates on
+ * arrival. Falls back to the legacy book-ch/v shape (which Read still parses
+ * and canonicalizes with replace) when the ref can't be resolved.
+ */
 export const readPath = (ref) => {
   const m = /^(.+?)\s+(\d+)(?::(\d+))?/.exec(ref || "");
   if (!m) return null;
+  try {
+    const head = canonical(`${m[1]} ${m[2]}${m[3] ? `:${m[3]}` : ""}`);
+    if (m[3]) {
+      const id = lookup(head)?.verse_ids?.[0];
+      const slug = id ? verseIdToSlug([id]) : null;
+      if (slug) return `/read/${slug}`;
+    } else if (lookup(head)?.verse_ids?.length) {
+      const slug = slugify(head);
+      if (slug) return `/read/${slug}`;
+    }
+  } catch {
+    /* fall through to the legacy shape */
+  }
   const bookCh = `${m[1].toLowerCase().replace(/\s+/g, "-")}-${m[2]}`;
   return `/read/${bookCh}${m[3] ? `/${m[3]}` : ""}`;
 };
@@ -110,15 +129,49 @@ const cleanPhrase = (p) => (p || "").replace(/[“”"'‘’]/g, "").trim();
 
 // Wrap the first occurrence of `phrase` inside `text` in a highlight <mark>.
 // Returns the raw string when there's no phrase or no match (graceful).
-const highlightPhrase = (text, phrase) => {
-  if (!phrase) return text;
-  const idx = text.toLowerCase().indexOf(phrase.toLowerCase());
-  if (idx < 0) return text;
-  return [
-    text.slice(0, idx),
-    <mark key="anchor" className="scriptureAnchorMark">{text.slice(idx, idx + phrase.length)}</mark>,
-    text.slice(idx + phrase.length),
-  ];
+// Matching is case-, punctuation- and whitespace-insensitive, and an elided
+// anchor ("My soul was rent…the slain") is matched fragment by fragment.
+const normWithMap = (s) => {
+  let out = "";
+  const map = [];
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (/[\p{L}\p{N}]/u.test(c)) {
+      out += c.toLowerCase();
+      map.push(i);
+    } else if (out && out[out.length - 1] !== " ") {
+      out += " ";
+      map.push(i);
+    }
+  }
+  return { out, map };
+};
+export const highlightPhrase = (text, phrase) => {
+  if (!phrase || !text) return text;
+  const { out, map } = normWithMap(text);
+  const ranges = [];
+  phrase
+    .split(/…|\.\.\./)
+    .map((f) => normWithMap(f).out.trim())
+    .filter((f) => f.length >= 3)
+    .forEach((f) => {
+      const at = out.indexOf(f);
+      if (at < 0) return;
+      const start = map[at];
+      const end = map[at + f.length - 1] + 1;
+      if (!ranges.some(([a, b]) => start < b && end > a)) ranges.push([start, end]);
+    });
+  if (!ranges.length) return text;
+  ranges.sort((a, b) => a[0] - b[0]);
+  const parts = [];
+  let pos = 0;
+  ranges.forEach(([a, b], i) => {
+    parts.push(text.slice(pos, a));
+    parts.push(<mark key={`anchor-${i}`} className="scriptureAnchorMark">{text.slice(a, b)}</mark>);
+    pos = b;
+  });
+  parts.push(text.slice(pos));
+  return parts;
 };
 
 export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = false, refAsPopup = false, highlight = null, onBoMSections = null }) {
