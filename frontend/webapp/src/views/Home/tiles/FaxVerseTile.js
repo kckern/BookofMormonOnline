@@ -1,9 +1,12 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { renderBaseUrl, assetUrl } from "src/models/BoMOnlineAPI";
+import { renderBaseUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
-import ScriptureExcerpt from "src/views/_Common/ScriptureExcerpt";
+import ScriptureExcerpt, { readPath } from "src/views/_Common/ScriptureExcerpt";
+import labelOr from "./_ds/labelOr";
+import TileImage from "./_ds/TileImage";
 import TileDeepLink from "./_ds/TileDeepLink";
+import { shortEdition } from "./faxLabels";
 
 const CROP_WIDTH = 800;
 
@@ -11,24 +14,33 @@ const CROP_WIDTH = 800;
 const refSlug = (ref) => (ref || "").replace(/[ :]+/g, ".").toLowerCase();
 
 /**
- * A sampled verse: the verse text on top, then cropped-verse facsimile images
- * from up to 4 editions stacked below, each edition-labeled and deep-linking to
- * that edition's fax viewer at the verse.
+ * A sampled verse: the verse text on top (its ref pill opens the scripture
+ * popup), then cropped-verse facsimile images from up to 4 editions stacked
+ * below. Each row is ONE link into that edition's viewer at the verse, named
+ * by a compact edition label (the verse is already named once, above). The
+ * CTA goes to the verse in Read ("See in context").
+ *
+ * Crops are offered at 1x (w800) and 2x (w1600) and render at their intrinsic
+ * size (capped to the column) rather than being stretched to full width, so a
+ * narrow fragment is not upscaled into mush.
  */
 export default function FaxVerseTile({ data }) {
   if (!data || !data.selector) return null;
 
   // Prefer the editions list; fall back to a single row from legacy fields.
-  const editions =
+  const editions = (
     data.editions && data.editions.length
       ? data.editions
       : data.version
       ? [{ version: data.version, title: data.title, page: data.page }]
-      : [];
+      : []
+  ).filter((ed) => ed?.version);
   if (!editions.length) return null;
 
-  const selector = data.selector || null;
+  const selector = data.selector;
   const slug = refSlug(data.ref);
+  const viewerPath = (ed) => (slug ? `/fax/${ed.version}/${slug}` : `/fax/${ed.version}/${ed.page}`);
+  const cropUrl = (ed, w) => `${renderBaseUrl}/fax/render/${ed.version}/crop/w${w}/${selector}.jpg`;
 
   const hideRow = (e) => {
     const row = e.target.closest(".faxEditionRow");
@@ -51,49 +63,29 @@ export default function FaxVerseTile({ data }) {
       {/* Facsimiles on bottom */}
       <div className="faxVerseEditions">
         {editions.map((ed) => {
-          const to = slug ? `/fax/${ed.version}/${slug}` : `/fax/${ed.version}/${ed.page}`;
-          const src = selector
-            ? `${renderBaseUrl}/fax/render/${ed.version}/crop/w${CROP_WIDTH}/${selector}.jpg`
-            : null;
+          const name = shortEdition(ed.title) || ed.version;
           return (
-            <Link key={ed.version} to={to} className="faxEditionRow">
-              {src ? (
-                <div className="faxEditionCropWrap">
-                  {/* top rail: "<title>: <ref>" on the left, per-edition tab graphic on the right */}
-                  <div className="faxEditionRail">
-                    <span className="faxEditionRailTitle">
-                      {ed.title || ed.version}
-                      {data.ref ? <>{" "}<span className="faxEditionRailRef scripture_link">{data.ref}</span></> : null}
-                    </span>
-                    <img
-                      className="faxEditionTab"
-                      src={`${assetUrl}/fax/tabs/${ed.version}`}
-                      alt={ed.title || ed.version}
-                      loading="lazy"
-                      onError={(e) => (e.target.style.display = "none")}
-                    />
-                  </div>
-                  <img
-                    className="faxEditionCrop"
-                    src={src}
-                    alt={`${ed.title || ed.version} ${data.ref || ""}`.trim()}
-                    loading="lazy"
-                    onError={hideRow}
-                  />
-                </div>
-              ) : null}
+            <Link key={ed.version} to={viewerPath(ed)} className="faxEditionRow" title={ed.title || undefined}>
+              <span className="faxEditionRail">
+                <span className="faxEditionRailTitle">{name}</span>
+                {ed.page != null ? (
+                  <span className="faxEditionRailPage">{labelOr("page_n", "p. $1", [ed.page])}</span>
+                ) : null}
+              </span>
+              <span className="faxEditionCropWrap">
+                <TileImage
+                  className="faxEditionCrop"
+                  path={cropUrl(ed, CROP_WIDTH)}
+                  srcSet={`${cropUrl(ed, CROP_WIDTH)} 1x, ${cropUrl(ed, CROP_WIDTH * 2)} 2x`}
+                  alt={data.ref || ""}
+                  onError={hideRow}
+                />
+              </span>
             </Link>
           );
         })}
       </div>
-      {editions[0] ? (
-        <TileDeepLink
-          to={slug ? `/fax/${editions[0].version}/${slug}` : `/fax/${editions[0].version}/${editions[0].page}`}
-          always
-        >
-          {label("view_more")}
-        </TileDeepLink>
-      ) : null}
+      <TileDeepLink to={readPath(data.ref) || viewerPath(editions[0])} always verb="seeInContext" />
     </div>
   );
 }

@@ -28,6 +28,7 @@ const EXEMPT = new Set([
   "RefPill.js",
   "ScripturePopup.js",
   "textUtils.js",
+  "faxLabels.js",
   "mapStoryPath.js",
   "mapStoryLayout.js",
   "homeSamplerCache.js",

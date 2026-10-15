@@ -4,12 +4,19 @@ import { flatten, clampWords } from "./textUtils";
 import { renderMoneyQuote } from "../../_Common/moneyQuote";
 import { RevealProvider } from "./_ds/Reveal";
 import TileDeepLink from "./_ds/TileDeepLink";
+import TileImage from "./_ds/TileImage";
+import ExpandableText from "./ExpandableText";
 
 // Shared history-archive doc tile. Quote hero (mini→money→teaser) + title +
 // meta + key-points + citation, plus a right-side facsimile rail driven by
 // `images` (0 = no rail, 1 = a single thumbnail, >1 = a filmstrip that fills
 // the tile height). Gates on `data` — NOT `data.id` — so archives without
-// thumbnails (joseph-smith) still render.
+// thumbnails (joseph-smith) still render. `images` are media paths (relative
+// to assetUrl) or absolute URLs, rendered through TileImage.
+//
+// One tab stop per destination: the title and the facsimile rail are mouse
+// shortcuts to the document (tabIndex -1; the rail is also aria-hidden), the
+// CTA is the keyboard/screen-reader stop. The eyebrow links to `headingTo`.
 export const parseTeaser = (html) => {
   const raw = html || "";
   const bullets = [...raw.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)]
@@ -20,7 +27,7 @@ export const parseTeaser = (html) => {
   return { lead, bullets };
 };
 
-export default function ArchiveDocTile({ data, heading, to, images = [] }) {
+export default function ArchiveDocTile({ data, heading, headingTo, to, images = [] }) {
   if (!data) return null;
   const rail = (Array.isArray(images) ? images : [images]).filter(Boolean);
   const meta = [data.year, data.source, data.author].filter(Boolean).join(" · ");
@@ -33,10 +40,12 @@ export default function ArchiveDocTile({ data, heading, to, images = [] }) {
   return (
     <RevealProvider>
       <div className="samplerTileInner historyTile">
-        <h3 className="tileHeading">{heading}</h3>
+        <h3 className="tileHeading">{headingTo ? <Link to={headingTo}>{heading}</Link> : heading}</h3>
         <div className="historyTileBody">
           <div className="historyTileMain">
-            <Link to={to} className="historyTileTitle">{data.document}</Link>
+            {data.document ? (
+              <Link to={to} className="historyTileTitle" tabIndex={-1}>{data.document}</Link>
+            ) : null}
             {meta ? <div className="historyTileMeta">{meta}</div> : null}
             {hasQuote ? (
               <blockquote className="historyTileQuote">
@@ -51,7 +60,7 @@ export default function ArchiveDocTile({ data, heading, to, images = [] }) {
                 ) : null}
               </blockquote>
             ) : lead ? (
-              <div className="historyTileTeaser clampLines" style={{ WebkitLineClamp: 3 }}>{lead}</div>
+              <ExpandableText className="historyTileTeaser" lines={3}>{lead}</ExpandableText>
             ) : null}
             {bullets.length ? (
               <ul className="historyTileBullets">
@@ -66,16 +75,16 @@ export default function ArchiveDocTile({ data, heading, to, images = [] }) {
             <Link
               to={to}
               className={`historyTileRail${multi ? " multi" : ""}`}
-              aria-label={data.document || ""}
+              tabIndex={-1}
+              aria-hidden="true"
             >
               {rail.map((src, i) => (
-                <img
+                <TileImage
                   key={i}
                   className="historyTileThumb"
-                  style={!multi && aspect ? { aspectRatio: `1 / ${aspect}` } : undefined}
-                  src={src}
-                  alt={data.document || ""}
-                  loading="lazy"
+                  aspect={!multi && aspect ? `1 / ${aspect}` : undefined}
+                  path={src}
+                  alt=""
                   onError={(e) => (e.target.style.display = "none")}
                 />
               ))}
