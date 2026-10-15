@@ -31,6 +31,17 @@ describe("TileImage", () => {
     expect(img.classList.contains("tileImage")).toBe(true);
   });
 
+  test("widths=[] (no variants exist, e.g. art): no srcset even with variants on; onError reaches the caller", () => {
+    process.env[KEY] = "1";
+    const onError = vi.fn();
+    const { container } = render(<TileImage path="art/3294" widths={[]} alt="" onError={onError} />);
+    const img = container.querySelector("img");
+    expect(img.hasAttribute("srcset")).toBe(false);
+    expect(img.hasAttribute("sizes")).toBe(false);
+    fireEvent.error(img);
+    expect(onError).toHaveBeenCalledTimes(1);
+  });
+
   test("eager: loading=eager and fetchpriority=high", () => {
     const { container } = render(<TileImage path="people/nephi1" alt="" eager />);
     const img = container.querySelector("img");

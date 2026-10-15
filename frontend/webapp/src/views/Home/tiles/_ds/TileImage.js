@@ -23,7 +23,7 @@ export default function TileImage({
 }) {
   const [variantFailed, setVariantFailed] = useState(false);
   if (!path) return null;
-  const useVariants = !variantFailed && variantsEnabled();
+  const useVariants = !variantFailed && widths.length > 0 && variantsEnabled(); // widths=[]: no variants exist (art, home banners)
   const srcSet = useVariants ? widths.map((w) => `${variantUrl(path, w)} ${w}w`).join(", ") : undefined;
   const handleError = (e) => {
     if (useVariants) {

@@ -39,7 +39,14 @@ const makeBlankSections = (counts, id) => {
 };
 export default function ProgressBox() {
   const appController = useAppController();
-  useEffect(() => history.push("/home/user"), []);
+  // Canonicalize /home/user/<sub> (e.g. /home/user/signin) to /home/user with
+  // REPLACE: a push added a history entry (even on /home/user itself), so one
+  // Back from the user tab landed on the pre-redirect URL instead of the page
+  // the reader came from.
+  useEffect(() => {
+    // keep the router's entry state (key/idx) so its scroll restore + POP deltas stay intact
+    if (history.location.pathname !== "/home/user") history.replace("/home/user", window.history.state);
+  }, []);
 
   let tokenToLoad = appController.states.user.token;
   let userToLoad = appController.states.user.user;
