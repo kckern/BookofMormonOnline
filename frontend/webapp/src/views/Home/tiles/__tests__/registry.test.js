@@ -42,8 +42,8 @@ describe("tile registry", () => {
     );
   });
 
-  test("the map reserve is main-only so it lands below the fold", () => {
-    expect(reservePool.find((t) => t.key === "map").mainOnly).toBe(true);
+  test("the unreachable Map reserve is gone (removed in Task 10c)", () => {
+    expect(reservePool.find((t) => t.key === "map")).toBeUndefined();
   });
 
   test("registers the three matters grid tiles and the profile reserve", () => {

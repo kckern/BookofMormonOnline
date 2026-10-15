@@ -25,6 +25,9 @@ export const flatten = (html) =>
     (html || "")
       .replace(/{(.*?)\|(.*?)}/g, "$1")
       .replace(/\[(.*?)\|(.*?)\]/g, "$1")
+      // Name<sup>2</sup> → Name² BEFORE tags become spaces; otherwise it flattens
+      // to "Alma 2", which scripture detection then reads as a chapter.
+      .replace(/<sup>\s*([1-4])\s*<\/sup>/gi, (m, d) => SUPS[d])
       .replace(/<[^>]*>/gi, " ")
       .replace(/\s+/g, " "),
   )

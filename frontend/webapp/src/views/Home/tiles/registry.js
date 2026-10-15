@@ -17,7 +17,6 @@ import MapStoryTile from "./MapStoryTile";
 import PersonProfileTile from "./PersonProfileTile";
 import PlaceProfileTile from "./PlaceProfileTile";
 import WitnessTile from "./WitnessTile";
-import MapTile from "./MapTile";
 import TranslationTile from "./TranslationTile";
 import JosephSmithTile from "./JosephSmithTile";
 import MattersNarrativeTile from "./MattersNarrativeTile";
@@ -39,7 +38,7 @@ import MatterProfileTile from "./MatterProfileTile";
  * This module is the SINGLE registry. Besides `tileRegistry` (the default grid)
  * it also exports `reservePool` (balancer fill tiles) and `batchTiles`
  * (infinite-scroll tiles) — see their definitions below. `personProfile`,
- * `placeProfile`, `witness`, and `map` live ONLY in those pools, not in the
+ * `placeProfile` and `witness` live ONLY in those pools, not in the
  * default rotation, so add such tiles to the matching pool here.
  */
 export const tileRegistry = [
@@ -72,9 +71,11 @@ export const tileRegistry = [
 /**
  * Reserve tiles: NOT part of the default rotation. Sampler's balancer measures
  * the left rail against the masonry and inserts these onto the shorter side
- * until the columns bottom out together. Cheap/relevant first; the map (heavy,
- * lazy) last and always into the masonry (below the fold). `mainOnly` forces a
- * tile into the masonry; `props` are passed through; `dataKey`/`seedOffset` are
+ * until the columns bottom out together. Cheap/relevant first. (The old
+ * interactive Map reserve was removed 2026-10-15: it sat 10th behind
+ * MAX_RESERVES=5 so it never rendered, and when forced it was an unlabeled,
+ * seed-invariant dud; MapStory and the per-place map pins carry the map on
+ * Home.) `mainOnly` forces a tile into the masonry; `props` are passed through; `dataKey`/`seedOffset` are
  * read by Sampler's renderReserve.
  */
 export const reservePool = [
@@ -87,7 +88,6 @@ export const reservePool = [
   { key: "artFill1",      component: ImageArtTile,      props: { artIndex: 1 }, isReady: (p) => (p?.art?.length || 0) > 1 },
   { key: "chiasmus2",     component: ChiasmusTile,      props: { seed: 0 }, seedOffset: 97, isReady: () => true },
   { key: "artFill2",      component: ImageArtTile,      props: { artIndex: 2 }, isReady: (p) => (p?.art?.length || 0) > 2 },
-  { key: "map",           component: MapTile,           isReady: () => true, mainOnly: true },
 ];
 
 // Infinite-scroll batch tiles: the repeatable content types re-sampled under a

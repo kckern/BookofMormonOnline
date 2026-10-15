@@ -35,7 +35,6 @@ const EXEMPT = new Set([
   "samplerLayout.js",
   "planPreviewCache.js",
   "registry.js",
-  "MapTileInner.js",
   "MapStoryTileInner.js",
   "MapStoryCard.js",
   // Thin wrappers — delegate all CTAs to ArchiveDocTile.jsx which carries TileDeepLink.
