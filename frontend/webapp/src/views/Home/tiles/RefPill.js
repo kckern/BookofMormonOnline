@@ -6,7 +6,12 @@ import { enDash } from "./textUtils";
  * THE scripture-reference affordance for the whole sampler, rendered with the
  * SITE's `.scripture_link` style (Main.css) — the same Detect Scripture UX as
  * everywhere else. One look, one behavior: click opens the scripture popup.
- * Safe inside card <Link>s (prevents default + stops propagation).
+ *
+ * A native <button type="button">: keyboard (Enter/Space), focus and the
+ * accessible role come for free. It must NOT be placed inside a card <Link>/<a>
+ * (nested interactive content) — put it beside the link instead; the static
+ * guard in __tests__/refPillPlacement.test.js enforces this. preventDefault +
+ * stopPropagation stay as a belt-and-braces for any remaining legacy nesting.
  */
 export default function RefPill({ refText, className = "" }) {
   if (!refText) return null;
@@ -15,18 +20,9 @@ export default function RefPill({ refText, className = "" }) {
     e.stopPropagation();
     openScripture(refText);
   };
-  // span, not <a>: RefPills sit inside card <Link>s and nested anchors are
-  // invalid DOM (React warns, browsers split the tree). Styled to match the
-  // site's a.scripture_link via .sampler .scripture_link in Sampler.css.
   return (
-    <span
-      className={`scripture_link ${className}`.trim()}
-      role="button"
-      tabIndex={0}
-      onClick={open}
-      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && open(e)}
-    >
+    <button type="button" className={`scripture_link ${className}`.trim()} onClick={open}>
       {enDash(refText)}
-    </span>
+    </button>
   );
 }

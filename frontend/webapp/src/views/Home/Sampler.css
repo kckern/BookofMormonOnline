@@ -196,8 +196,11 @@ html[data-theme="dark"] .tileHeading a:hover { color: #fff; }
 .tileHeadingGroup::before { content: "·"; margin: 0 0.4em; opacity: 0.7; }
 
 /* ALL scripture refs on home use the site's .scripture_link style. RefPill
-   renders a span (nested <a> is invalid inside card Links), so the Main.css
-   `div a.scripture_link` rule doesn't reach it — mirror it here. */
+   renders a <button>, so the Main.css `div a.scripture_link` rule doesn't reach
+   it — mirror it here. Font, size, weight, line-height, padding, border,
+   color and background below already beat the button UA styles (Bootstrap
+   reboot zeroes the margin); the button-only reset after this rule clears the
+   rest of the UA chrome without out-ranking per-tile margin/align tweaks. */
 .sampler .scripture_link {
   background-color: #323b4d22;
   border: 1px solid #323b4d55;
@@ -223,6 +226,14 @@ html[data-theme="dark"] .tileHeading a:hover { color: #fff; }
   line-height: 1.3;
   padding: 0 0.6ex;
   vertical-align: baseline;
+}
+.sampler button.scripture_link {
+  -webkit-appearance: none;
+  appearance: none;
+  letter-spacing: inherit;
+  word-spacing: inherit;
+  text-transform: inherit;
+  text-indent: 0;
 }
 .sampler .scripture_link:hover { background-color: #323b4d44; }
 html[data-theme="dark"] .sampler .scripture_link {
