@@ -289,7 +289,7 @@ Raw measurements: `home-discover-audit-2026-10-15/page/pagepass.json`.
 
 **P1 · E1/E2 — Back from any tile destination rebuilds a different Home.**
 Variable tiles are re-shuffled with `Math.random` on every mount
-(`Sampler.js:120`, `shuffle(...)` in the `useState` initializer), and infinite
+(`Sampler.js:113`, `shuffle(...)` in the `useState` initializer), and infinite
 batches live only in component state (`extraBatches`), so leaving Home discards
 both. Measured: desktop, Back from `/fax/printer` landed at y=1988 instead of
 3000 with a different main-column order; phone, Back from a history doc dropped
