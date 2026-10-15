@@ -32,12 +32,14 @@ export default function ReadingProgressTile({ token, bookmark }) {
   const overallCompleted = overall.completed > 0 ? overall.completed : 0;
   const overallStarted = overall.started > 0 ? overall.started : 0;
 
-  const [page, setPage] = useState(null);
+  // undefined = loading (the pane reserves its footprint), null = failed/empty
+  const [page, setPage] = useState(undefined);
   const pageSlug = bookmark?.pageSlug;
 
   useEffect(() => {
     if (!pageSlug) return undefined;
     let cancelled = false;
+    setPage(undefined);
     BoMOnlineAPI({ pageinfoprogress: [{ slug: [pageSlug], token }] }, { token, useCache: false })
       .then((r) => {
         if (cancelled) return;
@@ -48,7 +50,7 @@ export default function ReadingProgressTile({ token, bookmark }) {
         const pg = candidates.find((x) => x && typeof x === "object" && Array.isArray(x.sections));
         setPage(pg || null);
       })
-      .catch(() => {});
+      .catch(() => { if (!cancelled) setPage(null); });
     return () => { cancelled = true; };
   }, [pageSlug, token]);
 
@@ -73,9 +75,17 @@ export default function ReadingProgressTile({ token, bookmark }) {
           <ProgressBar complete={overallCompleted} started={overallStarted} />
         </div>
       </div>
-      <div className="ProgressBoxPane rpBoxPane">
-        {pages.length ? <ProgressDetailsCircles progressPages={{ pages }} /> : null}
-      </div>
+      {pages.length ? (
+        <div className="ProgressBoxPane rpBoxPane">
+          <ProgressDetailsCircles progressPages={{ pages }} />
+        </div>
+      ) : page === undefined ? (
+        // reserve the page box while its progress loads — no second grow
+        <div className="ProgressBoxPane rpBoxPane rpBoxPending" aria-busy="true" />
+      ) : (
+        // progress unavailable: still offer the way back to the page
+        <Link className="rpContinue" to={`/${pageSlug}`}>{bookmark.pagetitle || pageSlug}</Link>
+      )}
     </div>
   );
 }

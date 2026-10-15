@@ -862,17 +862,58 @@ html[data-theme="dark"] .valuePropText { color: #e4e4e4; }
   line-height: 1.2;
 }
 button.valuePropSecondary { background: transparent; }
-.valuePropPrimary { background: #323b4d; color: #fff; }
-.valuePropPrimary:hover { background: #4a5670; color: #fff; text-decoration: none; }
+.valuePropPrimary { background: #1f1f1f; color: #fff; } /* house: black, not slate-blue */
+.valuePropPrimary:hover { background: #3a3a3a; color: #fff; text-decoration: none; }
 .valuePropSecondary {
   border: 1px solid #c9c9c9;
   color: #444;
 }
-.valuePropSecondary:hover { border-color: #323b4d; color: #323b4d; text-decoration: none; }
-html[data-theme="dark"] .valuePropPrimary { background: #5c6b8a; color: #fff; }
-html[data-theme="dark"] .valuePropPrimary:hover { background: #71809f; color: #fff; }
+.valuePropSecondary:hover { border-color: #1f1f1f; color: #1f1f1f; text-decoration: none; }
+html[data-theme="dark"] .valuePropPrimary { background: #ececec; color: #1f1f1f; } /* near-white primary, no slate-blue */
+html[data-theme="dark"] .valuePropPrimary:hover { background: #fff; color: #111; }
 html[data-theme="dark"] .valuePropSecondary { border-color: #555; color: #ccc; }
 html[data-theme="dark"] .valuePropSecondary:hover { border-color: #ddd; color: #ddd; }
+@media (pointer: coarse) {
+  .valuePropPrimary,
+  .valuePropSecondary { min-height: 44px; display: inline-flex; align-items: center; }
+}
+/* the bubbles are a status picture, not controls (no handler): no pointer,
+   no hover glow. Legible numbers: #555 on #e9e9e9 (6:1), dark #bdbdbd on
+   #3a3a3a (6:1). Week 1 / the current week carries the gold accent. */
+/* even columns that fill the tile width (no ragged right-hand gap) */
+.segmentList.guestSegmentList { display: grid; grid-template-columns: repeat(auto-fill, minmax(1.9rem, 1fr)); gap: 4px; }
+.guestSegmentList .segmentListItem { width: auto; cursor: default; font-size: 0.62rem; font-weight: 600; }
+.guestSegmentList .segmentListItem:hover { filter: none; }
+.guestSegmentList .segmentListItem.notStarted,
+.guestSegmentList .segmentListItem.future.notStarted { background-color: #e9e9e9; color: #555; }
+.guestSegmentList .segmentListItem.current { outline: 2px solid #c9a24b; outline-offset: 0; }
+.guestSegmentList .segmentListItem.current.notStarted { background-color: rgba(201, 162, 75, 0.22); color: #3d3214; }
+html[data-theme="dark"] .guestSegmentList .segmentListItem.notStarted,
+html[data-theme="dark"] .guestSegmentList .segmentListItem.future.notStarted { background-color: #3a3a3a; color: #bdbdbd; }
+html[data-theme="dark"] .guestSegmentList .segmentListItem.current.notStarted { background-color: rgba(201, 162, 75, 0.28); color: #f3e6c4; }
+/* the global dark theme borders every bubble and paints "current" green — neutral + gold here */
+html[data-theme="dark"] .guestSegmentList .segmentListItem { border: 0; box-shadow: none; }
+html[data-theme="dark"] .guestSegmentList .segmentListItem.current { outline: 2px solid #c9a24b; box-shadow: none; }
+/* placeholder while the slot's variant is still unknown: an invisible copy of
+   the plan tile, so it holds the plan tile's footprint at every width */
+.readingPlanPending > * { visibility: hidden; }
+/* the signed-in chooser (Gallery/Wizard) gets a way back to the bubbles */
+.readingPlanChooserBar { display: flex; justify-content: flex-end; padding: 0.5rem 0.6rem 0; }
+.readingPlanClose {
+  border: 1px solid #c9c9c9;
+  background: transparent;
+  color: #333;
+  border-radius: 2rem;
+  padding: 0.3rem 0.85rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.readingPlanClose:hover { border-color: #333; }
+html[data-theme="dark"] .readingPlanClose { border-color: #555; color: #ddd; }
+html[data-theme="dark"] .readingPlanClose:hover { border-color: #ddd; }
+@media (pointer: coarse) { .readingPlanClose { min-height: 44px; } }
 
 /* ================================================================
    SPOTLIGHT — community group card OR leaderboard/finishers list
@@ -1127,12 +1168,15 @@ html[data-theme="dark"] .narrationItem:has(.narrationBeatLink:hover) { backgroun
   margin-top: 0.22rem;
   flex-shrink: 0;
 }
+html[data-theme="dark"] .narrationDot.isBlank { opacity: 0.3; }
 .narrationText {
   font-size: 0.8rem;
   line-height: 1.45;
   color: #555;
   min-width: 0;
 }
+a.narrationBeatLink { color: #3a3a3a; text-decoration: none; }
+a.narrationBeatLink:hover { color: #000; text-decoration: underline; text-decoration-color: rgba(201, 162, 75, 0.7); }
 html[data-theme="dark"] .narrationText { color: #c4c4c4; }
 html[data-theme="dark"] a.narrationBeatLink { color: #cfcfcf; }
 html[data-theme="dark"] a.narrationBeatLink:hover { color: #fff; }
@@ -1168,15 +1212,12 @@ html[data-theme="dark"] a.narrationBeatLink:hover { color: #fff; }
   object-position: top center;
 }
 .historyTileThumb {
-html[data-theme="dark"] .narrationDot.isBlank { opacity: 0.3; }
   width: 100%;
   height: auto;
   object-fit: cover;
   border-radius: 0.35rem;
   border: 1px solid #ddd;
   background: #f4f1ea;
-a.narrationBeatLink { color: #3a3a3a; text-decoration: none; }
-a.narrationBeatLink:hover { color: #000; text-decoration: underline; text-decoration-color: rgba(201, 162, 75, 0.7); }
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
   flex-shrink: 0;
   align-self: flex-start;
@@ -1779,6 +1820,12 @@ html[data-theme="dark"] .rpUserProgress .progress { background-color: #3a3a3a; }
 /* dark theme: the gray #eee section box would glare — tone it down */
 html[data-theme="dark"] .rpBoxPane .sectionBox { background-color: #2a2a2a; color: #aaa; }
 html[data-theme="dark"] .rpBoxPane .sectionDots { border-right-color: #444; }
+/* reserve the page box while its progress loads (no second grow) */
+.rpBoxPane.rpBoxPending { min-height: 7.5rem; border-radius: 0.5rem; background: #f3f3f3; }
+html[data-theme="dark"] .rpBoxPane.rpBoxPending { background: #2a2a2a; }
+/* progress unavailable: the bookmark's page as a plain way back */
+a.rpContinue { font-weight: 700; font-size: 0.88rem; color: #1f1f1f; text-decoration: underline; text-decoration-color: #c9a24b; text-underline-offset: 0.18em; }
+html[data-theme="dark"] a.rpContinue { color: #f0f0f0; }
 
 /* ---- notes tile (wave 1) ---- */
 .notesTile .notesEntry + .notesEntry {
