@@ -6,10 +6,12 @@
 destinations those tiles lead to. The People / Places / Matters destinations (both
 the single-entity pages and the "view all" index pages) get a dedicated
 **Destination Study** (§S) because they are new and immature.
-**Status:** Rubric approved; audit run pending.
+**Status:** Rubric approved; page-level pass (§K) done 2026-10-15; per-tile pass and Destination Study pending.
 
 This document holds the rubric first, then (once run) the results. Screenshots and
-videos go in `docs/audits/home-discover-audit-2026-10-15/`.
+videos go in `docs/audits/home-discover-audit-2026-10-15/` — **gitignored**
+(34MB+, and tiles such as Notes can carry user-generated content; the community
+tile is masked in every capture). Harness: Playwright scripts kept alongside.
 
 ---
 
@@ -237,8 +239,15 @@ open: **the study answers it with evidence rather than assuming it.**
 
 ## 4. Protocol
 
-- **Target:** `http://localhost:8200` (never `bom.kckern.net` — the Cloudflare
-  edge cache serves stale bundles).
+- **Target:** `http://localhost:8201` — the Vite dev server that the Next front
+  door proxies human browsers to. (`localhost:8200` doesn't work for this: its
+  `/graphql` 404s because the API route lives in NPM on the public host, and
+  headless Chromium's `HeadlessChrome` UA is classified as a bot → SSR, which has
+  no `/home`. Never `bom.kckern.net` — Cloudflare edge-caches stale bundles.)
+  Harness overrides the UA to desktop Chrome / iOS Safari.
+- **Caveat:** Vite dev serves unbundled modules, so absolute timings (first
+  paint, long tasks) are slower than prod. Ordering, shifts, and behavior are
+  representative; J-criteria timings must be re-checked on a prod build.
 - **Core pass (full criteria):** 1440 and 390 viewports, warm cache, guest,
   English, light mode.
 - **Spot-check sweeps (one pass each, all tiles, triage only):** 768–1024
@@ -266,3 +275,106 @@ open: **the study answers it with evidence rather than assuming it.**
 | Default | readingplan, section (Narration), contents, community, people, text, commentary ×3, history, fax, places, mattersNarrative, mattersMaterial, mattersConcept, biblephrases, chiasmus, art, notes, faxVerse, mapstory |
 | Reserve | personProfile, witness, translation, josephSmith, placeProfile, matterProfile, artFill1/2, chiasmus2, map |
 | Batch-only | personProfile, placeProfile, matterProfile, witness, artB (+ repeatable default types) |
+
+---
+
+# Results
+
+## R1. Page-level pass (§K + page-scope B/E) — 2026-10-15
+
+Core config: 1440×900 desktop and 390×844 phone (DPR 2), guest, English, light.
+Raw measurements: `home-discover-audit-2026-10-15/page/pagepass.json`.
+
+### Findings
+
+**P1 · E1/E2 — Back from any tile destination rebuilds a different Home.**
+Variable tiles are re-shuffled with `Math.random` on every mount
+(`Sampler.js:120`, `shuffle(...)` in the `useState` initializer), and infinite
+batches live only in component state (`extraBatches`), so leaving Home discards
+both. Measured: desktop, Back from `/fax/printer` landed at y=1988 instead of
+3000 with a different main-column order; phone, Back from a history doc dropped
+40 infinite tiles → 0, landed at y=3426 instead of 4179, order reshuffled. The
+new route-level restore (`2791b37c`) can't help — the page it restores to no
+longer exists. Same reshuffle on a tab round-trip (Explore → Community →
+Explore: different order). *Fix hint:* persist the shuffled order + revealed
+batches (session-scoped, keyed by seed) and rehydrate on POP; or keep Home
+mounted across tile navigations.
+
+**P1 · K1/F1 — Phone layout buries the page under the rail.** At ≤800px the
+rail stacks *above* the main column, so a phone reader scrolls past 12 rail
+tiles (reading plan, narration, contents, history, fax, faxVerse, chiasmus, and
+5 reserves) before People appears at **y≈4007** (~5 screens). The balancer
+(`Sampler.js` reserve `useLayoutEffect`) still compares rail vs main *heights*
+when they are stacked, which is meaningless, so it keeps feeding reserves into
+the rail and making it worse. Infinite-scroll tiles are also binned into the
+rail on phone (`railInfinite`), i.e. inserted **above** the reader's position
+mid-page — Chromium's scroll anchoring hides that, but iOS Safari has no
+`overflow-anchor` (not measured here, likely visible jump). *Fix hint:* at
+single-column widths disable the balancer and rail binning, interleave rail and
+main into one curated order, and append batches only at the end.
+
+**P1 · B2 — Phone reading-plan grid rug-pull above the fold.** On phone the
+52-week grid in ReadingPlanTile pops in 1–3 s after first paint and shoves
+everything ~175px down (CLS 0.103 at ~4.2 s, sources: readingplan, narration,
+contents). Screenshots `phone-warm-1000ms.png` vs `phone-warm-3000ms.png`.
+Desktop warm load is clean (CLS 0.015).
+
+**P2 · B1/B2 — Desktop cold-load shift.** Cold load CLS 0.133 (>0.1): one
+shift of 0.117 at ~2.4 s sourced to the masonry + contents tile — consistent
+with the live community payload landing and the balancer re-binning. Warm load
+avoids it.
+
+**P1 · K4/B4 — Batch fetch failure leaves 3 permanent skeletons.** With
+`homesampler` batch requests failing (forced via route abort, and seen once
+naturally after `ERR_NETWORK_CHANGED`), the bottom of the feed shows three grey
+skeleton tiles indefinitely: no retry, no message, no terminus. On desktop the
+reader was parked at the bottom for 8 s+ looking at skeletons.
+`desktop-fetchfail-bottom.png`. *Fix hint:* on failure drop the skeletons and
+render a quiet end-of-feed with a retry link; also define the MAX_BATCHES
+terminus.
+
+**P2 · I1/F — No refresh/resample affordance on phone.** `HomeTabs` (which owns
+the resample button) is not rendered on mobile (`Home.js:77`), so phone users
+have no way to get a new sample and no Explore/Community/User tabs.
+
+**P2 · A1/F1 — Phone header clips and overlaps.** At 390px the header's user
+area is cut off ("Gu…" for Guest) and a `0.0% · 0.0%` progress pill shows for
+a guest; the tile "READING PLAN" label sits under the fixed header at y=0.
+
+**P2 · M2 — Runtime errors on a normal load.**
+- `TypeError: map.delete is not a function` in MapStoryTileInner `regNode`
+  (`MapStoryTileInner.js:80-83`, called from the leader-line refs at :630/:643)
+  — the ref map isn't a `Map` at unmount time.
+- Uncaught `SyntaxError: Unexpected token '<'` — something is parsing an HTML
+  response as JSON (to pin down in the tile pass).
+- 404s for fax edition tab images: `media.bookofmormon.online/fax/tabs/1877`,
+  `/1891` (FaxVerse/Fax edition rail, A2).
+- React warning: unknown `activeClassName` prop on a DOM element (router-7
+  leftover on a NavLink).
+
+**P2 · B4 — BiblePhrases renders as a 2px empty shell** on both viewports in
+the sampled seed (measured height 2px) — a grid slot with nothing in it.
+
+**P3 · J3 — Long tasks** at load: 917 ms (desktop) / 1306 ms (phone), plus
+300–460 ms tasks while batches append on phone. Dev-mode inflated; re-measure
+on a prod build before acting.
+
+**P3 · Resample replaces the whole page with skeletons** (CLS 0.49, user-
+initiated so not a CLS violation). Acceptable, but a cross-fade or keeping the
+fixed rail would feel less like a reload.
+
+### Passes
+
+- Desktop warm load: instant paint from cache, no skeleton flash, CLS 0.015,
+  no horizontal overflow at either width.
+- Infinite scroll on desktop: batches arrive in 250–500 ms, append below the
+  viewport, no measurable shift while scrolling (`scrollCls` empty).
+- Commentary anti-stacking holds: the three commentary tiles alternate columns.
+
+### Gestalt (page)
+
+- **Craft 3/5** — desktop is composed and dense with real content; phone is an
+  unedited stack of the desktop rail.
+- **Beauty 4/5 desktop, 2/5 phone** — the people mosaic and art carry desktop;
+  phone opens on a grid of 52 grey week-buttons.
+- **Belonging 4/5** — consistent card chrome, gold accents restrained.
