@@ -1316,29 +1316,40 @@ html[data-theme="dark"] .placesImgWrap { background: #333; }
 
 /* fax pages: ref-captioned, deep-linking into the viewer at that page */
 /* flex-grow is set inline per page (natural aspect ratio) so both pages render
-   at equal height with proportional widths — see FaxTile.js */
-.faxTilePage { flex-basis: 0; flex-shrink: 1; flex-grow: 1; min-width: 0; position: relative; display: flex; flex-direction: column; text-decoration: none; }
+   at equal height with proportional widths — see FaxTile.js. The row's
+   max-width (inline) caps the rendered page height; it centers when capped. */
+.faxTilePages { margin-inline: auto; width: 100%; }
+.faxTilePage { flex-basis: 0; flex-shrink: 1; flex-grow: 1; min-width: 0; display: flex; flex-direction: column; }
+/* the page link: image + folio overlay (the ref rail is a sibling button above) */
+.faxTilePageLink { position: relative; display: block; text-decoration: none; border-radius: 0.35rem; }
 /* natural page proportions — the sheet fills whatever height it needs */
-.faxTilePage img { width: 100%; height: auto; display: block; border-radius: 0 0 0.35rem 0.35rem; border: 1px solid #e0e0e0; border-top: none; transition: transform 0.15s ease; }
-html[data-theme="dark"] .faxTilePage img { border-color: #444; }
-/* reference rail sitting above the page image, centered */
-.faxPageBarRef {
+.faxTilePage img { width: 100%; height: auto; display: block; border-radius: 0.35rem; border: 1px solid #e0e0e0; background: #f4f1ea; transition: transform 0.15s ease; }
+.faxTilePage.hasRef img { border-top: none; border-radius: 0 0 0.35rem 0.35rem; }
+html[data-theme="dark"] .faxTilePage img { border-color: #444; background: #2c2c2c; }
+/* reference rail sitting above the page image: a RefPill <button> stretched
+   to the page width (overrides the inline-chip .scripture_link metrics) */
+.sampler .faxTilePage .faxPageBarRef {
   display: block;
+  width: 100%;
   text-align: center;
   font-size: 0.66rem;
   font-weight: 700;
   line-height: 1.3;
-  padding: 0.15rem 0.35rem;
+  padding: 0.2rem 0.35rem;
   border: 1px solid #e0e0e0;
   border-bottom: none;
   border-radius: 0.35rem 0.35rem 0 0;
   background: rgba(0, 0, 0, 0.04);
-  cursor: pointer;
+  color: #444;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-html[data-theme="dark"] .faxPageBarRef { border-color: #444; background: rgba(255, 255, 255, 0.05); }
+.sampler .faxTilePage .faxPageBarRef:hover { background: rgba(201, 162, 75, 0.14); color: #000; }
+html[data-theme="dark"] .sampler .faxTilePage .faxPageBarRef { border-color: #444; background: rgba(255, 255, 255, 0.05); color: #d6d6d6; }
+@media (pointer: coarse) {
+  .sampler .faxTilePage .faxPageBarRef { min-height: 44px; display: flex; align-items: center; justify-content: center; }
+}
 /* page number kept as a small overlay, bottom-right of the image */
 .faxPageBarNum {
   position: absolute;
@@ -1347,13 +1358,11 @@ html[data-theme="dark"] .faxPageBarRef { border-color: #444; background: rgba(25
   font-size: 0.62rem;
   font-weight: 400;
   color: #fff;
-  background: rgba(15, 18, 26, 0.7);
+  background: rgba(0, 0, 0, 0.62);
   padding: 0.05rem 0.35rem;
   border-radius: 0.3rem;
   pointer-events: none;
 }
-.faxTilePageRef { font-size: 0.66rem; font-weight: 700; color: #333; text-align: center; }
-html[data-theme="dark"] .faxTilePageRef { color: #ccc; }
 
 /* history: structured bullets + citation */
 .historyTileBullets { margin: 0.35rem 0 0; padding-left: 1rem; font-size: 0.76rem; line-height: 1.4; color: #555; }
@@ -1572,9 +1581,9 @@ html[data-theme="dark"] .faxTileEdition img { border-color: #444; background: #2
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  font-size: 0.58rem;
-  line-height: 1.2;
-  margin-top: 0.2rem;
+  font-size: 0.66rem;
+  line-height: 1.25;
+  margin-top: 0.25rem;
   color: var(--tile-meta);
 }
 html[data-theme="dark"] .faxTileEdition { color: #9a9a9a; }
