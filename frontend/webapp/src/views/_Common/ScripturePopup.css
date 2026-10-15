@@ -113,6 +113,10 @@ html[data-theme="dark"] .samplerScriptureReadLink:hover { background: rgba(201, 
 
 
 .samplerScriptureCard:focus { outline: none; }
+.samplerScriptureReadLink:focus-visible {
+  outline: 2px solid #c9a24b;
+  outline-offset: 2px;
+}
 .samplerScriptureHead button:focus-visible {
   outline: 2px solid #c9a24b;
   outline-offset: 2px;
@@ -123,6 +127,11 @@ html[data-theme="dark"] .samplerScriptureReadLink:hover { background: rgba(201, 
     min-width: 44px;
     min-height: 44px;
     margin: -0.5rem -0.6rem -0.5rem 0;
+  }
+  /* Read pill is the sheet's primary CTA — full 44px touch target. */
+  .samplerScriptureReadLink {
+    min-height: 44px;
+    justify-content: center;
   }
 }
 

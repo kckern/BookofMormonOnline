@@ -6,7 +6,7 @@ import ScripturePopup, { openScripture } from "../ScripturePopup";
 // Real `read` query responses captured from :8201/graphql/en (trimmed to the
 // sections these refs touch). Helaman 1:1 and Alma 6:8 come back from the API
 // with an exact duplicate line — the bug these tests pin.
-import READ from "./fixtures/readChapters";
+import READ from "../__fixtures__/readChapters";
 
 vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
@@ -99,14 +99,45 @@ test("dialog semantics: aria-modal, labelled by its title, focus in, Esc restore
   expect(document.documentElement.style.overflow).toBe("");
 });
 
-test("Tab is trapped inside the dialog", async () => {
-  setup();
-  const dialog = await open("Helaman 1:1-4");
-  await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
-  const close = within(dialog).getByRole("button", { name: /close/i });
-  close.focus();
-  fireEvent.keyDown(close, { key: "Tab", shiftKey: true });
-  expect(dialog.contains(document.activeElement)).toBe(true);
+test("Tab is trapped inside the dialog: Shift+Tab on first wraps to last, Tab on last wraps to first", async () => {
+  // jsdom has no layout, so offsetParent is always null and useModalA11y's
+  // visibility filter would see only the active element — making any trap
+  // assertion vacuous. Give every attached element a non-null offsetParent.
+  const desc = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "offsetParent");
+  Object.defineProperty(HTMLElement.prototype, "offsetParent", {
+    configurable: true,
+    get() { return this.isConnected ? this.parentNode : null; },
+  });
+  try {
+    setup();
+    const dialog = await open("Helaman 1:1-4");
+    await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
+    // the Read CTA appears once the fetch confirms BoM content
+    const readLink = await waitFor(() => {
+      const a = dialog.querySelector("a.samplerScriptureReadLink");
+      expect(a).not.toBeNull();
+      return a;
+    });
+    const focusable = Array.from(
+      dialog.querySelectorAll('a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])')
+    );
+    expect(focusable.length).toBeGreaterThan(1);
+    const close = within(dialog).getByRole("button", { name: /close/i });
+    const last = focusable[focusable.length - 1];
+    expect(focusable[0]).toBe(close);
+    expect(last).not.toBe(close);
+    expect(focusable).toContain(readLink);
+
+    close.focus();
+    fireEvent.keyDown(close, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(last);
+
+    fireEvent.keyDown(last, { key: "Tab" });
+    expect(document.activeElement).toBe(close);
+  } finally {
+    if (desc) Object.defineProperty(HTMLElement.prototype, "offsetParent", desc);
+    else delete HTMLElement.prototype.offsetParent;
+  }
 });
 
 test("backdrop click closes; phone width renders the same dialog (bottom sheet), not a side drawer", async () => {
