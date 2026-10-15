@@ -395,7 +395,6 @@ html[data-theme="dark"] .peopleIndexItem:hover .peopleIndexText { color: #ddd; }
 .viewAllCard:hover .viewAllBox { border-color: #323b4d; color: #323b4d; }
 html[data-theme="dark"] .viewAllBox { border-color: #555; background: #2a2a2a; color: #999; }
 html[data-theme="dark"] .viewAllCard:hover .viewAllBox { border-color: #ddd; color: #ddd; }
-.placesViewAll { aspect-ratio: auto; height: 4.4rem; }
 .samplerCard {
   display: flex;
   flex-direction: column;
@@ -535,7 +534,7 @@ html[data-theme="dark"] .peopleFaceRef { color: #ccc; }
 }
 
 /* ================================================================
-   PLACES — compact 2×2 thumbnail grid
+   PLACES — 3-up square cards + mosaic end cell
    ================================================================ */
 .placesTileGrid {
   display: grid;
@@ -543,37 +542,7 @@ html[data-theme="dark"] .peopleFaceRef { color: #ccc; }
   gap: 0.5rem;
 }
 .placesTileCard { color: inherit; text-decoration: none; min-width: 0; }
-.placesTileCard img.placesThumb {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  background: #e2e2e2;
-  display: block;
-}
 .placesImgWrap > a:hover > img { transform: scale(1.02); transition: transform 0.15s ease; }
-.placesTileNameRow {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  margin-top: 0.25rem;
-}
-.placesTileName {
-  font-weight: 700;
-  font-size: 0.72rem;
-  line-height: 1.15;
-  color: #2a2a2a;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  text-decoration: none;
-  min-width: 0;
-}
-a.placesTileName:hover { color: inherit; }
-html[data-theme="dark"] .placesTileName { color: #f0f0f0; }
-.placesTileMapLink { flex-shrink: 0; line-height: 0; opacity: 0.55; }
-.placesTileMapLink:hover { opacity: 1; }
-.placesTileMapLink img { width: 0.85rem; height: 0.85rem; }
-html[data-theme="dark"] .placesTileMapLink img { filter: invert(0.85); }
 .placesTileInfo {
   font-size: 0.64rem;
   line-height: 1.25;
@@ -582,14 +551,6 @@ html[data-theme="dark"] .placesTileMapLink img { filter: invert(0.85); }
   flex-direction: column;
   gap: 0.2rem;
 }
-.placesTileDesc {
-  color: #666;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-html[data-theme="dark"] .placesTileDesc { color: #b0b0b0; }
 .placesTileIndexRow {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -598,16 +559,7 @@ html[data-theme="dark"] .placesTileDesc { color: #b0b0b0; }
 }
 /* Matters cards give the seeded index text more room — three lines, not two. */
 .mattersTile .placesTileIndexRow { -webkit-line-clamp: 3; }
-.placesTileRef {
-  font-weight: 700;
-  color: #333;
-  cursor: pointer;
-  white-space: nowrap;
-}
 
-html[data-theme="dark"] .placesTileRef { color: #ccc; }
-.placesMosaicWrap { position: relative; aspect-ratio: 1 / 1; border-radius: 0.45rem; overflow: hidden; }
-.placesMosaicWrap .viewAllMosaic { width: 100%; height: 100%; aspect-ratio: auto; border-radius: 0; }
 
 /* ================================================================
    FAX — header on top; pages at natural aspect with overlaid page numbers
@@ -1257,7 +1209,7 @@ html[data-theme="dark"] .historyTileQuote { color: #9a9a9a; }
 .textTile .itemInFeedContainer { margin: 0; }
 .textTile .itemInFeed { margin: 0; }
 
-/* places: people-convention overlays on a 16:9 image */
+/* places: people-convention overlays on a square image */
 .placesImgWrap {
   position: relative;
   aspect-ratio: 1 / 1;
@@ -1307,6 +1259,63 @@ html[data-theme="dark"] .placesImgWrap { background: #333; }
 
 /* info overlay = the bottom band (people-title convention) */
 .placesInfoOverlay { pointer-events: none; }
+
+/* --- Places tile only (.placesTilePlaces; matters cards share the base
+   classes above and are styled by their own family) --- */
+/* the entity name outranks the info band: up to 3 lines, clear of the pin */
+.placesTilePlaces .placesNameOverlay {
+  -webkit-line-clamp: 3;
+  max-width: calc(100% - 2.2rem);
+  font-size: 0.7rem;
+  line-height: 1.18;
+}
+/* one truncation: the band is a plain block, its inner text clamps to 2 lines
+   (the clamp on the padded box itself leaked half a third line) */
+.placesTilePlaces .placesInfoOverlay { display: block; }
+.placesTilePlaces .placesInfoText {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+/* the image link's focus ring sits inside the clipping image box */
+.placesTilePlaces .placesCardLink { display: block; height: 100%; }
+.placesTilePlaces .placesCardLink:focus-visible { outline-offset: -3px; }
+/* card body is not a link: no pointer affordance on it; the card border answers
+   a hover on the image link instead of a whole-card lift */
+.placesTilePlaces .placesTileCard:not(.viewAllCard):has(.placesCardLink:hover) { border-color: #c9c9c9; }
+html[data-theme="dark"] .placesTilePlaces .placesTileCard:not(.viewAllCard):has(.placesCardLink:hover) { border-color: #555; }
+
+/* map pin (Places cards + PlaceProfile hero): a small glyph on a dark scrim
+   disc so it reads on bright skies, with a >=44px hit area on touch */
+.placesTilePlaces .placesImgWrap > a.placesMapBtn,
+.placeProfilePlace .placesMapBtn {
+  width: 1.6rem;
+  height: 1.6rem;
+  top: 0.25rem;
+  right: 0.25rem;
+  border-radius: 50%;
+  background: rgba(15, 18, 24, 0.55);
+  opacity: 1;
+  z-index: 2;
+  transition: background 0.15s ease;
+}
+.placesTilePlaces .placesImgWrap > a.placesMapBtn:hover,
+.placeProfilePlace .placesMapBtn:hover { background: rgba(15, 18, 24, 0.8); }
+.placesTilePlaces .placesImgWrap > a.placesMapBtn > img,
+.placeProfilePlace .placesMapBtn > img {
+  width: 0.95rem;
+  height: 0.95rem;
+  filter: brightness(0) invert(1);
+}
+@media (pointer: coarse) {
+  .placesTilePlaces .placesImgWrap > a.placesMapBtn::after,
+  .placeProfilePlace .placesMapBtn::after {
+    content: "";
+    position: absolute;
+    inset: calc((1.6rem - 44px) / 2);
+  }
+}
 
 /* text tile: the feed card centers in its slot, both axes — no blank interior */
 .textTile { align-items: center; justify-content: center; }
@@ -1425,7 +1434,6 @@ html[data-theme="dark"] .communityInvite { color: #ccc; }
   .communityMsgText { display: none; }
   .communityGroupStrip { flex-wrap: wrap; }
 }
-.placesMosaicCaption { margin-top: 0.25rem; }
 
 /* THE standardized read-more pill (used everywhere prose clamps: people bio,
    contents/places description, commentary). Centered, inbox-arrow-down glyph. */
@@ -1644,11 +1652,15 @@ html[data-theme="dark"] .placeProfileImgLink > img { background: #333; }
 .placeProfileMapBtn img { width: 1.1rem; height: 1.1rem; object-fit: contain; }
 .placeProfileDesc { font-size: 0.8rem; line-height: 1.45; color: #555; }
 html[data-theme="dark"] .placeProfileDesc { color: #c4c4c4; }
+/* PlaceProfile only: cap the hero on wide single-column layouts (tablet: the
+   16:9 hero alone was ~420px); "(" + ref pill + ")" never break apart */
+.placeProfilePlace .placeProfileImgLink > img { max-height: 15rem; }
+.placeProfilePlace .refParen { white-space: nowrap; }
 
 /* ================================================================
-   MAP — lazy interactive map tile (reserve, below the fold)
+   MAP FRAME — shared by the MapStory tile (the standalone Map tile was
+   removed in Task 10c)
    ================================================================ */
-.mapTile { padding: 0.6rem 0.7rem 0.7rem; }
 .mapTileFrame {
   position: relative;
   width: 100%;
@@ -1659,7 +1671,6 @@ html[data-theme="dark"] .placeProfileDesc { color: #c4c4c4; }
 }
 html[data-theme="dark"] .mapTileFrame { background: #22282e; }
 .mapTileCanvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-.mapTileLoading { display: flex; align-items: center; justify-content: center; height: 100%; color: #999; font-size: 1.4rem; }
 .mapTileCta { margin-top: 0.5rem; }
 
 /* ================================================================
