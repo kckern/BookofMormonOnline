@@ -836,3 +836,4 @@ Add a triangle notch pointing down at the bottom of the tooltip
 .mapPanelHeadRow h5.title { line-height: 1.2; overflow-wrap: anywhere; }
 .mapPanelHeadRow .closePanelButton { line-height: 1; }
 .mapPanel .info { margin-top: 0.25rem; }
+.mapPanel .desc .scripture_link { white-space: nowrap; }
