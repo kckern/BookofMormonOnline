@@ -22,6 +22,10 @@ describe("flatten", () => {
   test("strips HTML, collapses whitespace, and tightens parentheses", () => {
     expect(flatten("Alma said <b>hi</b>  ( there )")).toBe("Alma said hi (there)");
   });
+  test("a <sup>N</sup> disambiguator stays attached to its name (no 'Alma 2' scripture leak)", () => {
+    expect(flatten("{Alma<sup>2</sup>|alma2} was teaching")).toBe("Alma² was teaching");
+    expect(flatten("Ammon<sup> 2 </sup> and his brethren")).toBe("Ammon² and his brethren");
+  });
   test("superscripts disambiguation digits after flattening", () => {
     expect(flatten("{Heth2|heth} reigned")).toBe("Heth² reigned");
   });
