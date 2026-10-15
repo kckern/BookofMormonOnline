@@ -49,3 +49,34 @@ test("reveal is reversible: one button toggles Read more / Show less and keeps f
   expect(btn).toHaveAttribute("aria-expanded", "false");
   expect(document.activeElement).toBe(btn);
 });
+
+// A parent re-render passes NEW JSX children while the text is expanded (the
+// Sampler balancer re-renders reserve tiles on its settle ticks). Expanded, the
+// box no longer overflows — re-measuring then would drop the pill and strand
+// the reader with no Show less (and lose focus). Only the collapsed box is measured.
+test("a parent re-render while expanded keeps the Show less control", () => {
+  const sh = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "scrollHeight");
+  Object.defineProperty(HTMLElement.prototype, "scrollHeight", {
+    configurable: true,
+    get() { return this.classList.contains("clampLines") ? 500 : 100; },
+  });
+  try {
+    const ui = (n) => (
+      <ExpandableText lines={2}>
+        <span>{`lots of text that overflows the clamp box ${n}`}</span>
+      </ExpandableText>
+    );
+    const { rerender } = render(ui(1));
+    const btn = screen.getByRole("button", { name: "Read more" });
+    btn.focus();
+    fireEvent.click(btn);
+    rerender(ui(2));
+    expect(screen.getByRole("button", { name: "Show less" })).toBe(btn);
+    expect(document.activeElement).toBe(btn);
+    fireEvent.click(btn);
+    rerender(ui(3));
+    expect(screen.getByRole("button", { name: "Read more" })).toBe(btn);
+  } finally {
+    Object.defineProperty(HTMLElement.prototype, "scrollHeight", sh);
+  }
+});

@@ -1553,9 +1553,10 @@ html[data-theme="dark"] .chiasmusTileSpeakerName { color: #ccc; }
 html[data-theme="dark"] .chiasmusTileTitle { color: #f0f0f0; }
 
 /* fax: other editions we hold — compact entry points under the sampled pages */
+/* 2-up in a narrow card, one row of 4 on a wide (tablet) card — never posters */
 .faxTileEditions {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
   gap: 0.5rem;
   margin-top: 0.5rem;
   padding-top: 0.45rem;
@@ -2317,6 +2318,7 @@ html[data-theme="dark"] .mapStoryScrubber::-moz-range-track { background: #4a554
 .faxVerseTile .faxVerseEditions {
   display: flex;
   flex-direction: column;
+  max-width: 36rem; /* wide (tablet) cards: keep each rail's folio near its crop */
   gap: 0.55rem;
   margin: 0.5rem 0 0.35rem;
 }
