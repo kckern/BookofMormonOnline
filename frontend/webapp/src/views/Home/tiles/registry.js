@@ -23,7 +23,7 @@ import JosephSmithTile from "./JosephSmithTile";
 import MattersNarrativeTile from "./MattersNarrativeTile";
 import MattersMaterialTile from "./MattersMaterialTile";
 import MattersConceptTile from "./MattersConceptTile";
-import MatterProfileTile from "./MatterProfileTile";
+import MatterProfileTile, { hasProfileMatter } from "./MatterProfileTile";
 
 /**
  * Sampler tile registry. Adding a tile type:
@@ -83,7 +83,7 @@ export const reservePool = [
   { key: "translation",  component: TranslationTile,   dataKey: "translation",  isReady: (p) => !!p?.translation },
   { key: "josephSmith",  component: JosephSmithTile,   dataKey: "josephSmith",  isReady: (p) => !!p?.josephSmith },
   { key: "placeProfile",  component: PlaceProfileTile,  isReady: (p) => (p?.places?.length || 0) > 11 },
-  { key: "matterProfile", component: MatterProfileTile, props: { group: "concept" }, isReady: (p) => (p?.mattersConcept?.length || 0) > 5 },
+  { key: "matterProfile", component: MatterProfileTile, props: { group: "concept" }, isReady: (p) => hasProfileMatter(p, "concept") },
   { key: "artFill1",      component: ImageArtTile,      props: { artIndex: 1 }, isReady: (p) => (p?.art?.length || 0) > 1 },
   { key: "chiasmus2",     component: ChiasmusTile,      props: { seed: 0 }, seedOffset: 97, isReady: () => true },
   { key: "artFill2",      component: ImageArtTile,      props: { artIndex: 2 }, isReady: (p) => (p?.art?.length || 0) > 2 },
@@ -100,7 +100,7 @@ export const batchTiles = [
     .map((t) => ({ key: t.key, component: t.component, isReady: t.isReady, span: t.span })),
   { key: "personProfile", component: PersonProfileTile, isReady: (p) => (p?.people?.length || 0) > 0, span: "tile-personProfile" },
   { key: "placeProfile",  component: PlaceProfileTile,  isReady: (p) => (p?.places?.length || 0) > 0, span: "tile-placeProfile" },
-  { key: "matterProfile", component: MatterProfileTile, props: { group: "concept" }, isReady: (p) => (p?.mattersConcept?.length || 0) > 0, span: "tile-matterProfile" },
+  { key: "matterProfile", component: MatterProfileTile, props: { group: "concept" }, isReady: (p) => hasProfileMatter(p, "concept"), span: "tile-matterProfile" },
   { key: "witness",       component: WitnessTile, dataKey: "witnesses", isReady: (p) => (p?.witnesses?.length || 0) > 0, span: "tile-witness" },
   { key: "artB",          component: ImageArtTile, props: { artIndex: 1 }, isReady: (p) => (p?.art?.length || 0) > 1, span: "tile-art" },
 ];

@@ -684,8 +684,9 @@ const sampleText = async (ctx: AppContext, seed: number) => {
 };
 
 // --- Matters: three groups by branch × specificity -----------------------
-// 17 = 5 cards + a 3×4 mosaic end cell, mirroring places.
-const MATTERS_COUNT = 17;
+// 18 = 5 cards + a 3×4 mosaic end cell (17, mirroring places) + 1 for the
+// MatterProfile tile, so the profile never repeats a matter the grid shows.
+const MATTERS_COUNT = 18;
 type MatterGroup = 'narrative' | 'material' | 'concept';
 
 const sampleMatters = (group: MatterGroup) => async (ctx: AppContext, seed: number) => {
