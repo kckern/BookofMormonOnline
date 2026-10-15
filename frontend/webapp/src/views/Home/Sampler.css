@@ -1469,26 +1469,60 @@ html[data-theme="dark"] .readMorePill:hover { background: rgba(201, 162, 75, 0.2
 /* ================================================================
    BIBLE PHRASES — intertext pair with shared wording highlighted
    ================================================================ */
-.biblePhrasesPair { display: flex; gap: 0.7rem; }
-.biblePhrasesPassage { flex: 1 1 0; min-width: 0; }
-.biblePhrasesPassage > .scripture_link { display: block; text-align: center; }
-.biblePhrasesPassage p {
-  margin: 0.3rem 0 0;
-  font-size: 0.78rem;
-  line-height: 1.45;
-  color: #555;
+/* The three self-fetching / image tiles of the analysis family collapse to
+   nothing (no 2px bordered shell) when they render null: a dud pick, a failed
+   fetch or a failed image. */
+.tile.tile-biblephrases:empty,
+.tile.tile-chiasmus:empty,
+.tile.tile-art:empty { display: none; }
+/* In-tile loading block while a self-fetching tile resolves (the tile shell
+   carries the measured skeleton min-height). */
+.biblePhrasesTile .tileInnerSkeleton,
+.chiasmusTile .tileInnerSkeleton {
+  flex: 1 1 auto;
+  border-radius: 0.45rem;
+  background: #ededed;
+  animation: samplerShimmer 1.3s ease-in-out infinite;
 }
-html[data-theme="dark"] .biblePhrasesPassage p { color: #c4c4c4; }
-.biblePhrasesPassage.kjv { border-left: 1px dashed #e2e2e2; padding-left: 0.7rem; }
+html[data-theme="dark"] .biblePhrasesTile .tileInnerSkeleton,
+html[data-theme="dark"] .chiasmusTile .tileInnerSkeleton { background: #2c2c2c; }
+@media (prefers-reduced-motion: reduce) {
+  .biblePhrasesTile .tileInnerSkeleton,
+  .chiasmusTile .tileInnerSkeleton { animation: none; }
+}
+
+.tile-biblephrases { container-type: inline-size; }
+.biblePhrasesPair { display: flex; gap: 0.9rem; }
+.biblePhrasesPassage { flex: 1 1 0; min-width: 0; }
+/* inline, left-aligned ref chip like every other tile (not a full-width bar) */
+.biblePhrasesPassage > .scripture_link { display: inline-block; }
+/* scripture in the Read serif, at the chiasmus/art reading size */
+.biblePhrasesPassage p {
+  margin: 0.35rem 0 0;
+  font-family: "Scripture", Georgia, serif;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: #2f2f2f;
+}
+html[data-theme="dark"] .biblePhrasesPassage p { color: #d6d6d6; }
+.biblePhrasesPassage.kjv { border-left: 1px solid #ececec; padding-left: 0.9rem; }
 html[data-theme="dark"] .biblePhrasesPassage.kjv { border-left-color: #3a3a3a; }
+/* narrow tile (phone, tablet column): stack the pair with a rule between */
+@container (max-width: 26rem) {
+  .biblePhrasesPair { flex-direction: column; gap: 0.6rem; }
+  .biblePhrasesPassage.kjv { border-left: 0; padding-left: 0; border-top: 1px solid #ececec; padding-top: 0.6rem; }
+  html[data-theme="dark"] .biblePhrasesPassage.kjv { border-top-color: #3a3a3a; }
+}
 .biblePhrasesTile mark {
-  background: rgba(240, 200, 80, 0.35);
+  background: rgba(201, 162, 75, 0.24);
   color: inherit;
-  padding: 0 0.1em;
+  padding: 0 0.08em;
   border-radius: 0.2em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 html[data-theme="dark"] .biblePhrasesTile mark {
-  background: rgba(240, 200, 80, 0.22);
+  background: rgba(201, 162, 75, 0.26);
 }
 /* view-in-context: a distinct pill with the exit-bracket glyph */
 .tileMoreLink {
