@@ -1,4 +1,6 @@
 import React from "react";
+import fs from "node:fs";
+import path from "node:path";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import MapStoryTile, {
@@ -308,4 +310,10 @@ describe("MapStoryTile", () => {
     expect(container.querySelector('img[src$="/places/jerusalem"]')).toBeTruthy();
     expect(container.querySelector('img[src$="/places/valley-of-lemuel"]')).toBeTruthy();
   });
+});
+
+test("MapStoryTileInner never shadows the global Map", () => {
+  const src = fs.readFileSync(path.resolve(__dirname, "../MapStoryTileInner.js"), "utf8");
+  expect(src).not.toMatch(/import\s+Map\s+from\s+["']ol\/Map["']/);
+  expect(src).toMatch(/import\s+OlMap\s+from\s+["']ol\/Map["']/);
 });

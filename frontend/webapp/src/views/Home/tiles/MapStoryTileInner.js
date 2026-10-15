@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { assetUrl } from "src/models/BoMOnlineAPI";
-import Map from "ol/Map";
+import OlMap from "ol/Map";
 import View from "ol/View";
 import TileLayer from "ol/layer/Tile";
 import XYZ from "ol/source/XYZ";
@@ -372,7 +372,7 @@ export default function MapStoryTileInner({
     });
     progressLayer.setZIndex(20);
 
-    const map = new Map({
+    const map = new OlMap({
       target,
       layers: [
         new TileLayer({
