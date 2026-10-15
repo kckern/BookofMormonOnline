@@ -15,10 +15,10 @@ const renderIn = (ui) => render(<MemoryRouter>{ui}</MemoryRouter>);
 const deep = () => screen.queryByRole("link", { name: (n, el) => el.classList.contains("tileMoreLink") });
 const readMore = () => screen.getByRole("button", { name: (n, el) => el.classList.contains("readMorePill") });
 
-test("PersonProfileTile: deeplink hidden until the bio is expanded", () => {
+test("PersonProfileTile: the 'Open <name>' deeplink is always available (single tab stop; no gate)", () => {
   const payload = { people: [{ slug: "alma", name: "Alma", description: "A long bio that overflows." }] };
   renderIn(<PersonProfileTile payload={payload} personIndex={0} />);
-  expect(deep()).toBeNull();
+  expect(deep().getAttribute("href")).toBe("/people/alma");
   fireEvent.click(readMore());
   expect(deep().getAttribute("href")).toBe("/people/alma");
 });
