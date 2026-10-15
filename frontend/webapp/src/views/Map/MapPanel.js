@@ -24,11 +24,12 @@ import {
   TabContent,
   TabPane
 } from "reactstrap";
-import { detectScriptures, generateReference } from "scripture-guide";
+import { generateReference } from "scripture-guide";
 import { determineLanguage } from "../../models/Utils";
 import { ApiBaseUrl, assetUrl } from "../../models/BoMOnlineAPI";
 import { ScripturePanelSingle } from "../Page/Narration";
 import { getHtmlScriptureLinkParserOptions } from "../_Common/ViewUtils";
+import { renderPersonPlaceHTML, detectScripturesPreservingTokens } from "../Page/PersonPlace";
 import RangeSlider from "./RangeSlider";
 import { computeRuns, colorForRun, buildPanelItems } from './colors';
 import { useMapController } from "src/contexts/MapContext";
@@ -47,7 +48,6 @@ export function MapPanel() {
   const mapController = useMapController();
   const [activeTab, setActiveTab] = useState("1");
   const [scripture, setScripture] = useState(null);
-  const parserOptions = getHtmlScriptureLinkParserOptions(setScripture);
   const [prevMapType, setPrevMapType] = useState(null);
   const {panelContents, zoomLevel, currentMap, mapCenter, setPanelContents,mapFunctions, isAdmin, placeList, selectedStory, setSelectedStory} = mapController;
   const {slug} = panelContents || {};
@@ -126,11 +126,14 @@ export function MapPanel() {
   let desc_with_scripturelinks =  placeDetails?.description;
 
 
-    desc_with_scripturelinks = detectScriptures(
+    // Same pipeline as the /places/:slug page (PlaceBody): {Name|slug} and
+    // [Name|slug] tokens are masked from scripture detection (so "moroni1" is
+    // never read as a reference) and then rendered as person/place links.
+    desc_with_scripturelinks = detectScripturesPreservingTokens(
     placeDetails?.description || "",
     (scripture) => { if (!scripture) return;
        return `<a className="scripture_link">${scripture}</a>` }
-       , { language: determineLanguage(), chainAcrossMarkers: false }
+       , determineLanguage()
        );
 
 
@@ -162,7 +165,7 @@ export function MapPanel() {
 </Nav>
 <TabContent activeTab={activeTab}>
     <TabPane tabId="1">
-        <div className="desc">{Parser(desc_with_scripturelinks, parserOptions)}</div>
+        <div className="desc">{renderPersonPlaceHTML(desc_with_scripturelinks, mapController.appController, setScripture)}</div>
     </TabPane>
     <TabPane tabId="2">
     {matchingStories.map((story, i) => {
@@ -421,7 +424,7 @@ if(isMobile()) return null;
     <div className="mapPanelCardContainer">
     <Card>
       <CardHeader>
-        <div  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height:"1.5rem" }}>
+        <div className="mapPanelHeadRow" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: "1.5rem" }}>
         <span
           className="searchPanelButton"
           onClick={()=>mapController.setSearching({firstLetter:""})}
