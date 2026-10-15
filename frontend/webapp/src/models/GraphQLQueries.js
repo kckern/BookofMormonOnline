@@ -1925,7 +1925,7 @@ const queries = {
       val: false,
       query: `homesampler${seedArg} {
         seed
-        people { slug guid name title date description index { ref slug text } }
+        people { slug guid name title unit identification date description index { ref slug text } }
         places { slug name info description index { ref slug text } }
         mattersNarrative { slug name subtitle nrefs era_culture index { ref slug text } }
         mattersMaterial { slug name subtitle nrefs era_culture index { ref slug text } }

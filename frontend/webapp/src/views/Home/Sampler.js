@@ -466,7 +466,7 @@ export default function Sampler() {
       }
       case "contents": return 12 + ((payload.contents?.pages || []).length || 5) * 2.6;
       // calibrated against measured render heights (2026-07-15, 1400px vp)
-      case "people": return 46;
+      case "people": return 51; // 810px: 5-up face strip (2026-10-15)
       case "text": return 16;
       case "commentary":
       case "commentary2":

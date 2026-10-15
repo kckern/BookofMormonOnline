@@ -12,7 +12,6 @@ const TILES_DIR = path.resolve(__dirname, "..");
 const ALLOW = new Set([
   "MattersGroupTile.js", // Task 10d
   "NarrationTile.js", // Task 10a
-  "PeopleTile.js", // Task 10b
 ]);
 
 function listTileFiles(dir) {
