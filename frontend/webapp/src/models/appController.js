@@ -282,6 +282,11 @@ export const appFunctions = {
     return appController;
   },
   closePopUp: (appController, input) => {
+    // Views call closePopUp defensively on mount even when nothing is open; only
+    // a popup that WAS open owns the URL. Otherwise its stale underSlug (e.g. the
+    // /commentary/<id> deeplink a page just canonicalized away from) was pushed
+    // back, so Back from a commentary tile looped (audit R2.2 E1).
+    const wasOpen = appController.states.popUp.open === true;
     appController.states.popUp.open = false;
     appController.states.popUp.loading = false;
     appController.states.popUp.type = null;
@@ -293,7 +298,7 @@ export const appFunctions = {
     // rewriting the slug here would send it back to the index.
     // NOTE: closePopUp is also used directly as an onClick handler, where
     // input.val is a click event — hence the optional-chained read.
-    if (!input.val?.keepSlug) {
+    if (wasOpen && !input.val?.keepSlug) {
       appController.functions.setSlug(appController.states.popUp.underSlug);
     }
 

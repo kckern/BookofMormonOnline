@@ -163,3 +163,32 @@ describe("map pin on phone: the auto-opened place sheet replaces the map URL", (
     expect(c.functions.setSlug).toHaveBeenCalledWith("places/moroni", { replace: false });
   });
 });
+
+describe("closePopUp only restores the URL when a popup was open", () => {
+  let pushSpy;
+  beforeEach(() => {
+    window.history.replaceState(null, "", "/downfall/34");
+    pushSpy = vi.spyOn(window.history, "pushState");
+  });
+  afterEach(() => pushSpy.mockRestore());
+
+  const ctl = (open) => ({
+    states: { slug: "/downfall/34", popUp: { open, type: open ? "people" : null, ids: [], activeId: 1, underSlug: "/commentary/1580213102" } },
+    functions: { setSlug: (val) => appFunctions.setSlug(ctlRef, { val }) },
+  });
+  let ctlRef;
+
+  it("a page mount calling closePopUp with nothing open does not push a stale underSlug", () => {
+    // /commentary/<id> canonicalizes to /downfall/34; Page then closes popups on
+    // mount. With no popup open, the URL must stay put (audit: commentary Back trap).
+    ctlRef = ctl(false);
+    appFunctions.closePopUp(ctlRef, {});
+    expect(pushSpy).not.toHaveBeenCalled();
+  });
+
+  it("closing a popup that was open still returns the URL to what was behind it", () => {
+    ctlRef = ctl(true);
+    appFunctions.closePopUp(ctlRef, {});
+    expect(pushSpy.mock.calls.at(-1)?.[2]).toBe("/commentary/1580213102");
+  });
+});

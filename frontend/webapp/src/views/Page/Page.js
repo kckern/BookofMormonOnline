@@ -23,6 +23,7 @@ import { Alert } from "reactstrap";
 import loading_comments from "src/views/_Common/Study/svg/loading_comment.svg";
 import { MuteButton } from "./MuteButton";
 import { usePageInit, pageScrollManager } from "./usePageInit";
+import { createAutoClickTracker } from "./autoClickTracker";
 import { addToPageCommentIndex, updateToPageComment, deleteToPageComments } from "./commentIndex";
 import { usePageComments } from "./usePageComments";
 import { setBaseDocTitle, pushDocTitle, popDocTitle } from "./docTitle";
@@ -131,6 +132,8 @@ export default function Page() {
   // CURRENT state through this ref, never a render snapshot.
   const refs = useRef({});
   refs.current = { states, appController };
+  // Synchronous record of campaign (deeplink) row opens — see autoClickTracker.
+  const autoClicks = useRef(createAutoClickTracker());
 
   const functions = useMemo(() => {
     // Build as `fns` so sibling handlers (e.g. the audio `ended` listener
@@ -256,10 +259,16 @@ export default function Page() {
         dispatch({ fn: "setPageSlugId", val: val });
       },
       resetAutoClicked: () => {
+        autoClicks.current = createAutoClickTracker();
         dispatch({ fn: "resetAutoClicked" });
       },
-      markAutoClicked: (slug) => dispatch({ fn: "markAutoClicked", val: slug }),
-      isAutoClicked: (slug) => refs.current.states.autoClicked.has(slug),
+      markAutoClicked: (slug) => {
+        autoClicks.current.mark(slug);
+        dispatch({ fn: "markAutoClicked", val: slug });
+      },
+      // The campaign marks then clicks in one tick; reducer state lags the
+      // dispatch, so the synchronous tracker is the authority (consumed once).
+      isAutoClicked: (slug) => autoClicks.current.consume(slug) || refs.current.states.autoClicked.has(slug),
       setNotFound: (val) => {
         dispatch({ fn: "setNotFound", val: val });
       },
@@ -373,6 +382,8 @@ export default function Page() {
         pageController.appController.functions.setPopUp({
           type: "commentary",
           ids: [pageController.states.initOpen.commentaryId],
+          // landing on /commentary/<id>: the popup URL replaces, not a 2nd entry
+          replaceSlug: true,
         })
     : pageController.states.initOpen.imageId
     ? () =>
