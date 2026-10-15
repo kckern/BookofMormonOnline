@@ -1364,8 +1364,8 @@ html[data-theme="dark"] .historyTileBullets { color: #c4c4c4; }
 /* community (merged): group strip, facepiles, chip-tagged messages, finishers */
 .communityGroupStrip { display: flex; gap: 0.55rem; margin-bottom: 0.65rem; }
 .communityGroupCard {
-  flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 0.5rem;
-  padding: 0.45rem 0.55rem; border: 1px solid #e6e6e6; border-radius: 0.5rem;
+  flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 0.45rem;
+  padding: 0.45rem 0.5rem; border: 1px solid #e6e6e6; border-radius: 0.5rem;
   background: #fbfbfb; color: inherit; text-decoration: none;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -1374,13 +1374,17 @@ html[data-theme="dark"] .historyTileBullets { color: #c4c4c4; }
 html[data-theme="dark"] .communityGroupCard { background: #262626; border-color: #3a3a3a; }
 html[data-theme="dark"] .communityGroupCard:hover,
 html[data-theme="dark"] .communityGroupCard:focus-visible { border-color: #555; box-shadow: 0 3px 10px rgba(0,0,0,0.45); }
-.communityGroupAvatar { width: 2.2rem; height: 2.2rem; border-radius: 0.45rem; object-fit: cover; flex-shrink: 0; background: #eee; }
+.communityGroupAvatar { width: 1.9rem; height: 1.9rem; border-radius: 0.45rem; object-fit: cover; flex-shrink: 0; background: #eee; }
 html[data-theme="dark"] .communityGroupAvatar { background: #333; }
 .communityGroupBody { min-width: 0; }
-.communityGroupName { font-weight: 700; font-size: 0.8rem; color: #2a2a2a; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.communityGroupName {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+  font-weight: 700; font-size: 0.78rem; line-height: 1.15; color: #2a2a2a; overflow-wrap: anywhere;
+}
 html[data-theme="dark"] .communityGroupName { color: #f0f0f0; }
 .communityGroupMeta { display: flex; align-items: center; gap: 0.3rem; margin-top: 0.15rem; font-size: 0.68rem; color: var(--tile-meta); white-space: nowrap; }
-.communityMemberCount { overflow: hidden; text-overflow: ellipsis; }
+.communityMemberCount { font-weight: 700; color: #444; }
+html[data-theme="dark"] .communityMemberCount { color: #ddd; }
 .communityFacepile { display: inline-flex; flex-shrink: 0; }
 .communityFacepile img,
 .communityFacepile .communityAvatarBlank {
@@ -2173,7 +2177,7 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
 .mapStoryBeat {
   display: flex;
   box-sizing: border-box;
-  min-height: 11rem;
+  min-height: 10.5rem;
   gap: 0.65rem;
   padding: 0.7rem;
   border: 1px solid #e6e6e6;
@@ -2194,7 +2198,9 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
   font-weight: 800;
 }
 .mapStoryCompleteMark { color: #1f1f1f; background: #c9a24b; }
-.mapStoryBeatBody { flex: 1 1 auto; min-width: 0; }
+/* Column so the traveler line pins to the card foot: the fixed reserve reads
+   as a designed card, not a box with a gap. */
+.mapStoryBeatBody { display: flex; flex: 1 1 auto; flex-direction: column; min-width: 0; }
 /* Leg row: two equal columns around the arrow; each place name may wrap to two
    lines instead of ellipsizing both ends mid-word ("City of Za…"). */
 .mapStoryLeg {
@@ -2203,7 +2209,7 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
   align-items: center;
   gap: 0.4rem;
   color: #222;
-  font-size: 0.86rem;
+  font-size: 0.82rem;
   font-weight: 720;
   line-height: 1.18;
 }
@@ -2217,8 +2223,8 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
 }
 .mapStoryPlaceThumb {
   flex: 0 0 auto;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   object-fit: cover;
   border: 2px solid #fff;
   border-radius: 0.4rem;
@@ -2254,7 +2260,7 @@ html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
   letter-spacing: 0.035em;
   text-transform: uppercase;
 }
-.mapStoryTravelerText { margin: 0.35rem 0 0; color: #555; font-size: 0.7rem; line-height: 1.25; }
+.mapStoryTravelerText { margin: auto 0 0; padding-top: 0.4rem; color: #555; font-size: 0.7rem; line-height: 1.25; }
 .mapStoryTravelerText > span { margin-right: 0.25rem; color: #c9a24b; font-size: 0.52rem; }
 .mapStoryTravelerText strong { color: #333; }
 .mapStoryCompleteHeading { color: #222; font-size: 0.9rem; font-weight: 800; }
@@ -2332,7 +2338,7 @@ html[data-theme="dark"] .mapStoryScrubber::-moz-range-track { background: #4a4a4
   .mapStoryLegend { display: none; }
   /* transport keeps a full 44px target; the scrubber absorbs the squeeze */
   .mapStoryControlButton { min-width: 44px; }
-  .mapStoryFooter { align-items: flex-end; }
+  .mapStoryFooter { align-items: center; }
   .mapStoryFooter > span { white-space: normal; }
 }
 

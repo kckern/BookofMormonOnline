@@ -47,6 +47,8 @@ export default function CommunityTile({ data }) {
         <div className="communityGroupStrip">
           {shownGroups.map((g) => {
             const members = g.members || [];
+            const one = members.length === 1;
+            const memberText = `${members.length} ${labelOr(one ? "member" : "members", one ? "member" : "members")}`;
             return (
               <Link key={g.url} to={`/home/community/${g.url}`} className="communityGroupCard">
                 <Avatar className="communityGroupAvatar" src={g.picture} />
@@ -54,12 +56,18 @@ export default function CommunityTile({ data }) {
                   <div className="communityGroupName">{g.name}</div>
                   <div className="communityGroupMeta">
                     <span className="communityFacepile">
-                      {members.slice(0, 4).map((m, i) => (
+                      {members.slice(0, 3).map((m, i) => (
                         <Avatar key={m.user_id || i} src={m.picture} />
                       ))}
                     </span>
-                    <span className="communityMemberCount">
-                      {members.length} {labelOr(members.length === 1 ? "member" : "members", members.length === 1 ? "member" : "members")}
+                    {/* Count beside the faces; the word lives in the accessible
+                        name (a 130px card can't fit "11 members" + faces). */}
+                    <span
+                      className="communityMemberCount"
+                      title={memberText}
+                      aria-label={memberText}
+                    >
+                      {members.length}
                     </span>
                   </div>
                 </div>

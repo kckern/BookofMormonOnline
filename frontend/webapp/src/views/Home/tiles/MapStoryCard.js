@@ -8,16 +8,16 @@ const placeLabel = (name, slug) => name || slug || "";
 
 const hide = (event) => { event.currentTarget.style.display = "none"; };
 
-// 28px thumbnails: the 256w variant is plenty even at 3x DPR.
+// 24px thumbnails: the 256w variant is plenty even at 3x DPR.
 const PlaceThumb = ({ slug }) =>
   slug ? (
     <TileImage
       className="mapStoryPlaceThumb"
       path={`places/${slug}`}
       widths={[256]}
-      sizes="28px"
-      width={28}
-      height={28}
+      sizes="24px"
+      width={24}
+      height={24}
       alt=""
       onError={hide}
     />
