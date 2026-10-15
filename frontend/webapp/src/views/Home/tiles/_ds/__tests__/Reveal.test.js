@@ -29,3 +29,13 @@ describe("Reveal", () => {
     expect(screen.getByTestId("revealed").textContent).toBe("y");
   });
 });
+
+describe("RevealProvider onReveal", () => {
+  test("fires the optional onReveal callback when reveal() runs", () => {
+    const onReveal = vi.fn();
+    render(<RevealProvider onReveal={onReveal}><Probe /></RevealProvider>);
+    expect(onReveal).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByText("reveal"));
+    expect(onReveal).toHaveBeenCalledTimes(1);
+  });
+});

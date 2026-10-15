@@ -9,6 +9,7 @@ import { read as readCache, write as writeCache, isFresh as cacheIsFresh } from 
 import { readSession, writeSession, clearSession } from "./tiles/samplerSession";
 import { singleColumnOrder } from "./tiles/samplerLayout";
 import TileBoundary from "./tiles/_ds/TileBoundary";
+import BoundedTile from "./tiles/_ds/BoundedTile";
 import { skeletonHeight } from "./tiles/_ds/skeletonHeights";
 import labelOr from "./tiles/_ds/labelOr";
 import "./Sampler.css";
@@ -50,6 +51,9 @@ const BATCH_RETRY_MS = 1500;
 // Below this width the rail + masonry stack into one column (Sampler.m.css uses
 // the app's 900px breakpoint), so the sampler switches to a single curated order.
 const SINGLE_COLUMN_QUERY = "(max-width: 900px)";
+// In the single column the long fixtures get a VISIBLE height bound (fade +
+// Read more ⇄ Show less, tiles/_ds/BoundedTile) instead of a silent clip.
+const BOUNDED_SPANS = new Set(["tile-narration", "tile-contents"]);
 const singleColumnMql = () =>
   typeof window !== "undefined" && window.matchMedia ? window.matchMedia(SINGLE_COLUMN_QUERY) : null;
 function useSingleColumn() {
@@ -143,6 +147,15 @@ export default function Sampler() {
   // revealed batches, so the route scroll-restore has the old page to land on.
   const sessionRef = useRef(readSession(cachedRef.current?.payload?.seed));
   const single = useSingleColumn();
+  // The tile's outer card: bounded (visible fade + toggle) for the long
+  // fixtures in the single column, a plain div everywhere else. A plain
+  // function (not a component defined in render) so React never remounts it.
+  const tileShell = (span, className, child) =>
+    single && BOUNDED_SPANS.has(span) ? (
+      <BoundedTile className={className}>{child}</BoundedTile>
+    ) : (
+      <div className={className}>{child}</div>
+    );
   const [variableTiles, setVariableTiles] = useState(() => {
     const saved = sessionRef.current?.order;
     return saved ? fromKeys(saved, VARIABLE_DEFAULT()) : shuffle(VARIABLE_DEFAULT());
@@ -371,9 +384,11 @@ export default function Sampler() {
     const data = def.dataKey ? bp[def.dataKey] : bp[def.key];
     return (
       <TileBoundary key={`${def.key}-${idx}`} tileKey={def.key}>
-        <div className={`tile infiniteTile ${def.span}`}>
-          <Tile data={data} next={bp[`${def.key}Next`]} seed={bp.seed} payload={bp} {...(def.props || {})} />
-        </div>
+        {tileShell(
+          def.span,
+          `tile infiniteTile ${def.span}`,
+          <Tile data={data} next={bp[`${def.key}Next`]} seed={bp.seed} payload={bp} {...(def.props || {})} />,
+        )}
       </TileBoundary>
     );
   };
@@ -427,9 +442,11 @@ export default function Sampler() {
     if (!isReady(payload)) return null;
     return (
       <TileBoundary key={key} tileKey={key}>
-        <div className={`tile ${spanOverride || span}`}>
-          <Tile data={payload[key]} next={payload[`${key}Next`]} seed={payload.seed} payload={payload} />
-        </div>
+        {tileShell(
+          spanOverride || span,
+          `tile ${spanOverride || span}`,
+          <Tile data={payload[key]} next={payload[`${key}Next`]} seed={payload.seed} payload={payload} />,
+        )}
       </TileBoundary>
     );
   };

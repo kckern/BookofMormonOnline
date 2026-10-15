@@ -3,10 +3,15 @@
 @media only screen and (max-width: 900px) {
   .sampler.container { padding: 0.75rem 0.6rem 2rem; }
 
-  /* columns stack; the left rail's tall tiles get bounded heights */
+  /* columns stack (only before the single-column branch takes over). No
+     height cap on rail tiles: a hard max-height clipped their CTAs silently. */
   .samplerColumns { flex-direction: column; }
   .samplerLeftRail { flex: 0 0 auto; }
-  .samplerLeftRail .tile { flex: 0 0 auto; max-height: 24rem; }
+  .samplerLeftRail .tile { flex: 0 0 auto; }
+  /* F1: in a column flex with align-items:flex-start, .samplerMain sized to
+     its max-content (wider than the viewport). Pin both to the column width. */
+  .samplerMain,
+  .samplerLeftRail { min-width: 0; width: 100%; }
   .samplerGrid { grid-template-columns: 1fr 1fr; gap: 0.6rem; }
   .samplerGrid .tile { grid-column: span 2 !important; }
   .samplerGrid .tile-places,
