@@ -15,6 +15,15 @@ export const VARIANT_WIDTHS = [256, 640];
 
 export const variantUrl = (path, width) => `${assetUrl}/variants/${width}/${path}.webp`;
 
+// Only these media families were generated (Task 11). Archive media (fax/,
+// history/, art/…) and absolute URLs have no variants: offering a srcset for
+// them would make every image 404 once before falling back.
+const VARIANT_FAMILIES = /^(people|places|matters)\//;
+export const hasVariants = (path) => VARIANT_FAMILIES.test(path || "");
+
+/** An absolute (http/https or root-relative) src is used verbatim, not under assetUrl. */
+export const isAbsoluteSrc = (path) => /^(https?:)?\/\//.test(path || "") || /^\//.test(path || "");
+
 export function variantsEnabled() {
   try {
     return process.env.REACT_APP_MEDIA_VARIANTS === "1";
