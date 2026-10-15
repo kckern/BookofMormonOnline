@@ -732,64 +732,79 @@ html[data-theme="dark"] .commentaryTileCover { background: #2c2c2c; border-color
   object-fit: cover;
   border-radius: 0.45rem;
   background: #eee;
-  margin-bottom: 0.45rem;
+  display: block;
 }
 html[data-theme="dark"] .contentsTile img { background: #2c2c2c; }
 .contentsTileTitle {
   font-weight: 800;
-  font-size: 0.92rem;
+  font-size: 0.98rem;
   line-height: 1.25;
   color: #2a2a2a;
+  margin: 0.55rem 0 0;
 }
 html[data-theme="dark"] .contentsTileTitle { color: #f0f0f0; }
 .contentsTileDesc {
-  margin: 0.35rem 0 0;
-  font-size: 0.78rem;
-  line-height: 1.4;
+  margin: 0.3rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
   color: #555;
 }
 html[data-theme="dark"] .contentsTileDesc { color: #c4c4c4; }
+/* pointer-only banner link (same href as the CTA; out of the tab order) */
 .contentsTileHead {
   color: inherit;
   text-decoration: none;
   display: block;
 }
+.contentsTileHead:hover img { filter: brightness(1.04); }
 
-/* the sampled division's page/section outline — a /contents entry in miniature.
-   Flex-fills the tall tile (no fixed cap → no mid-glyph clip, no orphan void). */
+/* the division's pages: a short list of block links + section counts — a map
+   of the division, not its sitemap. Hairline-separated rows, black titles,
+   neutral gray meta (>=4.5:1), gold only on hover. */
 .contentsTile { min-height: 0; }
 .contentsOutline {
-  margin-top: 0.55rem;
-  padding-top: 0.5rem;
+  list-style: none;
+  margin: 0.65rem 0 0;
+  padding: 0;
   border-top: 1px solid #ececec;
-  flex: 1 1 auto;
 }
 html[data-theme="dark"] .contentsOutline { border-top-color: #3a3a3a; }
-.contentsOutlinePage { margin-bottom: 0.45rem; }
-.contentsOutlinePageLink {
+.contentsOutline li { border-bottom: 1px solid #f1f1f1; }
+html[data-theme="dark"] .contentsOutline li { border-bottom-color: #333; }
+a.contentsOutlinePageLink {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.42rem 0.1rem;
+  color: #1f1f1f;
+  text-decoration: none;
+}
+.contentsOutlinePageTitle {
   font-weight: 700;
-  font-size: 0.78rem;
-  line-height: 1.25;
-  color: #2a2a2a;
-  text-decoration: none;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  min-width: 0;
 }
-
-html[data-theme="dark"] .contentsOutlinePageLink { color: #f0f0f0; }
-.contentsOutlineSections {
-  font-size: 0.7rem;
-  line-height: 1.5;
-  color: #777;
+.contentsOutlineCount {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  color: var(--tile-meta);
+  white-space: nowrap;
 }
-.contentsOutlineSections a {
-  color: #777;
-  text-decoration: none;
+a.contentsOutlinePageLink:hover { color: #000; }
+a.contentsOutlinePageLink:hover .contentsOutlinePageTitle {
+  text-decoration: underline;
+  text-decoration-color: #c9a24b;
+  text-underline-offset: 0.18em;
 }
-.contentsOutlineSections a:hover { color: #323b4d; }
-html[data-theme="dark"] .contentsOutlineSections { color: #9a9a9a; }
-html[data-theme="dark"] .contentsOutlineSections a { color: #9a9a9a; }
-html[data-theme="dark"] .contentsOutlineSections a:hover { color: #fff; }
-.contentsOutlineDot { color: #ccc; }
-html[data-theme="dark"] .contentsOutlineDot { color: #555; }
+html[data-theme="dark"] a.contentsOutlinePageLink { color: #f0f0f0; }
+html[data-theme="dark"] a.contentsOutlinePageLink:hover { color: #fff; }
+.contentsTile .tileMoreLink { margin-top: 0.65rem; }
+.contentsOutlineMore { padding: 0.42rem 0.1rem; font-size: 0.68rem; color: var(--tile-meta); border-bottom: 0 !important; }
+@media (pointer: coarse) {
+  a.contentsOutlinePageLink { min-height: 44px; align-items: center; }
+}
 
 /* ================================================================
    READING PLAN / SIGN-IN
