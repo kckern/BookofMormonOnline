@@ -652,7 +652,7 @@ html[data-theme="dark"] .faxTileTitle { color: #f0f0f0; }
   margin-bottom: 0.3rem;
   text-decoration: none;
 }
-.commentaryTileTitle:hover { color: #333; text-decoration: none; }
+.commentaryTileTitle:hover { color: #000; text-decoration: underline; text-decoration-color: rgba(201, 162, 75, 0.7); }
 html[data-theme="dark"] .commentaryTileTitle { color: #f0f0f0; }
 /* line-clamp, no scroll trap — a read-more shows only when actually cut */
 .commentaryTileExcerpt {
@@ -669,6 +669,13 @@ html[data-theme="dark"] .commentaryTileTitle { color: #f0f0f0; }
   display: block;
   -webkit-line-clamp: none;
   overflow: visible;
+}
+.commentaryTileExcerpt p { margin: 0 0 0.4rem; }
+.commentaryTileExcerpt p:last-child { margin-bottom: 0; }
+/* clamped to the aside height: fade the cut instead of slicing a line */
+.commentaryTileExcerpt.isClamped {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 1.6rem), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 1.6rem), transparent);
 }
 html[data-theme="dark"] .commentaryTileExcerpt { color: #c4c4c4; }
 /* ATV (textual-variants) apparatus inside a commentary tile: the popup's .atv
@@ -711,7 +718,7 @@ html[data-theme="dark"] .commentaryTileCover { background: #2c2c2c; border-color
   align-self: stretch;
 }
 .commentaryTileSource {
-  font-size: 0.66rem;
+  font-size: 0.7rem;
   font-style: italic;
   line-height: 1.3;
   color: var(--tile-meta);
@@ -719,8 +726,12 @@ html[data-theme="dark"] .commentaryTileCover { background: #2c2c2c; border-color
 /* center the ref over the cover (the cover fills the aside width; when the ref
    text is wider than the cover it wraps, centered, rather than left-aligning) */
 .commentaryTileRef { align-self: center; text-align: center; }
-/* the in-context cue sits at the bottom of the right column */
-.commentaryTileMore { margin-top: auto; }
+.commentaryTileCoverLink { display: block; }
+.commentaryTileCover { display: block; }
+/* the in-context cue: a full-width footer row under both columns, so the pill
+   never overruns the narrow aside */
+.commentaryTileFoot { display: flex; justify-content: flex-end; }
+.commentaryTileFoot:empty { display: none; }
 
 /* ================================================================
    CONTENTS — image + title + description
@@ -1250,12 +1261,80 @@ html[data-theme="dark"] .historyTileQuote { color: #9a9a9a; }
 .samplerFallback .samplerFooter { border-top: none; margin-top: 0; }
 
 /* ================================================================
-   TEXT — one full bom_text block via the feed's TextInFeed renderer.
-   The feed's speech-bubble notch has no anchor to point at here.
+   TEXT — one bom_text block set as scripture. Single chrome (the tile is
+   the card): context meta, title + RefPill, the passage in the Read serif
+   (left-aligned, no justify rivers), then the narration gloss.
    ================================================================ */
-.textTile .notch { display: none; }
-.textTile .itemInFeedContainer { margin: 0; }
-.textTile .itemInFeed { margin: 0; }
+.textTileMeta {
+  font-size: 0.72rem;
+  line-height: 1.3;
+  color: var(--tile-meta);
+  margin: -0.15rem 0 0.25rem;
+}
+.textTileHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.5rem;
+  margin-bottom: 0.45rem;
+}
+.textTileTitle {
+  font-weight: 800;
+  font-size: 0.92rem;
+  line-height: 1.25;
+  color: #2a2a2a;
+}
+.textTileTitle:hover { color: #000; text-decoration: underline; text-decoration-color: rgba(201, 162, 75, 0.7); }
+html[data-theme="dark"] .textTileTitle { color: #f0f0f0; }
+html[data-theme="dark"] .textTileTitle:hover { color: #fff; }
+.textTilePassage {
+  font-family: "Scripture", Georgia, "Times New Roman", serif;
+  font-size: 1rem;
+  line-height: 1.35;
+  color: #222;
+  text-align: left;
+  overflow-wrap: break-word;
+}
+html[data-theme="dark"] .textTilePassage { color: #d6d6d6; }
+.textTilePassage p { margin: 0 0 0.45rem; }
+.textTilePassage p:last-child { margin-bottom: 0; }
+/* poetry: a quiet indent with a hairline gold rule, no off-palette bar */
+.textTilePassage blockquote {
+  margin: 0.35rem 0 0.45rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid rgba(201, 162, 75, 0.45);
+  background: none;
+}
+.textTilePassage .indent { display: inline-block; width: 1.2em; }
+/* the feed renderer's entity/phrase highlights read as grey chips here */
+.textTilePassage .highlight,
+.textTilePassage span[class] { background: none; padding: 0; border: 0; }
+.textTileNarration {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin-top: 0.6rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid #ececec;
+}
+html[data-theme="dark"] .textTileNarration { border-top-color: #3a3a3a; }
+.textTileNarrationText {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  font-style: italic;
+  color: #555;
+}
+html[data-theme="dark"] .textTileNarrationText { color: #bdbdbd; }
+.textTileArt {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 0.3rem;
+  background: #e8e6e1;
+}
+html[data-theme="dark"] .textTileArt { background: #2c2c2c; }
 
 /* places: people-convention overlays on a 16:9 image */
 .placesImgWrap {
@@ -1308,11 +1387,6 @@ html[data-theme="dark"] .placesImgWrap { background: #333; }
 /* info overlay = the bottom band (people-title convention) */
 .placesInfoOverlay { pointer-events: none; }
 
-/* text tile: the feed card centers in its slot, both axes — no blank interior */
-.textTile { align-items: center; justify-content: center; }
-/* header stays left like every other tile; only the content centers */
-.textTile .tileHeading { align-self: flex-start; }
-.textTile .itemInFeedContainer { margin: 0 auto; max-width: 46rem; }
 
 /* fax pages: ref-captioned, deep-linking into the viewer at that page */
 /* flex-grow is set inline per page (natural aspect ratio) so both pages render
@@ -1746,7 +1820,7 @@ html[data-theme="dark"] .rpBoxPane .sectionDots { border-right-color: #444; }
   padding-top: 1rem;
   border-top: 1px solid rgba(128, 128, 128, 0.25);
 }
-.notesTile .notesText { font-size: 0.8rem; line-height: 1; margin-top: 0.5rem; }
+.notesTile .notesText { margin-top: 0.5rem; }
 /* speech-bubble treatment — the note reads as a margin gloss pointing up at the
    passage above. The tail is a centered CSS triangle flush to the top edge,
    filled with the bubble background (not floating, not the border grey). */
@@ -1760,8 +1834,11 @@ html[data-theme="dark"] .rpBoxPane .sectionDots { border-right-color: #444; }
   background: #faf4e6; /* cream */
   border: 1px solid #ddd;
   border-radius: 0.4rem;
-  line-height: 1;
 }
+/* no passage (fetch failed / non-BoM ref): no tail pointing at nothing */
+.notesTile .notesBubble.noPassage { margin-top: 0.2rem; }
+.notesTile .notesBubble.noPassage::before,
+.notesTile .notesBubble.noPassage::after { display: none; }
 .notesTile .notesBubble::before,
 .notesTile .notesBubble::after {
   content: "";
@@ -1794,8 +1871,22 @@ html[data-theme="dark"] .rpBoxPane .sectionDots { border-right-color: #444; }
   border-radius: 0.25rem;
   border: 1px solid #ddd;
 }
-.notesTile .notesBody { min-width: 0; }
-.notesTile .notesAttr { font-size: 0.85rem; color: #666; }
+.notesTile .notesBody { flex: 1 1 auto; min-width: 0; font-size: 0.82rem; line-height: 1.45; color: #333; }
+.notesTile .notesAttr { font-size: 0.78rem; color: var(--tile-meta); white-space: nowrap; }
+html[data-theme="dark"] .notesTile .notesBody { color: #d0d0d0; }
+/* passage loading: a sized, quiet placeholder instead of a lone "…" that
+   then grows the tile (B2) */
+.notesTile .samplerScriptureLoading {
+  min-height: 7.5rem;
+  border-radius: 0.4rem;
+  color: transparent;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.07), rgba(0, 0, 0, 0.04));
+}
+html[data-theme="dark"] .notesTile .samplerScriptureLoading {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.04));
+}
+/* dark: the Read section slab (#333) must not show as a grey box in the tile */
+html[data-theme="dark"] .notesTile .read-content .read-section { background: transparent; }
 /* anchor phrase: the exact scripture snippet the note annotates (note.title) */
 .notesTile .notesAnchor { font-weight: 700; }
 /* the same phrase, highlighted where it appears in the passage above */
@@ -1805,7 +1896,6 @@ html[data-theme="dark"] .notesTile .notesBubble { background: #1e1e1e; border-co
 html[data-theme="dark"] .notesTile .notesBubble::before { border-bottom-color: #444; }
 html[data-theme="dark"] .notesTile .notesBubble::after { border-bottom-color: #1e1e1e; }
 html[data-theme="dark"] .notesTile .notesCover { border-color: #444; }
-html[data-theme="dark"] .notesTile .notesAttr { color: #aaa; }
 .notesTile .notesMeta {
   display: flex;
   justify-content: space-between;

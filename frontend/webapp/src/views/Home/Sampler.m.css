@@ -37,3 +37,23 @@
   .samplerGrid .tile-activity { grid-column: span 2 !important; }
   .placesTileGrid { grid-template-columns: 1fr 1fr; }
 }
+
+/* ---- notes tile: keep the compact Read layout (speaker gutter beside the
+   verse) at ≤900px. Read.scss's phone rules stack the gutter above the text,
+   pull the section out by -0.6rem and rule a border — page styling that broke
+   the tile's padding and rhythm at phone and tablet widths. ---- */
+@media only screen and (max-width: 900px) {
+  .notesTile .read-content.scriptureExcerptCompact,
+  .notesTile .scriptureExcerptCompact .read-section { margin: 0; }
+  .notesTile .scriptureExcerptCompact .read-section .read-block { flex-direction: row; }
+  .notesTile .scriptureExcerptCompact .read-section .read-block .left-gutter,
+  .notesTile .scriptureExcerptCompact .read-section .read-block + .read-block .left-gutter {
+    display: block;
+    width: 3.4rem;
+    margin: 0;
+    padding: 0 0.6rem 0 0;
+    border-top: 0;
+    text-align: center;
+  }
+  .notesTile .scriptureExcerptCompact .read-section .read-block .left-gutter img { width: 2.8rem; height: 3rem; }
+}
