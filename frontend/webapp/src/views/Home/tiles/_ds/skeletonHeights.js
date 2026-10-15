@@ -34,7 +34,7 @@ const DESKTOP = {
   "tile-personProfile": "270px",
   "tile-placeProfile": "368px",
   "tile-matterProfile": "430px",
-  "tile-witness": "195px",
+  "tile-witness": "225px", // archive pass 2026-10-15: reporter meta line + reveal
   "tile-josephSmith": "190px",
 };
 
@@ -45,7 +45,8 @@ const PHONE = {
   "tile-text": "344px",
   "tile-commentary": "290px",
   "tile-history": "450px",
-  "tile-fax": "598px",
+  "tile-fax": "650px",
+  "tile-faxVerse": "640px",
   "tile-places": "641px",
   "tile-mattersNarrative": "670px",
   "tile-mattersMaterial": "670px",
@@ -55,7 +56,7 @@ const PHONE = {
   "tile-notes": "400px",
   "tile-mapstory": "625px",
   "tile-placeProfile": "322px",
-  "tile-witness": "208px",
+  "tile-witness": "240px",
 };
 
 /** CSS length for the skeleton of `spanClass`; `single` = phone single-column layout. */
