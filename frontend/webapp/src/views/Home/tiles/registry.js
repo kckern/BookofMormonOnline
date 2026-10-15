@@ -24,6 +24,7 @@ import MattersNarrativeTile from "./MattersNarrativeTile";
 import MattersMaterialTile from "./MattersMaterialTile";
 import MattersConceptTile from "./MattersConceptTile";
 import MatterProfileTile from "./MatterProfileTile";
+import { HIDE_PASSAGE_NOTES } from "src/models/featureFlags";
 
 /**
  * Sampler tile registry. Adding a tile type:
@@ -64,7 +65,9 @@ export const tileRegistry = [
   { key: "chiasmus",    component: ChiasmusTile,    span: "tile-chiasmus",    isReady: () => true },
   // one standalone artwork in the default rotation; more are held in reserve
   { key: "art",         component: ImageArtTile,    span: "tile-art",         isReady: (p) => (p?.art?.length || 0) > 0 },
-  { key: "notes",       component: NotesTile,       span: "tile-notes",       isReady: (p) => (p?.notes?.length || 0) > 0 },
+  // Prod builds hide passage notes in Read (features.yml → HIDE_PASSAGE_NOTES);
+  // the tile deep-links there, so it is gated by the same flag (grid + batches).
+  { key: "notes",       component: NotesTile,       span: "tile-notes",       isReady: (p) => !HIDE_PASSAGE_NOTES && (p?.notes?.length || 0) > 0 },
   { key: "faxVerse",   component: FaxVerseTile,    span: "tile-faxVerse",    isReady: (p) => !!p?.faxVerse?.page },
   { key: "mapstory",    component: MapStoryTile,    span: "tile-mapstory",    isReady: (p) => (p?.mapstory?.moves?.length || 0) >= 2 },
 ];
