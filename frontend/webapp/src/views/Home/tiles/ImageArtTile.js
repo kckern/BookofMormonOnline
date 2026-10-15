@@ -1,37 +1,47 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { assetUrl } from "src/models/BoMOnlineAPI";
-import { label } from "src/models/Utils";
 import ScriptureExcerpt, { readPath } from "src/views/_Common/ScriptureExcerpt";
 import TileDeepLink from "./_ds/TileDeepLink";
+import TileImage from "./_ds/TileImage";
+import labelOr from "./_ds/labelOr";
 
 /**
  * Standalone artwork tile. A shaded centered header carries the title above the
  * piece, which shows at its real aspect with the artist credited in a
- * translucent ©-badge bottom-right over the image. Beneath the image, the ACTUAL
- * scripture it illustrates rendered in the Read experience (via ScriptureExcerpt),
- * plus a see-in-context link. The backend hands us a standard-format reference, so even
+ * translucent ©-badge bottom-right over the image. Title + image are ONE link to
+ * the artwork page. Beneath the image, the ACTUAL scripture it illustrates
+ * rendered in the Read experience (via ScriptureExcerpt), plus a see-in-context
+ * link. The backend hands us a standard-format reference, so even
  * descriptively-headed pieces resolve to a real passage. Picks by index so the
  * default tile and its filler siblings each show a different work.
+ *
+ * A failed image drops the whole tile (`.tile-art:empty` collapses the shell)
+ * rather than leaving a blank frame that still credits an absent picture.
  */
 export default function ImageArtTile({ payload, artIndex = 0 }) {
+  const [failedId, setFailedId] = useState(null);
   const pool = payload?.art || [];
   if (!pool.length) return null;
   const art = pool[artIndex % pool.length];
-  if (!art?.id) return null;
+  if (!art?.id || failedId === art.id) return null;
   const ratio = art.width && art.height ? art.height / art.width : 0.66;
-  const to = readPath(art.ref);
+  const to = art.ref ? readPath(art.ref) : null;
   return (
     <div className="samplerTileInner imageArtTile">
-      {art.title ? <Link to={`/art/${art.id}`} className="imageArtTitleBar">{art.title}</Link> : null}
-      <Link to={`/art/${art.id}`} className="imageArtFrame" style={{ aspectRatio: `1 / ${ratio}` }}>
-        <img
-          src={`${assetUrl}/art/${art.id}`}
-          alt={art.title || ""}
-          loading="lazy"
-          onError={(e) => (e.target.style.visibility = "hidden")}
-        />
-        {art.artist ? <div className="imageArtArtistBadge">&copy;&nbsp;{art.artist}</div> : null}
+      <Link to={`/art/${art.id}`} className="imageArtLink">
+        {art.title ? <span className="imageArtTitleBar">{art.title}</span> : null}
+        <span className="imageArtFrame" style={{ aspectRatio: `1 / ${ratio}` }}>
+          {/* art has no resized variants on the media host: original only */}
+          <TileImage
+            path={`art/${art.id}`}
+            widths={[]}
+            alt={art.title ? "" : labelOr("artwork", "Artwork")}
+            width={art.width || undefined}
+            height={art.height || undefined}
+            onError={() => setFailedId(art.id)}
+          />
+          {art.artist ? <span className="imageArtArtistBadge">&copy;&nbsp;{art.artist}</span> : null}
+        </span>
       </Link>
       <div className="imageArtCaption">
         {art.ref ? (
@@ -41,7 +51,7 @@ export default function ImageArtTile({ payload, artIndex = 0 }) {
             <ScriptureExcerpt refText={art.ref} hideStudy refAsPopup highlight={art.title} />
           </div>
         ) : null}
-        {to ? <TileDeepLink to={to} always className="imageArtContext">{label("view_in_context")}</TileDeepLink> : null}
+        {to ? <TileDeepLink to={to} always verb="seeInContext" className="imageArtContext" /> : null}
       </div>
     </div>
   );

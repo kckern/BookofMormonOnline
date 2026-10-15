@@ -111,4 +111,26 @@ describe("ArtPage", () => {
     await waitFor(() => expect(screen.getByText(/Lehi's Dream/)).toBeInTheDocument());
     expect(screen.queryByRole("link", { name: /passage/i })).toBeNull();
   });
+
+  // D3: the page had no back control, and its only link used a back chevron
+  // (❮) for a forward navigation.
+  test("has a back control above the title, and the passage link reads forward", async () => {
+    BoMOnlineAPI.mockResolvedValue({ image: { 1000: ART } });
+    renderArt("/art/1000", "/art/:imageId");
+    const h1 = await screen.findByRole("heading", { level: 1, name: /Lehi's Dream/ });
+    const back = screen.getByRole("navigation", { name: /breadcrumb/i }).querySelector("a, button");
+    expect(back).not.toBeNull();
+    expect(back.compareDocumentPosition(h1) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const passage = screen.getByRole("link", { name: /passage/i });
+    expect(passage.textContent).not.toMatch(/❮/);
+  });
+
+  test("back with no in-app history goes Home", async () => {
+    BoMOnlineAPI.mockResolvedValue({ image: { 1000: ART } });
+    renderArt("/art/1000", "/art/:imageId");
+    await screen.findByRole("heading", { level: 1 });
+    const back = screen.getByRole("navigation", { name: /breadcrumb/i }).querySelector("a");
+    expect(back.getAttribute("href")).toBe("/home");
+  });
 });
+
