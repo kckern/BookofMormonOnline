@@ -111,8 +111,11 @@ html[data-theme="dark"] .samplerResample:hover { color: #fff; border-color: #999
   right: 0;
   bottom: 0;
 }
-.boundedTileMore .readMorePill { margin: 0; background-color: #fff; }
-html[data-theme="dark"] .boundedTileMore .readMorePill { background-color: #2a2a2a; }
+/* opaque ground over the fade, with the same gold wash as every other reveal pill */
+.boundedTileMore .readMorePill { margin: 0; background: linear-gradient(var(--tile-gold-wash), var(--tile-gold-wash)), #fff; }
+.boundedTileMore .readMorePill:hover { background: linear-gradient(rgba(201, 162, 75, 0.16), rgba(201, 162, 75, 0.16)), #fff; }
+html[data-theme="dark"] .boundedTileMore .readMorePill { background: linear-gradient(var(--tile-gold-wash), var(--tile-gold-wash)), #2a2a2a; }
+html[data-theme="dark"] .boundedTileMore .readMorePill:hover { background: linear-gradient(rgba(201, 162, 75, 0.22), rgba(201, 162, 75, 0.22)), #2a2a2a; }
 /* end of the infinite feed: a quiet line, never stranded skeletons */
 .samplerFeedEnd {
   display: flex;

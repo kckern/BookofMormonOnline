@@ -6,8 +6,10 @@ import { assetUrl } from "src/models/BoMOnlineAPI";
  * Off until those exist: REACT_APP_MEDIA_VARIANTS=1 turns srcset on.
  *
  * Read through `process.env` (not import.meta.env): vite.config.mjs exposes
- * REACT_APP_* only via `define` on `process.env.REACT_APP_*`. The typeof guard
- * keeps an unset var from throwing in the browser (no `process` global there).
+ * REACT_APP_* only via `define` on `process.env.REACT_APP_*`, substituting
+ * that exact member expression. There is no `process` global in the browser,
+ * so NO `typeof process` guard (it would make this permanently false in a real
+ * build); the try/catch covers an unset, unsubstituted var (ReferenceError).
  */
 export const VARIANT_WIDTHS = [256, 640];
 
@@ -15,7 +17,7 @@ export const variantUrl = (path, width) => `${assetUrl}/variants/${width}/${path
 
 export function variantsEnabled() {
   try {
-    return typeof process !== "undefined" && process.env.REACT_APP_MEDIA_VARIANTS === "1";
+    return process.env.REACT_APP_MEDIA_VARIANTS === "1";
   } catch {
     return false;
   }

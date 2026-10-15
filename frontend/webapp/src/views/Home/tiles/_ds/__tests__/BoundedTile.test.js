@@ -54,3 +54,35 @@ describe("BoundedTile", () => {
     restore();
   });
 });
+
+describe("BoundedTile collapse keeps the tile in view", () => {
+  const setup = (top) => {
+    const restore = fakeHeights(1000, 384);
+    const scroll = vi.fn();
+    const had = Object.prototype.hasOwnProperty.call(Element.prototype, "scrollIntoView");
+    const prev = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = scroll; // jsdom has none
+    const sp = { mockRestore: () => { if (had) Element.prototype.scrollIntoView = prev; else delete Element.prototype.scrollIntoView; } };
+    const rect = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockReturnValue({ top, bottom: top + 1100, left: 0, right: 0, width: 0, height: 1100 });
+    render(<BoundedTile className="tile"><p>long</p></BoundedTile>);
+    return { scroll, restore: () => { restore(); sp.mockRestore(); rect.mockRestore(); } };
+  };
+
+  test("Show less scrolls the tile back when its top is above the viewport", () => {
+    const { scroll, restore } = setup(-700);
+    fireEvent.click(screen.getByRole("button", { name: "Read more" }));
+    fireEvent.click(screen.getByRole("button", { name: "Show less" }));
+    expect(scroll).toHaveBeenCalledTimes(1);
+    expect(scroll.mock.calls[0][0]).toMatchObject({ block: "nearest" });
+    restore();
+  });
+
+  test("Show less does not scroll when the tile top is visible; Read more never scrolls", () => {
+    const { scroll, restore } = setup(40);
+    fireEvent.click(screen.getByRole("button", { name: "Read more" }));
+    fireEvent.click(screen.getByRole("button", { name: "Show less" }));
+    expect(scroll).not.toHaveBeenCalled();
+    restore();
+  });
+});
