@@ -10,7 +10,6 @@ const TILES_DIR = path.resolve(__dirname, "..");
 
 // Current violators, fixed per family in Phase 4. Remove the entry when fixed.
 const ALLOW = new Set([
-  "MattersGroupTile.js", // Task 10d
 ]);
 
 function listTileFiles(dir) {

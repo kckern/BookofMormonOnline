@@ -55,7 +55,7 @@ describe('homesampler matters', () => {
   it('narrative = concrete + instance', async () => {
     const s = await exec(12345);
     expect(s.mattersNarrative.length).toBeGreaterThan(0);
-    expect(s.mattersNarrative.length).toBeLessThanOrEqual(17);
+    expect(s.mattersNarrative.length).toBeLessThanOrEqual(18);
     expect(s.mattersNarrative.every((m) => m.branch === 'concrete' && m.specificity === 'instance')).toBe(true);
   });
 
@@ -69,6 +69,13 @@ describe('homesampler matters', () => {
     const s = await exec(12345);
     expect(s.mattersConcept.length).toBeGreaterThan(0);
     expect(s.mattersConcept.every((m) => m.branch === 'concepts')).toBe(true);
+  });
+
+  it('sends 18 per group: the 17 the grid tile shows + 1 for the profile tile', async () => {
+    const s = await exec(4242);
+    expect(s.mattersNarrative).toHaveLength(18);
+    expect(s.mattersMaterial).toHaveLength(18);
+    expect(s.mattersConcept).toHaveLength(18);
   });
 
   it('the three groups are disjoint within one sample', async () => {
