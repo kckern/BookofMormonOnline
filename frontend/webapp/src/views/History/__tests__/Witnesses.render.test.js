@@ -619,6 +619,25 @@ describe("source cards — keyboard access", () => {
         fireEvent.click(cards[0]);
         expect(mockSetPopUp).toHaveBeenCalledTimes(1);
     });
+
+    // Home witness tile deep link (/history/witnesses/<w>/<source>): the popup
+    // auto-opens as part of landing, so its URL REPLACES the deep link instead of
+    // pushing a second entry — one Back returns to Home (audit R2.5 witness D4).
+    it("a /:source deep link auto-opens that source with replaceSlug", async () => {
+        renderWitness(`/history/witnesses/david-whitmer/${FIXTURE_ROWS.moyle1945.slug}`);
+        await awaitCards(5);
+        await waitFor(() => expect(mockSetPopUp).toHaveBeenCalledTimes(1));
+        expect(mockSetPopUp).toHaveBeenCalledWith(
+            expect.objectContaining({ ids: [FIXTURE_ROWS.moyle1945.slug], replaceSlug: true })
+        );
+    });
+
+    it("a card click (user action) still pushes: no replaceSlug", async () => {
+        renderWitness();
+        const cards = await awaitCards(5);
+        fireEvent.click(cards[0]);
+        expect(mockSetPopUp.mock.calls[0][0].replaceSlug).toBeFalsy();
+    });
 });
 
 // Task 14: the breadcrumb dropdown is a navigation menu (links to other

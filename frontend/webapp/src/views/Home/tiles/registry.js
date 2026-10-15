@@ -18,6 +18,7 @@ import PersonProfileTile from "./PersonProfileTile";
 import PlaceProfileTile from "./PlaceProfileTile";
 import WitnessTile from "./WitnessTile";
 import MapTile from "./MapTile";
+// eslint-disable-next-line no-unused-vars -- parked until translation quotes are curated (see reservePool)
 import TranslationTile from "./TranslationTile";
 import JosephSmithTile from "./JosephSmithTile";
 import MattersNarrativeTile from "./MattersNarrativeTile";
@@ -80,7 +81,11 @@ export const tileRegistry = [
 export const reservePool = [
   { key: "personProfile", component: PersonProfileTile, isReady: (p) => (p?.people?.length || 0) > 14 },
   { key: "witness",       component: WitnessTile,       dataKey: "witnesses", isReady: (p) => (p?.witnesses?.length || 0) > 0 },
-  { key: "translation",  component: TranslationTile,   dataKey: "translation",  isReady: (p) => !!p?.translation },
+  // translation: REMOVED from the pool (audit R2.5 translation H1). Every
+  // translation-archive row is still "needs-editorial-quote" (0/155 carry a
+  // money_quote), so the sampler returns null for every seed and the slot
+  // shipped nothing. TranslationTile stays; re-add this line once quotes exist:
+  // { key: "translation", component: TranslationTile, dataKey: "translation", isReady: (p) => !!p?.translation },
   { key: "josephSmith",  component: JosephSmithTile,   dataKey: "josephSmith",  isReady: (p) => !!p?.josephSmith },
   { key: "placeProfile",  component: PlaceProfileTile,  isReady: (p) => (p?.places?.length || 0) > 11 },
   { key: "matterProfile", component: MatterProfileTile, props: { group: "concept" }, isReady: (p) => (p?.mattersConcept?.length || 0) > 5 },
@@ -102,5 +107,7 @@ export const batchTiles = [
   { key: "placeProfile",  component: PlaceProfileTile,  isReady: (p) => (p?.places?.length || 0) > 0, span: "tile-placeProfile" },
   { key: "matterProfile", component: MatterProfileTile, props: { group: "concept" }, isReady: (p) => (p?.mattersConcept?.length || 0) > 0, span: "tile-matterProfile" },
   { key: "witness",       component: WitnessTile, dataKey: "witnesses", isReady: (p) => (p?.witnesses?.length || 0) > 0, span: "tile-witness" },
+  // re-seeded per batch, so the 26 Joseph Smith statements rotate through the feed
+  { key: "josephSmith",   component: JosephSmithTile, dataKey: "josephSmith", isReady: (p) => !!p?.josephSmith, span: "tile-josephSmith" },
   { key: "artB",          component: ImageArtTile, props: { artIndex: 1 }, isReady: (p) => (p?.art?.length || 0) > 1, span: "tile-art" },
 ];

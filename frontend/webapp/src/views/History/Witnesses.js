@@ -155,7 +155,10 @@ const SingleWitness = ({ witness, sourceSlug }) => {
         });
     }, [witness?.slug]);
 
-    const openSource = (doc) => {
+    // replaceSlug: true when the popup auto-opens as part of landing on a
+    // /:source deep link — its URL replaces the deep link rather than pushing a
+    // second history entry, so one Back returns to wherever the link was tapped.
+    const openSource = (doc, { replaceSlug = false } = {}) => {
         if (!appController || !doc) return;
         appController.functions.setPopUp({
             type: "history",
@@ -163,12 +166,13 @@ const SingleWitness = ({ witness, sourceSlug }) => {
             popUpData: doc,
             underSlug: `history/witnesses/${witness.slug}`,
             vhtop: 10,
+            ...(replaceSlug ? { replaceSlug: true } : {}),
         });
     };
 
     useEffect(() => {
         if (!sourceSlug || !sources?.length || !appController) return;
-        openSource(sources.find(s => s.slug === sourceSlug));
+        openSource(sources.find(s => s.slug === sourceSlug), { replaceSlug: true });
     }, [sourceSlug, sources, appController, witness?.slug]);
 
     const visibleSources = useMemo(() => {
