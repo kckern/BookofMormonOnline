@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI.js";
-import { lookup } from "scripture-guide";
+import { lookup, generateReference } from "scripture-guide";
 import { label } from "src/models/Utils";
 import { slugify, getEnglishReference } from "src/utils/scriptureUtils";
 import "../Read/Read.scss";
@@ -45,6 +45,54 @@ const targetVerseIds = (ref) => {
     return new Set();
   }
 };
+
+// Chapters ("Alma 6", "Alma 7") a segment's verses span, in order. Falls back
+// to the segment's own chapter when lookup can't resolve verse ids, and caps
+// the per-verse walk so a whole-book ref doesn't generate thousands of refs.
+const chaptersOf = (seg, wanted) => {
+  const own = chapterRef(seg);
+  if (!wanted.size || wanted.size > 400) return own ? [own] : [];
+  const out = [];
+  wanted.forEach((id) => {
+    let ch = null;
+    try { ch = chapterRef(generateReference([id])); } catch { ch = null; }
+    if (ch && !out.includes(ch)) out.push(ch);
+  });
+  return out.length ? out : own ? [own] : [];
+};
+
+// Filter a `read` chapter to the wanted verses. The API sometimes returns a
+// verse's line twice with identical text (Helaman 1:1, Alma 6:8 — seen live);
+// drop exact (verse_id, text) repeats. Distinct lines of one verse (a verse
+// split across paragraphs, a book superscription/intro) are kept.
+const keepSections = (chapter, wanted) => {
+  const seen = new Set();
+  return (chapter?.sections || [])
+    .map((s) => {
+      const blocks = (s.blocks || [])
+        .map((b) => ({
+          ...b,
+          lines: (b.lines || []).filter((l) => {
+            if (wanted.size && !wanted.has(l.verse_id)) return false;
+            const k = `${l.verse_id}\u0000${(l.text || "").trim()}`;
+            if (seen.has(k)) return false;
+            seen.add(k);
+            return true;
+          }),
+        }))
+        .filter((b) => b.lines.length);
+      if (!blocks.length) return null;
+      const firstShown = blocks[0].lines[0]?.verse_id;
+      const sectionFirst = s.blocks?.[0]?.lines?.[0]?.verse_id;
+      return { heading: s.heading, ref: s.ref, blocks, partial: firstShown != null && sectionFirst != null && firstShown !== sectionFirst };
+    })
+    .filter(Boolean);
+};
+
+// Book superscriptions (§) and italic intros (format contains "i") are part of
+// verse 1's record but aren't the verse itself — they render without a verse
+// number, so the verse number shows once, on the verse text.
+const isFrontMatter = (l) => /§/.test(l.format || "") || /i/.test(l.format || "");
 
 /**
  * Renders a scripture reference in the exact Read experience — speaker circle,
@@ -102,35 +150,40 @@ export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = fals
         if (bookMatch) lastBook = bookMatch[1];
         return canonical(withBook);
       });
-    // fetch each segment's chapter, keeping segment order
+    // Expand each segment to the chapters its verses span (a cross-chapter
+    // range like "Alma 6:7-7:1" needs both Alma 6 and Alma 7), and fold
+    // adjacent segments in the same chapter ("Alma 32:21; 32:27") into one, so
+    // the section renders once with both verses rather than twice.
+    const units = [];
+    for (const seg of segRefs) {
+      const wanted = targetVerseIds(seg);
+      const chapters = chaptersOf(seg, wanted);
+      const prev = units[units.length - 1];
+      if (prev && chapters.length === 1 && prev.chapters.length === 1 && prev.chapters[0] === chapters[0] && wanted.size && prev.wanted.size) {
+        wanted.forEach((id) => prev.wanted.add(id));
+        prev.segs.push(seg);
+        continue;
+      }
+      units.push({ segs: [seg], chapters, wanted });
+    }
+    // fetch each unit's chapters, keeping order
     Promise.all(
-      segRefs.map((seg) => {
-        const ch = chapterRef(seg);
-        const wanted = targetVerseIds(seg);
-        return BoMOnlineAPI({ read: [ch] }, { useCache: false })
-          .then((r) => {
-            const chapter = r?.read?.[ch] || (r?.read && Object.values(r.read)[0]) || null;
-            const kept = (chapter?.sections || [])
-              .map((s) => {
-                const blocks = (s.blocks || [])
-                  .map((b) => ({ ...b, lines: (b.lines || []).filter((l) => !wanted.size || wanted.has(l.verse_id)) }))
-                  .filter((b) => b.lines.length);
-                if (!blocks.length) return null;
-                const firstShown = blocks[0].lines[0]?.verse_id;
-                const sectionFirst = s.blocks?.[0]?.lines?.[0]?.verse_id;
-                return { heading: s.heading, ref: s.ref, blocks, partial: firstShown != null && sectionFirst != null && firstShown !== sectionFirst };
-              })
-              .filter(Boolean);
+      units.map(({ segs, chapters, wanted }) =>
+        Promise.all(chapters.map((ch) => BoMOnlineAPI({ read: [ch] }, { useCache: false })
+          .then((r) => r?.read?.[ch] || (r?.read && Object.values(r.read)[0]) || null)
+          .catch(() => null)))
+          .then((chs) => {
+            const kept = chs.flatMap((chapter) => keepSections(chapter, wanted));
             if (kept.length) return { sections: kept };
             // Bible / cross-ref segment → plain passages
-            return BoMOnlineAPI({ scripture: [seg] }, { useCache: false }).then((sr) => {
+            return Promise.all(segs.map((seg) => BoMOnlineAPI({ scripture: [seg] }, { useCache: false }).then((sr) => {
               const raw = sr?.scripture;
               const val = raw?.[seg] || (raw && Object.values(raw)[0]) || null;
-              return { passages: val?.passages || [] };
-            });
+              return val?.passages || [];
+            }))).then((ps) => ({ passages: ps.flat() }));
           })
-          .catch(() => ({ passages: [] }));
-      }),
+          .catch(() => ({ passages: [] })),
+      ),
     ).then((results) => {
       if (cancelled) return;
       setSegments(results);
@@ -196,11 +249,19 @@ export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = fals
           <div className="main-content">
             <p className="read-scripture">
               {i === 0 && s.partial ? <span className="samplerScriptureEllipsis">… </span> : null}
-              {b.lines.map((l) => (
-                <span key={l.verse_id} className={`verse_${l.verse_id}`}>
-                  <sup>{l.verse_num}</sup>{highlightPhrase(l.text, anchor)}{" "}
-                </span>
-              ))}
+              {b.lines.map((l, li) => {
+                const prev = b.lines[li - 1];
+                const front = isFrontMatter(l);
+                // number a verse once: on its first non-front-matter line
+                const numbered = !front && !b.lines.slice(0, li).some((p) => p.verse_id === l.verse_id && !isFrontMatter(p));
+                const gap = prev && l.verse_id - prev.verse_id > 1;
+                return (
+                  <span key={`${l.verse_id}-${li}`} className={`verse_${l.verse_id}${/§/.test(l.format || "") ? " heading" : front ? " italic" : ""}`}>
+                    {gap ? <span className="samplerScriptureEllipsis">… </span> : null}
+                    {numbered ? <sup>{l.verse_num}</sup> : null}{highlightPhrase(l.text, anchor)}{" "}
+                  </span>
+                );
+              })}
             </p>
           </div>
         </div>

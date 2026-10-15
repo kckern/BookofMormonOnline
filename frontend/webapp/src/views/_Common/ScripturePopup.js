@@ -1,9 +1,8 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import Drawer from "react-modern-drawer";
-import "react-modern-drawer/dist/index.css";
 import { label, isMobile } from "src/models/Utils";
 import ScriptureExcerpt, { canonical, readPath } from "./ScriptureExcerpt";
+import useModalA11y from "./AppModal/useModalA11y";
 import "./ScripturePopup.css";
 
 /** Any scripture_link / RefPill opens a ref via this — one popup instance lives
@@ -24,6 +23,11 @@ export const openScripture = (ref, opts = {}) =>
  * App-wide scripture reader popup. Renders the ScriptureExcerpt in the exact
  * Read experience — speaker attribution, typography, Study action — inside a
  * click-away / Esc-dismissable modal.
+ *
+ * One dialog at every width: a centered card on desktop, a bottom sheet at
+ * phone widths (≤ 900px, CSS) with the close button in its header. Focus moves
+ * in on open, is trapped while open and returns to the opener on close
+ * (useModalA11y); page scroll is locked while open.
  */
 export default function ScripturePopup() {
   const [ref, setRef] = useState(null);
@@ -34,7 +38,14 @@ export default function ScripturePopup() {
   // reports this once its fetch resolves.
   const [hasBoM, setHasBoM] = useState(false);
   const cardRef = useRef(null);
+  const closeRef = useRef(null);
   const [tx, setTx] = useState(0);
+  const titleId = useId();
+  const close = useCallback(() => setRef(null), []);
+
+  // Focus in + Tab trap + focus restore. Esc is handled below (capture phase,
+  // consumed so views behind don't react), so no onClose here.
+  useModalA11y(!!ref, { dialogRef: cardRef, initialFocusRef: closeRef });
 
   useEffect(() => {
     const open = (e) => {
@@ -84,22 +95,20 @@ export default function ScripturePopup() {
   // Freeze the main site behind the shaded overlay while the modal is open —
   // reuse the app's existing body scroll lock (html has scrollbar-gutter:stable
   // so nothing shifts). Same mechanism StudyGroupBar uses.
+  // body.noscroll alone still let the page scroll under the popup (audit G2:
+  // measured scroll deltas while open), so lock the root scroller too.
+  const isOpen = !!ref;
   useEffect(() => {
-    if (!ref) return undefined;
+    if (!isOpen) return undefined;
+    const html = document.documentElement;
+    const prevOverflow = html.style.overflow;
     document.body.classList.add("noscroll");
-    return () => document.body.classList.remove("noscroll");
-  }, [ref]);
-
-  // Mobile presents the excerpt as a right side-drawer (no popup on mobile). Flip
-  // `drawerOpen` on after ref lands so react-modern-drawer plays its slide-in.
-  const mobile = isMobile();
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  useEffect(() => {
-    if (!mobile) return undefined;
-    if (!ref) { setDrawerOpen(false); return undefined; }
-    const t = setTimeout(() => setDrawerOpen(true), 10);
-    return () => clearTimeout(t);
-  }, [mobile, ref]);
+    html.style.overflow = "hidden";
+    return () => {
+      document.body.classList.remove("noscroll");
+      html.style.overflow = prevOverflow;
+    };
+  }, [isOpen]);
 
   if (!ref) return null;
   const to = readPath(ref);
@@ -107,8 +116,8 @@ export default function ScripturePopup() {
   const cardInner = (
     <>
       <div className="samplerScriptureHead">
-        <b>{ref}</b>
-        <button aria-label="Close" onClick={() => setRef(null)}>×</button>
+        <b id={titleId}>{ref}</b>
+        <button type="button" ref={closeRef} aria-label="Close" onClick={close}>×</button>
       </div>
       {/* .read-content scope makes the Read.scss styles apply */}
       <div className="samplerScriptureBody read-content scriptureExcerptCompact">
@@ -124,26 +133,17 @@ export default function ScripturePopup() {
     </>
   );
 
-  if (mobile) {
-    return (
-      <Drawer
-        open={drawerOpen}
-        direction="right"
-        size="90vw"
-        className="scripturePopupDrawer"
-        onClose={() => setRef(null)}
-      >
-        <div className="samplerScriptureCard scripturePopupDrawer-inner">{cardInner}</div>
-      </Drawer>
-    );
-  }
-
   return (
-    <div className="samplerScripturePopup" role="dialog" aria-modal="true" onClick={() => setRef(null)}>
+    <div className="samplerScripturePopup" onClick={close}>
       <div
         className="samplerScriptureCard"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
         ref={cardRef}
-        style={tx ? { transform: `translateX(${tx}px)` } : undefined}
+        // the anchor offset is a desktop nicety; the phone sheet is full-width
+        style={tx && !isMobile() ? { transform: `translateX(${tx}px)` } : undefined}
         onClick={(e) => e.stopPropagation()}
       >
         {cardInner}

@@ -45,3 +45,15 @@
 .scriptureExcerptCompact .read-section .read-section-header p { margin: 0; padding-left: 0.5rem; }
 html[data-theme="dark"] .scriptureExcerptCompact .read-scripture { color: #d6d6d6; }
 .scriptureExcerptCompact .samplerScriptureEllipsis { color: #999; }
+
+/* Book superscription / italic intro lines (Helaman 1:1 etc.) — part of verse
+   1's record, rendered without a verse number. */
+.read-scripture > span.heading {
+  display: block;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: center;
+  margin-bottom: 0.3rem;
+}
+.read-scripture > span.italic { display: block; font-style: italic; margin-bottom: 0.4rem; }
+
