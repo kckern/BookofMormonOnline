@@ -21,13 +21,18 @@ const badgeClass = (v) =>
   (v || "unknown").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 // A `/matters/<group>` URL (narrative | material | concepts) pre-selects that
-// Category chip; the same keywords are what the home tiles link to. Order matters
-// vs `/matters/:matterSlug`: these keywords are intercepted before the slug is
-// treated as a popup target. Category itself is a real filter axis, so the route
-// just seeds it — one source of truth (see the seeding effect below).
+// Category chip; the same keywords are what the home tiles link to. Routes.js
+// lists those three paths explicitly before `/matters/:matterSlug` and passes
+// the `group` prop (otherwise the slug route sends them to EntityPage → "Not
+// found"). Category itself is a real filter axis, so the group just seeds it —
+// one source of truth (see the seeding effect below).
 const CATEGORY_BY_TAG = Object.fromEntries(categoryChips.map((c) => [c.tag, c]));
 
-function MattersComponent() {
+// `group` prop → Category chip tag. The prop uses the singular `concept` key
+// (homesampler's mattersConcept); the chip tag / URL keyword is `concepts`.
+const GROUP_TAG = { narrative: "narrative", material: "material", concept: "concepts", concepts: "concepts" };
+
+function MattersComponent({ group } = {}) {
   const appController = useAppController();
   useEffect(() => {
     document.title = label("menu_matters") + " | " + label("home_title");
@@ -46,7 +51,11 @@ function MattersComponent() {
     subform_label: new Set(),
     search: null,
   };
-  const [matterFilters, setFilterRaw] = useState(emptyFilters);
+  const groupTag = GROUP_TAG[group] || null;
+  // Seed the group on first render too, so the index never flashes unfiltered.
+  const [matterFilters, setFilterRaw] = useState(() =>
+    groupTag ? { ...emptyFilters, category: new Set([groupTag]) } : emptyFilters
+  );
 
   /**
    * Keep the cascading Kind → Form → Subform selections honest:
@@ -84,7 +93,8 @@ function MattersComponent() {
   const match = { params: useLegacyParams(), url: useLocation().pathname };
   const routeParam = match?.params?.matterSlug;
   // A group keyword seeds the Category axis; anything else is a real slug → popup.
-  const activeGroup = routeParam && CATEGORY_TEST[routeParam] ? routeParam : null;
+  const activeGroup =
+    groupTag || (routeParam && CATEGORY_TEST[routeParam] ? routeParam : null);
   useEffect(() => {
     if (routeParam && !CATEGORY_TEST[routeParam]) {
       appController.functions.setPopUp({
@@ -179,6 +189,7 @@ function MattersComponent() {
             <>
               <span className="mattersGroupQualifier">
                 {tr(CATEGORY_BY_TAG[activeGroup].key, CATEGORY_BY_TAG[activeGroup].label)}
+                <span className="mattersGroupCount">{filtered.length}</span>
               </span>
               <Link className="mattersGroupClear" to="/matters">{tr("view_all", "View all")}</Link>
             </>

@@ -265,6 +265,21 @@ const routes = [
     path: "/places",
     component: Places,
   },
+  // Group view-all routes (the Home matters tiles link here). Listed before
+  // the slug route so the keywords never reach EntityPage ("Not found").
+  // react-router 7 has no regex params, so each keyword is its own entry.
+  {
+    path: "/matters/narrative",
+    component: () => <Matters group="narrative" />,
+  },
+  {
+    path: "/matters/material",
+    component: () => <Matters group="material" />,
+  },
+  {
+    path: "/matters/concepts",
+    component: () => <Matters group="concept" />,
+  },
   {
     path: "/matters/:matterSlug",
     component: () => <EntityPage type="matters" />,
