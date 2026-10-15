@@ -94,3 +94,20 @@ describe("MatterProfileTile — CTA, links, prose refs", () => {
     expect(prose).toMatch(/taught plainly Alma 34:17/);
   });
 });
+
+describe("MatterProfileTile — hero image failure (review round 2)", () => {
+  test("a hero that fails to load hides itself instead of showing a broken glyph", () => {
+    const prev = process.env.REACT_APP_MEDIA_VARIANTS;
+    process.env.REACT_APP_MEDIA_VARIANTS = "0";
+    const { container } = renderIn(
+      <MatterProfileTile payload={{ mattersConcept: [{ slug: "nope", name: "Nope" }] }} group="concept" matterIndex={0} />
+    );
+    const img = container.querySelector("img.tileImage");
+    fireEvent.error(img);
+    // no broken glyph and no empty 15rem box: the hero collapses, name stays
+    expect(container.querySelector("img.tileImage")).toBeNull();
+    expect(container.querySelector(".placeProfileImgLink")).toHaveClass("isNoImage");
+    expect(container.querySelector(".mattersNameText")).toHaveTextContent("Nope");
+    process.env.REACT_APP_MEDIA_VARIANTS = prev;
+  });
+});

@@ -75,6 +75,25 @@ export async function open(vpName = "desktop", group = "misc", { reducedMotion =
     },
     /** Trigger the Home resample (desktop only; the control isn't rendered on phone). */
     async resample() { await page.evaluate(() => window.dispatchEvent(new Event("home:resample"))); await page.waitForSelector(".tile:not(.skeleton)"); await page.waitForTimeout(3500); },
+    /**
+     * Touch hit heights (px) for every `selector` match inside `locator`: an
+     * elementFromPoint scan down each target's centre column, counting points
+     * that land on the target (its ::after hit area included). The tile
+     * standard wants >= 44 on touch viewports. Targets must be on screen.
+     */
+    async hitHeights(locator, selector) {
+      return locator.evaluate((root, sel) => [...root.querySelectorAll(sel)].map((el) => {
+        el.scrollIntoView({ block: "center", behavior: "instant" });
+        const r = el.getBoundingClientRect();
+        const x = r.left + Math.min(r.width / 2, 6);
+        let hit = 0;
+        for (let y = Math.floor(r.top - 40); y <= r.bottom + 40; y++) {
+          const at = document.elementFromPoint(x, y);
+          if (at && (at === el || el.contains(at))) hit++;
+        }
+        return { text: (el.textContent || "").trim().slice(0, 24), box: Math.round(r.height), hit };
+      }), selector);
+    },
     async cls() { return page.evaluate(() => window.__cls); },
     async resetCls() { await page.evaluate(() => (window.__cls = [])); },
     async close() { await browser.close(); },

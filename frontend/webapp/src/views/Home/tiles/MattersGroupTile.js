@@ -77,11 +77,11 @@ export default function MattersGroupTile({
                 </div>
               </Link>
               {item?.ref ? (
-                <div className="placesTileInfo samplerCardBody">
-                  <span className="placesTileIndexRow">
-                    <RefPill refText={item.ref} />
-                    {gloss ? <> {gloss}</> : null}
-                  </span>
+                <div className="placesTileInfo samplerCardBody mattersCardInfo">
+                  {/* chip outside the clamp: line-clamp's overflow would clip
+                      the chip's enlarged touch hit area */}
+                  <RefPill refText={item.ref} className="mattersCardRef" />
+                  {gloss ? <span className="placesTileIndexRow">{gloss}</span> : null}
                 </div>
               ) : null}
             </div>
@@ -106,7 +106,7 @@ export default function MattersGroupTile({
             <span className="mattersViewAllVerb">{verbLabel("viewAll")}</span>
             {more > 0 ? (
               <span className="mattersViewAllCount">
-                {labelOr("plus_n_more", "+$1 more", [more.toLocaleString()])}
+                {labelOr("plus_n_more", "+$1 more", [String(more)])}
               </span>
             ) : null}
           </span>

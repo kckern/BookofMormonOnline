@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import Parser from "html-react-parser";
 import { replaceNumbers } from "src/models/Utils";
@@ -49,9 +49,12 @@ const proseOpts = {
  * tile didn't show. `group` selects the sampler array.
  */
 export default function MatterProfileTile({ payload, group = "concept", matterIndex = PROFILE_MATTER_INDEX }) {
+  // A hero that 404s collapses (slug-keyed, so a new matter retries).
+  const [failedSlug, setFailedSlug] = useState(null);
   const list = payload?.[GROUP_KEY[group]] || [];
   const matter = list[matterIndex];
   if (!matter?.slug) return null;
+  const heroFailed = failedSlug === matter.slug;
   const name = matter.name ? replaceNumbers(matter.name) : "";
   const desc = flatten(matter.description || "");
   const href = `/matters/${matter.slug}`;
@@ -63,8 +66,18 @@ export default function MatterProfileTile({ payload, group = "concept", matterIn
         </h3>
         <div className="placeProfileHead">
           {/* Mouse/touch shortcut only — the CTA below is the one tab stop. */}
-          <Link to={href} className="placeProfileImgLink" tabIndex={-1}>
-            <TileImage path={`matters/${matter.slug}`} alt="" sizes="(max-width: 900px) 100vw, 420px" />
+          <Link to={href} className={`placeProfileImgLink${heroFailed ? " isNoImage" : ""}`} tabIndex={-1}>
+            {heroFailed ? null : (
+              <TileImage
+                path={`matters/${matter.slug}`}
+                alt=""
+                sizes="(max-width: 900px) 100vw, 420px"
+                onError={(e) => {
+                  e.target.style.visibility = "hidden";
+                  setFailedSlug(matter.slug);
+                }}
+              />
+            )}
             {name ? (
               <span className="peopleFaceName placesNameOverlay mattersNameOverlay">
                 <span className="mattersNameText">{name}</span>

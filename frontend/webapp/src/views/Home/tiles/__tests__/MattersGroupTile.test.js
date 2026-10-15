@@ -112,3 +112,21 @@ describe("MattersGroupTile — structure", () => {
     expect(c2.querySelector(".mattersSubtitle")).toBeNull();
   });
 });
+
+describe("MattersGroupTile — touch hit area + count (review round 2)", () => {
+  test("the ref chip sits outside the line-clamped gloss so the clamp can't clip its hit area", () => {
+    const { container } = renderIn(<MattersNarrativeTile data={mk(6)} seed={0} payload={{}} />);
+    const pill = container.querySelector(".scripture_link");
+    expect(pill.closest(".placesTileIndexRow")).toBeNull();
+    expect(pill.classList.contains("mattersCardRef")).toBe(true);
+    expect(container.querySelector(".placesTileIndexRow")).toHaveTextContent("Gloss for matter 0");
+  });
+
+  test("the '+N more' count is the plain number (not browser-locale grouped)", () => {
+    const spy = vi.spyOn(Number.prototype, "toLocaleString");
+    const { container } = renderIn(<MattersNarrativeTile data={mk(17)} seed={0} payload={{ mattersNarrativeCount: 1161 }} />);
+    expect(container.querySelector(".mattersViewAllCount")).toHaveTextContent("+1144 more");
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+});
