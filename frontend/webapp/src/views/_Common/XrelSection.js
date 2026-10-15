@@ -1,10 +1,11 @@
 /** @format */
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import ReactTooltip from "react-tooltip";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { label } from "src/models/Utils";
 import { verbLabel, tagLabel } from "./xrelVerbs";
 import EntityThumb from "./EntityThumb";
+import { LIST_CAP } from "./entity/useListCap";
 import "./XrelSection.css";
 
 /** dst_type → media asset folder. `group` has no artwork, hence no entry. */
@@ -73,8 +74,25 @@ export default function XrelSection({ xrels, showEmpty, noHeading }) {
     ReactTooltip.rebuild();
   });
 
+  const [expanded, setExpanded] = useState(false);
+
   const hasRows = Array.isArray(xrels) && xrels.length > 0;
   if (!hasRows && !showEmpty) return null;
+
+  // Hub entities carry 100+ xrel cards, each with its own thumbnail request.
+  // Cap the cards (not the verb heads) at LIST_CAP until the reader asks; a
+  // group whose cards all fall past the cap is dropped with them.
+  const capped = hasRows && !expanded && xrels.length > LIST_CAP;
+  let budget = capped ? LIST_CAP : Infinity;
+  const groups = hasRows
+    ? groupXrels(xrels)
+        .map((g) => {
+          const rows = g.rows.slice(0, Math.max(0, budget));
+          budget -= rows.length;
+          return { ...g, shown: rows };
+        })
+        .filter((g) => g.shown.length > 0)
+    : [];
 
   // popUpTargetFor (defined above), not ASSET_PATH (that's thumbnails only): it
   // also covers 'group', which has no thumbnail but does have a popup.
@@ -124,7 +142,7 @@ export default function XrelSection({ xrels, showEmpty, noHeading }) {
       {hasRows ? (
         <>
           <ul className="xrels">
-            {groupXrels(xrels).map((g) => (
+            {groups.map((g) => (
               <React.Fragment key={g.key}>
                 <li className={"xrel-group-head" + (g.reverse ? " reverse" : "")}>
                   {/* A reversed group reads "<card> … held by [this entity]", so the
@@ -134,10 +152,15 @@ export default function XrelSection({ xrels, showEmpty, noHeading }) {
                   <span className="xrel-group-verb">{verbLabel(g.rel)}</span>
                   {g.rows.length > 1 && <span className="xrel-group-count">{g.rows.length}</span>}
                 </li>
-                {g.rows.map(card)}
+                {g.shown.map(card)}
               </React.Fragment>
             ))}
           </ul>
+          {capped && (
+            <button type="button" className="entity-show-all" onClick={() => setExpanded(true)}>
+              Show all {xrels.length}
+            </button>
+          )}
           <ReactTooltip
             id={TOOLTIP_ID}
             place="left"

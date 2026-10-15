@@ -16,21 +16,24 @@ import EntityChooser from "./EntityChooser";
  * same markup serves both the modal (PopUp.js supplies the chrome) and the
  * standalone page (views/Entity/EntityPage.js).
  */
-export default function PersonBody({ data, setPopUpRef, onEntityClick }) {
+export default function PersonBody({ data, setPopUpRef, onEntityClick, headingLevel = 3 }) {
   const appController = useAppController();
   const person = data;
   if (!person) return null;
+  // The name is the page's <h1> on EntityPage; the popup keeps its <h3>.
+  const Heading = `h${headingLevel}`;
+  const hasRelationships = person.relations?.length > 0 || person.xrels?.length > 0;
 
   return (
     <div className="ppbody">
       <div className="bodytext">
-        <h3>
+        <Heading className="entity-name">
           {processName(person.name)}
           <br />
           <small className="ppbody-title">
             {replaceNumbers(person.title)}
           </small>
-        </h3>
+        </Heading>
         {renderPersonPlaceHTML(detectScripturesPreservingTokens(person.description, (scripture) => {
           if (!scripture) return;
           return `<a className="scripture_link">${scripture}</a>`
@@ -43,7 +46,7 @@ export default function PersonBody({ data, setPopUpRef, onEntityClick }) {
           <EntityThumb type="people" slug={person.slug} name={processName(person.name)} rounded />
         </div>
 
-        <h4>{label("relationships")}</h4>
+        {hasRelationships && <h4>{label("relationships")}</h4>}
         <Relationships data={person?.relations} onEntityClick={onEntityClick} />
         <XrelSection xrels={person?.xrels} noHeading />
         <ReferenceList

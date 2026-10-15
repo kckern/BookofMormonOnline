@@ -18,17 +18,19 @@ import EntityChooser from "./EntityChooser";
  * the modal's signature: the modal passes its onSelectMapType (which closes the
  * popup and dispatches handleMapChange), the page passes a Router navigation.
  */
-export default function PlaceBody({ data, setPopUpRef, onMapClick }) {
+export default function PlaceBody({ data, setPopUpRef, onMapClick, headingLevel = 3 }) {
   const appController = useAppController();
   const [showOptions, setShowOptions] = useState(false);
   const place = data;
   if (!place) return null;
   const onSelectMapType = onMapClick || (() => {});
+  // The name is the page's <h1> on EntityPage; the popup keeps its <h3>.
+  const Heading = `h${headingLevel}`;
 
   return (
     <div className="ppbody">
       <div className="bodytext">
-        <h3>
+        <Heading className="entity-name">
           <span>
             {Parser(
               place.name
@@ -38,7 +40,7 @@ export default function PlaceBody({ data, setPopUpRef, onMapClick }) {
           </span>
           <br />
           <small className="ppbody-title">{place.info}</small>
-        </h3>
+        </Heading>
 
         {renderPersonPlaceHTML(detectScripturesPreservingTokens(place.description, (scripture) => {
             if (!scripture) return;

@@ -195,4 +195,13 @@ describe("XrelSection", () => {
     expect(thumbs).toEqual(["people", "places", "matters"]);
     expect(document.querySelector(".xrel-group .thumb-mock")).toBeNull();
   });
+
+  test("caps a long list at 12 cards with a 'Show all N' button", () => {
+    const rows = Array.from({ length: 30 }, (_, i) => ({ ...srcRow, dst_slug: `p${i}`, dst_name: `P${i}` }));
+    const { container } = render(<XrelSection xrels={rows} />);
+    expect(container.querySelectorAll("li.xrel")).toHaveLength(12);
+    fireEvent.click(screen.getByRole("button", { name: "Show all 30" }));
+    expect(container.querySelectorAll("li.xrel")).toHaveLength(30);
+    expect(screen.queryByRole("button", { name: /show all/i })).toBeNull();
+  });
 });

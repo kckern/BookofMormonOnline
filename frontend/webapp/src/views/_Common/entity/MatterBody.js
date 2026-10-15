@@ -15,15 +15,17 @@ import EntityChooser from "./EntityChooser";
  * meaningless on a page), and the page omits them so the document scrolls
  * normally.
  */
-export default function MatterBody({ data, setPopUpRef, ppRef, bodyRef }) {
+export default function MatterBody({ data, setPopUpRef, ppRef, bodyRef, headingLevel = 3 }) {
   const appController = useAppController();
   const obj = data;
   if (!obj) return null;
+  // The name is the page's <h1> on EntityPage; the popup keeps its <h3>.
+  const Heading = `h${headingLevel}`;
 
   return (
     <div className="ppbody" ref={ppRef}>
       <div className="bodytext" ref={bodyRef}>
-        <h3>
+        <Heading className="entity-name">
           {processName(obj.name)}
           {obj.subtitle && (
             <>
@@ -31,7 +33,7 @@ export default function MatterBody({ data, setPopUpRef, ppRef, bodyRef }) {
               <small className="ppbody-title">{replaceNumbers(obj.subtitle)}</small>
             </>
           )}
-        </h3>
+        </Heading>
         {renderPersonPlaceHTML(
           detectScripturesPreservingTokens(
             obj.description || "",
@@ -48,7 +50,9 @@ export default function MatterBody({ data, setPopUpRef, ppRef, bodyRef }) {
           <EntityThumb type="matters" slug={obj.slug} name={obj.name} rounded />
         </div>
 
-        <XrelSection xrels={obj.xrels} showEmpty />
+        {/* No "No relationships." stub: an empty section is hidden, as on
+            people and places. */}
+        <XrelSection xrels={obj.xrels} />
 
         <ReferenceList
           index={obj.index}

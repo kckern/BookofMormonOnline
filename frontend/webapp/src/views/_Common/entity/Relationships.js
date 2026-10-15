@@ -1,7 +1,9 @@
 import React from "react";
 import ReactTooltip from "react-tooltip";
 import { assetUrl } from "src/models/BoMOnlineAPI";
+import { Link } from "react-router-dom";
 import { useAppController } from "src/contexts/AppControllerContext";
+import useListCap from "./useListCap";
 
 // Moved verbatim out of PopUp.js so the entity bodies can be rendered by the
 // standalone page without importing the popup (which would be circular, and
@@ -21,6 +23,17 @@ export default function Relationships({ data, onEntityClick }) {
         ids: [slug],
         underSlug: "people",
       }));
+
+  const [visible, showAll] = useListCap(data);
+  if (!visible.length) return null;
+
+  // A plain click keeps the in-app behaviour (modal or page navigation); a
+  // modified click (new tab/window) falls through to the real href.
+  const onRowClick = (e, slug) => {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    openPerson(slug);
+  };
 
   const personRow = (person, i) => {
     //determine split
@@ -50,16 +63,15 @@ export default function Relationships({ data, onEntityClick }) {
     const personTitle = person.person.title;
 
     return (
-      <div
+      <Link
         key={i}
+        to={`/people/${person.person.slug}`}
         className="related_row"
         data-for="relToolTip"
         data-tip={`${personTitle}`}
+        onClick={(e) => onRowClick(e, person.person.slug)}
       >
-        <div
-          style={{display:"flex"}}
-          onClick={()=>openPerson(person.person.slug)}
-        >
+        <div style={{display:"flex"}}>
           <div className="related_text">
             {items}
           </div>
@@ -68,7 +80,7 @@ export default function Relationships({ data, onEntityClick }) {
             <img src={`${assetUrl}/people/${person.person.slug}`} alt={person.person.name} />
           </div>
         </div>
-      </div>
+      </Link>
     );
   };
 
@@ -82,7 +94,8 @@ export default function Relationships({ data, onEntityClick }) {
         backgroundColor={"#666"}
         arrowColor={"#666"}
       />
-      {data?.map((relation, i) => personRow(relation, i))}
+      {visible.map((relation, i) => personRow(relation, i))}
+      {showAll}
     </div>
   );
 }
