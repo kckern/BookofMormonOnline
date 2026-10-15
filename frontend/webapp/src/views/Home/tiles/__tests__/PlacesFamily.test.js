@@ -97,6 +97,21 @@ describe("PlacesTile", () => {
     const carded = [...t.container.querySelectorAll(".placesTileCard:not(.viewAllCard) a.placesCardLink")].map((a) => a.getAttribute("href").split("/").pop());
     expect(carded).not.toContain(profiled);
   });
+
+  test("a slugless payload entry does not drift the two tiles' profiled index", () => {
+    const places = [...PAYLOAD_17, { name: "No slug", info: "x" }];
+    const payload = { places, placesCount: 188 };
+    const p = renderIn(<PlaceProfileTile payload={payload} />);
+    const profiled = p.container.querySelector(".placeProfileImgLink").getAttribute("href").split("/").pop();
+    p.unmount();
+    expect(profiled).toBe("place-16");
+    const t = renderIn(<PlacesTile data={places} payload={payload} />);
+    const shown = [
+      ...[...t.container.querySelectorAll(".placesMosaic img")].map((i) => i.getAttribute("src").split("/").pop()),
+      ...[...t.container.querySelectorAll("a.placesCardLink")].map((a) => a.getAttribute("href").split("/").pop()),
+    ];
+    expect(shown).not.toContain(profiled);
+  });
 });
 
 describe("PlaceProfileTile", () => {

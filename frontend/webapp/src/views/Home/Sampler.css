@@ -1309,6 +1309,12 @@ html[data-theme="dark"] .placesTilePlaces .placesTileCard:not(.viewAllCard):has(
   filter: brightness(0) invert(1);
 }
 @media (pointer: coarse) {
+  /* inset the pin so the whole 44px hit area stays inside the clipped wrap */
+  .placesTilePlaces .placesImgWrap > a.placesMapBtn,
+  .placeProfilePlace .placesMapBtn {
+    top: calc((44px - 1.6rem) / 2);
+    right: calc((44px - 1.6rem) / 2);
+  }
   .placesTilePlaces .placesImgWrap > a.placesMapBtn::after,
   .placeProfilePlace .placesMapBtn::after {
     content: "";

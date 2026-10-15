@@ -38,7 +38,8 @@ const attachParens = (html) =>
  * doesn't show (see profiledPlaceIndex).
  */
 export default function PlaceProfileTile({ payload, placeIndex }) {
-  const places = payload?.places || [];
+  // slug-filtered exactly as PlacesTile does, so profiledPlaceIndex agrees
+  const places = (payload?.places || []).filter((p) => p?.slug);
   if (!places.length) return null;
   const i = placeIndex != null ? placeIndex % places.length : profiledPlaceIndex(places);
   const place = places[i] || places[places.length - 1];
