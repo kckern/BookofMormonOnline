@@ -203,6 +203,13 @@ export const appFunctions = {
     if (!/^\//.test(slug)) slug = `/${slug}`;
     if (appController.states.slug === slug) return appController;
     appController.states.slug = slug;
+    // states.slug can be stale (a Router <Link> navigated without telling
+    // Main), so the guard above misses re-asserting the URL the browser is
+    // already on: the map-pin and Study-block deeplinks pushed their own URL a
+    // second time on mount, so one Back stayed put (audit R2.2 E1). Pushing
+    // the current URL is never navigation; skip it.
+    const loc = history?.location;
+    if (loc && `${loc.pathname}${loc.search || ""}${loc.hash || ""}` === slug) return appController;
     const useReplace = input.replace === true;
     input.val && (useReplace ? history?.replace(slug) : history?.push(slug));
     return appController;
@@ -252,11 +259,15 @@ export const appFunctions = {
       !appController.popUpData ||
       !appController.popUpData[appController.states.popUp.activeId];
     
+    // replaceSlug: the opener auto-opens the popup as part of landing on a
+    // deeplink (e.g. a phone map pin), so the popup URL replaces rather than
+    // adding a second entry for one tap (audit R2.2 E1).
     if (appController.states.popUp.activeId)
       appController.functions.setSlug(
         appController.states.popUp.type +
         "/" +
-        appController.states.popUp.activeId
+        appController.states.popUp.activeId,
+        { replace: input.val?.replaceSlug === true }
       );
     setPopDocTitle(appController.popUpData?.[appController.states.popUp.activeId],appController.states.popUp.type);
     return appController;

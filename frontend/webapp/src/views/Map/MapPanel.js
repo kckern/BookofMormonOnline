@@ -32,6 +32,7 @@ import { getHtmlScriptureLinkParserOptions } from "../_Common/ViewUtils";
 import RangeSlider from "./RangeSlider";
 import { computeRuns, colorForRun, buildPanelItems } from './colors';
 import { useMapController } from "src/contexts/MapContext";
+import { placeUrlSyncTarget } from "./mapUrlSync";
 
 const metersToMiles = (meters) => Math.round(meters * 0.000621371192 * 1) / 1;
 
@@ -75,18 +76,20 @@ export function MapPanel() {
     const mapSlug = mapController.currentMap?.slug;
     if (!mapSlug) return;
     // When the URL points at a story, the story URL is canonical — don't
-    // overwrite it with the place URL here.
-    const onStoryUrl = !!mapController.storySlug;
+    // overwrite it with the place URL here. While the place is out of this
+    // map's scope the redirect below owns the URL (see placeUrlSyncTarget).
+    const syncTo = placeUrlSyncTarget({
+        mapSlug,
+        slug,
+        onStoryUrl: !!mapController.storySlug,
+        placeLocation: preloadedPlace?.location,
+    });
+    if (syncTo) mapController.appController.functions.setSlug(syncTo);
     if (slug) {
-        if (!onStoryUrl) {
-          mapController.appController.functions.setSlug(`/map/${mapSlug}/place/${slug}`);
-        }
         setPlaceDetails({});
         BoMOnlineAPI({ places: [slug] }, { useCache: false }).then((result) => {
             setPlaceDetails(result?.places?.[slug] || {});
         });
-    } else if (!onStoryUrl) {
-        mapController.appController.functions.setSlug(`/map/${mapSlug}`);
     }
   }, [slug, currentMap?.slug, selectedStory, mapController.storySlug]);
 
@@ -220,7 +223,8 @@ useEffect(()=>{
   // TODO: prevMapType is not being set correctly
   const dstMap = currentMap?.slug === "neareast" ? (prevMapType || "internal") : "neareast";
   if(dstMap !== "neareast") setPrevMapType(dstMap);
-   mapController.getMap(dstMap,slug)
+   // Wrong-map deeplink: canonicalize, don't push (one Back = one entry).
+   mapController.getMap(dstMap,slug,{ replace: true })
 },[preloadedPlace?.location]);
 
 useEffect(()=>{

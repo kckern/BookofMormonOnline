@@ -16,6 +16,7 @@ import {
 } from "../../utils/scriptureUtils";
 import { useConcurrentOperations, useThrottle, useDebounce } from "../../hooks/useConcurrentOperations";
 import { ChapterNav } from "./components/ChapterNav";
+import { useCanonicalReadSlug } from "./useCanonicalReadSlug";
 import { SkeletonLoader } from "./components/SkeletonLoader";
 import { ChapterContent } from "./components/ChapterContent";
 import PassageNotes from "./PassageNotes";
@@ -530,14 +531,12 @@ export default function ReadScripture() {
     // ---------------------------------------------------------
     const debouncedHighlightedVersesForUrl = useDebounce(highlightedVerses, 500);
     
-    useEffect(() => {
-        if (!debouncedHighlightedVersesForUrl) return;
-        const urlSlug = match.url.replace(/^\/read\//, "");
-        const idealSlug = verseIdToSlug(debouncedHighlightedVersesForUrl) || slugify(activeChapterRef);
-        if (idealSlug && idealSlug !== urlSlug) {
-            navigate(`/read/${idealSlug}`);
-        }
-    }, [debouncedHighlightedVersesForUrl, activeChapterRef, navigate, match.url]);
+    useCanonicalReadSlug(
+        debouncedHighlightedVersesForUrl
+            ? verseIdToSlug(debouncedHighlightedVersesForUrl) || slugify(activeChapterRef)
+            : null,
+        match.url.replace(/^\/read\//, ""),
+    );
 
     // ---------------------------------------------------------
     // Render all chapters - memoized to prevent unnecessary re-renders
