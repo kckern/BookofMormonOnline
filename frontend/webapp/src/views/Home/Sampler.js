@@ -8,6 +8,8 @@ import { tileRegistry, reservePool, batchTiles } from "./tiles/registry";
 import { read as readCache, write as writeCache, isFresh as cacheIsFresh } from "./tiles/homeSamplerCache";
 import { readSession, writeSession, clearSession } from "./tiles/samplerSession";
 import { singleColumnOrder } from "./tiles/samplerLayout";
+import TileBoundary from "./tiles/_ds/TileBoundary";
+import { skeletonHeight } from "./tiles/_ds/skeletonHeights";
 import "./Sampler.css";
 import "./Sampler.m.css";
 
@@ -282,9 +284,11 @@ export default function Sampler() {
     if (def.dataKey) props.data = payload[def.dataKey];
     if (def.seedOffset) props.seed = (payload.seed || 0) + def.seedOffset;
     return (
-      <div key={`reserve-${key}`} className={`tile tile-${key}`}>
-        <Tile {...props} />
-      </div>
+      <TileBoundary key={`reserve-${key}`} tileKey={key}>
+        <div className={`tile tile-${key}`}>
+          <Tile {...props} />
+        </div>
+      </TileBoundary>
     );
   };
 
@@ -371,9 +375,11 @@ export default function Sampler() {
     const Tile = def.component;
     const data = def.dataKey ? bp[def.dataKey] : bp[def.key];
     return (
-      <div key={`${def.key}-${idx}`} className={`tile infiniteTile ${def.span}`}>
-        <Tile data={data} next={bp[`${def.key}Next`]} seed={bp.seed} payload={bp} {...(def.props || {})} />
-      </div>
+      <TileBoundary key={`${def.key}-${idx}`} tileKey={def.key}>
+        <div className={`tile infiniteTile ${def.span}`}>
+          <Tile data={data} next={bp[`${def.key}Next`]} seed={bp.seed} payload={bp} {...(def.props || {})} />
+        </div>
+      </TileBoundary>
     );
   };
 
@@ -414,13 +420,22 @@ export default function Sampler() {
 
   if (failed) return <SamplerFallback />;
 
+  // Skeletons reserve each span's measured footprint (tiles/_ds/skeletonHeights).
+  const skeleton = (key, span) => (
+    <div key={key} className={`tile skeleton ${span}`} style={{ minHeight: skeletonHeight(span, single) }} />
+  );
+
+  // Each tile renders inside its own error boundary: a throw drops that tile
+  // (shell included) and the rest of the grid survives.
   const renderTile = ({ key, component: Tile, span, isReady }, spanOverride) => {
-    if (!payload) return <div key={key} className={`tile skeleton ${span}`} />;
+    if (!payload) return skeleton(key, span);
     if (!isReady(payload)) return null;
     return (
-      <div key={key} className={`tile ${spanOverride || span}`}>
-        <Tile data={payload[key]} next={payload[`${key}Next`]} seed={payload.seed} payload={payload} />
-      </div>
+      <TileBoundary key={key} tileKey={key}>
+        <div className={`tile ${spanOverride || span}`}>
+          <Tile data={payload[key]} next={payload[`${key}Next`]} seed={payload.seed} payload={payload} />
+        </div>
+      </TileBoundary>
     );
   };
 
@@ -551,7 +566,7 @@ export default function Sampler() {
   // balancing so they appear right at the growing edge.
   if (!single && loadingMore && extraBatches.length < MAX_BATCHES) {
     ["tile-art", "tile-commentary", "tile-history"].forEach((span, i) => {
-      const node = <div key={`sk-${extraBatches.length}-${i}`} className={`tile skeleton ${span}`} />;
+      const node = skeleton(`sk-${extraBatches.length}-${i}`, span);
       if (railH <= mainColH) { railInfinite.push(node); railH += 12; }
       else { mainInfinite.push(node); mainColH += 6; }
     });
@@ -600,9 +615,7 @@ export default function Sampler() {
           {order.map((t) => renderTile(t))}
           {batchNodes}
           {loadingMore && extraBatches.length < MAX_BATCHES
-            ? ["tile-art", "tile-commentary"].map((span, i) => (
-                <div key={`sk-${extraBatches.length}-${i}`} className={`tile skeleton ${span}`} />
-              ))
+            ? ["tile-art", "tile-commentary"].map((span, i) => skeleton(`sk-${extraBatches.length}-${i}`, span))
             : null}
         </div>
         {feedTerminus}

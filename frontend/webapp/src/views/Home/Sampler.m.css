@@ -13,11 +13,6 @@
   .samplerGrid .tile-spotlight,
   .samplerGrid .tile-activity { grid-column: span 1 !important; }
 
-  /* skeletons keep sensible heights without the desktop span sizing */
-  .tile.skeleton { min-height: 8rem; }
-  .tile.skeleton.tile-people { min-height: 14rem; }
-  .tile.skeleton.tile-places { min-height: 10rem; }
-
   /* featured person: smaller portrait, tighter body */
   .peopleFeatureImg { width: 6rem; }
   .peopleFeatureDesc { -webkit-line-clamp: 3; }

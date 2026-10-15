@@ -231,15 +231,14 @@ html[data-theme="dark"] .sampler .scripture_link {
   color: #cfd6e4;
 }
 
-/* ---------- skeleton (sized to match real tiles → no layout shift) ---------- */
+/* ---------- skeleton ----------
+   Per-span min-heights are set inline from tiles/_ds/skeletonHeights.js (the
+   measured footprint of each tile), so the skeleton matches the real tile. */
 .tile.skeleton {
-  min-height: 9rem;
   background: #ededed;
   border-color: #e6e6e6;
   animation: samplerShimmer 1.3s ease-in-out infinite;
 }
-.tile.skeleton.tile-people { min-height: 15rem; }
-.tile.skeleton.tile-places { min-height: 15rem; }
 .tile.skeleton:hover { transform: none; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08); }
 html[data-theme="dark"] .tile.skeleton { background: #2c2c2c; border-color: #3a3a3a; }
 @keyframes samplerShimmer {
@@ -2324,11 +2323,8 @@ html[data-theme="dark"] .mapStoryScrubber::-moz-range-track { background: #4a554
 
 /* --- Matters tiles ------------------------------------------------------- */
 /* Grid tiles reuse the Places footprint; the layout is JS-binned masonry, so
-   the span classes only need to exist (skeleton sizing + hooks). */
-.tile.skeleton.tile-mattersNarrative,
-.tile.skeleton.tile-mattersMaterial,
-.tile.skeleton.tile-mattersConcept { min-height: 15rem; }
-.tile.skeleton.tile-matterProfile { min-height: 18rem; }
+   the span classes only need to exist (hooks; skeleton heights live in
+   tiles/_ds/skeletonHeights.js). */
 
 /* Singleton profile: subtitle rail under the hero image. */
 .matterProfileSub {
