@@ -23,7 +23,8 @@ export default function TileImage({
 }) {
   const [variantFailed, setVariantFailed] = useState(false);
   if (!path) return null;
-  const useVariants = !variantFailed && variantsEnabled();
+  // no widths = no variants exist for this media type (art, fax, history)
+  const useVariants = !variantFailed && widths.length > 0 && variantsEnabled();
   const srcSet = useVariants ? widths.map((w) => `${variantUrl(path, w)} ${w}w`).join(", ") : undefined;
   const handleError = (e) => {
     if (useVariants) {
