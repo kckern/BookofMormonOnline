@@ -2338,3 +2338,36 @@ html[data-theme="dark"] .mapStoryScrubber::-moz-range-track { background: #4a554
   opacity: 0.85;
 }
 html[data-theme="dark"] .matterProfileSub { border-color: #3a3a3a; }
+
+/* ================================================================
+   SHARED INTERACTION TOKENS — one focus ring, touch tap targets
+   ================================================================ */
+/* One gold keyboard-focus ring for every interactive element in the sampler
+   (house accent; no UA blue ring, no blue tap flash). */
+.sampler a,
+.sampler button,
+.sampler [tabindex] {
+  -webkit-tap-highlight-color: transparent;
+}
+.sampler a:focus:not(:focus-visible),
+.sampler button:focus:not(:focus-visible),
+.sampler [tabindex]:focus:not(:focus-visible) {
+  outline: none;
+}
+.sampler a:focus-visible,
+.sampler button:focus-visible,
+.sampler [tabindex]:focus-visible {
+  outline: 2px solid #c9a24b;
+  outline-offset: 2px;
+  box-shadow: none;
+}
+/* Reversible reveal: the Read more glyph points down; Show less flips it. */
+.readMorePill.isOpen::before { transform: rotate(180deg); }
+/* Touch: CTA pills get a ≥44px tap target. */
+@media (pointer: coarse) {
+  .tileCTA {
+    min-height: 44px;
+    padding-left: 0.9rem;
+    padding-right: 0.9rem;
+  }
+}

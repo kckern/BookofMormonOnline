@@ -27,3 +27,45 @@ describe("TileCTA", () => {
     expect(el).toHaveClass("tileMoreLink");
   });
 });
+
+describe("TileCTA verb vocabulary (sentence-case fallbacks)", () => {
+  test.each([
+    ["readMore", "Read more"],
+    ["showLess", "Show less"],
+    ["seeInContext", "See in context"],
+    ["viewAll", "View all"],
+    ["explore", "Explore"],
+  ])("verb=%s renders %s", (verb, text) => {
+    render(<TileCTA variant="reveal" verb={verb} onClick={() => {}} />);
+    expect(screen.getByRole("button", { name: text })).toBeInTheDocument();
+  });
+
+  test('verb="open" name="Nephi" renders "Open Nephi"', () => {
+    render(
+      <MemoryRouter>
+        <TileCTA variant="deeplink" verb="open" name="Nephi" to="/people/nephi" />
+      </MemoryRouter>
+    );
+    expect(screen.getByRole("link", { name: "Open Nephi" })).toBeInTheDocument();
+  });
+
+  test("children win over verb", () => {
+    render(<TileCTA variant="reveal" verb="viewAll" onClick={() => {}}>Custom</TileCTA>);
+    expect(screen.getByRole("button", { name: "Custom" })).toBeInTheDocument();
+    expect(screen.queryByText("View all")).toBeNull();
+  });
+
+  test("uses the DB label when the dictionary has the key", () => {
+    const prev = global.dictionary;
+    global.dictionary = { view_all: "See everything", open_x: "Visit $1" };
+    try {
+      const { unmount } = render(<TileCTA variant="reveal" verb="viewAll" onClick={() => {}} />);
+      expect(screen.getByRole("button", { name: "See everything" })).toBeInTheDocument();
+      unmount();
+      render(<TileCTA variant="reveal" verb="open" name="Alma" onClick={() => {}} />);
+      expect(screen.getByRole("button", { name: "Visit Alma" })).toBeInTheDocument();
+    } finally {
+      global.dictionary = prev;
+    }
+  });
+});

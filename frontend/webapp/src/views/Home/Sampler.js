@@ -10,6 +10,7 @@ import { readSession, writeSession, clearSession } from "./tiles/samplerSession"
 import { singleColumnOrder } from "./tiles/samplerLayout";
 import TileBoundary from "./tiles/_ds/TileBoundary";
 import { skeletonHeight } from "./tiles/_ds/skeletonHeights";
+import labelOr from "./tiles/_ds/labelOr";
 import "./Sampler.css";
 import "./Sampler.m.css";
 
@@ -45,12 +46,6 @@ const FIXED_TAIL = ["mapstory"];
 const MAX_BATCHES = 30; // backstop against a runaway fetch loop; effectively infinite for a reader
 const nextBatchSeed = (s) => ((s + 1013904223) % 2147483647) || 1;
 const BATCH_RETRY_MS = 1500;
-// label() echoes the key when the labels table lacks it; new keys fall back to
-// English until rows are added (home_feed_error, home_feed_end).
-const labelOr = (key, fallback) => {
-  const v = label(key);
-  return !v || v === key || v === " " ? fallback : v;
-};
 
 // Below this width the rail + masonry stack into one column (Sampler.m.css uses
 // the app's 900px breakpoint), so the sampler switches to a single curated order.

@@ -1,3 +1,4 @@
+import "@testing-library/jest-dom";
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { RevealProvider, useReveal } from "../_ds/Reveal";
@@ -27,4 +28,24 @@ test("expanding fires reveal() so a sibling Layer-2 can appear", () => {
   expect(screen.getByTestId("revealed").textContent).toBe("no");
   fireEvent.click(screen.getByRole("button")); // the read-more pill
   expect(screen.getByTestId("revealed").textContent).toBe("yes");
+});
+
+test("reveal is reversible: one button toggles Read more / Show less and keeps focus", () => {
+  render(
+    <ExpandableText lines={2}>
+      <span>lots of text that overflows the clamp box</span>
+    </ExpandableText>
+  );
+  const btn = screen.getByRole("button", { name: "Read more" });
+  expect(btn).toHaveAttribute("aria-expanded", "false");
+  btn.focus();
+  fireEvent.click(btn);
+  const after = screen.getByRole("button", { name: "Show less" });
+  expect(after).toBe(btn); // same element — not unmounted/remounted
+  expect(after).toHaveAttribute("aria-expanded", "true");
+  expect(document.activeElement).toBe(btn);
+  fireEvent.click(btn);
+  expect(screen.getByRole("button", { name: "Read more" })).toBe(btn);
+  expect(btn).toHaveAttribute("aria-expanded", "false");
+  expect(document.activeElement).toBe(btn);
 });

@@ -1,5 +1,4 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
-import { label } from "src/models/Utils";
 import { useReveal } from "./_ds/Reveal";
 import TileCTA from "./_ds/TileCTA";
 
@@ -10,6 +9,10 @@ import TileCTA from "./_ds/TileCTA";
  * overflow. Safe inside card <Link>s. Expanding also fires the tile's Reveal
  * gate (no-op when there is no <RevealProvider>) so a sibling Layer-2 deeplink
  * can appear only after the reader has expanded.
+ *
+ * Reversible: ONE toggle button whose label flips Read more ⇄ Show less (never
+ * unmount/remount), so keyboard focus stays put; aria-expanded mirrors state.
+ * Collapsing does not re-hide an already-revealed Layer-2 deeplink.
  */
 export default function ExpandableText({ children, lines = 6, className }) {
   const [open, setOpen] = useState(false);
@@ -29,11 +32,11 @@ export default function ExpandableText({ children, lines = 6, className }) {
     // no-op default when there is no provider).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [children, lines]);
-  const expand = (e) => {
+  const toggle = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setOpen(true);
-    reveal();
+    if (!open) reveal();
+    setOpen(!open);
   };
   return (
     <div className={className}>
@@ -44,10 +47,14 @@ export default function ExpandableText({ children, lines = 6, className }) {
       >
         {children}
       </div>
-      {truncated && !open ? (
-        <TileCTA variant="reveal" onClick={expand}>
-          {label("read_more")}
-        </TileCTA>
+      {truncated ? (
+        <TileCTA
+          variant="reveal"
+          verb={open ? "showLess" : "readMore"}
+          onClick={toggle}
+          aria-expanded={open}
+          className={open ? "isOpen" : ""}
+        />
       ) : null}
     </div>
   );
