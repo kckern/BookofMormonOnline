@@ -1564,18 +1564,28 @@ html[data-theme="dark"] .tileMoreLink:hover { background: rgba(201, 162, 75, 0.2
    CHIASMUS — head only; the mirrored lines are the shared MiniChiasm
    component (_Common/MiniChiasm.css)
    ================================================================ */
-.chiasmusTileHead { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.4rem; }
+.chiasmusTileHead { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.55rem; }
 .chiasmusTileHeadTop { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; min-width: 0; }
 .chiasmusTileHead .chiasmGlyph { flex: 0 0 auto; opacity: 0.9; order: 1; }
-.chiasmusTileIdent { display: flex; align-items: center; gap: 0.45rem; min-width: 0; }
-.chiasmusTileAvatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex: 0 0 auto; }
-.chiasmusTileIdentText { display: flex; flex-direction: column; min-width: 0; gap: 0.05rem; }
-.chiasmusTileSpeakerName { font-size: 0.8rem; font-weight: 600; color: #444; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-html[data-theme="dark"] .chiasmusTileSpeakerName { color: #ccc; }
-.chiasmusTileRef { align-self: flex-start; }
-.chiasmusTileHeadText { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; min-width: 0; }
-.chiasmusTileTitle { font-weight: 800; font-size: 0.85rem; color: #2a2a2a; }
+/* speaker: face + name, one link to the person page */
+.chiasmusTileSpeaker { display: inline-flex; align-items: center; gap: 0.5rem; min-width: 0; color: inherit; border-radius: 2rem; }
+a.chiasmusTileSpeaker:hover .chiasmusTileSpeakerName { text-decoration: underline; text-decoration-color: #c9a24b; text-underline-offset: 3px; }
+.chiasmusTileAvatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex: 0 0 auto; background: #e6e3dc; }
+html[data-theme="dark"] .chiasmusTileAvatar { background: #333; }
+.chiasmusTileSpeakerName { font-size: 0.82rem; font-weight: 600; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html[data-theme="dark"] .chiasmusTileSpeakerName { color: #ddd; }
+.chiasmusTileHeadText { display: flex; align-items: baseline; gap: 0.3rem 0.5rem; flex-wrap: wrap; min-width: 0; }
+.chiasmusTileTitle { font-weight: 800; font-size: 0.9rem; color: #2a2a2a; }
 html[data-theme="dark"] .chiasmusTileTitle { color: #f0f0f0; }
+/* MiniChiasm in the tile: legend keys in the meta token (was --link #cfcfcf,
+   1.6:1, and blue in dark), wrapped lines that don't collide, and a quieter
+   gold for the mirrored words so the accent stays an accent. */
+.chiasmusTile .miniChiasmLine { margin-bottom: 0.3rem; }
+.chiasmusTile .miniChiasmKey { color: var(--tile-meta); line-height: 1.75; }
+.chiasmusTile .miniChiasmText { line-height: 1.38; color: #333; }
+html[data-theme="dark"] .chiasmusTile .miniChiasmText { color: #d6d6d6; }
+.chiasmusTile .miniChiasm mark { background: rgba(201, 162, 75, 0.2); }
+html[data-theme="dark"] .chiasmusTile .miniChiasm mark { background: rgba(201, 162, 75, 0.22); }
 
 /* fax: other editions we hold — compact entry points under the sampled pages */
 .faxTileEditions {
