@@ -64,4 +64,11 @@ describe("Sampler CSS", () => {
     const block = n.split("@media only screen and (max-width: 900px)")[1] || "";
     expect(block).toMatch(/\.samplermain, \.samplerleftrail \{[^}]*min-width: 0[^}]*width: 100%/);
   });
+
+  test("collapse-on-null tiles hide their empty shell (reserves share the span)", () => {
+    const sels = rules(css)
+      .filter(([, body]) => /display:\s*none/.test(body))
+      .flatMap(([sel]) => sel.split(",").map((x) => x.trim()));
+    ["tile-art", "tile-chiasmus", "tile-biblephrases"].forEach((span) => expect(sels).toContain(`.tile.${span}:empty`));
+  });
 });

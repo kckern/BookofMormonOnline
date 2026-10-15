@@ -11,6 +11,7 @@ import RefPill from "./RefPill";
 import TileDeepLink from "./_ds/TileDeepLink";
 import labelOr from "./_ds/labelOr";
 import { skeletonHeight } from "./_ds/skeletonHeights";
+import useSingleColumn from "./_ds/useSingleColumn";
 
 // data.js is ESM with a default export (it was CommonJS); destructure after
 // the imports so import/first stays satisfied.
@@ -190,6 +191,7 @@ const heading = () => labelOr("analysis_bible", "Biblical language");
  */
 export default function BiblePhrasesTile({ seed }) {
   const [state, setState] = useState({ status: "loading", pair: null });
+  const single = useSingleColumn();
   const lang = determineLanguage();
 
   useEffect(() => {
@@ -233,7 +235,7 @@ export default function BiblePhrasesTile({ seed }) {
       <div
         className="samplerTileInner biblePhrasesTile isLoading"
         aria-busy="true"
-        style={{ minHeight: `calc(${skeletonHeight("tile-biblephrases")} - 2px)` }}
+        style={{ minHeight: `calc(${skeletonHeight("tile-biblephrases", single)} - 2px)` }}
       >
         <h3 className="tileHeading">{heading()}</h3>
         <div className="tileInnerSkeleton" aria-hidden="true" />

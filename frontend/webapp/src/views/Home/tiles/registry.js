@@ -84,9 +84,9 @@ export const reservePool = [
   { key: "josephSmith",  component: JosephSmithTile,   dataKey: "josephSmith",  isReady: (p) => !!p?.josephSmith },
   { key: "placeProfile",  component: PlaceProfileTile,  isReady: (p) => (p?.places?.length || 0) > 11 },
   { key: "matterProfile", component: MatterProfileTile, props: { group: "concept" }, isReady: (p) => (p?.mattersConcept?.length || 0) > 5 },
-  { key: "artFill1",      component: ImageArtTile,      props: { artIndex: 1 }, isReady: (p) => (p?.art?.length || 0) > 1 },
-  { key: "chiasmus2",     component: ChiasmusTile,      props: { seed: 0 }, seedOffset: 97, isReady: () => true },
-  { key: "artFill2",      component: ImageArtTile,      props: { artIndex: 2 }, isReady: (p) => (p?.art?.length || 0) > 2 },
+  { key: "artFill1",      component: ImageArtTile,      props: { artIndex: 1 }, span: "tile-art", isReady: (p) => (p?.art?.length || 0) > 1 },
+  { key: "chiasmus2",     component: ChiasmusTile,      props: { seed: 0 }, seedOffset: 97, span: "tile-chiasmus", isReady: () => true },
+  { key: "artFill2",      component: ImageArtTile,      props: { artIndex: 2 }, span: "tile-art", isReady: (p) => (p?.art?.length || 0) > 2 },
   { key: "map",           component: MapTile,           isReady: () => true, mainOnly: true },
 ];
 

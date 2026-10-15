@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { generateReference } from "scripture-guide";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import BiblePhrasesTile, { markShared, candidatePairs, pairPath } from "../BiblePhrasesTile";
+import { skeletonHeight } from "../_ds/skeletonHeights";
 
 vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
@@ -132,6 +133,20 @@ describe("BiblePhrasesTile", () => {
     expect(inner).not.toBeNull();
     expect(inner.getAttribute("aria-busy")).toBe("true");
     expect(inner.style.minHeight).toMatch(/px|rem/);
+  });
+
+  test("the loading skeleton uses the phone height in the single column", () => {
+    const orig = window.matchMedia;
+    window.matchMedia = (q) => ({ matches: q.includes("900px"), media: q, addEventListener() {}, removeEventListener() {} });
+    try {
+      BoMOnlineAPI.mockImplementation(() => new Promise(() => {}));
+      const { container } = renderTile();
+      const inner = container.querySelector(".biblePhrasesTile");
+      expect(inner.style.minHeight).toContain(`${parseInt(skeletonHeight("tile-biblephrases", true), 10) - 2}px`); // jsdom folds calc(h - 2px)
+      expect(skeletonHeight("tile-biblephrases", true)).not.toBe(skeletonHeight("tile-biblephrases", false));
+    } finally {
+      window.matchMedia = orig;
+    }
   });
 
   test("falls back to the next pair when the first shares no phrase", async () => {

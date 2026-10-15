@@ -293,7 +293,9 @@ export default function Sampler() {
     if (def.seedOffset) props.seed = (payload.seed || 0) + def.seedOffset;
     return (
       <TileBoundary key={`reserve-${key}`} tileKey={key}>
-        <div className={`tile tile-${key}`}>
+        {/* def.span: a reserve copy of a family tile shares its family CSS
+            (e.g. the tile-art / tile-chiasmus :empty collapse). */}
+        <div className={`tile tile-${key}${def.span ? ` ${def.span}` : ""}`}>
           <Tile {...props} />
         </div>
       </TileBoundary>

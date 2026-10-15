@@ -8,6 +8,7 @@ import TileDeepLink from "./_ds/TileDeepLink";
 import TileImage from "./_ds/TileImage";
 import labelOr from "./_ds/labelOr";
 import { skeletonHeight } from "./_ds/skeletonHeights";
+import useSingleColumn from "./_ds/useSingleColumn";
 
 // Displayable in a tile: plain-letter mirrored schemes deep enough to be
 // interesting, short enough not to scroll (ABCCBA … up to 12 lines), and with
@@ -34,6 +35,7 @@ const heading = () => labelOr("chiasmus", "Chiasmus");
  */
 export default function ChiasmusTile({ seed }) {
   const [state, setState] = useState({ status: "loading", chiasm: null });
+  const single = useSingleColumn();
 
   useEffect(() => {
     let cancelled = false;
@@ -61,7 +63,7 @@ export default function ChiasmusTile({ seed }) {
       <div
         className="samplerTileInner chiasmusTile isLoading"
         aria-busy="true"
-        style={{ minHeight: `calc(${skeletonHeight("tile-chiasmus")} - 2px)` }}
+        style={{ minHeight: `calc(${skeletonHeight("tile-chiasmus", single)} - 2px)` }}
       >
         <h3 className="tileHeading">{heading()}</h3>
         <div className="tileInnerSkeleton" aria-hidden="true" />
