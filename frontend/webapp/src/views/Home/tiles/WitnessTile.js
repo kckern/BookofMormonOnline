@@ -11,6 +11,10 @@ import ExpandableText from "./ExpandableText";
 // principal (David Whitmer has by far the most rows) doesn't clog consecutive
 // tiles as fresh batches append on scroll. Module-scoped, resets per page load.
 let lastFeaturedWitness = null;
+// The choice per payload array, so a REMOUNT of the same tile (the masonry
+// re-flows tiles between columns as the page grows) re-features the same
+// witness instead of skipping to another one mid-read.
+const chosenByData = new WeakMap();
 
 const initials = (name) =>
   (name || "")
@@ -67,6 +71,9 @@ export default function WitnessTile({ data }) {
   // (which other witness tiles keep changing), the card's content would randomly swap
   // after it had already loaded. The choice is stable once made.
   const chosenRef = useRef(null);
+  if (!chosenRef.current && data && typeof data === "object" && chosenByData.has(data)) {
+    chosenRef.current = chosenByData.get(data);
+  }
   if (!chosenRef.current) {
     // Only rows with an editorially-prepared money quote are quotable — NEVER a
     // teaser/transcript (that would fabricate an attribution).
@@ -76,7 +83,10 @@ export default function WitnessTile({ data }) {
     // attributed third-party accounts ("Speaker: …") surface across the feed.
     const notLast = witnesses.filter((x) => x.principal !== lastFeaturedWitness);
     const pool = notLast.length ? notLast : witnesses;
-    if (pool.length) chosenRef.current = pool[0];
+    if (pool.length) {
+      chosenRef.current = pool[0];
+      if (data && typeof data === "object") chosenByData.set(data, pool[0]);
+    }
   }
   const w = chosenRef.current;
   // Remember who this tile featured so the next witness tile can skip them.

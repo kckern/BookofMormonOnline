@@ -58,6 +58,22 @@ describe("WitnessTile", () => {
     expect(sp.closest(".witnessStatementWrap")).toBeNull();
   });
 
+  test("a remount with the same payload re-features the same witness (no mid-read swap)", () => {
+    const two = [
+      { slug: "a", principal: "Martin Harris", witnessSlug: "martin-harris", moneyQuote: "Q1." },
+      { slug: "b", principal: "Hyrum Smith", witnessSlug: "hyrum-smith", moneyQuote: "Q2." },
+    ];
+    const first = setup(two);
+    const name = first.container.querySelector(".witnessName").textContent;
+    first.unmount(); // lastFeaturedWitness is now `name`
+    const again = setup(two);
+    expect(again.container.querySelector(".witnessName")).toHaveTextContent(name);
+    again.unmount();
+    // a DIFFERENT payload (a new batch) still skips the previous witness
+    const next = setup(two.map((x) => ({ ...x })));
+    expect(next.container.querySelector(".witnessName")).not.toHaveTextContent(name);
+  });
+
   test("portrait goes through TileImage and is decorative (the name is the link text)", () => {
     const { container } = setup(data);
     const img = container.querySelector(".witnessHero img");
