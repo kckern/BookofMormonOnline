@@ -2369,7 +2369,109 @@ html[data-theme="dark"] .mapStoryScrubber::-moz-range-track { background: #4a554
    the span classes only need to exist (hooks; skeleton heights live in
    tiles/_ds/skeletonHeights.js). */
 
-/* Singleton profile: subtitle rail under the hero image. */
+/* Card = ONE link (image + name [+ subtitle]); the ref pill + gloss sit below
+   it as siblings, so the card itself is a div — feedback comes from the
+   border + a gentle image zoom, not a whole-card lift. */
+.mattersTile .tileHeadingGroup::before { margin-left: 0.1em; } /* a real space precedes it */
+.mattersCardLink { display: block; color: inherit; text-decoration: none; }
+.mattersCardLink:hover { color: inherit; }
+.mattersCard:has(.mattersCardLink:hover) { border-color: #c9c9c9; }
+html[data-theme="dark"] .mattersCard:has(.mattersCardLink:hover) { border-color: #555; }
+.mattersCardLink .placesImgWrap > img.tileImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.15s ease;
+}
+.mattersCardLink:hover .placesImgWrap > img.tileImage { transform: scale(1.03); }
+.mattersCardLink:focus-visible { outline-offset: -2px; }
+
+/* Name pill: the clamp lives on the inner span, so the pill's padding can't
+   reveal a third line; no map-pin reservation (matters have no pin). Names get
+   up to three lines — the key noun is usually at the end. */
+.mattersTile .mattersNameOverlay,
+.matterProfileTile .mattersNameOverlay {
+  display: block;
+  -webkit-line-clamp: unset;
+  max-width: calc(100% - 0.7rem);
+}
+.mattersNameText {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: break-word;
+}
+
+/* Narrative subtitle: a secondary layer, shown on hover/keyboard focus only —
+   name + subtitle + ref + gloss on a 104px card was four layers too many. It
+   stays in the link's accessible name. */
+.mattersSubtitle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0.3rem 0.45rem;
+  background: rgba(15, 18, 24, 0.78);
+  color: #f0f0f0;
+  font-size: 0.6rem;
+  line-height: 1.3;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+.mattersSubtitleText {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+@media (hover: hover) {
+  .mattersCardLink:hover .mattersSubtitle { opacity: 1; }
+}
+.mattersCardLink:focus-visible .mattersSubtitle { opacity: 1; }
+
+/* View all end cell: verb on top, the localized "+N more" count under it. */
+.mattersViewAll { min-height: 6rem; background: #f1f1f1; color: inherit; text-decoration: none; }
+html[data-theme="dark"] .mattersViewAll { background: #2c2c2c; }
+.mattersViewAll:has(.viewAllMosaic) { background: #fbfbfb; }
+.mattersViewAllLabel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.05rem;
+  white-space: nowrap;
+  text-align: center;
+}
+.mattersViewAllCount { font-size: 0.66rem; font-weight: 500; opacity: 0.88; }
+
+/* Touch: the tiny ref chip and the eyebrow link get a bigger hit area. The
+   index row clips (line-clamp), so make room above the chip inside it. */
+@media (pointer: coarse) {
+  .mattersTile .placesTileIndexRow { padding-top: 0.6rem; }
+  .mattersTile .placesTileIndexRow .scripture_link { position: relative; }
+  .mattersTile .placesTileIndexRow .scripture_link::after {
+    content: "";
+    position: absolute;
+    inset: -0.6rem -0.4rem -0.7rem;
+  }
+  .mattersTile .tileHeading a,
+  .matterProfileTile .tileHeading a { position: relative; }
+  .mattersTile .tileHeading a::after,
+  .matterProfileTile .tileHeading a::after {
+    content: "";
+    position: absolute;
+    inset: -1rem -0.5rem;
+  }
+}
+
+/* Singleton profile: bounded hero (a 16:9 hero at tablet width was taller than
+   the whole old rail cap), then a subtitle deck between rules. */
+.matterProfileTile .placeProfileImgLink > img.tileImage { max-height: 15rem; }
+.matterProfileTile .placeProfileImgLink:hover > img.tileImage { transform: scale(1.02); }
+.matterProfileTile .placeProfileImgLink > img.tileImage { transition: transform 0.15s ease; }
 .matterProfileSub {
   margin: 0.5rem 0;
   padding: 0.35rem 0.5rem;
@@ -2378,9 +2480,15 @@ html[data-theme="dark"] .mapStoryScrubber::-moz-range-track { background: #4a554
   font-size: 0.85rem;
   font-style: italic;
   text-align: center;
-  opacity: 0.85;
+  color: #4a4a4a;
 }
-html[data-theme="dark"] .matterProfileSub { border-color: #3a3a3a; }
+html[data-theme="dark"] .matterProfileSub { border-color: #3a3a3a; color: #cfcfcf; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mattersCardLink .placesImgWrap > img.tileImage,
+  .matterProfileTile .placeProfileImgLink > img.tileImage,
+  .mattersSubtitle { transition: none !important; transform: none !important; }
+}
 
 /* ================================================================
    SHARED INTERACTION TOKENS — one focus ring, touch tap targets
