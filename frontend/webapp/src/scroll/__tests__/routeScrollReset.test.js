@@ -63,7 +63,7 @@ describe("resetScroll", () => {
     const win = { scrollTo: vi.fn() };
     const doc = { getElementById: (id) => (id === "main-panel" ? panel : null) };
     resetScroll(doc, win);
-    expect(win.scrollTo).toHaveBeenCalledWith(0, 0);
+    expect(win.scrollTo).toHaveBeenCalledWith({ top: 0, left: 0, behavior: "instant" });
     expect(panel.scrollTop).toBe(0);
   });
 });
@@ -87,7 +87,7 @@ describe("restoreScroll", () => {
     expect(scrollTo).not.toHaveBeenCalled();
     height = 3000;
     runFrame();
-    expect(scrollTo).toHaveBeenCalledWith(0, 2000);
+    expect(scrollTo).toHaveBeenCalledWith({ top: 2000, left: 0, behavior: "instant" });
   });
   it("gives up without moving if the user scrolls first", () => {
     restoreScroll(2000);
@@ -107,7 +107,7 @@ describe("restoreScroll", () => {
     restoreScroll(2000, { timeoutMs: 0 });
     height = 1000;
     runFrame();
-    expect(scrollTo).toHaveBeenCalledWith(0, 600);
+    expect(scrollTo).toHaveBeenCalledWith({ top: 600, left: 0, behavior: "instant" });
   });
   it("does nothing for a missing or zero position", () => {
     restoreScroll(undefined);

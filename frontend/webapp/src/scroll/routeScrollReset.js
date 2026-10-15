@@ -40,7 +40,9 @@ export function scrollAction({ prevPathname, pathname, hash, navigationType }) {
 }
 
 export function resetScroll(doc = document, win = window) {
-  win.scrollTo(0, 0);
+  // "instant": Bootstrap reboot sets html { scroll-behavior: smooth }, which turned
+  // page changes and Back restores into a visible top-to-target animation.
+  win.scrollTo({ top: 0, left: 0, behavior: "instant" });
   const panel = doc.getElementById("main-panel");
   if (panel) panel.scrollTop = 0;
 }
@@ -64,7 +66,7 @@ export function restoreScroll(y, { token = createAbortToken(), timeoutMs = RESTO
   const tick = () => {
     if (token.aborted) return;
     if (maxY() >= y || Date.now() >= deadline) {
-      window.scrollTo(0, Math.min(y, Math.max(0, maxY())));
+      window.scrollTo({ top: Math.min(y, Math.max(0, maxY())), left: 0, behavior: "instant" });
       cleanup();
       return;
     }
