@@ -148,12 +148,12 @@ describe("ReadingPlanTile guest preview (C1/D4/A4)", () => {
     renderTile();
     await waitFor(() => expect(document.querySelectorAll(".segmentListItem")).toHaveLength(3));
     const start = document.querySelector("a.valuePropPrimary");
-    expect(start.getAttribute("href")).toBe("/read/1-nephi-1");
+    expect(start.getAttribute("href")).toBe("/read/1.nephi.1");
   });
 
   test("planStartPath falls back to the first chapter when the preview is unknown", () => {
-    expect(planStartPath(null)).toBe("/read/1-nephi-1");
-    expect(planStartPath({ segments: [{ ref: "Mosiah 1 - Mosiah 3:27" }] })).toBe("/read/mosiah-1");
+    expect(planStartPath(null)).toBe("/read/1.nephi.1");
+    expect(planStartPath({ segments: [{ ref: "Mosiah 1 - Mosiah 3:27" }] })).toBe("/read/mosiah.1");
   });
 });
 

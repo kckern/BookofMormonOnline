@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useLocation, useParams } from "react-router-dom";
+import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 import { Spinner } from "src/views/_Common/Loader";
@@ -25,7 +25,7 @@ function text(key, fallback) {
  */
 export default function ArtPage() {
   const { imageId } = useParams();
-  const { pathname } = useLocation();
+  const { pathname, key: locationKey } = useLocation();
   const navigate = useNavigate();
   const [state, setState] = useState({ data: null, status: "loading" });
 
@@ -73,8 +73,24 @@ export default function ArtPage() {
     );
   }
 
+  // Way back, above the title (entity-page convention). There is no art index:
+  // with in-app history it steps Back to where the reader came from (e.g. the
+  // Home tile); on a direct load it goes Home.
+  const crumb = (
+    <nav className="entity-page-crumb" aria-label="Breadcrumb">
+      {locationKey && locationKey !== "default" ? (
+        <button type="button" className="entity-page-crumb-back" onClick={() => navigate(-1)}>
+          ‹ {text("back", "Back")}
+        </button>
+      ) : (
+        <Link to="/home">‹ {text("menu_home", "Home")}</Link>
+      )}
+    </nav>
+  );
+
   return (
     <div className="entity-page art-page">
+      {crumb}
       <img
         className="art-page-image"
         src={`${assetUrl}/art/${data.id}`}
@@ -87,7 +103,9 @@ export default function ArtPage() {
       {data.artist && <h2 className="art-page-artist">{data.artist}</h2>}
       {data.location?.slug && (
         <p>
-          <a href={`/${data.location.slug}`}>❮ {text("read_passage", "Read the passage")}</a>
+          <Link to={`/${data.location.slug}`} className="art-page-passage">
+            {text("read_passage", "Read the passage")} ›
+          </Link>
         </p>
       )}
       {data.link && (

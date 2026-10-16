@@ -9,6 +9,9 @@ vi.mock("src/models/BoMOnlineAPI", () => ({
 }));
 
 import { tileRegistry, reservePool, batchTiles } from "../registry";
+import ImageArtTile from "../ImageArtTile";
+import ChiasmusTile from "../ChiasmusTile";
+import BiblePhrasesTile from "../BiblePhrasesTile";
 
 const isFn = (x) => typeof x === "function";
 const allEntriesValid = (pool) =>
@@ -67,5 +70,14 @@ describe("tile registry", () => {
     expect(js.dataKey).toBe("josephSmith");
     expect(js.isReady({ josephSmith: { slug: "x" } })).toBe(true);
     expect(js.isReady({ josephSmith: null })).toBe(false);
+  });
+
+  test("reserve/batch copies of collapse-on-null tiles carry their family span", () => {
+    // Sampler.css collapses .tile.tile-art / -chiasmus / -biblephrases :empty;
+    // a reserve slot (class tile-<key> + span) must match that rule too.
+    const want = new Map([[ImageArtTile, "tile-art"], [ChiasmusTile, "tile-chiasmus"], [BiblePhrasesTile, "tile-biblephrases"]]);
+    [...reservePool, ...batchTiles]
+      .filter((t) => want.has(t.component))
+      .forEach((t) => expect([t.key, t.span]).toEqual([t.key, want.get(t.component)]));
   });
 });

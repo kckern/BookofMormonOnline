@@ -17,9 +17,9 @@ const PLACEHOLDER_SEGMENTS = Array.from({ length: 52 }, () => ({}));
 const NBSP = "\u00a0";
 // Where "Start reading" goes when the plan's first segment is unknown (the
 // preview failed): the first chapter — the default program starts there.
-const START_FALLBACK = "/read/1-nephi-1";
+const START_FALLBACK = readPath("1 Nephi 1");
 
-/** The first segment's opening chapter in the reader ("1 Nephi 1 - …" → /read/1-nephi-1). */
+/** The first segment's opening chapter in the reader ("1 Nephi 1 - …" → /read/1.nephi.1). */
 export const planStartPath = (preview) => readPath(preview?.segments?.[0]?.ref) || START_FALLBACK;
 
 /**

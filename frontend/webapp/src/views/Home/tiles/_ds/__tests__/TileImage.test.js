@@ -71,6 +71,19 @@ describe("TileImage", () => {
     expect(after.getAttribute("src")).toBe("https://media.test/people/nephi1");
   });
 
+  // art/fax/history have no uploaded variants: widths={[]} must mean "original
+  // only" (no srcset, and the first error reaches the caller's onError).
+  test("widths=[] with variants enabled: no srcset, onError reaches the caller at once", () => {
+    process.env[KEY] = "1";
+    const onError = vi.fn();
+    const { container } = render(<TileImage path="art/12" alt="" widths={[]} onError={onError} />);
+    const img = container.querySelector("img");
+    expect(img.hasAttribute("srcset")).toBe(false);
+    expect(img.hasAttribute("sizes")).toBe(false);
+    fireEvent.error(img);
+    expect(onError).toHaveBeenCalledTimes(1);
+  });
+
   test("aspect sets an aspect-ratio box and className is appended", () => {
     const { container } = render(<TileImage path="art/12" alt="" aspect="4 / 3" className="artHero" />);
     const img = container.querySelector("img");

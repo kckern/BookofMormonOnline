@@ -250,7 +250,7 @@ export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = fals
   }, [ref]);
 
   if (!ref) return null;
-  if (!segments) return <div className="samplerScriptureLoading">…</div>;
+  if (!segments) return <div className="samplerScriptureLoading isLoading" aria-busy="true">…</div>;
   const hasAny = segments.some((s) => (s.sections?.length || s.passages?.length));
   if (!hasAny) return <div className="samplerScriptureLoading">{label("rp_error_loading")}</div>;
 

@@ -28,8 +28,8 @@ const DESKTOP = {
   "tile-mattersNarrative": "373px",
   "tile-mattersMaterial": "373px",
   "tile-mattersConcept": "373px",
-  "tile-biblephrases": "220px",
-  "tile-chiasmus": "420px",
+  "tile-biblephrases": "320px", // re-measured 2026-10-15 after the Task 10g redesign (6 seeds: 219–395)
+  "tile-chiasmus": "400px", // 10g: 6 seeds 311–488 with the ≤600-char filter
   "tile-art": "600px",
   "tile-notes": "440px",
   "tile-mapstory": "650px",
@@ -55,7 +55,8 @@ const PHONE = {
   "tile-mattersNarrative": "670px",
   "tile-mattersMaterial": "670px",
   "tile-mattersConcept": "670px",
-  "tile-chiasmus": "480px",
+  "tile-biblephrases": "420px", // 10g: pair stacks on phone
+  "tile-chiasmus": "400px",
   "tile-art": "580px",
   "tile-notes": "370px",
   "tile-mapstory": "625px",
