@@ -92,21 +92,24 @@ export default function ScripturePopup() {
     return () => window.removeEventListener("keydown", onKey, true);
   }, [ref]);
 
-  // Freeze the main site behind the shaded overlay while the modal is open —
-  // reuse the app's existing body scroll lock (html has scrollbar-gutter:stable
-  // so nothing shifts). Same mechanism StudyGroupBar uses.
-  // body.noscroll alone still let the page scroll under the popup (audit G2:
-  // measured scroll deltas while open), so lock the root scroller too.
+  // Freeze the main site behind the shaded overlay while the modal is open by
+  // locking the ROOT scroller only (html overflow:hidden; scrollbar-gutter:stable
+  // so nothing shifts). Not body.noscroll: body is height:100%, so once html
+  // stops propagating overflow, an overflow-hidden body clips the page to one
+  // viewport and throws the reader to scrollY 0 for good (audit E3). The scroll
+  // position is also put back on an in-place close in case anything moved it meanwhile.
   const isOpen = !!ref;
   useEffect(() => {
     if (!isOpen) return undefined;
     const html = document.documentElement;
     const prevOverflow = html.style.overflow;
-    document.body.classList.add("noscroll");
+    const y = window.scrollY;
+    const path = window.location.pathname;
     html.style.overflow = "hidden";
     return () => {
-      document.body.classList.remove("noscroll");
       html.style.overflow = prevOverflow;
+      // only when closed in place — the Read link navigates (its own scroll)
+      if (window.location.pathname === path && window.scrollY !== y) window.scrollTo(0, y);
     };
   }, [isOpen]);
 

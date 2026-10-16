@@ -160,3 +160,20 @@ test("backdrop click closes; phone width renders the same dialog (bottom sheet),
     window.innerWidth = prev;
   }
 });
+
+test("scroll lock keeps the reader's place: body is not clipped and scrollY is restored (audit E3)", async () => {
+  setup();
+  const spy = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+  Object.defineProperty(window, "scrollY", { configurable: true, writable: true, value: 1700 });
+  const dialog = await open("Helaman 1:1-4");
+  // body.noscroll on a height:100% body clips the page to one viewport and
+  // throws the reader to scrollY 0 — only the root scroller is locked now
+  expect(document.body.classList.contains("noscroll")).toBe(false);
+  expect(document.documentElement.style.overflow).toBe("hidden");
+  window.scrollY = 0; // something moved the page while open
+  fireEvent.keyDown(dialog, { key: "Escape" });
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(spy).toHaveBeenCalledWith(0, 1700);
+  spy.mockRestore();
+  delete window.scrollY;
+});
