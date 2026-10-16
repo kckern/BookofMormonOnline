@@ -111,3 +111,29 @@ describe("MatterProfileTile — hero image failure (review round 2)", () => {
     process.env.REACT_APP_MEDIA_VARIANTS = prev;
   });
 });
+
+describe("MatterProfileTile — parity with Place Profile (blind audit matters-11/12)", () => {
+  beforeEach(() => sessionStorage.clear());
+  beforeAll(() => {
+    Object.defineProperty(HTMLElement.prototype, "scrollHeight", { configurable: true, get: () => 500 });
+    Object.defineProperty(HTMLElement.prototype, "clientHeight", { configurable: true, get: () => 100 });
+  });
+  afterAll(() => {
+    delete HTMLElement.prototype.scrollHeight;
+    delete HTMLElement.prototype.clientHeight;
+  });
+  test("eyebrow reads 'Matters · Profile', as the place and person profiles", () => {
+    renderIn(<MatterProfileTile payload={{ mattersConcept: mk(18) }} group="concept" />);
+    expect(screen.getByRole("heading", { level: 3 })).toHaveTextContent(/^Matters · Profile$/);
+  });
+  test("the prose clamp is the word-safe fade clamp and remembers an expansion across a Back remount", () => {
+    const payload = { mattersConcept: mk(18) };
+    const { container, unmount } = renderIn(<MatterProfileTile payload={payload} group="concept" />);
+    expect(container.querySelector(".placeProfileDesc .clampLines.clampFade")).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Read more" }));
+    unmount();
+    const { container: c2 } = renderIn(<MatterProfileTile payload={payload} group="concept" />);
+    expect(c2.querySelector(".placeProfileDesc .clampLines")).toBeNull();
+    expect(screen.getByRole("link", { name: "Open Concept R" })).toBeInTheDocument();
+  });
+});

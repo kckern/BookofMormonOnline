@@ -35,6 +35,11 @@ export const flatten = (html) =>
     .replace(/\s+\)/g, ")")
     .trim();
 
+// Editor's working notes left at the end of an index line ("Workmen labor in
+// temple metals (paraphrastic)") — never reader-facing (audit matters-07).
+const EDITOR_NOTE = /\s*\((?:paraphras\w*|sic|summar\w*|implied|inferred|implicit|approx\w*|loosely|cf\.?)\)\s*$/i;
+export const stripEditorNote = (s) => (s || "").replace(EDITOR_NOTE, "").trim();
+
 /** Typographic verse ranges: hyphens between digits render as en-dashes. */
 export const enDash = (s) => (s || "").replace(/(\d)\s*-\s*(\d)/g, "$1–$2");
 
@@ -75,7 +80,16 @@ export const clampWords = (text, words, { phrase = false } = {}) => {
       }
     }
   }
-  return kept.join(" ").replace(/[,;:—-]$/, "") + "…";
+  // a quote opened in the last few kept words and never closed leaves a
+  // dangling fragment ('"the genealogy of my…'): cut back before it
+  for (let j = kept.length - 1; j >= Math.max(1, kept.length - 3); j--) {
+    if (/^[“"‘]/.test(kept[j]) && !/[”"’]$/.test(kept.slice(j).join(" ").slice(1))) {
+      kept = kept.slice(0, j);
+      popDangling();
+      break;
+    }
+  }
+  return kept.join(" ").replace(/[\s,;:—–\-“"‘(]+$/, "") + "…";
 };
 
 /** Display hygiene for data strings: typographic apostrophes, trimmed. */

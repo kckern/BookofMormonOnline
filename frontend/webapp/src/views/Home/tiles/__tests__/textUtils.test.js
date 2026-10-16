@@ -63,3 +63,13 @@ describe("clampWords", () => {
     );
   });
 });
+
+describe("clampWords — no orphan punctuation before the ellipsis (blind audit matters-04)", () => {
+  test.each([
+    ["Jacob names the purpose of his temple sermon – to declare the word", 8, "Jacob names the purpose of his temple sermon…"],
+    ["He records “the genealogy of my fathers” in full", 3, "He records…"],
+    ["Nephi keeps the record “ of his people", 5, "Nephi keeps the record…"],
+  ])("%s", (text, n, want) => {
+    expect(clampWords(text, n)).toBe(want);
+  });
+});

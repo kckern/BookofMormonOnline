@@ -62,7 +62,9 @@ export default function MatterProfileTile({ payload, group = "concept", matterIn
     <RevealProvider>
       <div className="samplerTileInner placeProfileTile matterProfileTile">
         <h3 className="tileHeading">
-          <Link to="/matters">{labelOr("menu_matters", "Matters")}</Link>
+          <Link to="/matters">
+            {labelOr("menu_matters", "Matters")} · {labelOr("profile", "Profile")}
+          </Link>
         </h3>
         <div className="placeProfileHead">
           {/* Mouse/touch shortcut only — the CTA below is the one tab stop. */}
@@ -87,7 +89,7 @@ export default function MatterProfileTile({ payload, group = "concept", matterIn
         </div>
         {matter.subtitle ? <p className="matterProfileSub">{matter.subtitle}</p> : null}
         {desc ? (
-          <ExpandableText className="placeProfileDesc" lines={5}>
+          <ExpandableText className="placeProfileDesc" lines={5} fade persistKey={`matterProfile:${matter.slug}`}>
             {Parser(stripParens(getDetectedScripturesHtml(desc)), proseOpts)}
           </ExpandableText>
         ) : null}

@@ -253,7 +253,9 @@ html[data-theme="dark"] .tileHeading a:hover { color: #fff; }
   background-color: #33333322;
   border: 1px solid #33333355;
   border-radius: 0.5ex;
-  color: #333333aa;
+  /* solid ink: the translucent #333a over the tinted fill measured ~3.7:1 at
+     card-chip size (audit matters-03); #444 on the fill is ~7:1 */
+  color: #444;
   font-family: "Scripture", serif;
   padding: 0 1ex;
   font-size: 0.65rem;
@@ -739,7 +741,7 @@ html[data-theme="dark"] .peopleFaceRef { color: #ccc; }
 /* Places cards fit the row by words (FitWords) instead — no clamp ellipsis */
 .placesTileIndexRow.fitWords { display: block; -webkit-line-clamp: unset; }
 /* Matters cards give the seeded index text more room — three lines, not two. */
-.mattersTile .placesTileIndexRow { -webkit-line-clamp: 3; }
+.mattersTile .placesTileIndexRow:not(.fitWords) { -webkit-line-clamp: 3; }
 
 
 /* ================================================================
@@ -2974,7 +2976,10 @@ html[data-theme="dark"] .mattersCard:has(.mattersCardLink:hover) { border-color:
   transition: transform 0.15s ease;
 }
 .mattersCardLink:hover .placesImgWrap > img.tileImage { transform: scale(1.03); }
-.mattersCardLink:focus-visible { outline-offset: -2px; }
+/* ring the whole card, not the link: the card and image wrap clip overflow, so
+   a ring on the link showed only a 2px bar under the image (audit matters-05) */
+.mattersTile .mattersCardLink:focus-visible { outline: none; }
+.mattersCard:has(.mattersCardLink:focus-visible) { outline: 2px solid #c9a24b; outline-offset: 2px; }
 
 /* Name pill: the clamp lives on the inner span, so the pill's padding can't
    reveal a third line; no map-pin reservation (matters have no pin). Names get
@@ -2992,6 +2997,9 @@ html[data-theme="dark"] .mattersCard:has(.mattersCardLink:hover) { border-color:
   overflow: hidden;
   overflow-wrap: break-word;
 }
+/* long names ("Genealogical Record-Keeping") step down a size so the pill
+   doesn't bury the illustration's subject (audit matters-08) */
+.mattersNameOverlay.isLong { font-size: 0.64rem; padding: 0.12rem 0.4rem; }
 
 /* Narrative subtitle: a secondary layer, shown on hover/keyboard focus only —
    name + subtitle + ref + gloss on a 104px card was four layers too many. It
@@ -3011,15 +3019,17 @@ html[data-theme="dark"] .mattersCard:has(.mattersCardLink:hover) { border-color:
   transition: opacity 0.15s ease;
   pointer-events: none;
 }
-.mattersSubtitleText {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
+/* fit by whole words (FitWords), two lines — no mid-word clamp ellipsis */
+.mattersSubtitleText { display: block; }
 @media (hover: hover) {
   .mattersCardLink:hover .mattersSubtitle { opacity: 1; }
 }
+/* touch has no hover: the subtitle is the persistent bottom band, as the
+   Places info band (audit matters-10) */
+@media (hover: none) {
+  .mattersSubtitle { opacity: 1; }
+}
+
 .mattersCardLink:focus-visible .mattersSubtitle { opacity: 1; }
 
 /* View all end cell: verb on top, the localized "+N more" count under it. */
@@ -3036,8 +3046,9 @@ html[data-theme="dark"] .mattersViewAll { background: #2c2c2c; }
 }
 .mattersViewAllCount { font-size: 0.66rem; font-weight: 500; opacity: 0.88; }
 
-/* Matters card body: the ref chip on its own line, gloss clamped beneath. */
-.mattersTile .mattersCardRef { align-self: flex-start; }
+/* Matters card body: the ref chip on its own line, gloss fit beneath. The chip
+   sits outside the gloss, so it gets the legible 0.62rem floor (matters-03). */
+.mattersTile .mattersCardRef { align-self: flex-start; font-size: 0.62rem; }
 
 /* Touch: >=44px hit areas for the tiny ref chips (card + profile prose) and the
    eyebrow link. z-index lifts each ::after above later-painted siblings (the

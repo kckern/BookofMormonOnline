@@ -3,9 +3,10 @@ import { Link } from "react-router-dom";
 import { replaceNumbers } from "src/models/Utils";
 import RefPill from "./RefPill";
 import TileImage from "./_ds/TileImage";
+import FitWords from "./_ds/FitWords";
 import labelOr from "./_ds/labelOr";
 import { verbLabel } from "./_ds/TileCTA";
-import { clampWords, flatten, tr } from "./textUtils";
+import { flatten, stripEditorNote, tr } from "./textUtils";
 
 // 5 cards + a 3×4 mosaic end cell. The sampler may send more (the extra one is
 // MatterProfileTile's, so the profile never repeats a matter shown here).
@@ -52,7 +53,9 @@ export default function MattersGroupTile({
         {cards.map((m, i) => {
           const idx = (m.index || []).filter((x) => x?.ref);
           const item = idx.length ? idx[(seed + i) % idx.length] : null;
-          const gloss = item?.text ? clampWords(flatten(item.text), 16) : "";
+          // fit to three whole lines by measurement (FitWords): a word budget fed
+          // into a CSS line-clamp cut mid-word ("the people's dut…", audit matters-04)
+          const gloss = item?.text ? stripEditorNote(flatten(item.text)) : "";
           const name = m.name ? replaceNumbers(m.name) : "";
           return (
             <div className="placesTileCard samplerCard mattersCard" key={m.slug}>
@@ -65,13 +68,13 @@ export default function MattersGroupTile({
                     onError={(e) => (e.target.style.visibility = "hidden")}
                   />
                   {name ? (
-                    <span className="peopleFaceName placesNameOverlay mattersNameOverlay">
+                    <span className={`peopleFaceName placesNameOverlay mattersNameOverlay${name.length > 16 ? " isLong" : ""}`}>
                       <span className="mattersNameText">{name}</span>
                     </span>
                   ) : null}
                   {showSubtitle && m.subtitle ? (
                     <span className="mattersSubtitle">
-                      <span className="mattersSubtitleText">{clampWords(m.subtitle, 12)}</span>
+                      <FitWords className="mattersSubtitleText" text={m.subtitle} lines={2} />
                     </span>
                   ) : null}
                 </div>
@@ -81,7 +84,7 @@ export default function MattersGroupTile({
                   {/* chip outside the clamp: line-clamp's overflow would clip
                       the chip's enlarged touch hit area */}
                   <RefPill refText={item.ref} className="mattersCardRef" />
-                  {gloss ? <span className="placesTileIndexRow">{gloss}</span> : null}
+                  {gloss ? <FitWords className="placesTileIndexRow" text={gloss} lines={3} /> : null}
                 </div>
               ) : null}
             </div>

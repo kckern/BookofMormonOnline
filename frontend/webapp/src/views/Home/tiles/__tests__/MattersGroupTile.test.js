@@ -130,3 +130,23 @@ describe("MattersGroupTile — touch hit area + count (review round 2)", () => {
     spy.mockRestore();
   });
 });
+
+describe("MattersGroupTile — word-safe glosses + editorial junk (blind audit matters-04/07)", () => {
+  const long = "the people's duty to keep the commandments through their whole lives that the law of Moses was given";
+  test("the gloss is fit to three whole lines by measurement (FitWords), not cut by a 16-word budget", () => {
+    const { container } = renderIn(<MattersConceptTile data={mk(6, { index: [{ ref: "Alma 1:1", text: long }] })} payload={{}} />);
+    const row = container.querySelector(".placesTileIndexRow");
+    expect(row.classList.contains("fitWords")).toBe(true);
+    expect(row.style.getPropertyValue("--fit-lines")).toBe("3");
+    // jsdom has no layout, so the fit pass keeps the whole text (no budget cut)
+    expect(row).toHaveTextContent(long);
+  });
+  test("a trailing editor's note like '(paraphrastic)' never reaches the card", () => {
+    const { container } = renderIn(
+      <MattersNarrativeTile data={mk(6, { index: [{ ref: "Alma 1:1", text: "Workmen labor in temple metals (paraphrastic)" }] })} payload={{}} />
+    );
+    const row = container.querySelector(".placesTileIndexRow");
+    expect(row).toHaveTextContent("Workmen labor in temple metals");
+    expect(row.textContent).not.toMatch(/paraphrastic|\(\s*\)/);
+  });
+});

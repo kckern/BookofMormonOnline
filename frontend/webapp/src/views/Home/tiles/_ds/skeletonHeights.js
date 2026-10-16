@@ -26,9 +26,9 @@ const DESKTOP = {
   "tile-fax": "630px",
   "tile-faxVerse": "600px",
   "tile-places": "347px",
-  "tile-mattersNarrative": "373px",
-  "tile-mattersMaterial": "373px",
-  "tile-mattersConcept": "373px",
+  "tile-mattersNarrative": "407px",
+  "tile-mattersMaterial": "407px",
+  "tile-mattersConcept": "407px", // re-measured 2026-10-16 (matters-06),
   "tile-biblephrases": "320px", // re-measured 2026-10-15 after the Task 10g redesign (6 seeds: 219–395)
   "tile-chiasmus": "400px", // 10g: 6 seeds 311–488 with the ≤600-char filter
   "tile-art": "600px",
@@ -36,7 +36,7 @@ const DESKTOP = {
   "tile-mapstory": "662px",
   "tile-personProfile": "330px",
   "tile-placeProfile": "368px",
-  "tile-matterProfile": "430px",
+  "tile-matterProfile": "420px",
   "tile-witness": "225px", // archive pass 2026-10-15: reporter meta line + reveal
   "tile-josephSmith": "190px",
 };
@@ -54,9 +54,10 @@ const PHONE = {
   "tile-fax": "650px",
   "tile-faxVerse": "640px",
   "tile-places": "641px",
-  "tile-mattersNarrative": "670px",
-  "tile-mattersMaterial": "670px",
-  "tile-mattersConcept": "670px",
+  "tile-mattersNarrative": "706px",
+  "tile-mattersMaterial": "706px",
+  "tile-mattersConcept": "732px", // 2026-10-16: concept names wrap more
+  "tile-matterProfile": "410px",
   "tile-biblephrases": "420px", // 10g: pair stacks on phone
   "tile-chiasmus": "400px",
   "tile-art": "580px",
