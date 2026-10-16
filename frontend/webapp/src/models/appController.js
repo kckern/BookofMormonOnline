@@ -196,6 +196,19 @@ export function appControllerReducer(appController, input) {
   return { ...appController };
 }
 
+/**
+ * Does the browser path belong to the open popup? A popup pushes its own URL
+ * (`/<type>/<activeId>`) natively, so a Back/Forward that lands anywhere else
+ * means the reader has left it (see syncPopUpToLocation).
+ */
+export function popUpOwnsPath(popUp, pathname) {
+  if (!popUp?.open || !popUp.type || popUp.activeId == null) return false;
+  let path = String(pathname || "");
+  try { path = decodeURIComponent(path); } catch { /* keep raw */ }
+  path = path.replace(/\/+$/, "");
+  return path === `/${popUp.type}/${popUp.activeId}`;
+}
+
 export const appFunctions = {
   setSlug: (appController, input) => {
     let slug = input.val;
@@ -308,6 +321,23 @@ export const appFunctions = {
       if(theaterPlayer.paused && theaterPlayer.currentTime) theaterPlayer.play();
     }
 
+    return appController;
+  },
+
+  // popstate (Back/Forward). The popup's URL was pushed outside the Router, so
+  // nothing else hears the reader leave it: a Back to /home left the phone
+  // drawer covering the feed, and on desktop the stale source modal re-opened
+  // on a later visit (blind audit archive witness-E1). Close it WITHOUT
+  // writing a URL (the browser already moved) and adopt the new path as slug.
+  syncPopUpToLocation: (appController, input) => {
+    const path = input.val;
+    if (!appController.states.popUp?.open || popUpOwnsPath(appController.states.popUp, path)) return appController;
+    appController.states.popUp.open = false;
+    appController.states.popUp.loading = false;
+    appController.states.popUp.type = null;
+    appController.states.popUp.ids = [];
+    appController.states.popUp.activeId = 1;
+    if (path) appController.states.slug = path;
     return appController;
   },
 

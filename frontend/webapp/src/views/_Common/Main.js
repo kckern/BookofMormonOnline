@@ -78,6 +78,12 @@ function Main(props) {
   // SET "appDispatch" GOLABAL TO GET IT ON "appController" FILE IN "appDispatch" FUNCTION
   global._appDispatch = appDispatch;
 
+  // Back/Forward off a popup's own URL closes it (appController.syncPopUpToLocation).
+  useEffect(() => {
+    const onPop = () => appDispatch({ fn: "syncPopUpToLocation", val: window.location.pathname });
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
   const fireStudyGroupAction = (e) => appController.functions.processStudyGroupEvent(e);
   const firedMessage = (e) => appController.functions.firedMessage(e);
