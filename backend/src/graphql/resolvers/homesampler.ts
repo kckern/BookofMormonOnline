@@ -18,7 +18,7 @@ import { deSlugGroupName, parseVerseIdFromNote, resolveEntityNames } from '../..
 import { canonicalSelector } from '../../media/fax/canonical.js';
 import { imageScanMeta } from '../../media/fax/resolve.js';
 import { getHomeSamplerCache } from '../homeSamplerCacheStore.js';
-import { currentBucket, seedForBucket } from '../homeSamplerCache.js';
+import { currentBucket, samplerCacheKey, seedForBucket } from '../homeSamplerCache.js';
 
 // 24 people = 1 featured + 11 face cards + 12 view-all mosaic thumbs (3×4);
 // 17 places = 5 cards + a full 3×4 mosaic.
@@ -813,9 +813,7 @@ export const homesamplerResolvers: Resolvers = {
       // and are later evicted.
       const bucket = currentBucket(Date.now());
       const seed = hasSeed ? (argSeed as number) : seedForBucket(bucket);
-      const key = hasSeed
-        ? `homesampler:v2:${lang}:seed:${seed}`
-        : `homesampler:v2:${lang}:${bucket}`;
+      const key = samplerCacheKey(lang, hasSeed ? { seed } : { bucket });
 
       // A cache fault must never fail the request — fall back to a fresh compute.
       try {

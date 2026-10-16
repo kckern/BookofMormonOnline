@@ -9,10 +9,22 @@
  *      an injected adapter so this core stays unit-testable without a DB.
  *
  * The cache is keyed by a string the caller builds (e.g.
- * `homesampler:v2:${lang}:${bucket}`). Freshness is a 6h window; results are
+ * `samplerCacheKey(lang, { bucket })`). Freshness is a 6h window; results are
  * deep-frozen before caching so a field resolver can't mutate state shared across
  * every request in the window.
  */
+
+/**
+ * Key namespace for cached sampler payloads. BUMP THE VERSION whenever the
+ * payload shape changes (fields, array lengths): an old-shape window otherwise
+ * keeps serving for up to a full TTL after deploy. v3 = matters groups carry 18
+ * (the 17 the group tile shows + 1 for MatterProfile).
+ */
+export const SAMPLER_KEY_PREFIX = 'homesampler:v3:';
+
+/** Front-door window key ({ bucket }) or explicit-seed key ({ seed }). */
+export const samplerCacheKey = (lang: string, at: { bucket: number } | { seed: number }): string =>
+  'seed' in at ? `${SAMPLER_KEY_PREFIX}${lang}:seed:${at.seed}` : `${SAMPLER_KEY_PREFIX}${lang}:${at.bucket}`;
 
 /** 6-hour content window. Both the server cache and the client cache pivot on it. */
 export const TTL_MS = 6 * 3600 * 1000;

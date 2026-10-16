@@ -190,3 +190,17 @@ describe('getOrCompute', () => {
     await compute(); // keep the mock referenced without asserting compute count
   });
 });
+
+// Payload-shape changes (e.g. MATTERS_COUNT 17 -> 18 for the MatterProfile tile)
+// must bump the key version, or windows cached by the old shape keep serving it
+// for up to a full TTL after deploy (audit matters-11: profile tile never rendered).
+import { SAMPLER_KEY_PREFIX, samplerCacheKey } from '../../src/graphql/homeSamplerCache.js';
+describe('sampler cache key', () => {
+  it('is versioned past the 17-per-matters-group payload (v2)', () => {
+    expect(SAMPLER_KEY_PREFIX).toBe('homesampler:v3:');
+  });
+  it('builds window and seed keys under the one prefix', () => {
+    expect(samplerCacheKey('en', { bucket: 42 })).toBe('homesampler:v3:en:42');
+    expect(samplerCacheKey('ko', { seed: 7 })).toBe('homesampler:v3:ko:seed:7');
+  });
+});
