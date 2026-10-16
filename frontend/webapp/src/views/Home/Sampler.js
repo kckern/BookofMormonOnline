@@ -188,14 +188,16 @@ export default function Sampler() {
   const sentinelRef = useRef(null);
   const loadMoreRef = useRef(() => {}); // latest maybeLoadMore, for the observer
   const mountedRef = useRef(true);
+  const genRef = useRef(0); // sampler generation — see fetchSampler
   useEffect(() => () => { mountedRef.current = false; }, []);
 
   // Community stream — always live, never cached. Fills its own tile when it
   // lands; a failure just leaves the community tile empty (non-fatal).
   const fetchCommunity = () => {
+    const gen = genRef.current;
     BoMOnlineAPI({ homegroups: { token }, leaderboard: { token } }, { useCache: false })
       .then((r) => {
-        if (!mountedRef.current || r?.error) return;
+        if (!mountedRef.current || gen !== genRef.current || r?.error) return;
         setCommunity(assembleCommunity(r));
       })
       .catch(() => {});
@@ -205,11 +207,16 @@ export default function Sampler() {
   // window seed, cacheable). `swap` → paint the result (cold load / manual
   // refresh); when false (stale revalidate) we only refresh the cache so the
   // fresh sample applies on the NEXT load without disturbing the current view.
-  const fetchSampler = (explicitSeed, swap, attempt = 0) => {
+  // Latest-request-wins: every sampler generation (mount, each resample) bumps
+  // genRef; a response — or a failure's same-seed retry — from an older
+  // generation is dropped, so a slow superseded fetch can never repaint the
+  // page the reader is already looking at (audit B2).
+  const fetchSampler = (explicitSeed, swap, attempt = 0, gen = genRef.current) => {
     const input = { homesampler: explicitSeed ? { seed: explicitSeed } : {} };
+    const stale = () => !mountedRef.current || gen !== genRef.current;
     BoMOnlineAPI(input, { useCache: false })
       .then((r) => {
-        if (!mountedRef.current) return;
+        if (stale()) return;
         if (r?.error || !Array.isArray(r?.homesampler)) throw new Error("homesampler unavailable");
         const sp = assembleSampler(r);
         writeCache(sp, sp.seed);
@@ -217,8 +224,8 @@ export default function Sampler() {
         if (swap) setSamplerPayload(sp);
       })
       .catch(() => {
-        if (!mountedRef.current) return;
-        if (attempt < 1) fetchSampler(explicitSeed, swap, attempt + 1);
+        if (stale()) return;
+        if (attempt < 1) fetchSampler(explicitSeed, swap, attempt + 1, gen);
         // Only fall back to the empty-state footer when there is nothing to show.
         else if (swap && !samplerPayload) setFailed(true);
       });
@@ -227,6 +234,7 @@ export default function Sampler() {
   // Manual refresh: a fresh random seed → server-fresh sample, swap the view
   // (explicit action), overwrite the cache. Refitted variables + a fresh feed.
   const resample = () => {
+    genRef.current += 1; // supersede every in-flight sampler/batch/community fetch
     clearSession();
     sessionRef.current = null;
     setFeedEnd(null);
@@ -313,12 +321,15 @@ export default function Sampler() {
     setLoadingMore(true);
     // a retry re-requests the same seed; only a fresh attempt advances it
     const bs = attempt ? batchSeedRef.current : (batchSeedRef.current = nextBatchSeed(batchSeedRef.current || seed));
+    const gen = genRef.current;
+    // a batch for a superseded sample: resample already reset the feed refs
+    const stale = () => !mountedRef.current || gen !== genRef.current;
     const fail = () => {
+      if (stale()) return;
       fetchingRef.current = false;
-      if (!mountedRef.current) return;
       if (attempt < 1) {
         // skeletons stay up through the one retry
-        setTimeout(() => mountedRef.current && prefetchBatch(attempt + 1), BATCH_RETRY_MS);
+        setTimeout(() => !stale() && prefetchBatch(attempt + 1), BATCH_RETRY_MS);
         return;
       }
       setLoadingMore(false);
@@ -326,9 +337,9 @@ export default function Sampler() {
     };
     BoMOnlineAPI({ homesampler: { seed: bs, token } }, { useCache: false })
       .then((r) => {
+        if (stale()) return;
         if (r?.error || !Array.isArray(r?.homesampler)) return fail();
         fetchingRef.current = false;
-        if (!mountedRef.current) return;
         setLoadingMore(false);
         reserveRef.current = { payload: assembleSampler(r), tiles: shuffle(batchTiles) };
         // the latest closure: this one may predate a Retry that cleared feedEnd
