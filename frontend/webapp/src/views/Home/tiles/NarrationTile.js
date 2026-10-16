@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext, useState } from "react";
 import { Link } from "react-router-dom";
 import { label } from "src/models/Utils";
 import green from "src/views/User/svg/green.svg";
@@ -11,6 +11,8 @@ import RefPill from "./RefPill";
 import TileDeepLink from "./_ds/TileDeepLink";
 import TileImage from "./_ds/TileImage";
 import labelOr from "./_ds/labelOr";
+import TileCTA from "./_ds/TileCTA";
+import { TileBoundContext } from "./_ds/Reveal";
 
 const statusDot = { completed: green, started: yellow };
 
@@ -34,9 +36,8 @@ const sectionArt = (section, seed, count = 4) => {
  * a RefPill (popup), then the beat text as THE link into its block's study
  * page (e.g. /ammon/22). The pill is a sibling of the link — never nested.
  */
-function NarrationList({ section, showStatus }) {
-  const items = narrationItems(section);
-  if (!items.length) return null;
+function NarrationList({ section, items, showStatus }) {
+  if (!items?.length) return null;
   return items.map((n) => {
     const status = n.text?.status;
     return (
@@ -61,13 +62,29 @@ function NarrationList({ section, showStatus }) {
  * the reader has progress in these beats), and each beat's bom_text ref. A
  * short section leaves room — the NEXT section continues the story under a
  * quieter "Next" divider. Layer 2: "See in context" → the section's page.
+ *
+ * Footprint: at most BEAT_BUDGET beats show at rest. A longer section gets an
+ * in-place Read more ⇄ Show less (Layer 1, the shared reveal pill); a short
+ * one is topped up from the next section only to the budget — never the whole
+ * next section (a 4-beat sample once dragged in 14 and became a minority of
+ * its own tile).
  */
+export const BEAT_BUDGET = 6;
+
 export default function NarrationTile({ data, next, seed = 0 }) {
   const items = narrationItems(data);
   if (!items.length) return null;
   const art = sectionArt(data, seed);
-  const nextItems = narrationItems(next);
-  const showNext = items.length < 6 && nextItems.length > 0;
+  const [open, setOpen] = useState(false);
+  const liftBound = useContext(TileBoundContext);
+  const overBudget = items.length > BEAT_BUDGET;
+  const shown = overBudget && !open ? items.slice(0, BEAT_BUDGET) : items;
+  const nextItems = narrationItems(next).slice(0, Math.max(0, BEAT_BUDGET - items.length));
+  const showNext = nextItems.length > 0;
+  const toggle = () => {
+    if (!open) liftBound?.();
+    setOpen((o) => !o);
+  };
   // A guest (or a reader new to these beats) would see a column of identical
   // grey "not read" dots that says nothing — show status only when it informs.
   const showStatus = [...items, ...(showNext ? nextItems : [])].some((n) => statusDot[n.text?.status]);
@@ -101,14 +118,25 @@ export default function NarrationTile({ data, next, seed = 0 }) {
         </div>
       ) : null}
       <div className="narrationTileList">
-        <NarrationList section={data} showStatus={showStatus} />
+        <NarrationList section={data} items={shown} showStatus={showStatus} />
+        {overBudget ? (
+          <div className="narrationMore">
+            <TileCTA
+              variant="reveal"
+              verb={open ? "showLess" : "readMore"}
+              aria-expanded={open}
+              className={open ? "isOpen" : ""}
+              onClick={toggle}
+            />
+          </div>
+        ) : null}
         {showNext ? (
           <>
             <div className="narrationNext">
               <span className="narrationNextLabel">{labelOr("next", "Next")}</span>
               <Link to={`/${next.slug}`} className="narrationNextTitle">{next.title}</Link>
             </div>
-            <NarrationList section={next} showStatus={showStatus} />
+            <NarrationList section={next} items={nextItems} showStatus={showStatus} />
           </>
         ) : null}
       </div>

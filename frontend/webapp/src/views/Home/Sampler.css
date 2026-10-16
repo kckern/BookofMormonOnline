@@ -60,7 +60,7 @@ html[data-theme="dark"] {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   transition: color 0.15s ease, border-color 0.15s ease;
 }
-.samplerResample:hover { color: #323b4d; border-color: #323b4d; }
+.samplerResample:hover { color: #333333; border-color: #333333; }
 html[data-theme="dark"] .samplerResample { background: #2c2c2c; border-color: #4a4a4a; color: #bbb; }
 html[data-theme="dark"] .samplerResample:hover { color: #fff; border-color: #999; }
 
@@ -90,10 +90,17 @@ html[data-theme="dark"] .samplerResample:hover { color: #fff; border-color: #999
   flex-direction: column;
   gap: 0.7rem;
 }
-.samplerSingle .tile { flex: 0 0 auto; }
+/* programmatic scrolls (Show less, focus) align below the fixed heading-bar */
+.samplerSingle .tile { flex: 0 0 auto; scroll-margin-top: calc(60px + 0.75rem); }
 .tile.boundedTile { flex-direction: column; }
 .samplerSingle .tile-narration.boundedTile:not(.revealed),
 .samplerSingle .tile-contents.boundedTile:not(.revealed) { max-height: 24rem; }
+/* single column: a full-width 16:9 banner at tablet width (≈744×418) was
+   taller than the whole bound, leaving the contents tile a picture with no
+   title. Cap it so the title and teaser always show at rest. */
+.samplerSingle .contentsTile img { max-height: 11rem; }
+/* breadcrumb hover: neutral, not the shared component's slate blue */
+.sampler .breadcrumb { --bc-link-hover: #111; }
 /* the fade: only when content actually overflows the bound */
 .tile.boundedTile.isOverflowing:not(.revealed) > .samplerTileInner {
   -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 5rem), transparent calc(100% - 1.25rem));
@@ -243,10 +250,10 @@ html[data-theme="dark"] .tileHeading a:hover { color: #fff; }
    reboot zeroes the margin); the button-only reset after this rule clears the
    rest of the UA chrome without out-ranking per-tile margin/align tweaks. */
 .sampler .scripture_link {
-  background-color: #323b4d22;
-  border: 1px solid #323b4d55;
+  background-color: #33333322;
+  border: 1px solid #33333355;
   border-radius: 0.5ex;
-  color: #323b4daa;
+  color: #333333aa;
   font-family: "Scripture", serif;
   padding: 0 1ex;
   font-size: 0.65rem;
@@ -276,7 +283,7 @@ html[data-theme="dark"] .tileHeading a:hover { color: #fff; }
   text-transform: inherit;
   text-indent: 0;
 }
-.sampler .scripture_link:hover { background-color: #323b4d44; }
+.sampler .scripture_link:hover { background-color: #33333344; }
 html[data-theme="dark"] .sampler .scripture_link {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.22);
@@ -516,7 +523,7 @@ html[data-theme="dark"] .peopleTile .peopleFaceCard:hover { border-color: #555; 
   color: #888;
   transition: border-color 0.15s ease, color 0.15s ease;
 }
-.viewAllCard:hover .viewAllBox { border-color: #323b4d; color: #323b4d; }
+.viewAllCard:hover .viewAllBox { border-color: #333333; color: #333333; }
 html[data-theme="dark"] .viewAllBox { border-color: #555; background: #2a2a2a; color: #999; }
 html[data-theme="dark"] .viewAllCard:hover .viewAllBox { border-color: #ddd; color: #ddd; }
 .samplerCard {
@@ -918,8 +925,9 @@ html[data-theme="dark"] a.contentsOutlinePageLink:hover { color: #fff; }
   justify-content: space-between;
   gap: 0.6rem;
 }
-.guestPlanTitle { font-size: 0.9rem; color: #444; min-width: 0; }
-html[data-theme="dark"] .guestPlanTitle { color: #ddd; }
+/* same title tier as the narration / contents rail tiles (h4, 0.98rem/800) */
+.guestPlanTitle { font-size: 0.98rem; font-weight: 800; line-height: 1.25; color: #2a2a2a; min-width: 0; margin: 0; }
+html[data-theme="dark"] .guestPlanTitle { color: #f0f0f0; }
 .guestPlanMeta { flex-shrink: 0; font-size: 0.7rem; color: #737373; white-space: nowrap; } /* ≥4.5:1 on white */
 html[data-theme="dark"] .guestPlanMeta { color: #a3a3a3; } /* ≥4.5:1 on #222 */
 /* the program's real segment cells (all not-started) — structure, not slogans */
@@ -932,6 +940,10 @@ html[data-theme="dark"] .guestPlanMeta { color: #a3a3a3; } /* ≥4.5:1 on #222 *
 }
 html[data-theme="dark"] .valuePropText { color: #e4e4e4; }
 .valuePropCtas { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+/* guest CTAs are the shared deeplink pills: a flush-right pair like every
+   sibling tile's "See in context" */
+.valuePropCtas .tileMoreLink { margin: 0; }
+.valuePropCtas .tileMoreLink:first-child { margin-left: auto; }
 .valuePropPrimary,
 .valuePropSecondary {
   display: inline-block;
@@ -1148,8 +1160,8 @@ html[data-theme="dark"] .samplerFooter { border-top-color: #3a3a3a; }
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 .samplerFooterLink:hover {
-  background: #323b4d;
-  border-color: #323b4d;
+  background: #333333;
+  border-color: #333333;
   color: #fff;
   text-decoration: none;
 }
@@ -1210,6 +1222,9 @@ html[data-theme="dark"] a.narrationNextTitle { color: #f0f0f0; }
 .narrationTileList {
   flex: 1 1 auto;
 }
+/* Layer 1 for a long section: the shared reveal pill, left under the beats */
+.narrationMore { display: flex; margin: 0.15rem 0 0.1rem; }
+.narrationMore .readMorePill { margin: 0; }
 /* seeded strip of the section's art: equal cropped cells in one row (no
    floating thumbs / ragged wraps); a lone image keeps its own aspect */
 .narrationArtRow {
@@ -1268,6 +1283,8 @@ html[data-theme="dark"] a.narrationBeatLink { color: #cfcfcf; }
 html[data-theme="dark"] a.narrationBeatLink:hover { color: #fff; }
 /* >=44px touch targets without loosening the type rhythm: an invisible hit area */
 @media (pointer: coarse) {
+  /* beat rows tall enough to tap one without hitting its neighbour */
+  .narrationItem { padding-block: 0.6rem; }
   .narrationCrumbs a,
   a.narrationNextTitle { position: relative; }
   .narrationCrumbs a::after,

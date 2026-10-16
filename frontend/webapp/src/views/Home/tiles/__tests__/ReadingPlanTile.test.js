@@ -147,8 +147,18 @@ describe("ReadingPlanTile guest preview (C1/D4/A4)", () => {
   test("Start reading opens the plan's first segment, not the generic contents page", async () => {
     renderTile();
     await waitFor(() => expect(document.querySelectorAll(".segmentListItem")).toHaveLength(3));
-    const start = document.querySelector("a.valuePropPrimary");
+    const start = screen.getByRole("link", { name: "Start reading" });
     expect(start.getAttribute("href")).toBe("/read/1.nephi.1");
+  });
+
+  test("guest CTAs are the shared deeplink pills in sentence case; the plan title is a rail-tier heading", async () => {
+    const { container } = renderTile();
+    await waitFor(() => expect(container.querySelector(".guestPlanTitle")?.textContent).toBe("Book of Mormon in a Year"));
+    const start = screen.getByRole("link", { name: "Start reading" });
+    const signIn = screen.getByRole("link", { name: "Sign in" });
+    [start, signIn].forEach((a) => expect(a.classList.contains("tileMoreLink")).toBe(true));
+    expect(signIn.getAttribute("href")).toBe("/home/user/signin");
+    expect(container.querySelector(".guestPlanTitle").tagName).toBe("H4");
   });
 
   test("planStartPath falls back to the first chapter when the preview is unknown", () => {

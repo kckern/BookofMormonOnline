@@ -12,3 +12,16 @@ export default function labelOr(key, fallback, inserts) {
   if (v && v !== key && String(v).trim()) return v;
   return String(fallback).replace(/\$(\d+)/g, (m, i) => (list[i - 1] != null ? list[i - 1] : ""));
 }
+
+/**
+ * Sentence case for the CTA vocabulary ("Start Reading" → "Start reading").
+ * Only touches a plain-ASCII Title-Case label (the English table rows); any
+ * other script or mixed-case label (proper nouns, acronyms) is left alone.
+ */
+export function sentenceCase(s) {
+  const str = String(s ?? "");
+  if (!/^[A-Za-z][A-Za-z ]*$/.test(str)) return str;
+  const words = str.split(" ");
+  if (!words.every((w) => !w || /^[A-Z][a-z]*$/.test(w))) return str;
+  return words.map((w, i) => (i === 0 ? w : w.toLowerCase())).join(" ");
+}

@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI.js";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { label } from "src/models/Utils";
@@ -7,7 +6,8 @@ import { readPath } from "src/views/_Common/ScriptureExcerpt";
 import { ReadingPlan } from "../ReadingPlan";
 import ReadingProgressTile from "./ReadingProgressTile";
 import { readPlanPreview, loadPlanPreview } from "./planPreviewCache";
-import labelOr from "./_ds/labelOr";
+import labelOr, { sentenceCase } from "./_ds/labelOr";
+import TileCTA from "./_ds/TileCTA";
 
 // Until the default program's preview lands (cold load only — it's cached
 // after that), reserve the grid at its final size: the default program is 52
@@ -60,7 +60,7 @@ function PlanBubbles({ title, meta, segments, ctas }) {
       <h3 className="tileHeading">{label("reading_plan")}</h3>
       <div className="guestPlanPreview">
         <div className="guestPlanTitleRow">
-          <b className="guestPlanTitle">{title}</b>
+          <h4 className="guestPlanTitle">{title}</h4>
           {meta ? <span className="guestPlanMeta">{meta}</span> : null}
         </div>
         {segments?.length ? (
@@ -94,12 +94,12 @@ function PendingPlanTile() {
     <div className="samplerTileInner valuePropTile readingPlanPending" aria-busy="true">
       <div className="tileHeading" aria-hidden="true">{NBSP}</div>
       <div className="guestPlanPreview" aria-hidden="true">
-        <div className="guestPlanTitleRow"><b className="guestPlanTitle">{NBSP}</b></div>
+        <div className="guestPlanTitleRow"><h4 className="guestPlanTitle">{NBSP}</h4></div>
         <div className="segmentList guestSegmentList">
           {PLACEHOLDER_SEGMENTS.map((_, i) => <div key={i} className="segmentListItem future notStarted" />)}
         </div>
       </div>
-      <div className="valuePropCtas" aria-hidden="true"><span className="valuePropPrimary">{NBSP}</span></div>
+      <div className="valuePropCtas" aria-hidden="true"><span className="tileCTA tileMoreLink">{NBSP}</span></div>
     </div>
   );
 }
@@ -122,8 +122,12 @@ function GuestPlanPreview() {
       segments={failed ? null : guestSegments(preview)}
       ctas={
         <>
-          <Link className="valuePropPrimary" to={planStartPath(preview)}>{label("start_reading")}</Link>
-          <Link className="valuePropSecondary" to="/home/user/signin">{label("sign_in")}</Link>
+          <TileCTA variant="deeplink" to={planStartPath(preview)}>
+            {sentenceCase(labelOr("start_reading", "Start reading"))}
+          </TileCTA>
+          <TileCTA variant="deeplink" to="/home/user/signin">
+            {sentenceCase(labelOr("sign_in", "Sign in"))}
+          </TileCTA>
         </>
       }
     />
@@ -226,7 +230,7 @@ function SignedInPlanTile({ token }) {
       segments={failed ? null : guestSegments(preview)}
       ctas={
         <button type="button" ref={openerRef} className="valuePropPrimary" onClick={() => setChooser(true)}>
-          {label("start_reading")}
+          {sentenceCase(labelOr("start_reading", "Start reading"))}
         </button>
       }
     />

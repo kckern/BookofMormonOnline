@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 vi.mock("../ScripturePopup", () => ({ __esModule: true, openScripture: vi.fn() }));
@@ -87,3 +87,27 @@ describe("NarrationTile", () => {
     expect(r2.container.querySelectorAll(".narrationDot")).toHaveLength(2);
   });
 });
+
+describe("NarrationTile footprint (C4/H3)", () => {
+  const many = (prefix, n) => Array.from({ length: n }, (_, i) => beat(`${prefix}${i}`, `p/${prefix}${i}`, null, `${prefix} beat ${i}.`));
+  const beatLinks = (c) => c.querySelectorAll("a.narrationBeatLink");
+
+  test("a long section shows 6 beats, then an in-place Read more ⇄ Show less", () => {
+    const { container } = renderTile({ data: { slug: "s", title: "S", rows: many("a", 11) } });
+    expect(beatLinks(container)).toHaveLength(6);
+    const more = screen.getByRole("button", { name: "Read more" });
+    expect(more.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(more);
+    expect(beatLinks(container)).toHaveLength(11);
+    fireEvent.click(screen.getByRole("button", { name: "Show less" }));
+    expect(beatLinks(container)).toHaveLength(6);
+  });
+
+  test("the Next continuation only fills up to the 6-beat budget", () => {
+    const { container } = renderTile({ data: { slug: "s", title: "S", rows: many("a", 4) }, next: { slug: "n", title: "N", rows: many("n", 14) } });
+    expect(beatLinks(container)).toHaveLength(6);
+    expect(container.querySelector('a.narrationNextTitle[href="/n"]')).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Read more" })).toBeNull();
+  });
+});
+
