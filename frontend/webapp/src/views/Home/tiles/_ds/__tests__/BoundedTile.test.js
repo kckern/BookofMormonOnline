@@ -74,15 +74,55 @@ describe("BoundedTile collapse keeps the tile in view", () => {
     fireEvent.click(screen.getByRole("button", { name: "Read more" }));
     fireEvent.click(screen.getByRole("button", { name: "Show less" }));
     expect(scroll).toHaveBeenCalledTimes(1);
-    expect(scroll.mock.calls[0][0]).toMatchObject({ block: "nearest" });
+    expect(scroll.mock.calls[0][0]).toMatchObject({ block: "start" });
     restore();
   });
 
   test("Show less does not scroll when the tile top is visible; Read more never scrolls", () => {
-    const { scroll, restore } = setup(40);
+    const { scroll, restore } = setup(120);
     fireEvent.click(screen.getByRole("button", { name: "Read more" }));
     fireEvent.click(screen.getByRole("button", { name: "Show less" }));
     expect(scroll).not.toHaveBeenCalled();
+    restore();
+  });
+});
+
+describe("BoundedTile keyboard focus under the bound (XC-2)", () => {
+  test("focusing a link hidden under the fade lifts the bound and resets the clipped scroll", () => {
+    const restore = fakeHeights(1000, 384);
+    const { container } = render(<BoundedTile className="tile"><p>long</p><a href="/x">deep link</a></BoundedTile>);
+    const wrap = container.firstChild;
+    wrap.scrollTop = 250; // what the browser does when focus lands in an overflow:hidden box
+    fireEvent.focusIn(screen.getByText("deep link"));
+    expect(wrap.className).toContain("revealed");
+    expect(wrap.scrollTop).toBe(0);
+    restore();
+  });
+
+  test("focusing the Read more toggle itself does not reveal", () => {
+    const restore = fakeHeights(1000, 384);
+    const { container } = render(<BoundedTile className="tile"><p>long</p></BoundedTile>);
+    fireEvent.focusIn(screen.getByRole("button", { name: "Read more" }));
+    expect(container.firstChild.className).not.toContain("revealed");
+    restore();
+  });
+});
+
+describe("BoundedTile collapse clears the fixed header", () => {
+  test("Show less scrolls back when the tile top is under the 60px header", () => {
+    const restore = fakeHeights(1000, 384);
+    const scroll = vi.fn();
+    const prev = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = scroll;
+    const rect = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockReturnValue({ top: 20, bottom: 1120, left: 0, right: 0, width: 0, height: 1100 });
+    render(<BoundedTile className="tile"><p>long</p></BoundedTile>);
+    fireEvent.click(screen.getByRole("button", { name: "Read more" }));
+    fireEvent.click(screen.getByRole("button", { name: "Show less" }));
+    expect(scroll).toHaveBeenCalledTimes(1);
+    expect(scroll.mock.calls[0][0]).toMatchObject({ block: "start" });
+    rect.mockRestore();
+    if (prev) Element.prototype.scrollIntoView = prev; else delete Element.prototype.scrollIntoView;
     restore();
   });
 });

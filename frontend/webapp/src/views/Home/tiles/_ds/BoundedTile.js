@@ -13,8 +13,17 @@ import TileCTA from "./TileCTA";
  * The bound itself lives in CSS (`.boundedTile:not(.revealed)`); this only
  * measures overflow and owns the revealed flag. On Show less, if the
  * re-bounded tile's top has scrolled above the viewport, it is brought back
- * into view so the reader is not stranded far below the collapsed tile.
+ * into view so the reader is not stranded far below the collapsed tile — top
+ * aligned, clearing the fixed mobile heading-bar via the tile's CSS
+ * `scroll-margin-top` (a top hidden under the 60px bar counts as scrolled off).
+ *
+ * Keyboard: links under the fade stay reachable — focusing one lifts the bound
+ * (instead of the browser silently scrolling the overflow:hidden card and
+ * leaving its heading off the top with a blank foot).
  */
+// the fixed mobile heading-bar (Header.css .heading-bar.mobile) + breathing room
+const HEADER_CLEAR = 64;
+
 export default function BoundedTile({ className = "", children }) {
   const ref = useRef(null);
   const [revealed, setRevealed] = useState(false);
@@ -33,13 +42,24 @@ export default function BoundedTile({ className = "", children }) {
     collapsing.current = false;
     const el = ref.current;
     if (!el || typeof el.scrollIntoView !== "function") return;
-    if (el.getBoundingClientRect().top >= 0) return;
+    if (el.getBoundingClientRect().top >= HEADER_CLEAR) return;
     const reduce =
       typeof window !== "undefined" &&
       typeof window.matchMedia === "function" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    el.scrollIntoView({ block: "nearest", behavior: reduce ? "auto" : "smooth" });
+    el.scrollIntoView({ block: "start", behavior: reduce ? "auto" : "smooth" });
   }, [revealed]);
+
+  const onFocus = useCallback(
+    (e) => {
+      if (revealed || !overflowing) return;
+      if (e.target.closest && e.target.closest(".boundedTileMore")) return;
+      const el = ref.current;
+      if (el) el.scrollTop = 0; // undo the browser's focus-scroll of the clipped box
+      setRevealed(true);
+    },
+    [revealed, overflowing],
+  );
 
   useLayoutEffect(() => {
     const el = ref.current;
@@ -58,7 +78,7 @@ export default function BoundedTile({ className = "", children }) {
     .filter(Boolean)
     .join(" ");
   return (
-    <div ref={ref} className={cls}>
+    <div ref={ref} className={cls} onFocus={onFocus}>
       <TileBoundContext.Provider value={reveal}>{children}</TileBoundContext.Provider>
       {overflowing || revealed ? (
         <div className="boundedTileMore">
