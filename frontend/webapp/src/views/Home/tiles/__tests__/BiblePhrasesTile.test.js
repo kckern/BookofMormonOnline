@@ -3,7 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { generateReference } from "scripture-guide";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
-import BiblePhrasesTile, { markShared, candidatePairs, pairPath } from "../BiblePhrasesTile";
+import BiblePhrasesTile, { markShared, candidatePairs, pairPath, scorePair } from "../BiblePhrasesTile";
 import { skeletonHeight } from "../_ds/skeletonHeights";
 
 vi.mock("src/models/BoMOnlineAPI", () => ({
@@ -69,6 +69,29 @@ describe("markShared", () => {
     const [a] = markShared("O Lord, my God, and the rock of my salvation", "my God, and the rock of my strength");
     const m = a.filter(isMark).map((n) => n.props.children);
     expect(m[0]).toBe("my God, and the rock of my");
+  });
+});
+
+describe("scorePair", () => {
+  test("curated 1-2 word stop phrases are neither marked nor scored (audit H1)", () => {
+    const bom = "And they shall be cast into a lake of fire and brimstone, and it shall be so";
+    const kjv = "And the devil shall be cast into the lake of fire and brimstone";
+    const r = scorePair(bom, kjv, {
+      bom_highlight: ["shall be", "cast into a lake of fire and brimstone"],
+      bible_highlight: ["shall be", "lake of fire and brimstone"],
+    });
+    const marked = (t, rs) => rs.map(([s, e]) => t.slice(s, e));
+    expect(marked(bom, r.bomRanges)).toEqual(["cast into a lake of fire and brimstone"]);
+    expect(marked(kjv, r.kjvRanges)).toEqual(["lake of fire and brimstone"]);
+    expect(r.score).toBe(5);
+  });
+
+  test("a curated row of only stop phrases falls back to the computed shared runs", () => {
+    const r = scorePair("Therefore whoso repenteth and cometh unto me", "Therefore whoso repenteth and cometh unto me", {
+      bom_highlight: ["Therefore"], bible_highlight: ["Therefore"],
+    });
+    expect(r.score).toBeGreaterThanOrEqual(3);
+    expect(r.bomRanges.length).toBeGreaterThan(0);
   });
 });
 

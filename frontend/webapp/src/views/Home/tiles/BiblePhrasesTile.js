@@ -130,8 +130,12 @@ export const markShared = (a, b, minWords = STRONG) => {
 export const scorePair = (bomText, kjvText, hl) => {
   const bomPh = hl?.bom_highlight || [];
   const kjvPh = hl?.bible_highlight || [];
-  const bomHits = bomPh.map((p) => findPhrase(bomText, p)).filter(Boolean);
-  const kjvHits = kjvPh.map((p) => findPhrase(kjvText, p)).filter(Boolean);
+  // 1-2 word curated rows ("shall be", "Therefore") are stop phrases: marking
+  // them beside the real shared clause reads as noise, so they are dropped from
+  // both the marks and the score (audit H1).
+  const hits = (text, phrases) => phrases.map((p) => findPhrase(text, p)).filter((h) => h && h.words >= PARTIAL);
+  const bomHits = hits(bomText, bomPh);
+  const kjvHits = hits(kjvText, kjvPh);
   if (bomHits.length && kjvHits.length) {
     const score = Math.min(Math.max(...bomHits.map((h) => h.words)), Math.max(...kjvHits.map((h) => h.words)));
     return { score, bomRanges: bomHits.map((h) => h.range), kjvRanges: kjvHits.map((h) => h.range) };
