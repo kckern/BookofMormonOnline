@@ -1264,3 +1264,344 @@ ENTITY /matters/:slug (desktop 1440, top→bottom): app chrome (fixed dark heade
 | /matters/:slug | P3 | A2 | Image weight: 1254–1672px square originals served for 54px relationship thumbs and 273px hero. | Measured natural 1254×1254 / 1672×1672 rendered at 54×54 and 273×273 (swords, corn). Sharp at 2× but ~20–30× pixel overdraw for thumbs; 16 on swords. | Serve sized variants (e.g. ?w=128 / ?w=600) from media host. |
 | /matters/:slug | P3 | D4 | Continuity from a Home matters card is acceptable (same name + same artwork), but the arrival is a different visual world (popup body on grey page) and Back target ('❮ Matters') differs from origin (Home). | Code path: MattersGroupTile.js:42 / MatterProfileTile.js:41 Link to /matters/:slug → Routes.js:269 EntityPage; title/art match (same assetUrl/matters/:slug). Live tile-click capture NOT performed (see limitations in sampled). | Make the page header reuse the tile's image treatment; return control should go back to Home when arriving from Home. |
 | /matters/:slug | P3 | A4 | Body links in description use a translucent navy rgba(50,59,77,.67) rather than house black. | Measured bodyLinkColors ['rgba(50, 59, 77, 0.667)'] on all three entities; house style = links black. | Set .entity-page .bodytext a { color:#000 } with gold underline as the back link already does (EntityPage.css:48-52). |
+
+## R4. Fix log — 2026-10-15/16
+
+Implementation: `docs/plans/2026-10-15-home-tiles-production-readiness.md`. Every in-scope R1–R3 finding is listed with its outcome (fixed in <sha> / accepted: reason / not reproducible: evidence).
+
+### R4.1 Page level and shared (Phases 1–3, plus post-merge verification)
+
+| Finding | Outcome |
+|---|---|
+| R1 E1/E2 Back/tab rebuilds a different Home | fixed: session snapshot (ac3c63e8); Back pins the tile the reader was looking at (e6e4aa5f). Live: 6/6 round-trips land on the same tile, 0–14px drift |
+| R1 K1/F1 phone buries People | fixed (ac3c63e8): single curated column; People at y≈256 (was ≈4000) |
+| R1 B2 phone reading-plan rug-pull | fixed (ac3c63e8 + rail family dcf01a55) |
+| R1 K4 batch failure strands skeletons | fixed (ac3c63e8): terminus + Retry; live Retry loads the next batch |
+| R1 B3 on-screen shifts during infinite scroll | fixed (e6e4aa5f): removed content-visibility placeholders; scroll CLS 0.075 → 0.000 |
+| R1 I1 no resample on phone | accepted for now: phone has no tab bar by design; the end-of-sample terminus offers resample |
+| R1 M2 runtime errors | fixed: ol/Map shadowing (8f043da9, P0); RR5 activeClassName (da114295); duplicate cluster keys (story family). The `Unexpected token <` and the 404 are a Vite-dev-only Clicky path; absent on a prod build |
+| R2.2 P0 MapStory dies ~2s after mount | fixed (8f043da9) |
+| R2.2 P0 /matters/<group> Not found | fixed (1fdc10d8) |
+| R2.2 E1 canonicalizing pushes | fixed (4242eb85; commentary deeplink d7019803; closePopUp no stale push). Live sweep: one Back → /home from all 16 desktop / 18 phone destination classes |
+| R2.2 E1 restore animated from the top | fixed (7e7fba3b): instant scroll (Bootstrap reboot set smooth) |
+| R2.2 F1 phone overflow, A1 silent clipping | fixed (fc31b274, d824a672) |
+| R2.2 F3/D5/G2 ScripturePopup | fixed (5a8d3523, 5f8d7400) |
+| R2.2 J1 image weight | fixed: 2,186 WebP variants uploaded (people/places/matters, 256/640w); TileImage srcset on by default (c54fa54d). Desktop deep-scroll 21MB → 8.3MB; people/places/matters load variants only. Archive media (fax/history/art) has no variants: accepted, follow-up |
+| R2.2 M2 no per-tile error boundary | fixed (012baa2b) |
+| R2.2 G1/C2/F2/A4/C5/L3/C1 shared primitives | fixed (0c6567c9, 64ae0f30, fc31b274) |
+| R2.2 D3 entity back control below the fold | fixed (edba8db8) |
+| Labels | 53 new keys + Korean applied to bom_prd; read_more → "Read more" |
+
+### R4.2 Per tile (Phase 4 families)
+
+#### rail
+
+Review: approve. Commits: `d857055f`, `25925e56`, `597e4f71`, `dcf01a55`, `315425a4`.
+
+Decisions: Contents tile: shows the division's pages (not sections) as block rows, capped at MAX_PAGES=6 plus '+ N more' (plain text). The division's own intro page (same slug/title) is omitted. The banner is a pointer-only duplicate link (tabindex -1, aria-hidden), and the title is a plain h4, so 'See in context' is the single tab stop to the division. Inside a phone BoundedTile (detected via TileBoundContext) the description renders unclamped under the bound's single reveal, avoiding two stacked Read more pills. Narration tile: section title is plain (h4) rather than a link, because the CTA covers that href. CTA verb is seeInContext. Reading plan tile: - Bubbles are decorative (aria-hidden), not links. Linking 52 cells would add 52 tab stops, and the preview refs are cross-range strings that don't map to sensible destinations. - Guest 'Start reading' goes to /read/&lt;first chapter of week 1>. - Signed-in 'Start reading'/'Manage plan' still opens the in-tile chooser, which now has a Close button. Shared changes, minimal: - TileImage: widths=[] disables srcset. - ProgressBox: push changed to replace. - skeletonHeights: contents 1000 to 560px, narration 617 to 650px. Sampler.js BOUNDED_SPANS is unchanged.
+
+| Tile | Crit. | Sev | Outcome |
+|---|---|---|---|
+| readingplan | B1 | P1 | fixed in dcf01a55: the plan preview is fetched in parallel with mybookmark (it was fetched after it), and the pending slot is an invisible copy of the plan tile with the same layout, so it holds the final footprint at every width (desktop 238, phone 249, tablet 189) |
+| readingplan | B2 | P2 | fixed in dcf01a55: while bookmark===undefined the slot shows a neutral invisible ghost (aria-busy) instead of GuestPlanPreview. ReadingProgressTile reserves its page box while loading, so there is no second grow |
+| readingplan | B4 | P2 | fixed in dcf01a55: if the programs/preview fetch fails, the tile shows the heading and CTAs with no bubbles. Covered for guests and for signed-in users with no plan. ReadingProgressTile failure shows a link back to the page |
+| readingplan | C1 | P2 | fixed in dcf01a55: the bubbles are a status picture (aria-hidden, cursor default, no hover filter, no handlers) |
+| readingplan | A4 | P2 | fixed in dcf01a55: #555 on #e9e9e9 (~6:1); dark #bdbdbd on #3a3a3a (~5.5:1). Verified live via computed style |
+| readingplan | D4 | P2 | fixed in dcf01a55: guest Start reading goes to readPath(first segment ref) = /read/1-nephi-1, with the same fallback when the preview is unknown. Verified live href |
+| readingplan | D5 | P2 | accepted: the Sign in destination layout (progress header for guests, login in the right column) belongs to the User page (views/User/User.js), outside the rail family. Needs a User-page task |
+| readingplan | E1 | P2 | fixed in dcf01a55: ProgressBox canonicalizes /home/user/&lt;sub> to /home/user with replaceState, keeping the router's history.state. It previously used pushState, even on /home/user itself |
+| readingplan | L1 | P2 | fixed in dcf01a55: the signed-in chooser has a Close button. Focus moves into the chooser on open and back to the opener on close, and the plan is re-read without a loading flash. Unit-tested; not driven live (no signed-in session in the harness) |
+| readingplan | F2 | P3 | fixed in dcf01a55: valueProp pills and Close are min-height 44px on (pointer: coarse). Live phone/tablet height 44 |
+| readingplan | L3 | P3 | fixed in dcf01a55: dark primary is near-white #ececec (light primary is #1f1f1f, not slate-blue). The global dark bubble border and green current-week marker are neutralized; week 1 is outlined in gold |
+| readingplan | H2 | P3 | partially fixed in dcf01a55: week 1 is gold as the start point; the grid fills the width evenly; there is no ragged right gap. accepted: a value-proposition line or today's reading needs copy and labels (Task 12) |
+| section | G3 | P2 | fixed in 597e4f71: art thumbs use TileImage with alt 'Art for &lt;section>' (n) |
+| section | D3 | P2 | accepted: the /art/:id destination layout (title, caption, back) is the art page, owned by family 10g (art E1/H6). Not changed here |
+| section | F2 | P2 | fixed in 597e4f71: invisible 44px hit areas (::after) on the crumb and Next links on touch. RefPill/TileCTA touch sizes come from the shared Phase 2 rules |
+| section | A3 | P3 | fixed in 597e4f71: the section title is an h4 under the page crumb; the continuation is a 'Next · &lt;title>' divider |
+| section | A5 | P3 | fixed in 597e4f71: equal 4:3 cropped cells in one grid row, max 9rem each (no stretched slivers at tablet) |
+| section | J1 | P3 | accepted: art has no media variants (Task 11 covers people/places/matters only); TileImage now skips srcset for it (d857055f). Needs art variants upstream |
+| section | L3 | P3 | fixed in 597e4f71: the blank dot is at opacity .3 in dark mode, and dots render only when some beat has progress |
+| section | H2 | P3 | fixed in 597e4f71: status dots are hidden when no beat has progress (all guests) |
+| section | G1/refPill | P2 | fixed in 597e4f71: the RefPill is a sibling of the beat link, and NarrationTile.js is removed from the refPillPlacement ALLOW set |
+| section | H2/CTA verb (R2.3) | P3 | fixed in 597e4f71: 'View more' becomes 'See in context' via TileDeepLink verb. The title no longer duplicates the CTA href (one link per destination) |
+| contents | C2 | P1 | fixed in 25925e56 (with the Task 7 BoundedTile): inside the bound there is one Read more (the description renders plain, so no stacked second pill). Verified live on phone: 384 to 826px, CTA visible |
+| contents | A1 | P2 | fixed in 25925e56: the outline lists pages only, as block rows with section counts, at most 6 plus '+ N more'. Desktop 1000 to 518px |
+| contents | C3 | P2 | fixed in 25925e56: See in context is always visible (TileDeepLink always). The banner link is tabindex -1 and aria-hidden, so the division has one tab stop |
+| contents | G1 | P2 | fixed in 25925e56: the description and its Read more sit outside any &lt;a> |
+| contents | F2 | P2 | fixed in 25925e56: outline rows are block links, min-height 44px on touch |
+| contents | C1 | P3 | fixed in 25925e56: the head link is narrowed to the banner (brightness hover); rows get a gold underline on hover |
+| contents | H2 | P3 | fixed in 597e4f71: narration now also says 'See in context' |
+| contents | A4 | P3 | fixed in 25925e56: section links are removed; counts use var(--tile-meta) #6b6b6b |
+
+Open: 1. **Shared primitives touched** (minimal, flagged for merge):    - tiles/_ds/TileImage.js: `widths.length > 0` added to the useVariants condition. Families 10f/10g, which use TileImage for art, fax and history, may want `widths={[]}` for media without variants, to avoid a 404 per image and to keep the caller's onError working.    - views/User/ProgressBox.js: push changed to replace, with history.state preserved.    - tiles/_ds/skeletonHeights.js: the tile-contents and tile-narration entries. 2. **Sampler.css:** edits stay inside the CONTENTS, READING PLAN, NARRATION and READING PROGRESS blocks. One `@media (pointer: coarse)` sits inside each block. 3. **Title case from the labels table:** 'Read More', 'Start Reading' and 'Sign In' come from the DB, so the sentence-case rule depends on Task 12 label rows (read_more, start_reading, sign_in). The new label keys are listed separately. 4. **readingplan D5** (Sign in destination layout on the User page) and **section D3** (the /art/:id page) are destination pages outside this family. Recorded as accepted. 5. **Balancer estimate:** Sampler.js estimates contents height as `12 + pages*2.6` rem. That was never accurate, and the tile is now shorter. I left it alone because Sampler.js is shared. 6. **Capture harness:** on this loaded machine the harness's fixed 30s `waitForSelector` in `home()` timed out repeatedly on cold Vite loads. I used a polling pre-load in a scratchpad driver; the harness itself may need a longer or env-configurable timeout. 7. No push or merge, no screenshots committed, audit doc not edited.
+
+#### people
+
+Review: approve. Commits: `d5e8bfbb`, `e2ba7596`.
+
+Decisions: 1. Face strip is 9 faces at 5-up instead of 11 at 6-up, as the audit suggested (fewer faces, readable size). The 24-person sample is split as featured + profile reserve + 9 faces + 12 mosaic, so no person repeats between People and PersonProfile. 2. One keyboard stop per destination. In the featured block the 'Open &lt;name>' TileDeepLink is the Tab stop. The portrait (aria-hidden) and the name link stay clickable for the mouse but are tabIndex -1. The Open CTA is not gated behind Read more, because the auditor flagged gating a duplicate as C3. ProfileTiles.test.js PersonProfile case updated to match. 3. Layout follows the tile's own width (container queries on .peopleTile/.personProfileTile), not the viewport. 4. PersonProfileTile is added to twoLayerCompliance EXEMPT as a thin wrapper; its deeplink lives in the new PersonFeature.js, which imports TileDeepLink. 5. The featured pick is done client-side, which needed `unit identification` added to the people line of the homesampler query in GraphQLQueries.js. There is no backend change.
+
+| Tile | Crit. | Sev | Outcome |
+|---|---|---|---|
+| people | A1 (face names cut mid-word) | P2 | fixed in d5e8bfbb: name chips wrap to 2 lines, with the clamp on an inner span; at 1440, 820 and 390 no names are cut mid-word |
+| people | F1 (phone 4-up, clipped pills, 1-2 word fragments) | P2 | fixed in d5e8bfbb: container queries give 5-up x2 (9 faces) when wide, 3-up x3 (8 faces) under 600px, and portrait+name+title only under 440px. Phone cards are 99px (were 72px); docW equals vw at 390, 820 and 1440 |
+| people | A3 (9.6px type) | P2 | fixed in d5e8bfbb: names 12.5px, titles and pills 11.2px, index text 11.5px (measured live at 1440) |
+| people | A4 (meta contrast) | P2 | fixed in d5e8bfbb: index text and featured title use the --tile-meta token (#6b6b6b light / #a3a3a3 dark) |
+| people | F2 (pill tap target inside card link) | P2 | fixed in d5e8bfbb: the pill is now a sibling button above a stretched card link. On coarse pointers its ::after hit area reaches 44px. Live tablet tap 8px above the pill opened the popup and did not navigate. Phone hides the body, so no pill there |
+| people | J1 (8MB of full-size JPEGs, lazy LCP) | P2 | fixed in d5e8bfbb: every image goes through TileImage. Live currentSrc is variants/256/people/*.webp. The featured portrait is eager with fetchpriority=high. Face sizes are tuned so 256w is picked at DPR2 |
+| people | A1 (title band leaks 3rd line through padding) | P3 | fixed in d5e8bfbb: the clamp moved to an inner .peopleFaceTitleText span |
+| people | H3 (dangling 'of…' titles; bio clamp 'genealog…') | P3 | titles fixed in d5e8bfbb: clampWords backs off trailing function words, e.g. 'Son of Joseph¹, father of a tribe…'. Bio mid-word cut accepted: it is the browser's CSS line-clamp ellipsis, and the reversible Read more shows the full text |
+| people | A3 (parens around detected-ref pills) | P3 | fixed in d5e8bfbb: _ds/refProse.js strips '(' and ')' around bare refs, so pills no longer orphan parentheses |
+| people | A7 (subscript Nephi₂, typo 'againts') | P3 | subscript fixed in d5e8bfbb: supDigits maps ₁-₄ to superscripts. Typo accepted: it is in a source data row (bom_people index text), not frontend; needs a prod DB edit |
+| people | G1 (button inside card &lt;a>, 2 tab stops/card) | P3 | fixed in d5e8bfbb: card is a container with one link plus a sibling RefPill button. PeopleTile.js removed from refPillPlacement ALLOW. Live Tab order is pill, link, pill, link; the focused card gets a gold ring |
+| people | H1 (dud featured: groups, Bible figures) | P3 | fixed in d5e8bfbb (client-side): featured picks the first unit=I, non-Bible person with a bio of at least 600 chars, else falls back to data[0]. The homesampler query now asks for unit and identification. On 9 live seeds this replaced 3 group/short leads |
+| people | A1 (dead phone .peopleFeatureDesc clamp rule) | P3 | fixed in d5e8bfbb: dead Sampler.m.css people rules deleted; layout now follows container queries |
+| people | R2.3 superscript disambiguators / inverted names | P2 | fixed in d5e8bfbb: personName() = supDigits(processName()). 'Gideon, Chief Judge of' now reads 'Chief Judge of Gideon'; Mosiah2 reads Mosiah². Raw-digit title= tooltips removed |
+| people | CTA 'Open &lt;name>' + view-all fallback | P2 | fixed in d5e8bfbb: featured has one TileDeepLink verb=open ('Open Mosiah²'). Portrait and name links are tabIndex -1. View-all falls back to verbLabel('viewAll'), and its +N now counts the people not shown (featured + faces) |
+| people | M2 (onError hides image -> blank hole) | P2 | fixed in d5e8bfbb: PersonPortrait swaps to a gold serif monogram in the same box. Verified live by forcing 404s on the featured portrait and one face portrait |
+| personProfile | A1 (fixed portrait + narrow ribbon of text, dead gutter) | P2 | fixed in e2ba7596: under 520px the portrait becomes a 4.75rem header avatar and the bio runs full width. At 1440 the expanded tile is 778px with no gutter |
+| personProfile | M2 (blank 128x171 hole on image error) | P2 | fixed in e2ba7596: shares PersonPortrait, so a failed image shows the monogram |
+| personProfile | A4 (featured title #888) | P2 | fixed in d5e8bfbb: shared .peopleFeatureTitle uses --tile-meta |
+| personProfile | H2 ('See in context' to own page; same 'PEOPLE' eyebrow) | P3 | fixed in e2ba7596: CTA is 'Open &lt;name>' and is always visible as the single tab stop. Eyebrow is 'People · Profile'. Profiles the payload's reserved person, never one shown in the People tile |
+| personProfile | H3 (paren around pills) | P3 | fixed in e2ba7596 via refProse; bio refs are also RefPill buttons now, not href-less &lt;a> |
+| personProfile | J1 (1024px JPEG for 128px portrait) | P3 | fixed in e2ba7596: TileImage srcset (sizes=128px); live serves variants/256 |
+
+Open: **Shared primitives touched (minimal; please check when merging other families):** - tiles/textUtils.js   - supDigits now also maps subscripts ₁-₄ to superscripts.   - clampWords backs off trailing function words (of, and, the, …). This changes truncated output for Places, Matters, Witness, JosephSmith and Community too, as an improvement; their tests still pass here. - New tiles/_ds/refProse.js (detected refs as RefPill buttons, wrapping parens removed). It is reusable for the placeProfile and matterProfile paren and G1 issues (R2.2 A3). Families 10c and 10d may have written their own. - tiles/_ds/skeletonHeights.js: tile-people is 810px desktop / 775px phone; tile-personProfile is 330px desktop. - Sampler.js: est('people') goes from 46 to 51. - GraphQLQueries.js: the people line gains `unit identification`. - ProfileTiles.test.js and twoLayerCompliance EXEMPT (PersonProfileTile.js) are shared files, so merge conflicts are possible. **Not fixed in my scope:** - Labels table returns 'Read More' in title case for read_more (Task 12 label rows). - The shared `.sampler .scripture_link` chip contrast (~3.7:1, R2.2 A4) is unchanged; it is used by every tile, so it needs one shared fix. - Bio RefPills inside prose have no 44px coarse hit area. That is low risk because they are not inside a link. - Bio CSS line-clamp may still end mid-word; Read more reveals the rest (accepted). - 'againts' typo is in source data. - Destination /people/:slug defects (R3) are out of scope. **Scratchpad note:** the session scratchpad root is shared by all 8 parallel agents. My first cap.mjs and vite.log were overwritten by another family's files. My working scripts are in scratchpad/t10-people-work/.
+
+#### places
+
+Review: changes → fix pass. Commits: `5ea89fa8`, `5f922a4d`, `a4e3e9ed`, `9d2063db`, `05889ed7`, `9bf1b6a0`.
+
+Decisions: MapTile reachability: REMOVED. It was 10th in reservePool behind MAX_RESERVES=5, never in batchTiles, and a seed-invariant dud when forced; MapStory and the place pins cover the map on Home. Pin hit area: the glyph disc stays at 1.6rem on fine pointers. On coarse pointers it is inset by (44px-1.6rem)/2 from the corner so the 44px ::after fits inside the overflow:hidden wrap. Both tiles slug-filter before profiledPlaceIndex so they index identical lists.
+
+| Tile | Crit. | Sev | Outcome |
+|---|---|---|---|
+| places | F1 (phone overflow) | P1 (critic: merged into cross-cutting F1) | not reproducible: the cross-cutting masonry fix is already on the branch. At phone 390 the tile sits inside the viewport with both card columns intact (phase4/places/phone-phone-tile-places.png). |
+| places | J1 (1024px JPEGs) | P1 | fixed in 5ea89fa8: card art and mosaic cells render through TileImage, using srcset variants 256/640 from the media CDN. |
+| places | E1 (map-pin double history) | P1 | fixed upstream: canonicalize-with-replace on the map route was already on the branch (Phase 2/3). |
+| places | D5 (map-pin destination raw markup / title overprint) | P1 | fixed in 9d2063db + 05889ed7: the place panel description goes through detectScripturesPreservingTokens + renderPersonPlaceHTML, the title wraps on its own line box, and scripture pills stay on one line. |
+| places | A1 (info band half third line, double truncation) | P2 | fixed in 5ea89fa8: the clampWords pre-ellipsis is gone and the band uses a single CSS line-clamp on an inner span. |
+| places | H3 (names clipped to 2 lines) | P2 | fixed in 5ea89fa8: names flatten with superscript disambiguators, take up to 3 lines and are never clipped while the info band shows two. |
+| places | F2 (18px map pin) | P2 | fixed in 5ea89fa8 + 9bf1b6a0: a 1.6rem dark scrim disc (live on desktop: 26x26 on fine pointers). Under pointer:coarse the pin is inset (44px-1.6rem)/2 so its 44px ::after is no longer clipped by the overflow:hidden wrap. Measured live with elementFromPoint: 44x44 on all 5 Places pins at phone 390, tablet 820 and phone dark. |
+| places | C1 (card lifts but only image links) | P2 | fixed in 5ea89fa8: the image link is stretched over the whole card, the pill and pin sit above it, and the hover state is scoped to the link. |
+| places | H4 (places saturates infinite feed) | P2 | partly fixed in 5ea89fa8: within a sample the mosaic skips the profiled place and the cards. accepted (rest): cross-batch dedupe and cadence live in shared Sampler.js/registry batch assembly, outside this family's files. Recorded in openIssues. |
+| places | A7 (data junk in info strings) | P3 | accepted: source-data typos in bom places.info need a data edit (writes are out of scope on the read-only dev DB). Trailing ';' and stray footnote digits are no longer pre-processed by clampWords, which was removed. |
+| places | D3 (/places back link at bottom) | P3 | fixed upstream: the entity page back control/layout fix was already on the branch. |
+| places | C5 (UA focus ring) | P3 | fixed in 5ea89fa8 for the card link (inset focus-visible offset so the ring shows on dark art). The sampler-wide ring is cross-cutting. |
+| places | dead CSS / '16:9' comment | P3 | fixed in 5ea89fa8: dead places rules and the removed Map tile's rules are dropped, and the CSS is scoped under .placesTilePlaces. |
+| placeProfile | F1 (tablet rail clips to bare image) | P1 | fixed in 5f922a4d: the hero is capped at max-height 15rem. Tablet 820 shows hero, prose with pills and the Read More CTA (phase4/places/tablet-tablet-tile-placeProfile.png). |
+| placeProfile | E1 (map-pin double history) | P1 | fixed upstream: canonicalize-with-replace was already on the branch. |
+| placeProfile | G2 (scripture refs not keyboard reachable) | P2 | fixed in 5f922a4d: detected scripture renders as RefPill buttons. The file is removed from the refPillPlacement ALLOW set. |
+| placeProfile | H4 (profiled place duplicated in mosaic) | P2 | fixed in 5f922a4d + 9bf1b6a0: the shared profiledPlaceIndex runs on the same slug-filtered list in both tiles. A regression test with a slugless payload entry fails without the fix and passes with it. |
+| placeProfile | F2 (18px pin, invisible on sky) | P2 | fixed in 5ea89fa8 + 9bf1b6a0: same scrim disc as Places. Coarse-pointer inset measured live at 45x44 / 45x45 at phone, tablet and phone dark. |
+| placeProfile | A7 ('Ammon 2' leak) | P3 | fixed in 5f922a4d: flatten() turns &lt;sup>n&lt;/sup> into a superscript before stripping tags, so 'Alma 2' and 'Ammon 2' no longer turn into chapter pills. |
+| placeProfile | H3 (token Read More, not collapsible) | P3 | fixed via the shared reversible ExpandableText (Read more / Show less) used by the tile. |
+| placeProfile | H2 ('See in context' label) | P3 | fixed in 5f922a4d: the Layer-2 CTA is 'Open &lt;place>' via the TileCTA verb. |
+| placeProfile | A2 (upscaled hero at 2x) | P3 | accepted: source images are capped at 1024px. The 640 variant plus the 1024 original via srcset is the best available, and the hero height cap limits upscaling. |
+| placeProfile | A4 (orphaned '(' around pills) | P3 | fixed in 5f922a4d: '(' + pill + ')' is kept on one line. |
+| placeProfile | C5 (UA focus ring) | P3 | accepted: cross-cutting sampler-wide focus ring, not family-scoped. |
+| map | H1/H2/A1/C1/A7/L3/H2 (unreachable, featureless, letterboxed) | P2/P3 | fixed in a4e3e9ed: the Map reserve tile and its module/CSS are removed. MapStory and every place card's map pin already carry the map on Home. A test asserts there is no map reserve or batch entry. |
+
+Open: Places H4 cross-batch saturation (the same places across infinite batches, plus Places and PlaceProfile in every batch) needs a dedupe or cadence change in shared Sampler.js/registry batch assembly. That is outside the family files, so it is not done here. The sampler-wide :focus-visible ring (C5) is cross-cutting. Typos in places.info source data need a DB data edit. No shared primitives were changed in this follow-up.
+
+#### matters
+
+Review: changes → fix pass. Commits: `1c7b7f76`, `a6f4033d`, `866f4905`.
+
+Decisions: On touch hit areas, I took the reviewer's first option: the ref chip moved out of the clamped row onto its own line (align-self: flex-start), and only the gloss is clamped. Hit areas are centered with percent insets, top/bottom = calc((100% - 44px)/2). The eyebrow is the exception: it grows 12px up and the rest down (bottom: calc(100% - 36px)), because the tile's top edge clipped a centered area to 41-42px. To keep first-line prose chips from being clipped, the profile's collapsed prose clamp uses an offset padding-top/negative margin-top pair. When the profile hero fails to load, it now collapses to the name chip, not just visibility:hidden, because hiding the img alone left an empty 15rem white box. Earlier decisions are unchanged: profile index 17 (PROFILE_MATTER_INDEX) so it never repeats a Concept-tile matter, and the CTA verb 'open'.
+
+| Tile | Crit. | Sev | Outcome |
+|---|---|---|---|
+| mattersNarrative/Material/Concept | D5 (dead /matters/&lt;group> heading + view-all) | P0 | fixed upstream: /matters/&lt;group> routes landed in fix/t2-matters-routes, which is merged into this branch. The tile links to those routes, and I confirmed live that the hrefs are /matters/narrative\|material\|concepts |
+| mattersNarrative | F1 (rail cap 24rem on phone) | P1 | fixed: live phone render shows the full tile (h=702), including the second card row and the view-all cell. The skeleton reservation is 373/670px via _ds/skeletonHeights |
+| mattersMaterial/Concept | F1 (445px tile in a 390 viewport) | P1 | fixed by the cross-cutting column fix on this base. Live phone measurement: scrollWidth 390 = innerWidth 390 |
+| matterProfile | C2 (Read More clipped by rail cap; hero too tall) | P1 | fixed in a6f4033d: hero capped at max-height 15rem, tile 424px on phone with Read More and Open &lt;name> reachable (verified in phone/tablet shots) |
+| mattersNarrative | A1 (third line of name/subtitle leaks under the pill) | P2 | fixed in 1c7b7f76: the clamp moved to an inner span. clampOverflow measured 0 on every card live |
+| mattersNarrative | H3 (four text layers; names cut at the key noun) | P2 | fixed in 1c7b7f76: names get 3 lines and no map-pin reservation. The narrative subtitle is now a hover/focus layer, not always on |
+| mattersNarrative/Material/Concept | F2 (tap targets too small on phone) | P2 | fixed in 866f4905. The ref chip moved out of the line-clamped .placesTileIndexRow, so it sits on its own line and only the gloss is clamped. Chip and eyebrow get a z-index:1 ::after sized to 44px under pointer: coarse; the eyebrow grows 12px up and the rest downward, over the card grid. With the new tileharness hitHeights() elementFromPoint scan on phone, every chip measures 45px and every eyebrow 49px |
+| matterProfile | F2 (prose RefPills 18px with no expansion; eyebrow 34px) | P2 | fixed in 866f4905: a coarse ::after on .placeProfileDesc .scripture_link plus the eyebrow. The collapsed clamp gets padding-top 14px offset by margin-top -14px, so first-line chips aren't clipped and nothing shifts. Live: eyebrow 48px; prose chips 45px both collapsed and expanded with realistic prose. Accepted residual: chips on directly adjacent prose lines (18px line height) overlap, so each gets about 18-22px. The WCAG 2.5.8 inline-in-sentence exception covers this |
+| mattersNarrative/Material/Concept | J1 (17 full-size JPEGs per tile) | P2 | fixed in 1c7b7f76: TileImage with a 256/640 srcset for cards and 256 for mosaic cells. Live currentSrc is variants/256\|640/matters/&lt;slug>.webp |
+| matterProfile | D4 (destination shows initials instead of the image on phone) | P2 | fixed upstream by the entity-page fix (fix/t9-entity-pages), which is merged into this branch |
+| matterProfile | D3 (entity page back control below the article) | P2 | fixed upstream by the entity-page back control/layout fix (t9), which is merged |
+| matterProfile | G2 (Read More unmounts the focused button, focus drops to body) | P2 | fixed via the shared reversible ExpandableText (Phase 2), now used by the tile. A test covers Read more -> Open &lt;name> reveal |
+| matterProfile | R2: hero TileImage missing onError (broken glyph in a 15rem grey box) | minor | fixed in 866f4905. onError hides the img and records the failed slug in state. The hero then collapses (img unmounted, link .isNoImage) to a standalone name chip instead of an empty box. Unit-tested and verified live with a missing-asset slug |
+| mattersNarrative/Material/Concept | R2: '+N more' used browser-locale toLocaleString | minor | fixed in 866f4905: plain String(more), as other tiles do. A test asserts Number.prototype.toLocaleString is not called |
+| mattersNarrative/Material | A1 (name pill wraps early: map-pin max-width reservation) | P3 | fixed in 1c7b7f76 (no pin clearance on matters overlays) |
+| mattersNarrative/Material/Concept | B1 (15rem skeleton vs 373/808px tile) | P3 | fixed: _ds/skeletonHeights reserves 373px desktop and 670px phone for the group tiles and 430px for the profile |
+| matterProfile | B1 (18rem skeleton vs ~430px) | P3 | fixed: skeletonHeights tile-matterProfile = 430px |
+| matterProfile | H3 (clamp cuts after an opening parenthesis) | P3 | fixed in a6f4033d: parentheses around a lone ref are dropped and the ref renders as a RefPill |
+| matterProfile | H2 (generic 'See in context' CTA; redundant hero link) | P3 | fixed in a6f4033d: the CTA is TileDeepLink verb=open ('Open &lt;name>'), and the hero link has tabIndex=-1 so the tile has one tab stop |
+| matterProfile | H4 (profile always repeats a Concept-tile mosaic matter) | P3 | fixed in a6f4033d: homesampler sends 18 per group and the profile uses index 17. The registry only offers the tile when that matter exists (backend test updated) |
+| matterProfile | J1 (1254px hero without srcset) | P3 | fixed: TileImage hero with srcset; live currentSrc is 640/matters/&lt;slug>.webp |
+| mattersMaterial/Concept | H4 (near-duplicate 'Sackcloth' vs 'Sackcloth and ashes' across tiles) | P3 | accepted: these are distinct bom_matters rows in different groups. Deduplicating them is a content/data decision, not a tile fix |
+| mattersNarrative/Concept | A7 (dropped apostrophes / mixed name casing in bom_matters) | P3 | accepted: source-data cleanup in bom_matters.name, outside the tile layer (no DB writes from this task) |
+| mattersNarrative/Material/Concept/matterProfile | L3 (parchment art glares in dark mode) | P3 | accepted: I reviewed the dark desktop shots, and the cards read cleanly. Dimming images is a cross-cutting treatment shared with people/places, so it should be one shared rule, not a matters-only one |
+| matterProfile | L3 (dark Read More pill turns blue) | P3 | accepted: the shared .readMorePill/ExpandableText primitive is filed as cross-cutting, outside this family's CSS blocks |
+
+Open: 1) I changed a shared script: scripts/home-audit/tileharness.mjs gained hitHeights(locator, selector), an elementFromPoint scan for touch hit height, as the reviewer requested. It is additive only. 2) In dense profile prose, chips on directly adjacent lines overlap at the 18px line height, so each gets about 18-22px. I accepted this under the WCAG 2.5.8 inline exception. 3) On phone, the Home infinite feed rendered matterProfile twice (y=11648 and y=19312) in one session. This looks like the infinite feed repeating the tile across batches, which is feed/registry behavior outside this family; worth a check by whoever owns the feed. 4) Not pushed or merged, per instructions.
+
+#### scripture
+
+Review: approve. Commits: `af42f6a6`, `637bfd94`, `c0e03c63`, `e6ed44b8`, `71c8850f`, `cc2f7a43`.
+
+Decisions: Notes L5: CONFIRMED. HIDE_PASSAGE_NOTES (src/models/featureFlags.js:93 = NODE_ENV==='production' && features.yml passageNotes.hidden:true) hides the passage-notes destination in Read (Read.js:22, ChapterContent.js:8). The Notes tile is now never ready in prod builds: registry isReady is `!HIDE_PASSAGE_NOTES && ...`, and batchTiles reuses that predicate. Pinned by notesFeatureGate.test.js. Dev and tests still show the tile. Text tile: the legacy TextInFeed renderer is dropped for a sampler-native layout: - eyebrow plain text - meta line "page · section" - title, plus a RefPill for the bracketed or bare-reference heading - Read-serif passage in ExpandableText (9 lines) - narration with one static art thumb - TileDeepLink "See in context" Commentary: ref-only titles (BoM Minute) use the title's ref for the pill and lift the first prose sentence as the headline, removing it from the body. The revealed excerpt is bounded to about 1100 chars; the full text is behind "See in context". readPath: now canonical everywhere (popup Read button, art tile, fax viewers too), instead of a notes-only helper.
+
+| Tile | Crit. | Sev | Outcome |
+|---|---|---|---|
+| text | E1 | P1 | not reproducible: live history 2->3 on deeplink, one Back returns to /home (Task 8's setSlug skip already fixed it); TextTile 637bfd94 also cuts the card to one link |
+| text | A3 | P2 | fixed in 637bfd94 + 71c8850f (own layout: left-aligned Read serif, no grey slabs, page/section meta line) |
+| text | A5 | P3 | fixed in 637bfd94 (single chrome, no nested itemInFeed card) |
+| text | A7 | P3 | fixed in 637bfd94 + 71c8850f (no dangling colon or arrow; feed highlight chips neutralized) |
+| text | A6 | P3 | fixed in 637bfd94 (one static TileImage thumb, no rotation timer) |
+| text | C1 | P3 | fixed in 637bfd94 (eyebrow is plain text; title gets a hover underline; one deeplink) |
+| text | G2 | P3 | fixed in 637bfd94 (one tab stop to the href; title is tabIndex -1; ref is a RefPill button) |
+| text | D3 | P3 | accepted: destination scroll position belongs to the Page route. Back now works in one press (E1), which was the stated mitigation |
+| text | L3 | P3 | fixed in 71c8850f (dark theme uses neutral text and a gold hairline poetry rule, no slabs or green bar) |
+| commentary | C2 | P2 | fixed in c0e03c63 (reveal is reversible with focus and aria-expanded kept, keeps paragraphs, bounded to about 1100 chars with an ellipsis; line-clamp truncation always offers the reveal) |
+| commentary | A7-offbyone | P2 | fixed in c0e03c63 (tile side): a reference-only title drives the pill and the headline becomes the first prose sentence, so title and pill no longer disagree. The underlying BoM Minute +1 data offset in the DB and the /commentary modal header remains a data fix |
+| commentary | D5 | P2 | not reproducible as a blank panel: in-app nav renders the Study page with the host row open by 1.5s and the popup follows at about 4s on dev. Found and fixed a real E1 regression on the same path (history +3, Back landed on /downfall/34) in cc2f7a43; now +1 entry and Back goes to /home |
+| commentary | G1 | P2 | fixed in c0e03c63 (aside ref and inline excerpt refs are RefPill buttons via refPillParserOptions) |
+| commentary | A1 | P3 | fixed in c0e03c63 + 71c8850f (deeplink moved to a full-width footer row) |
+| commentary | A7-junk | P3 | fixed in c0e03c63 (tidy: space before ?/!, hyphen-as-dash before function words, 'verses 6. 11' -> 'verses 6, 11'); straight-vs-curly quote mixing accepted (source data) |
+| commentary | A4 | P3 | fixed in 71c8850f (source uses the --tile-meta token, size 0.7rem) |
+| commentary | H2 | P3 | partially fixed in c0e03c63 (ref-only titles lead with the prose). CTA casing: the TileCTA verb is used, but the DB label read_more = 'Read More' (title case) overrides the sentence-case fallback. Needs a labels-row update (Task 12) |
+| commentary | H1 | P3 | accepted: down-weighting ATV and ref-titled sources is a backend sampler change outside this family; ref-titled rows now read better in the tile |
+| commentary | G2-triple-link | P3 | fixed in c0e03c63 (title and cover links are tabIndex -1, one tab stop to /commentary/:id) |
+| notes | E1 | P1 | fixed in af42f6a6 (readPath emits the canonical /read/ether.6/8). Live: one history entry, Back goes to /home |
+| notes | L5 | P1 | fixed in e6ed44b8 (confirmed HIDE_PASSAGE_NOTES = prod && features.yml passageNotes.hidden hides notes in Read.js/ChapterContent.js; the registry notes isReady is now gated on it, covering grid and batchTiles) |
+| notes | B2 | P2 | fixed in 71c8850f + e6ed44b8 (sized 7.5rem shimmer placeholder instead of a lone '…'; a failed passage drops the block and shows a RefPill). The chapter fetch is still uncached (shared ScriptureExcerpt useCache:false) |
+| notes | A7 | P2 | fixed in e6ed44b8 (no wrapping quotes when the note already opens with a quote) |
+| notes | A3 | P2 | fixed in 71c8850f (body line-height 1.45 at 0.82rem, attribution 0.78rem meta gray) |
+| notes | G1 | P2 | fixed in e6ed44b8 (inline refs are RefPill buttons). The passage-header ref from shared ScriptureExcerpt stays a span[role=button] with Enter/Space handling |
+| notes | H2 | P3 | fixed in af42f6a6 (anchor matching ignores punctuation and case and works per elided fragment) |
+| notes | H1 | P3 | accepted: source rotation and length weighting is a backend sampler change |
+| notes | D3 | P3 | accepted: relies on the fixed Back (E1); the Read page chrome is out of scope |
+| notes | L3 | P3 | fixed in 71c8850f (dark .read-section slab transparent inside the tile) |
+| notes | G3 | P3 | fixed in e6ed44b8 (cover alt = publication title) |
+| notes | phone/tablet layout (new) | P2 | fixed in 71c8850f (Read.scss &lt;=900px rules stacked the speaker gutter and pulled the section out by -0.6rem; Sampler.m.css keeps the compact row layout) |
+
+Open: Shared-file edits outside the family (minimal, called out): 1. frontend/webapp/src/views/_Common/ScriptureExcerpt.js    - readPath now returns the canonical slug, e.g. /read/1.nephi.2/11. This also changes ScripturePopup, ImageArtTile (10g) and the Facsimile viewers, all for the better.    - highlightPhrase is exported and tolerant of punctuation and elisions.    - Possible merge overlap if 10g also touched readPath. 2. tiles/_ds/TileImage.js: `widths.length > 0` gate, so `widths={[]}` gives a plain src for art and source covers. 10f/10g may make the same change; it is a one-line merge. 3. tiles/RefPill.js    - new named export refPillParserOptions    - reworded the line-11 comment: its literal `&lt;Link>/&lt;a>` text made the refPillPlacement scanner flag the file 4. tiles/registry.js: the notes isReady gate (one line plus an import). 10c and 10f also edit this file. 5. tiles/_ds/skeletonHeights.js: text, commentary and notes values re-measured. 6. views/Page/Page.js: setActiveRow replaces while resolving a /commentary\|image/:id deeplink, and the commentary onTail popup passes replaceSlug:true. No unit test covers this; it was verified live only. Remaining: - DB label read_more is 'Read More' (title case), so the TileCTA sentence-case fallback never shows. Fix the labels row in Task 12 (show_less already uses the fallback). - BoM Minute reference/verse_id +1 offset is still in the data and in the /commentary modal header. - Read canonicalizes /read/ether.6/8 to /read/ether.6 with replace after highlighting. It costs no history entry, but the shareable URL loses the verse (a Read-side concern). - ScriptureExcerpt still fetches chapters with useCache:false. - The passage-header ref in ScriptureExcerpt is a span[role=button], keyboard-operable but not a native button. - A 415 on /graphql showed up once during the Read/Page navigation probes; I did not attribute it to these tiles.
+
+#### archive
+
+Review: approve. Commits: `8c088eb0`, `659c01f7`, `4289f388`, `91b8a204`, `c200a14a`, `6b3165b6`, `291360b8`, `136f5ae1`, `a755c6c0`, `9157c3f8`.
+
+Decisions: TranslationTile: REMOVED from reservePool (registry.js keeps a commented re-add line; component kept and fixed). Root cause is data, not a query bug: all 155 'translation' archive rows have quote_curation_status 'needs-editorial-quote' and 0 have metadata.money_quote, so sampleArchiveDoc('translation') returns null for every seed. Re-add the pool entry once quotes are curated. Joseph Smith: the 'only one statement ever' bug WAS a query bug: joseph-smith-statements (and witnesses/lost-116-pages) rows have id NULL, so seededOrder('id') produced NULL for every row; sampleArchiveDoc now seeds on slug (non-null, unique). JosephSmithTile also added to batchTiles. FaxVerse CTA now goes to the verse in Read ('See in context') instead of duplicating row 1's viewer href; FaxTile CTA is 'Open &lt;short edition>'. Decorative fax tab graphics were removed rather than patched (assets exist for only 9 editions).
+
+| Tile | Crit. | Sev | Outcome |
+|---|---|---|---|
+| fax | G1 | P2 | fixed in 659c01f7 (ref rail is a RefPill &lt;button> beside the page link; Enter opens popup, focus returns - verified live) |
+| fax | A2 | P2 | fixed in 659c01f7 (page row max-width caps rendered page height at 20rem, so tablet no longer upscales the 400px thumbs ~1.85x; desktop unchanged) |
+| fax | J1 | P2 | accepted: fax/covers has no smaller rendition and no variants on the media CDN (Task 11 covered people/places/matters only); covers are lazy + async via TileImage. Needs a variants run for fax/covers (outward upload, KC confirm) |
+| fax | C1 | P3 | fixed in 659c01f7 (ref is its own row/button above the image link) |
+| fax | F2 | P3 | fixed in 659c01f7 (min-height 44px under pointer:coarse) |
+| fax | L3 | P3 | fixed in 659c01f7 (TileImage adoption -> global dark dim on img.tileImage) |
+| fax | A6 | P3 | no_change_needed: Task 7 reduced-motion block already covers .faxTilePages img:hover / .faxTileEdition:hover img |
+| fax | L2 | P3 | fixed in 659c01f7 ('pp.', 'p.', alt via labelOr: x_pages, page_n, x_page_n) |
+| fax | tab-404 (R1 M2) | P2 | fixed in 4289f388 (fax/tabs/&lt;ed> only exists for 9 editions; the decorative tab graphic is removed, rows use a compact text label; no 404s in live capture) |
+| fax/faxVerse | E1 Back x2 (plan) | P1 | not reproducible: Playwright on 8216 desktop+phone, every fax/faxVerse destination (page link, edition cover, title, CTA, row) adds 1 entry and one Back lands on /home (viewer already uses replace) |
+| faxVerse | A2 | P2 | fixed in 4289f388/c200a14a (crops via TileImage with 1x w800 / 2x w1600 render srcset at intrinsic size, never upscaled, max-height 6.5rem). Residual: 1891 crop for 1 Ne 4:5 is cut off - bad bbox in the fax index data, not tile code (accepted) |
+| faxVerse | A5 | P2 | fixed in 4289f388 (no tab graphics; every row has the same text rail: short edition + folio) |
+| faxVerse | C1 | P2 | fixed in 4289f388 (per-row look-alike ref pill removed; header pill is the only popup trigger) |
+| faxVerse | L3 | P2 | fixed in 4289f388 (crops dimmed via tileImage, dark border/background, rail titles #e8e8e8) |
+| faxVerse | H4 | P3 | fixed in 4289f388 (ref shown once) |
+| faxVerse | A7 | P3 | fixed in 4289f388 (shortEdition: '2013 Salt Lake City' etc.; full title as hover title) |
+| faxVerse | G3 | P3 | fixed in 4289f388 (decorative tab img removed) |
+| faxVerse | CTA dup href | P2 | fixed in 4289f388 (CTA 'See in context' -> Read verse, distinct from row 1; verified one Back) |
+| history | D3 | P2 | no_change_needed: Task 9 back control ('&lt; History') verified live above the H1 |
+| history | D5 | P3 | fixed in a755c6c0 (transcript's leading citation paragraph dropped); document.title already correct live |
+| history | A3 | P3 | fixed in 4289f388 (eyebrow links /history) |
+| history | G2 | P3 | fixed in 4289f388 (title + rail tabIndex -1, rail aria-hidden; CTA is the single tab stop) |
+| translation | H1 | P2 | fixed in 91b8a204 (removed from reservePool: 0/155 translation rows have a money_quote, all 'needs-editorial-quote' - data, not a query bug) |
+| translation | C4 | P3 | fixed in 4289f388 (CTA -> /history/&lt;slug>, eyebrow -> /history/translation) |
+| translation | L2 | P3 | fixed in 4289f388 (labelOr('translation')) |
+| josephSmith | A3 | P2 | fixed in 4289f388 (.witnessStatement .miniHighlight background none; line-height 1.05 -> 1.32) |
+| josephSmith | H1 | P2 | fixed in c200a14a (rows have id NULL so MD5(CONCAT(id,..)) was NULL for all -> seeded on slug; live-DB test shows rotation; also added to batchTiles in 91b8a204). Needs backend deploy/restart to take effect |
+| josephSmith | L3 | P2 | fixed in 4289f388 (no highlight slab in dark; verified dark capture) |
+| josephSmith | H3 | P3 | fixed in 4289f388 + 6b3165b6 (ExpandableText, reversible, focus kept - verified live keyboard) |
+| josephSmith | J1 | P3 | accepted: history/witnesses/people portraits have no variants on the media CDN; TileImage lazy/async |
+| josephSmith | L2 | P3 | fixed in 4289f388 (labelOr joseph_smith; portrait alt '' since name is visible link text) |
+| josephSmith | D4 (CTA to archive not doc) | P3 | fixed in 4289f388 (CTA -> /history/&lt;slug>, the featured document; verified live) |
+| witness | A7 | P2 | fixed in 4289f388 (inlineMarkdown renders _x_/*x* as &lt;em>) |
+| witness | A3 | P2 | fixed in 4289f388 (reporter is a 0.72rem meta-gray line above the quote) |
+| witness | H1 | P2 | fixed in 4289f388 (reporter no longer eats the clamp + reversible Read more reveals the full statement) |
+| witness | D4 | P2 | fixed in 4289f388 + 91b8a204 + 136f5ae1 (CTA -> /history/witnesses/&lt;w>/&lt;source>; that route crashed the app with 'Maximum update depth exceeded' pre-existing - fixed; popup opens with replaceSlug; one Back to /home verified) |
+| witness | H3 | P3 | fixed in 4289f388 (ExpandableText) |
+| witness | D5 | P3 | accepted: 'Biography coming soon.' is a recorded deliberate product choice (Witnesses.render.test.js 'KNOWN DIFFERENCE ... kept as-is') |
+| witness | J1 | P3 | accepted: no variants for history/witnesses portraits; TileImage lazy/async |
+| witness | remount swap (new) | P2 | fixed in 291360b8 (featured witness memoized per payload; masonry remount no longer swaps the person mid-read) |
+| witness/josephSmith/history | ExpandableText re-measure (new) | P2 | fixed in 6b3165b6 (expanded box no longer re-measured on parent re-render, Show less no longer vanishes) |
+| archive | B1 skeletons | P3 | fixed in 9157c3f8 (witness, fax phone, faxVerse phone rows re-measured) |
+
+Open: 1. Shared primitives changed:    - `tiles/_ds/TileImage.js` and `mediaVariants.js` (8c088eb0): a new `hasVariants()` limits srcset to people/places/matters paths, and absolute or root-relative srcs are used as-is. Before this, archive images 404'd once each and the caller's `onError` never ran.    - `tiles/ExpandableText.js` (6b3165b6): it no longer re-measures while expanded. Before, any parent re-render with new JSX children made Show less disappear.    Other families editing these files may hit merge conflicts. 2. Files outside the tile folders changed:    - `views/History/Witnesses.js`: fixes an existing infinite loop on /history/witnesses/&lt;w>/&lt;source> that blanked the app, and adds `replaceSlug`.    - `views/_Common/entity/HistoryBody.js`: the citation is no longer printed twice.    - `backend/src/graphql/resolvers/homesampler.ts`: archive docs are now seeded on slug.    - `registry.js`, `skeletonHeights.js` and `twoLayerCompliance` EXEMPT (`faxLabels.js`): small edits; registry and skeletonHeights may conflict with 10c/10b. 3. The backend change needs bom-greenfield restarted, and later deployed, before Joseph Smith statements rotate. Cached sampler payloads (L1 and the shared L2, 6h) keep the old pick until they expire. 4. Page-level, not fixed here: the Sampler masonry remounts reserve and batch tiles when infinite batches append. That drops any expanded Read more state; the witness person-swap side effect is fixed. 5. The `read_more` label row in the database is 'Read More' (title case), so every Read more button is title case. That breaks the sentence-case rule and needs a row update in Task 12. 6. Data issues left as they are:    - The fax index bbox for the 1891 edition is wrong for some verses (the crop is cut off).    - fax/covers and the history portraits have no variants; this needs extending Task 11's upload scope, which KC must confirm. 7. The popup document title shows '(undefined)' for history sources opened from the Witnesses page (`setPopDocTitle` receives the doc itself instead of an id-keyed map). This is existing destination code and outside this family's scope. 8. New label rows needed for Task 12 are listed under newLabelKeys. 'history' and 'translation' are guarded by labelOr; a 'History' row exists but may not match the lowercase key.
+
+#### analysis
+
+Review: changes → fix pass. Commits: `f70f7adc`, `c2cf4183`, `5792e56d`, `cd54a885`, `e5859654`.
+
+Decisions: For the reserve collapse I used reviewer option (b): reservePool entries artFill1, artFill2 and chiasmus2 now carry a span (tile-art / tile-chiasmus), and Sampler.renderReserve adds def.span to the class list. This is safe because tile-art and tile-chiasmus have no CSS other than the :empty collapse, so reserve layout does not change. For the single-column state I added a new file, tiles/_ds/useSingleColumn.js, which uses the same 900px query as Sampler. It is a separate file, not an edit to skeletonHeights.js, so it cannot conflict with other families editing that file.
+
+| Tile | Crit. | Sev | Outcome |
+|---|---|---|---|
+| biblephrases | B4/H1 | P1 | fixed in c2cf4183 (six candidate pairs in one request, no dud picks, null collapses the tile). The reserve and batch collapse is covered in e5859654 |
+| biblephrases | B1 | P2 | fixed in c2cf4183 (skeleton sized to the tile). In e5859654 the phone skeleton height is used in the single column: live phone skeleton 418px against a settled 414px, and no CLS from the tile |
+| biblephrases | H3 | P2 | fixed in c2cf4183 (word-token diff; marks fall on word boundaries) |
+| biblephrases | A3/A5 | P2 | fixed in c2cf4183 (Scripture serif, inline ref chips, stacks when narrow, house-gold marks) |
+| biblephrases | D4/L2 | P2 | fixed in c2cf4183 (TileCTA verb seeInContext deep-links the pair's chapter grid; eyebrow links to /analysis/bible) |
+| chiasmus | A4/L3 | P2 | fixed in 5792e56d (legend keys use --tile-meta, 5.3:1 in light, gray in dark; line-height 1.38) |
+| chiasmus | C1/A2/J1 | P2 | fixed in 5792e56d (avatar and name are one link to the person; TileImage 256w variant; ref pill moved outside any link) |
+| chiasmus | B1 | P1 | fixed in 5792e56d (sized skeleton; a failed fetch collapses). In e5859654 the reserve chiasmus2 also collapses, and the skeleton height follows the single-column layout |
+| chiasmus | size | P2 | fixed in 5792e56d (pool limited to chiasms of at most 600 chars; tile stays about 300-490px) |
+| chiasmus | A4-marks | P3 | fixed in 5792e56d (quieter house-gold marks) |
+| art | G2 | P2 | fixed in cd54a885 (title bar and image are one link) |
+| art | M2 | P1 | fixed in cd54a885 (an image error drops the tile). In e5859654 reserve artFill1/artFill2 carry the tile-art span: live, with art images aborted, tile-artFill1.tile-art has display:none and height 0 |
+| art | B2 | P2 | fixed in cd54a885 (excerpt placeholder reserves about 9rem; a failed excerpt hides) |
+| art | A3 | P3 | fixed in cd54a885 (duplicate excerpt heading suppressed) |
+| art | L3 | P2 | fixed in cd54a885 (dark Read inset transparent; phone caption and face layout fixed) |
+| art | J1 | P2 | fixed in f70f7adc and cd54a885 (TileImage serves the original only when no variants exist) |
+| art | D3 | P2 | fixed in cd54a885 (/art/:id gets a Back crumb, a forward Router link and an image capped at 72vh) |
+| review-r2 | reserve-collapse (major) | P1 | fixed in e5859654 (reservePool art and chiasmus entries get a span; renderReserve emits tile tile-&lt;key> &lt;span>; tests added in registry.test.js and samplerCss.test.js) |
+| review-r2 | in-tile skeleton single-column (minor) | P2 | fixed in e5859654 (new tiles/_ds/useSingleColumn hook; BiblePhrases and Chiasmus call skeletonHeight(span, single); phone test added) |
+
+Open: 1. Shared code touched, minimal changes: Sampler.js renderReserve now adds def.span to a reserve tile's class list, and there is a new file, tiles/_ds/useSingleColumn.js. Sampler.js still has its own copy of useSingleColumn and could import the shared hook later. 2. MAX_RESERVES is 5 and artFill1 is 7th in the reserve pool, so on normal payloads the art reserves rarely appear. To test them live I had to strip API fields; this is a pre-existing balancer property. 3. tileharness home() waits for the first .tile:not(.skeleton) to be visible. One early run timed out under machine load; the next run passed, and I left the harness unchanged.
+
+#### story
+
+Review: approve. Commits: `641cda11`, `483c80a2`, `25200211`, `58673e62`.
+
+Decisions: - **"Explore full journey" is now "Explore".** It uses the TileCTA `explore` verb, per the fixed CTA vocabulary. - **Complete card heading is the route.** The heading reads "A → B", or "Round trip from A". The status line alone says "Journey complete", and the footer route hides in the complete state, so nothing is said twice. - **Map failure shows a static summary.** The fallback shows the route plus the whole-journey card, with no transport controls. - **MapStory ref is the shared RefPill.** It uses the `.scripture_link` chip rather than a bespoke underlined button, for Belonging and one implementation. - **Red kept only for map semantics.** Red stays on the on-map route and markers and on the matching legend dots; all chrome is gold or neutral. - **Community shows 2 group cards maximum.** The tile is never wider than about 445px, so the rest fold into the +N card computed in JS rather than CSS. - **Edit outside the tile files.** `views/Map/MapContents.js` was edited (one Icon option) because the plan's 10h must-fix D5 lives on the story destination page. **Shared-primitive change (minimal):** `tiles/_ds/skeletonHeights.js` - tile-community: 213 → 252px desktop, plus 283px phone. - tile-mapstory: 650 → 662px desktop, 625 → 655px phone. Both were measured live after the changes.
+
+| Tile | Crit. | Sev | Outcome |
+|---|---|---|---|
+| mapstory | M2 (P0, ol/Map shadowing) | P0 | fixed before this task (Task 1); verified live: OL map stays mounted (.ol-viewport present, no .mapStoryFallback) through 12s of autoplay at 1440/390/820, no map.delete errors |
+| mapstory | D5 Explore destination portrait covers map | P1 | fixed in 641cda11 (the OL walker Icon used scale 0.6 on a ~1024px people image; it is now a 24px icon inside the 36px halo; live desktop-dest-after.png shows the route and map) |
+| mapstory | D5 map-tile edge 404s on story page | P1 (sub-item) | accepted: console-only 404s for out-of-extent tiles on the /map page; they are not visible and belong to the Map view's tile-extent config, outside the tile family |
+| mapstory | F3 phone popup offset | P1 | fixed by Task 6 (shared). Verified live at phone 390: the dialog is at x=0, w=390, a bottom sheet with the close button visible (phone-popup-after.png) |
+| mapstory | M2 autoplay continues after boundary trips / no reset | P2 | fixed in 483c80a2 (on boundary failure, playback stops, the status and transport hide, and the static route plus whole-journey card show; the boundary is keyed on the story slug) |
+| mapstory | J2 autoplay offscreen / hidden tab | P2 | fixed in 483c80a2 (playing requires visible && !pageHidden; playback resumes when the tab is visible again; tests added) |
+| mapstory | A6 reduced motion disables autoplay | P2 | fixed/verified in 483c80a2 (existing behavior pinned by test; live reduce capture: scrubber holds at 10/10, opens on the complete card) |
+| mapstory | A7 raw keys mapstory_meta/play/pause | P2 | fixed in 483c80a2 (all strings go through labelOr with English fallbacks; tested with an empty labels table) |
+| mapstory | A7 Alma2 / inverted titles / Bountiful→Bountiful | P2 | fixed in 483c80a2 (supDigits on travelers in the tile, card and map avatars/aria; 'Recolonization X' becomes 'X’s Recolonization'; round trips read 'Round trip from X') |
+| mapstory | A4 off-palette oxblood/green/blue focus | P2 | fixed in 483c80a2 (gold primary button, scrubber and complete mark; neutral status, legend and meta; blue focus rules removed so the global gold ring applies, verified live: rgb(201,162,75) 2px; red kept only for the on-map route and legend dots; CSS guard test) |
+| mapstory | B2 autoplay height jiggle | P2 | fixed in 483c80a2/58673e62 (fixed beat reserve; live heights sampled 1/s over 12s were constant: desktop 666/658, phone 655, tablet 677) |
+| mapstory | C5 ref/title focus invisible | P2 | fixed in 483c80a2 (the ref is now the shared RefPill button; the title gets the global gold ring, verified live) |
+| mapstory | J1 full-size thumbnails | P2 | fixed in 483c80a2 (place thumbs and traveler avatars use TileImage with the 256w variant srcset) |
+| mapstory | J3 useRef(new Map()) per render | P2 | fixed in 483c80a2 (useLazyRef for the overlay registries and the projection cache; source guard test) |
+| mapstory | L3 dark move-state contrast / sage fallback glare | P2 | fixed in 483c80a2 (dark #e0e0e0 status; dark fallback gradient; neutral dark tokens) |
+| mapstory | L2 hardcoded English | P2 | fixed in 483c80a2 (every visible string and aria-label goes through labelOr; keys listed in newLabelKeys) |
+| mapstory | duplicate React key from cluster ids | P2 | fixed in 483c80a2 (clusters key on `${id}-${index}`, used for both the React key and the DOM registry lookup) |
+| mapstory | A1 labels clip at frame edge / leg names truncate | P3 | fixed in 483c80a2 (labels are clamped inside the frame during camera moves; leg names wrap to 2 lines in a 3-column grid. Very long names, e.g. 'Land and Valley of Gideon' at 342px, can still clamp after 2 lines) |
+| mapstory | A5 arrow misaligned | P3 | fixed in 483c80a2 (grid with align-items:center) |
+| mapstory | F2 small tap targets | P3 | fixed in 483c80a2 (phone transport stays 44px (live: 44,44,44); the ref chip gets a ≥44px ::after hit area under pointer:coarse) |
+| mapstory | H3 complete description clamped mid-word | P3 | partially fixed in 483c80a2 (the complete card now clamps at 5 lines instead of 3). accepted: still ends with an ellipsis on long descriptions; sentence-boundary clamping needs server-side editorial copy, and the Explore CTA leads to the full text |
+| mapstory | H2 'Journey complete' twice / Active legend when complete | P3 | fixed in 483c80a2 (the complete card heading is now the route; the legend shows only Visited when complete; the footer route is hidden in the complete state) |
+| mapstory | R2.3 CTA verb 'Explore full journey' | P2 (inconsistency) | fixed in 483c80a2 (TileDeepLink verb='explore' → 'Explore') |
+| community | A1 container query hides message text | P2 | fixed in 25200211 (message rows are two-line, with the text clamped to 2 lines and never hidden; the container query only wraps the strip below 340px; live msgShown at 1440/390/820) |
+| community | E1 Back from /home/community loses scroll | P2 | accepted: this is page-level Home tab-route scroll restoration (Task 8/13, Sampler/routeHistory), not tile code |
+| community | A1 hidden more-card / '11 Members' wraps | P3 | fixed in 25200211/58673e62 (at most 2 cards, with the rest folded into an always-visible '+N groups' card; the count sits beside the faces with the word in aria-label/title, so there is no wrap or truncation) |
+| community | H2 thin hook / emoji label | P3 | fixed in 25200211 (it now leads with the message excerpt; the emoji is dropped and the finishers label is an eyebrow; the CTA is 'View all'. A 'join a study group' verb is outside the fixed CTA vocabulary) |
+| community | C5 no focus-visible | P3 | fixed in 25200211 (:focus-visible mirrors hover on group cards and message rows, plus the global gold ring) |
+| community | R2.3 CTA verb 'View more' | P2 (inconsistency) | fixed in 25200211 (verb='viewAll') |
+| community | J1/A2 avatars (TileImage) | P3 | accepted: community avatars are external user-profile URLs, not media-CDN paths, so TileImage variants don't apply. They are now lazy/async, and a missing picture renders a neutral disc instead of a broken &lt;img> |
+
+Open: **Needs another task or owner** 1. Every key in newLabelKeys needs `en`/`ko` rows (Task 12). Until then the English fallbacks render. 2. Community E1 (Back from `/home/community/&lt;group>` lands at scrollY 0) is page-level tab-route scroll restoration and was not touched (Sampler/routeHistory, Task 8/13). 3. I changed a shared primitive: `tiles/_ds/skeletonHeights.js`, the tile-community and tile-mapstory rows only. Other families editing that file may conflict on adjacent lines. Community height also depends on the payload (messages vs reading-now): about 250–283px. 4. I edited `views/Map/MapContents.js`, outside the tile family, one Icon option for D5.    - The story page's own palette (blue run-colors, blue distance badges) is not house style.    - Its out-of-extent tile 404s also remain.    - Both belong to the Map view, not Home. **Residual polish (accepted)** 5. MapStory overlay nodes are positioned with left/top, so the layout-shift API logs many tiny (0.0001–0.0006) non-input entries during camera moves. These predate this task; the tile's own height is now constant. Moving the overlay to transform/translate would remove them; I didn't do it here. 6. Long complete-card descriptions still end with an ellipsis after 5 lines (needs editorial copy). 7. A 20-move story was still not captured live. 8. Korean was not driven. **Process** 9. The scratchpad is shared with the other parallel families, and another agent overwrote my first `cap.mjs`. My scripts now live in `scratchpad/t10story/`.
