@@ -14,10 +14,11 @@ const FALLBACK = "14rem";
 const DESKTOP = {
 
 
+
   "tile-readingplan": "233px",
   "tile-narration": "650px", // 4:3 art cells (rail fix) add ~35px
   "tile-contents": "560px", // 2026-10-15 rail fix: pages-only outline (was a 1000px section wall)
-  "tile-community": "213px",
+  "tile-community": "252px",
   "tile-people": "810px",
   "tile-text": "360px",
   "tile-commentary": "280px",
@@ -32,7 +33,7 @@ const DESKTOP = {
   "tile-chiasmus": "400px", // 10g: 6 seeds 311–488 with the ≤600-char filter
   "tile-art": "600px",
   "tile-notes": "440px",
-  "tile-mapstory": "650px",
+  "tile-mapstory": "662px",
   "tile-personProfile": "330px",
   "tile-placeProfile": "368px",
   "tile-matterProfile": "430px",
@@ -41,6 +42,7 @@ const DESKTOP = {
 };
 
 const PHONE = {
+
 
 
   "tile-narration": "384px",
@@ -59,9 +61,10 @@ const PHONE = {
   "tile-chiasmus": "400px",
   "tile-art": "580px",
   "tile-notes": "370px",
-  "tile-mapstory": "625px",
+  "tile-mapstory": "655px",
   "tile-placeProfile": "322px",
   "tile-witness": "240px",
+  "tile-community": "283px",
 };
 
 /** CSS length for the skeleton of `spanClass`; `single` = phone single-column layout. */

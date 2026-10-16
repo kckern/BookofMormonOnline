@@ -1,7 +1,7 @@
 import React from "react";
 import fs from "node:fs";
 import path from "node:path";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup as cleanupAll, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import MapStoryTile, {
   homeStoryTitle,
@@ -12,7 +12,9 @@ import MapStoryTile, {
 // state and callbacks owned by the tile without replacing their semantics.
 vi.mock("../MapStoryTileInner", () => ({
   __esModule: true,
-  default: ({ moves, step, complete, animate, playing, onSelectStep, onMapInteraction, onRecenter }) => (
+  default: ({ moves, step, complete, animate, playing, onSelectStep, onMapInteraction, onRecenter }) => {
+    if (globalThis.__throwMapStoryInner) throw new Error("ol exploded");
+    return (
     <div
       data-testid="map-canvas"
       data-step={step}
@@ -25,7 +27,8 @@ vi.mock("../MapStoryTileInner", () => ({
       <button type="button" data-testid="map-manipulate" onClick={onMapInteraction}>manipulate</button>
       <button type="button" data-testid="map-recenter" onClick={onRecenter}>recenter</button>
     </div>
-  ),
+    );
+  },
 }));
 vi.mock("src/views/_Common/ScripturePopup", () => ({
   __esModule: true,
@@ -124,6 +127,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  globalThis.__throwMapStoryInner = false;
   vi.runOnlyPendingTimers();
   vi.useRealTimers();
   delete global.dictionary;
@@ -152,7 +156,7 @@ describe("MapStoryTile", () => {
     renderTile();
     expect(screen.getByRole("link", { name: "Lehi's Journey" }).getAttribute("href"))
       .toBe("/map/internal/story/lehis-journey");
-    expect(screen.getByRole("link", { name: "Explore full journey" }).getAttribute("href"))
+    expect(screen.getByRole("link", { name: "Explore" }).getAttribute("href"))
       .toBe("/map/internal/story/lehis-journey");
   });
 
@@ -316,4 +320,126 @@ test("MapStoryTileInner never shadows the global Map", () => {
   const src = fs.readFileSync(path.resolve(__dirname, "../MapStoryTileInner.js"), "utf8");
   expect(src).not.toMatch(/import\s+Map\s+from\s+["']ol\/Map["']/);
   expect(src).toMatch(/import\s+OlMap\s+from\s+["']ol\/Map["']/);
+});
+
+describe("MapStoryTile — Task 10h regressions", () => {
+  test("empty and minimal payloads collapse or render without undefined/NaN/broken images", () => {
+    const { container: c1 } = renderTile(null);
+    expect(c1.firstChild).toBeNull();
+    cleanupAll();
+    const { container: c2 } = renderTile({ slug: "x", moves: [] });
+    expect(c2.firstChild).toBeNull();
+    cleanupAll();
+    const bare = (s, e, a, b) => ({ start: s, end: e, startLat: a, startLng: a, endLat: b, endLng: b });
+    const { container } = renderTile({ slug: "bare", title: "", moves: [bare("a", "b", 1, 2), bare("b", "c", 2, 3)] });
+    expect(container.textContent).not.toMatch(/undefined|NaN|null/);
+    container.querySelectorAll("img").forEach((img) => expect(img.getAttribute("src")).not.toMatch(/undefined|null/));
+  });
+
+  test("no raw i18n keys leak when the labels table lacks the mapstory_* rows", () => {
+    global.dictionary = { map: "Map" }; // label() echoes unknown keys
+    const { container } = renderTile();
+    const attrs = [...container.querySelectorAll("*")].flatMap((el) =>
+      ["aria-label", "title", "aria-valuetext"].map((a) => el.getAttribute(a) || ""));
+    expect(container.textContent + attrs.join(" ")).not.toMatch(/mapstory_|view_more|\bexplore\b/);
+    expect(screen.getByLabelText("Pause journey")).toBeTruthy();
+    act(() => { vi.advanceTimersByTime(60000); });
+    expect(container.textContent).not.toMatch(/mapstory_/);
+    expect(container.textContent).toMatch(/2 moves · 3 places/);
+  });
+
+  test("the Layer-2 CTA uses the TileCTA explore verb", () => {
+    const { container } = renderTile();
+    const cta = container.querySelector(".mapStoryFooter .tileCTA");
+    expect(cta.textContent.trim()).toBe("Explore");
+    expect(cta.getAttribute("href")).toBe("/map/internal/story/lehis-journey");
+  });
+
+  test("disambiguation digits render as superscripts, never 'Alma2'", () => {
+    const story = { ...data, moves: data.moves.map((m) => ({ ...m, people: [{ slug: "alma2", name: "Alma2" }] })) };
+    const { container } = renderTile(story);
+    expect(container.textContent).not.toMatch(/Alma2/);
+    expect(container.textContent).toMatch(/Alma²/);
+  });
+
+  test("inverted Recolonization titles read naturally", () => {
+    expect(homeStoryTitle("Recolonization Limhi")).toBe("Limhi’s Recolonization");
+  });
+
+  test("a round trip reads 'Round trip from X', not 'X → X'", () => {
+    const story = { ...data, moves: [data.moves[0], { ...data.moves[1], end: "jerusalem", endName: "Jerusalem" }] };
+    const { container } = renderTile(story);
+    expect(container.textContent).not.toMatch(/Jerusalem\s*→\s*Jerusalem/);
+    expect(container.textContent).toMatch(/Round trip from Jerusalem/);
+  });
+
+  test("when the map boundary trips, autoplay stops and the transport hides", () => {
+    globalThis.__throwMapStoryInner = true;
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { container } = renderTile();
+    spy.mockRestore();
+    expect(container.querySelector(".mapStoryFallback")).toBeTruthy();
+    expect(container.querySelector(".mapStoryControls")).toBeNull();
+    expect(container.querySelector(".mapStoryPlaybackStatus")).toBeNull();
+    const before = container.textContent;
+    act(() => { vi.advanceTimersByTime(60000); });
+    expect(container.textContent).toBe(before);
+  });
+
+  test("autoplay stops while the tab is hidden and resumes when it is visible again", () => {
+    renderTile();
+    expect(mapState("playing")).toBe("true");
+    Object.defineProperty(document, "hidden", { configurable: true, get: () => true });
+    act(() => { document.dispatchEvent(new Event("visibilitychange")); });
+    expect(mapState("playing")).toBe("false");
+    act(() => { vi.advanceTimersByTime(60000); });
+    expect(mapState("step")).toBe("0");
+    Object.defineProperty(document, "hidden", { configurable: true, get: () => false });
+    act(() => { document.dispatchEvent(new Event("visibilitychange")); });
+    expect(mapState("playing")).toBe("true");
+  });
+
+  test("autoplay stops while the tile is offscreen", () => {
+    let cb;
+    const prev = global.IntersectionObserver;
+    global.IntersectionObserver = class { constructor(fn) { cb = fn; } observe() {} disconnect() {} };
+    try {
+      renderTile();
+      act(() => cb([{ isIntersecting: true, intersectionRatio: 1 }]));
+      expect(mapState("playing")).toBe("true");
+      act(() => cb([{ isIntersecting: false, intersectionRatio: 0 }]));
+      expect(mapState("playing")).toBe("false");
+      act(() => { vi.advanceTimersByTime(60000); });
+      expect(mapState("step")).toBe("0");
+    } finally {
+      global.IntersectionObserver = prev;
+    }
+  });
+
+  test("thumbnails and the place images go through TileImage (srcset-capable)", () => {
+    const { container } = renderTile();
+    const thumbs = container.querySelectorAll("img.mapStoryPlaceThumb");
+    expect(thumbs.length).toBe(2);
+    thumbs.forEach((img) => expect(img.classList.contains("tileImage")).toBe(true));
+  });
+});
+
+describe("MapStory source/CSS guards", () => {
+  const inner = fs.readFileSync(path.resolve(__dirname, "../MapStoryTileInner.js"), "utf8");
+  const css = fs.readFileSync(path.resolve(__dirname, "../../Sampler.css"), "utf8");
+  test("cluster keys cannot collide (no bare key={cluster.id})", () => {
+    expect(inner).not.toMatch(/key=\{cluster\.id\}/);
+  });
+  test("overlay registries are lazily initialized (no Map construction per render)", () => {
+    expect(inner).not.toMatch(/useRef\(\s*new Map\(\)/);
+    expect(inner).not.toMatch(/useRef\(\{\s*markers:\s*new Map/);
+  });
+  test("no off-palette blue/oxblood/green chrome in the MapStory CSS", () => {
+    const block = css.split("\n").filter((l) => /mapStory|mapTileFrame/.test(l) || true).join("\n");
+    const start = block.indexOf("---- map-story tile");
+    const end = block.indexOf("Multi-edition cropped-verse");
+    const story = block.slice(start, end);
+    expect(story.length).toBeGreaterThan(100);
+    expect(story).not.toMatch(/#45679e|69,\s*103,\s*158|#96362f|#2f6749|#397054|#8b2f29|#8b302a|#7f2d28|#2e5943|#9f3932|#c85a51|#b95850/i);
+  });
 });

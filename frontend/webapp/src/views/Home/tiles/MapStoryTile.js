@@ -1,9 +1,10 @@
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { label } from "src/models/Utils";
 import { legsOf, stopsOf } from "./mapStoryPath";
 import { MapStoryCompleteCard, MapStoryMoveCard } from "./MapStoryCard";
 import TileDeepLink from "./_ds/TileDeepLink";
+import labelOr from "./_ds/labelOr";
+import { supDigits } from "./textUtils";
 
 const MapStoryTileInner = React.lazy(() => import("./MapStoryTileInner"));
 
@@ -23,11 +24,22 @@ export const playbackTiming = (move) => {
 
 export const homeStoryTitle = (title) => {
   const clean = String(title || "").trim();
-  // This source title is an inverted database label, not readable editorial
-  // copy. Keep the correction explicit until Home-specific titles are stored.
-  if (clean.toLowerCase() === "recolonization noah") return "Noah’s Recolonization";
-  return clean;
+  // "Recolonization <Name>" source titles are inverted database labels, not
+  // readable editorial copy ("Recolonization Limhi"). Keep the correction
+  // explicit until Home-specific titles are stored.
+  const inverted = clean.match(/^recolonization\s+(.+)$/i);
+  if (inverted) return `${supDigits(inverted[1])}’s Recolonization`;
+  return supDigits(clean);
 };
+
+/** Display name for a traveler: disambiguation digits as superscripts (Alma2 → Alma²). */
+export const personName = (person) => supDigits(person?.name || person?.slug || "");
+
+/** "A → B", or "Round trip from A" when the journey ends where it began. */
+export const routeText = (origin, destination) =>
+  origin && origin === destination
+    ? labelOr("mapstory_round_trip", "Round trip from $1", [origin])
+    : `${origin} → ${destination}`;
 
 const prefersReducedMotion = () =>
   typeof window !== "undefined" &&
@@ -53,6 +65,13 @@ class MapStoryErrorBoundary extends React.Component {
     return { failed: true };
   }
 
+  componentDidCatch(error) {
+    // Tell the player: autoplay must stop and the transport must hide, or the
+    // tile keeps "playing" moves over a static fallback (audit M2).
+    console.warn("map story map failed:", error);
+    this.props.onFailed?.();
+  }
+
   render() {
     if (this.state.failed) return this.props.fallback;
     return this.props.children;
@@ -60,7 +79,7 @@ class MapStoryErrorBoundary extends React.Component {
 }
 
 const MapFallback = ({ title, origin, destination }) => (
-  <div className="mapStoryFallback" role="img" aria-label={`${title}: ${origin} to ${destination}`}>
+  <div className="mapStoryFallback" role="img" aria-label={`${title}: ${routeText(origin, destination)}`}>
     <div className="mapStoryFallbackRoute" aria-hidden="true">
       <span />
       <i />
@@ -68,7 +87,7 @@ const MapFallback = ({ title, origin, destination }) => (
     </div>
     <div className="mapStoryFallbackPlaces">
       <strong>{origin}</strong>
-      <strong>{destination}</strong>
+      {origin !== destination ? <strong>{destination}</strong> : null}
     </div>
   </div>
 );
@@ -83,7 +102,7 @@ export default function MapStoryTile({ data }) {
   const legs = useMemo(() => legsOf(moves), [moves]);
   const stops = useMemo(() => stopsOf(moves), [moves]);
   const title = homeStoryTitle(data?.title);
-  const mapLabel = String(label("map") || "").trim() || "Map";
+  const mapLabel = labelOr("map", "Map");
   const storyHref = `/map/internal/story/${data?.slug}`;
   const reducedInitially = prefersReducedMotion();
   const [step, setStep] = useState(0);
@@ -93,17 +112,25 @@ export default function MapStoryTile({ data }) {
   const [visible, setVisible] = useState(false);
   const [mapMounted, setMapMounted] = useState(false);
   const [mapMoved, setMapMoved] = useState(false);
+  const [pageHidden, setPageHidden] = useState(false);
+  const [mapFailed, setMapFailed] = useState(false);
   const rootRef = useRef(null);
 
   const currentMove = complete
     ? moves[moves.length - 1]
     : moves[Math.min(step, Math.max(0, moves.length - 1))];
   const timing = playbackTiming(currentMove);
-  const origin = moves[0] ? (moves[0].startName || moves[0].start) : "Origin";
+  const origin = moves[0] ? (moves[0].startName || moves[0].start) : labelOr("mapstory_origin", "Origin");
   const destination = moves.length
     ? (moves[moves.length - 1].endName || moves[moves.length - 1].end)
-    : "Destination";
-  const playing = visible && mapMounted && !paused && !complete && !reducedMotion && moves.length >= 2;
+    : labelOr("mapstory_destination", "Destination");
+  // Autoplay runs only while the tile is on screen, the tab is visible, the map
+  // is alive, and the reader hasn't asked for reduced motion (audit J2/M2/A6).
+  const playing = visible && !pageHidden && mapMounted && !mapFailed && !paused && !complete && !reducedMotion
+    && moves.length >= 2;
+  // A failed map shows the static route + whole-journey summary, never a
+  // stepping transport over a fallback that cannot show the steps.
+  const showComplete = complete || mapFailed;
   const summaryId = `map-story-summary-${String(data?.slug || "journey").replace(/[^a-z0-9_-]/gi, "-")}`;
 
   useEffect(() => {
@@ -143,11 +170,9 @@ export default function MapStoryTile({ data }) {
   }, []);
 
   useEffect(() => {
-    const pauseWhenHidden = () => {
-      if (document.hidden) setPaused(true);
-    };
-    document.addEventListener("visibilitychange", pauseWhenHidden);
-    return () => document.removeEventListener("visibilitychange", pauseWhenHidden);
+    const syncHidden = () => setPageHidden(Boolean(document.hidden));
+    document.addEventListener("visibilitychange", syncHidden);
+    return () => document.removeEventListener("visibilitychange", syncHidden);
   }, []);
 
   useEffect(() => {
@@ -195,14 +220,28 @@ export default function MapStoryTile({ data }) {
     setPaused((current) => !current);
   };
 
-  const movementLabel = complete ? "Journey complete" : `Move ${step + 1} of ${moves.length}`;
+  const moveFrom = currentMove.startName || currentMove.start;
+  const moveTo = currentMove.endName || currentMove.end;
+  const countsText = labelOr("mapstory_meta", "$1 moves · $2 places", [moves.length, stops.length]);
+  const completeLabel = labelOr("mapstory_complete", "Journey complete");
+  const movementLabel = showComplete
+    ? completeLabel
+    : labelOr("mapstory_move_of", "Move $1 of $2", [step + 1, moves.length]);
   const rangeValueText = complete
-    ? `Journey complete, ${moves.length} moves`
-    : `Move ${step + 1} of ${moves.length}: ${currentMove.startName || currentMove.start} to ${currentMove.endName || currentMove.end}`;
+    ? labelOr("mapstory_valuetext_complete", "Journey complete, $1 moves", [moves.length])
+    : labelOr("mapstory_valuetext", "Move $1 of $2: $3 to $4", [step + 1, moves.length, moveFrom, moveTo]);
   const travelerNames = (currentMove.people || [])
-    .map((person) => person?.name || person?.slug)
+    .map(personName)
     .filter(Boolean)
     .join(", ");
+  const route = routeText(origin, destination);
+  const summary = [
+    labelOr("mapstory_summary", "$1. A journey of $2 moves across $3 places: $4.", [title, moves.length, stops.length, route]),
+    showComplete
+      ? labelOr("mapstory_summary_complete", "The full journey is shown.")
+      : labelOr("mapstory_summary_current", "Current move: $1 to $2.", [moveFrom, moveTo]),
+    travelerNames ? `${labelOr("mapstory_traveling", "Traveling:")} ${travelerNames}.` : "",
+  ].filter(Boolean).join(" ");
 
   return (
     <div
@@ -218,17 +257,17 @@ export default function MapStoryTile({ data }) {
           <h3 className="tileHeading"><Link to="/map">{mapLabel}</Link></h3>
           <Link to={storyHref} className="mapStoryTitle">{title}</Link>
         </div>
-        <span className="mapStoryCounts">{moves.length} moves · {stops.length} places</span>
+        <span className="mapStoryCounts">{countsText}</span>
       </div>
 
-      <p id={summaryId} className="mapStoryTextEquivalent">
-        {title}. A journey of {moves.length} moves across {stops.length} places,
-        from {origin} to {destination}. {complete ? "The full journey is shown." : `Current move: ${currentMove.startName || currentMove.start} to ${currentMove.endName || currentMove.end}.`}
-        {travelerNames ? ` Traveling: ${travelerNames}.` : ""}
-      </p>
+      <p id={summaryId} className="mapStoryTextEquivalent">{summary}</p>
 
       <div className="mapTileFrame">
-        <MapStoryErrorBoundary fallback={<MapFallback title={title} origin={origin} destination={destination} />}>
+        <MapStoryErrorBoundary
+          key={data?.slug || "story"}
+          onFailed={() => setMapFailed(true)}
+          fallback={<MapFallback title={title} origin={origin} destination={destination} />}
+        >
           {mapMounted ? (
             <Suspense fallback={<MapFallback title={title} origin={origin} destination={destination} />}>
               <MapStoryTileInner
@@ -254,67 +293,79 @@ export default function MapStoryTile({ data }) {
         <div className="mapStoryMapShade" aria-hidden="true" />
       </div>
 
-      <div className="mapStoryPlaybackStatus">
-        <span className={`mapStoryMoveState${complete ? " isComplete" : ""}`}>{movementLabel}</span>
-        <span className="mapStoryLegend" aria-hidden="true">
-          <i className="isActive" /> Active <i className="isVisited" /> Visited <i className="isFuture" /> Later
-        </span>
-      </div>
+      {mapFailed ? null : (
+        <>
+          <div className="mapStoryPlaybackStatus">
+            <span className={`mapStoryMoveState${complete ? " isComplete" : ""}`}>{movementLabel}</span>
+            <span className="mapStoryLegend" aria-hidden="true">
+              {complete ? null : <><i className="isActive" /> {labelOr("mapstory_active", "Now")}</>}
+              <i className="isVisited" /> {labelOr("mapstory_visited", "Visited")}
+              {complete ? null : <><i className="isFuture" /> {labelOr("mapstory_later", "Later")}</>}
+            </span>
+          </div>
 
-      <div className="mapStoryControls" aria-label="Journey playback controls">
-        <button
-          type="button"
-          className="mapStoryControlButton"
-          onClick={previous}
-          disabled={!complete && step === 0}
-          aria-label="Previous move"
-        >
-          <Icon>‹</Icon>
-        </button>
-        <button
-          type="button"
-          className="mapStoryControlButton isPrimary"
-          onClick={togglePlayback}
-          aria-label={complete ? "Replay journey" : paused ? label("mapstory_play") : label("mapstory_pause")}
-          title={reducedMotion ? "Automatic movement is off because reduced motion is enabled" : undefined}
-        >
-          <Icon>{complete ? "↻" : paused ? "▶" : "Ⅱ"}</Icon>
-        </button>
-        <label className="mapStoryScrubberLabel">
-          <span className="mapStoryTextEquivalent">Choose a journey move</span>
-          <input
-            className="mapStoryScrubber"
-            type="range"
-            min="1"
-            max={moves.length}
-            step="1"
-            value={complete ? moves.length : step + 1}
-            onChange={(event) => selectStep(Number(event.target.value) - 1)}
-            aria-label="Journey move"
-            aria-valuetext={rangeValueText}
-            style={{ "--map-story-progress": `${complete ? 100 : (step / Math.max(1, moves.length - 1)) * 100}%` }}
-          />
-        </label>
-        <button
-          type="button"
-          className="mapStoryControlButton"
-          onClick={next}
-          disabled={complete}
-          aria-label="Next move"
-        >
-          <Icon>›</Icon>
-        </button>
-      </div>
+          <div className="mapStoryControls" role="group" aria-label={labelOr("mapstory_controls", "Journey playback controls")}>
+            <button
+              type="button"
+              className="mapStoryControlButton"
+              onClick={previous}
+              disabled={!complete && step === 0}
+              aria-label={labelOr("mapstory_previous", "Previous move")}
+            >
+              <Icon>‹</Icon>
+            </button>
+            <button
+              type="button"
+              className="mapStoryControlButton isPrimary"
+              onClick={togglePlayback}
+              aria-label={complete
+                ? labelOr("mapstory_replay", "Replay journey")
+                : paused ? labelOr("mapstory_play", "Play journey") : labelOr("mapstory_pause", "Pause journey")}
+              title={reducedMotion
+                ? labelOr("mapstory_reduced_motion", "Automatic movement is off because reduced motion is enabled")
+                : undefined}
+            >
+              <Icon>{complete ? "↻" : paused ? "▶" : "Ⅱ"}</Icon>
+            </button>
+            <label className="mapStoryScrubberLabel">
+              <span className="mapStoryTextEquivalent">{labelOr("mapstory_choose_move", "Choose a journey move")}</span>
+              <input
+                className="mapStoryScrubber"
+                type="range"
+                min="1"
+                max={moves.length}
+                step="1"
+                value={complete ? moves.length : step + 1}
+                onChange={(event) => selectStep(Number(event.target.value) - 1)}
+                aria-label={labelOr("mapstory_scrubber", "Journey move")}
+                aria-valuetext={rangeValueText}
+                style={{ "--map-story-progress": `${complete ? 100 : (step / Math.max(1, moves.length - 1)) * 100}%` }}
+              />
+            </label>
+            <button
+              type="button"
+              className="mapStoryControlButton"
+              onClick={next}
+              disabled={complete}
+              aria-label={labelOr("mapstory_next", "Next move")}
+            >
+              <Icon>›</Icon>
+            </button>
+          </div>
+        </>
+      )}
 
-      {mapMoved ? <div className="mapStoryInteractionHint">Playback paused while you explore the map.</div> : null}
+      {mapMoved ? (
+        <div className="mapStoryInteractionHint">
+          {labelOr("mapstory_paused_hint", "Playback paused while you explore the map.")}
+        </div>
+      ) : null}
 
       <div className="mapStoryStage">
-        {complete ? (
+        {showComplete ? (
           <MapStoryCompleteCard
-            title={title}
+            heading={route}
             description={data.description}
-            stopCount={stops.length}
-            moveCount={moves.length}
           />
         ) : (
           <MapStoryMoveCard
@@ -325,10 +376,9 @@ export default function MapStoryTile({ data }) {
       </div>
 
       <div className="mapStoryFooter">
-        <span>{origin} <span aria-hidden="true">→</span> {destination}</span>
-        <TileDeepLink to={storyHref} always className="mapTileCta tileMoreLink">
-          Explore full journey
-        </TileDeepLink>
+        {/* The complete card already names the route; don't say it twice. */}
+        <span>{showComplete ? null : route}</span>
+        <TileDeepLink to={storyHref} always verb="explore" className="mapTileCta" />
       </div>
     </div>
   );

@@ -553,9 +553,13 @@ const drawMap = ()=>{
         });
         const avatar = heroSlug
           ? new Style({
+              // Size the portrait in PIXELS, never by scale: people images are
+              // ~1024px originals, so scale 0.6 painted a ~600px portrait over
+              // the whole story map (Home audit D5). 24px fits inside the 36px halo.
               image: new Icon({
                 src: `${assetUrl}/people/${heroSlug}`,
-                scale: 0.6,
+                width: 24,
+                height: 24,
                 anchor: [0.5, 0.5],
               }),
               zIndex: 1,
