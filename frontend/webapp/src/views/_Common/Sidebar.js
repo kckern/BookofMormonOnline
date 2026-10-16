@@ -306,7 +306,7 @@ function Sidebar(props) {
               <li className={r.slug + "_link  menuitem " + activeClass} key={r.slug} >
                 <NavLink
                   to={"/" + r.slug}
-                  activeClassName=""
+                  className={() => ""} /* the <li> carries .active; keep the link class-free (RR7 adds "active" by default) */
                   onClick={() => {
                     appController.activeLeafCursorController?.activeAudio?.pause();
                     appController.functions.closePopUp();
