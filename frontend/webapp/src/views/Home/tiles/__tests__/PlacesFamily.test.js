@@ -160,3 +160,36 @@ describe("MapTile decision: removed (unreachable dud)", () => {
     expect(fs.existsSync(path.join(dir, "MapTileInner.js"))).toBe(false);
   });
 });
+
+describe("PlacesTile blind-audit fixes", () => {
+  test("C1: the place link is stretched over the whole card, not just the image", () => {
+    const { container } = renderIn(<PlacesTile data={PAYLOAD_17} payload={{}} />);
+    const card = container.querySelector(".placesTileCard:not(.viewAllCard)");
+    const link = card.querySelector("a.placesCardLink");
+    expect(link.parentElement).toBe(card); // card-level, not inside the image wrap
+    expect(link).toHaveAttribute("aria-label", "Place A");
+    expect(card.querySelector("a.placesCardLink img")).toBeNull();
+  });
+
+  test("H3: both bands fit by whole words (FitWords), no CSS line-clamp text", () => {
+    const { container } = renderIn(<PlacesTile data={PAYLOAD_17} payload={{}} />);
+    const card = container.querySelector(".placesTileCard:not(.viewAllCard)");
+    expect(card.querySelector(".placesInfoText")).toHaveClass("fitWords");
+    expect(card.querySelector(".placesTileIndexRow")).toHaveClass("fitWords");
+    expect(card.querySelector(".placesTileIndexRow").textContent).toContain("The Nephites laid its foundation.");
+  });
+
+  test("H1: a one-word gloss loses to a real phrase; 'City of and Land of' reads cleanly", () => {
+    const p = mkPlace(0, {
+      name: "City of and Land of Shilom",
+      index: [
+        { ref: "Alma 50:13", text: "Retained" },
+        { ref: "Mosiah 9:6", text: "Shilom is possessed by Zeniff" },
+      ],
+    });
+    const { container } = renderIn(<PlacesTile data={[p]} payload={{}} seed={0} />);
+    expect(container.textContent).toContain("City and Land of Shilom");
+    expect(container.textContent).toContain("Shilom is possessed by Zeniff");
+    expect(container.textContent).not.toContain("Retained");
+  });
+});

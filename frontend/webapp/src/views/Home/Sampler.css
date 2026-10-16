@@ -736,6 +736,8 @@ html[data-theme="dark"] .peopleFaceRef { color: #ccc; }
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+/* Places cards fit the row by words (FitWords) instead — no clamp ellipsis */
+.placesTileIndexRow.fitWords { display: block; -webkit-line-clamp: unset; }
 /* Matters cards give the seeded index text more room — three lines, not two. */
 .mattersTile .placesTileIndexRow { -webkit-line-clamp: 3; }
 
@@ -1614,26 +1616,64 @@ html[data-theme="dark"] .placesImgWrap { background: #333; }
 /* the entity name outranks the info band: up to 3 lines, clear of the pin */
 .placesTilePlaces .placesNameOverlay {
   -webkit-line-clamp: 3;
-  max-width: calc(100% - 2.2rem);
+  max-width: calc(100% - 2.6rem);
   font-size: 0.7rem;
   line-height: 1.18;
 }
-/* one truncation: the band is a plain block, its inner text clamps to 2 lines
-   (the clamp on the padded box itself leaked half a third line) */
+/* one truncation: the band is a plain block; its text fits 2 whole lines by
+   words (FitWords) — no mid-word line-clamp ellipsis (audit H3) */
 .placesTilePlaces .placesInfoOverlay { display: block; }
-.placesTilePlaces .placesInfoText {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+.fitWords {
+  display: block;
+  max-height: calc(var(--fit-lines, 2) * 1lh);
   overflow: hidden;
 }
-/* the image link's focus ring sits inside the clipping image box */
-.placesTilePlaces .placesCardLink { display: block; height: 100%; }
-.placesTilePlaces .placesCardLink:focus-visible { outline-offset: -3px; }
-/* card body is not a link: no pointer affordance on it; the card border answers
-   a hover on the image link instead of a whole-card lift */
-.placesTilePlaces .placesTileCard:not(.viewAllCard):has(.placesCardLink:hover) { border-color: #c9c9c9; }
-html[data-theme="dark"] .placesTilePlaces .placesTileCard:not(.viewAllCard):has(.placesCardLink:hover) { border-color: #555; }
+/* ONE place link stretched over the whole card — image and body (audit C1),
+   as the People cards do; the pin and the ref pill are raised above it */
+.placesTilePlaces .placesTileCard:not(.viewAllCard) { position: relative; }
+.placesTilePlaces .placesCardLink { position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
+.placesTilePlaces .placesCardLink:focus-visible { outline: none; }
+.placesTilePlaces .placesTileCard:has(.placesCardLink:focus-visible) { outline: 2px solid #c9a24b; outline-offset: 2px; }
+.placesTilePlaces .placesTileCard .scripture_link { position: relative; z-index: 2; }
+.placesTilePlaces .placesTileCard:not(.viewAllCard) {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.placesTilePlaces .placesTileCard:not(.viewAllCard):has(.placesCardLink:hover) {
+  transform: translateY(-2px);
+  border-color: #c9c9c9;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+.placesTilePlaces .placesTileCard:has(.placesCardLink:hover) .placesImgWrap > img { transform: scale(1.02); transition: transform 0.15s ease; }
+html[data-theme="dark"] .placesTilePlaces .placesTileCard:not(.viewAllCard):has(.placesCardLink:hover) { border-color: #555; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); }
+.placesTilePlaces .placesImgWrap > img { width: 100%; height: 100%; object-fit: cover; display: block; border: none; border-radius: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .placesTilePlaces .placesTileCard:not(.viewAllCard):has(.placesCardLink:hover) { transform: none; }
+  .placesTilePlaces .placesTileCard:has(.placesCardLink:hover) .placesImgWrap > img { transform: none; }
+}
+/* Touch: >=44px hit for the tiny ref chips (card index + profile prose)
+   without changing their look; z-index keeps it above the stretched link */
+@media (pointer: coarse) {
+  .placesTilePlaces .placesTileCard .scripture_link::after,
+  .placeProfilePlace .placeProfileDesc .scripture_link::after {
+    content: "";
+    position: absolute;
+    top: calc((100% - 44px) / 2);
+    bottom: calc((100% - 44px) / 2);
+    left: -0.4rem;
+    right: -0.4rem;
+  }
+  .placeProfilePlace .placeProfileDesc .scripture_link { position: relative; z-index: 1; }
+  /* the collapsed clamp clips at its padding box: pad its top (offset by a
+     negative margin, so nothing moves) so first-line chips keep their hit */
+  .placeProfilePlace .placeProfileDesc > .clampLines { padding-top: 14px; margin-top: -14px; }
+  /* the pin is inset for its 44px hit: keep the name chip clear of it */
+  .placesTilePlaces .placesNameOverlay { max-width: calc(100% - 3.3rem); }
+  .placesTilePlaces .placesTileIndexRow.fitWords {
+    padding-top: 16px;
+    margin-top: -16px;
+    max-height: calc(var(--fit-lines, 2) * 1lh + 16px);
+  }
+}
 
 /* map pin (Places cards + PlaceProfile hero): a small glyph on a dark scrim
    disc so it reads on bright skies, with a >=44px hit area on touch */

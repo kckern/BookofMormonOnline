@@ -4,15 +4,26 @@ import { label } from "src/models/Utils";
 import pin from "src/views/_Common/svg/map-icon.svg";
 import RefPill from "./RefPill";
 import TileImage from "./_ds/TileImage";
+import FitWords from "./_ds/FitWords";
 import labelOr from "./_ds/labelOr";
 import { verbLabel } from "./_ds/TileCTA";
-import { clampWords, flatten, supDigits } from "./textUtils";
+import { flatten, supDigits, tidy } from "./textUtils";
 
 const CARDS = 5;
 
 // info strings are terse data labels: flatten markup and drop trailing junk
 // punctuation ("record depository;")
-const cleanInfo = (s) => flatten(s).replace(/[\s;,:]+$/, "");
+const cleanInfo = (s) => tidy(flatten(s).replace(/[\s;,:]+$/, ""));
+// source-name hygiene: "City of and Land of Shilom" → "City and Land of Shilom"
+export const placeName = (s) => supDigits(flatten(s || "")).replace(/\bof and\b/g, "and");
+// a card hook needs a real phrase: one-word glosses ("Retained") lose to any
+// index line of 3+ words when the place has one (audit H1)
+const wordCount = (s) => flatten(s || "").split(/\s+/).filter(Boolean).length;
+export const hookLines = (index) => {
+  const idx = (index || []).filter((x) => x?.ref);
+  const good = idx.filter((x) => wordCount(x.text) >= 3);
+  return good.length ? good : idx;
+};
 const MOSAIC_MAX = 12; // 3×4 fills the end card
 
 /**
@@ -30,9 +41,11 @@ export const profiledPlaceIndex = (places) => {
 /**
  * Place cards follow the people-card convention: name overlaid on the square
  * image, info band along its bottom, a corner map pin deep-linking to the
- * internal map, and the seeded index line (RefPill + gloss) underneath. The
- * image link is stretched over the whole card (one link per destination); the
- * pin and the pill sit above it. End cell = the "much more" mosaic → /places.
+ * internal map, and the seeded index line (RefPill + gloss) underneath. One
+ * place link is stretched over the WHOLE card (image + body, audit C1); the
+ * pin and the pill sit above it. Both text bands fit by whole words
+ * (FitWords), never a mid-word ellipsis (audit H3). End cell = the "much
+ * more" mosaic → /places.
  */
 export default function PlacesTile({ data, seed = 0, payload }) {
   const list = (data || []).filter((p) => p?.slug);
@@ -50,26 +63,25 @@ export default function PlacesTile({ data, seed = 0, payload }) {
       </h3>
       <div className="placesTileGrid">
         {cards.map((p, i) => {
-          const name = supDigits(flatten(p.name || ""));
-          const idx = (p.index || []).filter((x) => x?.ref);
+          const name = placeName(p.name);
+          const idx = hookLines(p.index);
           const item = idx.length ? idx[(seed + i) % idx.length] : null;
           const ref = item?.ref || null;
-          const gloss = item?.text ? clampWords(flatten(item.text), 10) : "";
+          const gloss = item?.text ? tidy(flatten(item.text)) : "";
           return (
             <div className="placesTileCard samplerCard" key={p.slug}>
+              <Link to={`/places/${p.slug}`} className="placesCardLink" aria-label={name} />
               <div className="placesImgWrap">
-                <Link to={`/places/${p.slug}`} className="placesCardLink">
-                  <TileImage
-                    path={`places/${p.slug}`}
-                    alt={name}
-                    sizes="(max-width: 480px) 45vw, (max-width: 900px) 30vw, 120px"
-                    onError={(e) => (e.target.style.visibility = "hidden")}
-                  />
-                </Link>
+                <TileImage
+                  path={`places/${p.slug}`}
+                  alt={name}
+                  sizes="(max-width: 480px) 45vw, (max-width: 900px) 30vw, 120px"
+                  onError={(e) => (e.target.style.visibility = "hidden")}
+                />
                 <span className="peopleFaceName placesNameOverlay">{name}</span>
                 {p.info ? (
                   <span className="peopleFaceTitle placesInfoOverlay">
-                    <span className="placesInfoText">{cleanInfo(p.info)}</span>
+                    <FitWords className="placesInfoText" text={cleanInfo(p.info)} lines={2} />
                   </span>
                 ) : null}
                 <Link
@@ -83,10 +95,7 @@ export default function PlacesTile({ data, seed = 0, payload }) {
               </div>
               {ref ? (
                 <div className="placesTileInfo samplerCardBody">
-                  <span className="placesTileIndexRow">
-                    <RefPill refText={ref} />
-                    {gloss ? <> {gloss}</> : null}
-                  </span>
+                  <FitWords className="placesTileIndexRow" prefix={<RefPill refText={ref} />} text={gloss} lines={3} />
                 </div>
               ) : null}
             </div>
