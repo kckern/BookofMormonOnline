@@ -5,6 +5,7 @@ import { useAppController } from "src/contexts/AppControllerContext";
 import { label } from "src/models/Utils";
 import Masonry from "react-masonry-css";
 import { tileRegistry, reservePool, batchTiles } from "./tiles/registry";
+import { featuredPlaceSlugs, withoutSeenPlaces } from "./tiles/PlacesTile";
 import { read as readCache, write as writeCache, isFresh as cacheIsFresh } from "./tiles/homeSamplerCache";
 import { readSession, writeSession, clearSession, readAnchor, writeAnchor } from "./tiles/samplerSession";
 import { captureAnchor, pinAnchor } from "./tiles/scrollAnchor";
@@ -189,6 +190,9 @@ export default function Sampler() {
   const loadMoreRef = useRef(() => {}); // latest maybeLoadMore, for the observer
   const mountedRef = useRef(true);
   const genRef = useRef(0); // sampler generation — see fetchSampler
+  // payloads on the page (first + revealed batches), for batch de-duplication
+  const shownPayloadsRef = useRef([]);
+  shownPayloadsRef.current = [samplerPayload, ...extraBatches.map((b) => b.payload)].filter(Boolean);
   useEffect(() => () => { mountedRef.current = false; }, []);
 
   // Community stream — always live, never cached. Fills its own tile when it
@@ -341,7 +345,10 @@ export default function Sampler() {
         if (r?.error || !Array.isArray(r?.homesampler)) return fail();
         fetchingRef.current = false;
         setLoadingMore(false);
-        reserveRef.current = { payload: assembleSampler(r), tiles: shuffle(batchTiles) };
+        // places already featured up the feed don't come back as cards/profile
+        const seen = new Set();
+        shownPayloadsRef.current.forEach((sp) => featuredPlaceSlugs(sp).forEach((x) => seen.add(x)));
+        reserveRef.current = { payload: withoutSeenPlaces(assembleSampler(r), seen), tiles: shuffle(batchTiles) };
         // the latest closure: this one may predate a Retry that cleared feedEnd
         if (atBottomRef.current) loadMoreRef.current();
       })

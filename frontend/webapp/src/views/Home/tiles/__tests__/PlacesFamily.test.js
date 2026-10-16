@@ -4,7 +4,7 @@ import path from "node:path";
 import "@testing-library/jest-dom";
 import { render, screen, within, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import PlacesTile from "../PlacesTile";
+import PlacesTile, { featuredPlaceSlugs, withoutSeenPlaces } from "../PlacesTile";
 import PlaceProfileTile from "../PlaceProfileTile";
 import { reservePool, batchTiles } from "../registry";
 
@@ -218,5 +218,26 @@ describe("PlaceProfileTile blind-audit fixes", () => {
       if (sh) Object.defineProperty(HTMLElement.prototype, "scrollHeight", sh); else delete HTMLElement.prototype.scrollHeight;
       if (ch) Object.defineProperty(HTMLElement.prototype, "clientHeight", ch); else delete HTMLElement.prototype.clientHeight;
     }
+  });
+});
+
+describe("H4: no featured place repeats across infinite batches", () => {
+  const mk = (ids) => ids.map((i) => mkPlace(i));
+  test("featured = the 5 cards + the profiled place", () => {
+    const places = mk([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]);
+    expect([...featuredPlaceSlugs({ places })]).toEqual(["place-0", "place-1", "place-2", "place-3", "place-4", "place-16"]);
+  });
+  test("already-featured places leave the cards and the profile slot of a later batch", () => {
+    const seen = new Set(["place-2", "place-16", "place-20"]);
+    const places = mk([2, 3, 20, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]);
+    const out = withoutSeenPlaces({ places, seed: 9 }, seen);
+    expect(out.seed).toBe(9);
+    expect(out.places).toHaveLength(17); // the mosaic keeps its pool
+    const featured = [...featuredPlaceSlugs(out)];
+    featured.forEach((s) => expect(seen.has(s)).toBe(false));
+  });
+  test("untouched when nothing was seen", () => {
+    const payload = { places: mk([1, 2, 3]) };
+    expect(withoutSeenPlaces(payload, new Set())).toBe(payload);
   });
 });

@@ -38,6 +38,36 @@ export const profiledPlaceIndex = (places) => {
   return n > CARDS + MOSAIC_MAX ? CARDS + MOSAIC_MAX : n - 1;
 };
 
+/** Slugs a payload FEATURES: the Places tile's cards and the profiled place. */
+export const featuredPlaceSlugs = (payload) => {
+  const list = (payload?.places || []).filter((p) => p?.slug);
+  const out = new Set(list.slice(0, CARDS).map((p) => p.slug));
+  const pi = profiledPlaceIndex(list);
+  if (pi >= 0) out.add(list[pi].slug);
+  return out;
+};
+
+/**
+ * An infinite batch re-samples from the same ~188 places, so a place already
+ * featured higher up the feed (a card, the profile) could come back as a card
+ * or the profile (audit H4). Reorder the batch: unseen places take the card
+ * slots and the profile slot; seen ones only feed the mosaic. Returns the
+ * payload unchanged when nothing in it was seen.
+ */
+export const withoutSeenPlaces = (payload, seen) => {
+  const list = payload?.places;
+  if (!Array.isArray(list) || !seen?.size || !list.some((p) => seen.has(p?.slug))) return payload;
+  const unseen = list.filter((p) => !seen.has(p?.slug));
+  const old = list.filter((p) => seen.has(p?.slug));
+  const out = [...unseen, ...old];
+  // the profile slot gets an unseen place too, when there are enough of them
+  if (unseen.length > CARDS) {
+    const prof = out.splice(unseen.length - 1, 1)[0];
+    out.splice(profiledPlaceIndex([...out, prof]), 0, prof);
+  }
+  return { ...payload, places: out };
+};
+
 /**
  * Place cards follow the people-card convention: name overlaid on the square
  * image, info band along its bottom, a corner map pin deep-linking to the
