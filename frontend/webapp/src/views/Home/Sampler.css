@@ -2668,7 +2668,10 @@ html[data-theme="dark"] .notesTile .notesCover { border-color: #444; }
 .mapStoryMoveState.isComplete { color: #333; }
 .mapStoryLegend { display: flex; align-items: center; gap: 4px; color: var(--tile-meta); font-size: 0.66rem; }
 .mapStoryLegend i { width: 7px; height: 7px; margin-left: 3px; border-radius: 50%; background: #9f3029; }
-.mapStoryLegend i.isVisited { background: transparent; box-shadow: inset 0 0 0 1.5px #a5524c; }
+/* Now vs Visited read by SIZE, as on the map (big haloed active dot, small
+   visited dot) — not two near-identical reds (audit A4). */
+.mapStoryLegend i.isActive { width: 10px; height: 10px; box-shadow: 0 0 0 2px rgba(159, 48, 41, 0.22); }
+.mapStoryLegend i.isVisited { width: 6px; height: 6px; background: #a5524c; }
 .mapStoryLegend i.isFuture { background: #8a8a8a; opacity: 0.6; }
 
 .mapStoryControls { display: flex; align-items: center; gap: 0.4rem; }

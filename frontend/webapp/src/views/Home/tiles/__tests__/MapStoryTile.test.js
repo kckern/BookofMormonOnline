@@ -491,8 +491,9 @@ describe("MapStoryTile — story audit fixes (2026-10-16)", () => {
     expect(rule(".mapStoryScrubber::-webkit-slider-runnable-track")).not.toMatch(/#c9a24b/);
     expect(rule(".mapStoryScrubber::-webkit-slider-thumb")).not.toMatch(/#c9a24b/);
     expect(rule(".mapStoryCompleteMark")).not.toMatch(/#c9a24b/);
-    // Visited reads as a hollow ring, not a second near-identical red dot
-    expect(rule(".mapStoryLegend i.isVisited")).toMatch(/background:\s*transparent/);
+    // Now and Visited differ by size (as on the map), not by two close reds
+    const size = (sel) => Number((rule(sel).match(/width:\s*(\d+)px/) || [])[1]);
+    expect(size(".mapStoryLegend i.isActive")).toBeGreaterThan(size(".mapStoryLegend i.isVisited") + 2);
   });
 });
 
