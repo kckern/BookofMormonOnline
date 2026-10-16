@@ -4,11 +4,30 @@ import { renderBaseUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 import ScriptureExcerpt, { readPath } from "src/views/_Common/ScriptureExcerpt";
 import labelOr from "./_ds/labelOr";
-import TileImage from "./_ds/TileImage";
+import TileImage, { knownSize } from "./_ds/TileImage";
 import TileDeepLink from "./_ds/TileDeepLink";
 import { shortEdition } from "./faxLabels";
 
 const CROP_WIDTH = 800;
+// Matches the .faxEditionCrop max-height in Sampler.css.
+const CROP_MAX_H = "6.5rem";
+const CROP_TYPICAL_H = "3rem";
+
+/**
+ * The box a crop will occupy, from its natural size learned earlier this
+ * session: its intrinsic width, capped by the column and by the max-height at
+ * its aspect. Lets a tile remounted on Back reserve its final height before
+ * the crops arrive (blind audit faxVerse-B1 / XC2). Unknown → no reservation.
+ */
+const cropBox = (path) => {
+  const s = knownSize(path);
+  // unknown yet: hold the row at a typical crop height (a 3-4 line verse at
+  // column width, ~3rem) so a cold load moves little; the load re-renders
+  if (!s) return { height: CROP_TYPICAL_H };
+  const r = s.w / s.h;
+  // via a custom property: the stylesheet's width is var(--crop-w, auto)
+  return { aspectRatio: String(+r.toFixed(4)), "--crop-w": `min(100%, ${s.w}px, calc(${CROP_MAX_H} * ${+r.toFixed(4)}))` };
+};
 
 // The app's existing fax-viewer ref-slug convention, e.g. "Mosiah 2:17" -> "mosiah.2.17".
 const refSlug = (ref) => (ref || "").replace(/[ :]+/g, ".").toLowerCase();
@@ -25,6 +44,8 @@ const refSlug = (ref) => (ref || "").replace(/[ :]+/g, ".").toLowerCase();
  * narrow fragment is not upscaled into mush.
  */
 export default function FaxVerseTile({ data }) {
+  // bumped as crops load, so cropBox swaps the placeholder for the real box
+  const [, setLoaded] = React.useState(0);
   if (!data || !data.selector) return null;
 
   // Prefer the editions list; fall back to a single row from legacy fields.
@@ -49,8 +70,13 @@ export default function FaxVerseTile({ data }) {
 
   return (
     <div className="samplerTileInner faxVerseTile">
+      {/* its own name: the Fax tile shares the 'Facsimiles' family (blind audit faxVerse-H2) */}
       <h3 className="tileHeading">
-        <Link to="/fax">{label("facsimiles")}</Link>
+        <Link to="/fax">
+          {label("facsimiles")} · {editions.length > 1
+            ? labelOr("one_verse_editions", "One verse, $1 editions", [editions.length])
+            : labelOr("one_verse", "One verse")}
+        </Link>
       </h3>
 
       {/* Verse text on top */}
@@ -77,6 +103,9 @@ export default function FaxVerseTile({ data }) {
                   className="faxEditionCrop"
                   path={cropUrl(ed, CROP_WIDTH)}
                   srcSet={`${cropUrl(ed, CROP_WIDTH)} 1x, ${cropUrl(ed, CROP_WIDTH * 2)} 2x`}
+                  remember
+                  style={cropBox(cropUrl(ed, CROP_WIDTH))}
+                  onLoad={() => setLoaded((n) => n + 1)}
                   alt={data.ref || ""}
                   onError={hideRow}
                 />

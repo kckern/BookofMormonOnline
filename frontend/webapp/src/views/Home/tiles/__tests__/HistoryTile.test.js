@@ -103,4 +103,8 @@ describe("archive dark-mode imagery (Sampler.css)", () => {
   test("tile images are dimmed in dark mode", () => {
     expect(css).toMatch(/html\[data-theme="dark"\] \.tile img\.tileImage\s*{\s*filter:\s*brightness/);
   });
+  test("white facsimile scans (covers, crops) are dimmed further and the verse excerpt has no slab (fax-L3, faxVerse-L3)", () => {
+    expect(css).toMatch(/html\[data-theme="dark"\] \.faxTileEdition img\.tileImage,\s*html\[data-theme="dark"\] \.faxVerseTile img\.faxEditionCrop\s*{\s*filter:\s*brightness\(\.7\)/);
+    expect(css).toMatch(/html\[data-theme="dark"\] \.faxVerseTile \.read-content[^{]*{[^}]*background:\s*transparent/);
+  });
 });

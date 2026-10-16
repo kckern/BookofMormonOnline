@@ -101,3 +101,29 @@ describe("FaxVerseTile", () => {
     expect(row.style.display).toBe("none");
   });
 });
+
+// Blind audit faxVerse-B1 / XC2: crops reserved no box, so a tile restored on
+// Back came back ~370px tall and grew to ~600px under the scroll anchor.
+describe("FaxVerseTile reserves crop boxes it has already measured", () => {
+  test("a remount (Back) sizes each crop from its learned natural size before load", () => {
+    const d = { selector: "mosiah-2.17", ref: "Mosiah 2:17", editions: [{ version: "1830", title: "1830 Palmyra Edition", page: 155 }] };
+    const r = render(<MemoryRouter><FaxVerseTile data={d} /></MemoryRouter>);
+    const img = r.container.querySelector("img.faxEditionCrop");
+    expect(img.style.aspectRatio).toBe("");
+    expect(img.style.height).toBe("3rem"); // cold: held at a typical crop height
+    Object.defineProperty(img, "naturalWidth", { configurable: true, value: 800 });
+    Object.defineProperty(img, "naturalHeight", { configurable: true, value: 100 });
+    fireEvent.load(img);
+    expect(img.style.height).toBe(""); // the real box replaces the placeholder
+    r.unmount();
+    const again = render(<MemoryRouter><FaxVerseTile data={d} /></MemoryRouter>);
+    const img2 = again.container.querySelector("img.faxEditionCrop");
+    expect(img2.style.aspectRatio).toBe("8");
+    expect(img2.style.getPropertyValue("--crop-w")).toMatch(/min\(100%, 800px/);
+  });
+});
+
+test("faxVerse-H2: the eyebrow names this tile apart from the Fax tile", () => {
+  const { container } = renderTile(data);
+  expect(container.querySelector(".tileHeading").textContent).toMatch(/·\s*One verse/);
+});

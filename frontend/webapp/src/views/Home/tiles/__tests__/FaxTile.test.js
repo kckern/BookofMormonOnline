@@ -97,3 +97,27 @@ describe("shortEdition", () => {
     [null, ""],
   ])("%s → %s", (t, out) => expect(shortEdition(t)).toBe(out));
 });
+
+// Blind audit fax-B1 / XC2: the pages reserved no box, so the tile grew when
+// its thumbnails loaded — on cold load (CLS) and, worse, after Back (the
+// restored tile came back ~370px tall, then grew to ~600px under the anchor).
+describe("FaxTile reserves its page boxes", () => {
+  const imgs = (c) => [...c.querySelectorAll("a.faxTilePageLink img")];
+  test("before any image loads, every page has an aspect-ratio box", () => {
+    const { container } = setup();
+    imgs(container).forEach((img) => expect(img.style.aspectRatio).not.toBe(""));
+  });
+  test("a remount (Back) reserves the natural aspect learned on the first load", () => {
+    const first = setup();
+    imgs(first.container).forEach((img) => {
+      Object.defineProperty(img, "naturalWidth", { configurable: true, value: 500 });
+      Object.defineProperty(img, "naturalHeight", { configurable: true, value: 1000 });
+      fireEvent.load(img);
+    });
+    first.unmount();
+    const again = setup();
+    imgs(again.container).forEach((img) => expect(img.style.aspectRatio).toBe("0.5"));
+    const pages = [...again.container.querySelectorAll(".faxTilePage")];
+    pages.forEach((p) => expect(p.style.flexGrow).toBe("0.5"));
+  });
+});

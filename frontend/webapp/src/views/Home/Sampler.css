@@ -2950,7 +2950,8 @@ html[data-theme="dark"] .faxVerseTile .faxEditionRailTitle { color: #e8e8e8; }
 .faxVerseTile .faxEditionCropWrap { display: block; }
 /* intrinsic size (1x/2x srcset), capped to the column: never upscaled */
 .faxVerseTile .faxEditionCrop {
-  width: auto;
+  /* --crop-w: the box reserved from a size learned earlier (FaxVerseTile cropBox) */
+  width: var(--crop-w, auto);
   max-width: 100%;
   max-height: 6.5rem;
   height: auto;
@@ -3151,6 +3152,14 @@ html[data-theme="dark"] .matterProfileSub { border-color: #3a3a3a; color: #cfcfc
 
 /* Dark mode: dim tile imagery a touch so photos don't glare off the dark ground. */
 html[data-theme="dark"] .tile img.tileImage { filter: brightness(.85); }
+/* facsimile scans are near-white paper: dimmer still, so the covers and verse
+   crops aren't the brightest thing on a dark page (blind audit fax-L3 / faxVerse-L3) */
+html[data-theme="dark"] .faxTileEdition img.tileImage,
+html[data-theme="dark"] .faxVerseTile img.faxEditionCrop { filter: brightness(.7) contrast(1.05); }
+/* the embedded Read excerpt sits on the tile ground, not a lighter slab */
+html[data-theme="dark"] .faxVerseTile .read-content,
+html[data-theme="dark"] .faxVerseTile .read-content .read-section,
+html[data-theme="dark"] .faxVerseTile .read-content .read-block { background: transparent; }
 
 /* Reduced motion: no hover lift, no image zoom, no animated transitions on
    cards. (MapStory clusters keep their centering translate.) */
@@ -3169,4 +3178,26 @@ html[data-theme="dark"] .tile img.tileImage { filter: brightness(.85); }
   .faxTileEdition:hover img,
   .mapStoryControlButton:hover:not(:disabled) { transform: none !important; }
   .mapStoryCluster:hover { transform: translate(-50%, -50%) !important; }
+}
+
+/* Archive tiles (fax, faxVerse, history, Joseph Smith, witness): the eyebrow
+   link was an 11px tap target on touch (blind audit XC4). Same treatment as
+   the matters eyebrows: a 44px hit, 12px up into the tile padding and the
+   rest down over the tile's first row. */
+@media (pointer: coarse) {
+  .faxTile .tileHeading a,
+  .faxVerseTile .tileHeading a,
+  .historyTile .tileHeading a,
+  .witnessTile .tileHeading a { position: relative; z-index: 2; } /* above the portrait img (z 1) */
+  .faxTile .tileHeading a::after,
+  .faxVerseTile .tileHeading a::after,
+  .historyTile .tileHeading a::after,
+  .witnessTile .tileHeading a::after {
+    content: "";
+    position: absolute;
+    top: -12px;
+    bottom: calc(100% - 44px + 12px);
+    left: -0.4rem;
+    right: -0.4rem;
+  }
 }

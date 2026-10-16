@@ -56,3 +56,21 @@
   }
   .notesTile .scriptureExcerptCompact .read-section .read-block .left-gutter img { width: 2.8rem; height: 3rem; }
 }
+
+/* the facsimile-verse tile embeds the same Read excerpt: same phone fix
+   (blind audit faxVerse-F1 — pulled out of the tile padding, avatar stacked). */
+@media only screen and (max-width: 900px) {
+  .faxVerseTile .read-content.scriptureExcerptCompact,
+  .faxVerseTile .scriptureExcerptCompact .read-section { margin: 0; }
+  .faxVerseTile .scriptureExcerptCompact .read-section .read-block { flex-direction: row; }
+  .faxVerseTile .scriptureExcerptCompact .read-section .read-block .left-gutter,
+  .faxVerseTile .scriptureExcerptCompact .read-section .read-block + .read-block .left-gutter {
+    display: block;
+    width: 3.4rem;
+    margin: 0;
+    padding: 0 0.6rem 0 0;
+    border-top: 0;
+    text-align: center;
+  }
+  .faxVerseTile .scriptureExcerptCompact .read-section .read-block .left-gutter img { width: 2.8rem; height: 3rem; }
+}

@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { label } from "src/models/Utils";
 import labelOr from "./_ds/labelOr";
-import TileImage from "./_ds/TileImage";
+import TileImage, { knownSize } from "./_ds/TileImage";
 import TileDeepLink from "./_ds/TileDeepLink";
 import RefPill from "./RefPill";
 import { shortEdition } from "./faxLabels";
@@ -13,6 +13,15 @@ import { shortEdition } from "./faxLabels";
 // sampler card, not a poster.
 const PAGE_MAX_H_REM = 20;
 const PAGES_GAP_REM = 0.4;
+// Box reserved for a page whose thumbnail hasn't loaded yet (a typical octavo
+// leaf, w/h). Once a page has loaded this session its real aspect is reused,
+// so a remount on Back has its final height at once (blind audit fax-B1/XC2).
+const DEFAULT_PAGE_ASPECT = 0.64;
+const thumbPath = (slug, p, format) => `fax/thumb/${slug}/${String(p.imageFile ?? p.page).padStart(3, "0")}.${format}`;
+const learnedAspect = (path) => {
+  const s = knownSize(path);
+  return s ? s.w / s.h : null;
+};
 
 /**
  * Header on top (document title), then two pages sampled from the facsimile's
@@ -27,20 +36,23 @@ export default function FaxTile({ data, payload }) {
   // Per-page natural aspect (w/h). In a flex row, growing each page proportional
   // to its aspect makes their RENDERED HEIGHTS equal while widths differ — a
   // taller (narrower) sheet just takes less horizontal room than a wide one.
-  const [aspects, setAspects] = React.useState({});
-  if (!data?.slug) return null;
-  const format = data.format || "jpg";
+  const format = data?.format || "jpg";
   const pages = (payload?.faxPages || []).filter((p) => p?.page != null).slice(0, 2);
+  const [aspects, setAspects] = React.useState(() => {
+    const out = {};
+    if (data?.slug) pages.forEach((p) => { const a = learnedAspect(thumbPath(data.slug, p, format)); if (a) out[p.page] = a; });
+    return out;
+  });
+  if (!data?.slug) return null;
   const editions = (payload?.faxMore || []).filter((e) => e?.slug);
   const to = `/fax/${data.slug}`;
   const title = data.title || data.slug;
   const pageCount = Number(data.pages) || 0;
-  const known = pages.every((p) => aspects[p.page]);
-  const aspectSum = pages.reduce((s, p) => s + (aspects[p.page] || 0), 0);
-  const rowStyle =
-    pages.length && known
-      ? { maxWidth: `calc(${aspectSum.toFixed(4)} * ${PAGE_MAX_H_REM}rem + ${(pages.length - 1) * PAGES_GAP_REM}rem)` }
-      : undefined;
+  const aspectOf = (p) => aspects[p.page] || DEFAULT_PAGE_ASPECT;
+  const aspectSum = pages.reduce((s, p) => s + aspectOf(p), 0);
+  const rowStyle = pages.length
+    ? { maxWidth: `calc(${aspectSum.toFixed(4)} * ${PAGE_MAX_H_REM}rem + ${(pages.length - 1) * PAGES_GAP_REM}rem)` }
+    : undefined;
   return (
     <div className="samplerTileInner faxTile">
       <h3 className="tileHeading">
@@ -58,17 +70,18 @@ export default function FaxTile({ data, payload }) {
           {pages.map((p) => {
             // Thumbnail is keyed by the scan image-file number; the deep-link and
             // the "p. N" label stay on p.page (the printed folio, canonical route id).
-            const nnn = String(p.imageFile ?? p.page).padStart(3, "0");
             return (
               <div
                 key={p.page}
                 className={`faxTilePage${p.ref ? " hasRef" : ""}`}
-                style={{ flexGrow: aspects[p.page] || 1 }}
+                style={{ flexGrow: aspectOf(p) }}
               >
                 {p.ref ? <RefPill refText={p.ref} className="faxPageBarRef" /> : null}
                 <Link to={`${to}/${p.page}`} className="faxTilePageLink">
                   <TileImage
-                    path={`fax/thumb/${data.slug}/${nnn}.${format}`}
+                    path={thumbPath(data.slug, p, format)}
+                    aspect={String(aspectOf(p))}
+                    remember
                     alt={labelOr("x_page_n", "$1, page $2", [title, p.page])}
                     onLoad={(e) => {
                       const { naturalWidth: w, naturalHeight: h } = e.target;
