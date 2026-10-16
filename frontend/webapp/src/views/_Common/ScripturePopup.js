@@ -5,6 +5,9 @@ import ScriptureExcerpt, { canonical, readPath } from "./ScriptureExcerpt";
 import useModalA11y from "./AppModal/useModalA11y";
 import "./ScripturePopup.css";
 
+// Same typographic range as the RefPill that opened us ("3:25–26", not "3:25-26").
+const enDash = (s) => (s || "").replace(/(\d)\s*-\s*(\d)/g, "$1–$2");
+
 /** Any scripture_link / RefPill opens a ref via this — one popup instance lives
  * in Main, app-wide.
  *
@@ -119,7 +122,7 @@ export default function ScripturePopup() {
   const cardInner = (
     <>
       <div className="samplerScriptureHead">
-        <b id={titleId}>{ref}</b>
+        <b id={titleId}>{enDash(ref)}</b>
         <button type="button" ref={closeRef} aria-label="Close" onClick={close}>×</button>
       </div>
       {/* .read-content scope makes the Read.scss styles apply */}

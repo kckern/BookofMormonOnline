@@ -89,7 +89,7 @@ test("dialog semantics: aria-modal, labelled by its title, focus in, Esc restore
   expect(dialog.getAttribute("aria-modal")).toBe("true");
   const labelId = dialog.getAttribute("aria-labelledby");
   expect(labelId).toBeTruthy();
-  expect(document.getElementById(labelId).textContent).toBe("Helaman 1:1-4");
+  expect(document.getElementById(labelId).textContent).toBe("Helaman 1:1–4");
   await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
   expect(document.documentElement.style.overflow).toBe("hidden");
 
@@ -176,4 +176,11 @@ test("scroll lock keeps the reader's place: body is not clipped and scrollY is r
   expect(spy).toHaveBeenCalledWith(0, 1700);
   spy.mockRestore();
   delete window.scrollY;
+});
+
+test("popup title uses the same en-dash range as the pill that opened it (audit A7)", async () => {
+  setup();
+  const dialog = await open("Helaman 1:1-4");
+  const title = dialog.querySelector(".samplerScriptureHead b");
+  expect(title.textContent).toBe("Helaman 1:1–4");
 });
