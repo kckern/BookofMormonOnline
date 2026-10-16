@@ -28,6 +28,12 @@ export default defineConfig(({ mode }) => {
   // REACT_APP_ prefix, and merged with process.env so the Dockerfile's
   // REACT_APP_CLICKY_* build args keep working.
   const env = loadEnv(mode, __dirname, "REACT_APP_");
+  // Public, non-secret defaults (env files are gitignored as a secrets guard, so
+  // a committed default lives here). Media variants are uploaded to the CDN
+  // (backend/scripts/build-media-variants.mjs) and TileImage falls back per
+  // image on a miss; REACT_APP_MEDIA_VARIANTS=0 turns srcset off.
+  // (not under Vitest: tests toggle the flag through process.env themselves)
+  if (mode !== "test" && env.REACT_APP_MEDIA_VARIANTS === undefined) env.REACT_APP_MEDIA_VARIANTS = "1";
   const backend =
     process.env.REACT_APP_LOCAL_BACKEND === "true"
       ? `http://localhost:${process.env.REACT_APP_LOCAL_BACKEND_PORT || "5006"}`

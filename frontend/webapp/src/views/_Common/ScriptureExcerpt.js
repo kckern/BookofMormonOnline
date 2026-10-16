@@ -6,6 +6,37 @@ import { label } from "src/models/Utils";
 import { slugify, getEnglishReference, verseIdToSlug } from "src/utils/scriptureUtils";
 import "../Read/Read.scss";
 import "./ScriptureExcerpt.css";
+import { variantUrl, variantsEnabled } from "src/views/Home/tiles/_ds/mediaVariants";
+
+/**
+ * Speaker portrait in a block's left gutter. It renders ~3.5rem wide, so it
+ * takes the 256px variant instead of the 150-650KB original; a missing variant
+ * falls back to the original once, then the slot hides (as before).
+ */
+export function GutterAvatar({ slug, voice }) {
+  if (!slug) return null;
+  const path = `people/${slug}`;
+  const onError = (e) => {
+    const img = e.currentTarget;
+    if (img.hasAttribute("srcset")) {
+      img.removeAttribute("srcset");
+      img.src = `${assetUrl}/${path}`;
+      return;
+    }
+    img.style.visibility = "hidden";
+  };
+  return (
+    <img
+      alt={voice || ""}
+      src={`${assetUrl}/${path}`}
+      srcSet={variantsEnabled() ? `${variantUrl(path, 256)} 256w` : undefined}
+      sizes="4rem"
+      loading="lazy"
+      decoding="async"
+      onError={onError}
+    />
+  );
+}
 
 /** Canonicalize abbreviated refs ("ps 67:2" → "Psalm 67:2"). */
 export const canonical = (ref) => {
@@ -294,9 +325,7 @@ export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = fals
       {s.blocks.map((b, i) => (
         <div key={i} className="read-block">
           <div className="left-gutter">
-            {b.person_slug ? (
-              <img alt={b.voice} src={`${assetUrl}/people/${b.person_slug}`} onError={(e) => (e.target.style.visibility = "hidden")} />
-            ) : null}
+            <GutterAvatar slug={b.person_slug} voice={b.voice} />
             {b.voice ? <div className="read-voice">{label(b.voice)}</div> : null}
           </div>
           <div className="main-content">
