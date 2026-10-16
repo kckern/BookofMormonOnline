@@ -55,7 +55,7 @@ export default function JosephSmithTile({ data }) {
           <span className="witnessBody">
             {reporter ? <span className="witnessSpeaker">{reporter}:</span> : null}
             {hasQuote || lead ? (
-              <ExpandableText className="witnessStatementWrap" lines={4}>
+              <ExpandableText className="witnessStatementWrap" lines={4} persistKey={data.slug ? `josephSmith:${data.slug}` : undefined}>
                 <span className="witnessStatement">
                   {hasQuote ? (
                     <>

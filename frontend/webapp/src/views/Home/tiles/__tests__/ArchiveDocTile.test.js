@@ -1,7 +1,7 @@
 /* eslint-disable testing-library/no-container, testing-library/no-node-access */
 import React from "react";
 import "@testing-library/jest-dom";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import ArchiveDocTile from "../ArchiveDocTile";
 import TranslationTile from "../TranslationTile";
@@ -67,6 +67,26 @@ describe("ArchiveDocTile", () => {
   });
 });
 
+describe("ArchiveDocTile meta hygiene (blind audit history-A7/H3)", () => {
+  test("author renders in display order without a birth note", () => {
+    const { container } = setup({ data: { ...base, source: null, author: "Howe, Eber D., b. 1798" } });
+    expect(container.querySelector(".historyTileMeta").textContent).toBe("1830 · Eber D. Howe");
+  });
+  test("a plain 'Last, First' author flips too", () => {
+    const { container } = setup({ data: { ...base, source: null, author: "Scott, Walter" } });
+    expect(container.querySelector(".historyTileMeta").textContent).toBe("1830 · Walter Scott");
+  });
+  test("a long citation is clamped on words with an ellipsis; a missing space after a colon is restored", () => {
+    const long = "Howe, Eber D. Mormonism Unvailed: Or, A Faithful Account of That Singular Imposition and Delusion, from Its Rise to the Present Time. With Sketches of the Characters of Its Propagators, and a Full Detail of the Manner in Which the Famous Golden Bible Was Brought before the World. Painesville, Ohio:E. D. Howe, 1834.";
+    const { container } = setup({ data: { ...base, citation: long } });
+    const c = container.querySelector(".historyTileCitation").textContent;
+    expect(c.split(" ").length).toBeLessThanOrEqual(25);
+    expect(c).toMatch(/…$/);
+    const short = setup({ data: { ...base, citation: "Painesville, Ohio:E. D. Howe, 1834." } }).container;
+    expect(short.querySelectorAll(".historyTileCitation")[0].textContent).toBe("Painesville, Ohio: E. D. Howe, 1834.");
+  });
+});
+
 describe("archive tile wrappers", () => {
   const doc = { slug: "d1", document: "A Doc", mini_quote: "a quote", citation: "C." };
   const wrap = (ui) => render(<MemoryRouter>{ui}</MemoryRouter>);
@@ -106,6 +126,25 @@ describe("archive tile wrappers", () => {
     expect(sp).toHaveTextContent("Wilford Woodruff");
     expect(sp.closest(".witnessStatementWrap")).toBeNull();
     expect(container.querySelector(".witnessStatementWrap .witnessStatement")).toHaveTextContent("Long words here");
+  });
+
+  test("XC3: JosephSmithTile keeps an expanded quote expanded across a remount (Back)", () => {
+    sessionStorage.clear();
+    const sh = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "scrollHeight");
+    const ch = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "clientHeight");
+    Object.defineProperty(HTMLElement.prototype, "scrollHeight", { configurable: true, get: () => 500 });
+    Object.defineProperty(HTMLElement.prototype, "clientHeight", { configurable: true, get: () => 100 });
+    try {
+      const a = wrap(<JosephSmithTile data={{ ...doc, money_quote: "Long words here" }} />);
+      fireEvent.click(screen.getByRole("button", { name: "Read more" }));
+      a.unmount();
+      wrap(<JosephSmithTile data={{ ...doc, money_quote: "Long words here" }} />);
+      expect(screen.getByRole("button", { name: "Show less" })).toBeInTheDocument();
+    } finally {
+      if (sh) Object.defineProperty(HTMLElement.prototype, "scrollHeight", sh); else delete HTMLElement.prototype.scrollHeight;
+      if (ch) Object.defineProperty(HTMLElement.prototype, "clientHeight", ch); else delete HTMLElement.prototype.clientHeight;
+      sessionStorage.clear();
+    }
   });
 
   test("JosephSmithTile minimal payload: no undefined", () => {

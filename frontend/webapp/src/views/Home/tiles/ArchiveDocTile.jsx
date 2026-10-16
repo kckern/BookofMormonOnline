@@ -27,10 +27,25 @@ export const parseTeaser = (html) => {
   return { lead, bullets };
 };
 
+// Catalog-form authors ("Howe, Eber D., b. 1798", "Scott, Walter") read as raw
+// database text in a human meta line: drop life dates, flip to display order
+// (blind audit history-A7). Anything else is left alone.
+export const displayAuthor = (a) => {
+  const s = String(a || "").replace(/,?\s*(?:b\.|d\.|fl\.)\s*\d{3,4}\??\s*$/i, "").replace(/,?\s*\d{3,4}\s*[-–]\s*(?:\d{3,4})?\s*$/, "").trim();
+  const m = /^([^,]+),\s*([^,]+)$/.exec(s);
+  return m ? `${m[2].trim()} ${m[1].trim()}` : s;
+};
+
+// The full bibliographic citation (a whole 1834 long title) dominated the card
+// below the quote (blind audit history-H3): a word clamp keeps it a meta line;
+// the destination carries it in full.
+const CITATION_WORDS = 22;
+const tidyCitation = (c) => clampWords(flatten(c).replace(/:(?=[A-Za-z])/g, ": "), CITATION_WORDS);
+
 export default function ArchiveDocTile({ data, heading, headingTo, to, images = [] }) {
   if (!data) return null;
   const rail = (Array.isArray(images) ? images : [images]).filter(Boolean);
-  const meta = [data.year, data.source, data.author].filter(Boolean).join(" · ");
+  const meta = [data.year, data.source, displayAuthor(data.author)].filter(Boolean).join(" · ");
   const aspect = parseFloat(data.aspect) || null; // stored as height/width
   const { lead, bullets } = parseTeaser(data.teaser);
   // Show the FULL money quote with the mini-quote excerpts highlighted in place
@@ -69,7 +84,7 @@ export default function ArchiveDocTile({ data, heading, headingTo, to, images = 
                 ))}
               </ul>
             ) : null}
-            {data.citation ? <div className="historyTileCitation">{flatten(data.citation)}</div> : null}
+            {data.citation ? <div className="historyTileCitation">{tidyCitation(data.citation)}</div> : null}
           </div>
           {rail.length ? (
             <Link

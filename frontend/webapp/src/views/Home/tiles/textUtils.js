@@ -53,6 +53,17 @@ const DANGLING = /^(of|and|the|a|an|to|by|in|on|at|for|from|with|or|as|who|whose
  */
 const isDangling = (w) => DANGLING.test((w || "").replace(/[,;:]$/, ""));
 
+// A ". " after an initial ("in I. Woodbury") or a citation abbreviation
+// ("no. 119", "rep. Saints' Herald") is not a sentence end; cutting there left
+// '…Missouri, in I.' with no ellipsis (blind audit witness-H3).
+const NOT_SENTENCE_END = /(?:^|[\s(])(?:[A-Z]|no|nos|vol|vols|ed|eds|rep|repr|p|pp|ch|chap|n|ca|c|cf|esp|St|Mr|Mrs|Dr|Jr|Sr|Rev|Gen|Col|Capt|Hon|Prof|Mt|Ft)$/;
+const lastSentenceEnd = (cut) => {
+  for (let i = cut.lastIndexOf(". "); i > 0; i = cut.lastIndexOf(". ", i - 1)) {
+    if (!NOT_SENTENCE_END.test(cut.slice(0, i))) return i;
+  }
+  return -1;
+};
+
 /**
  * `phrase: true` (short labels such as person titles) also drops a trailing
  * fragment that a function word opened within the last three words — "…assisted
@@ -63,7 +74,7 @@ export const clampWords = (text, words, { phrase = false } = {}) => {
   const parts = (text || "").split(" ");
   if (parts.length <= words) return text || "";
   let cut = parts.slice(0, words).join(" ");
-  const lastEnd = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("; "));
+  const lastEnd = Math.max(lastSentenceEnd(cut), cut.lastIndexOf("; "));
   if (lastEnd > cut.length * 0.5) return cut.slice(0, lastEnd + 1).trim();
   cut = cut.replace(/\s*\([^)]*$/, "").replace(/[,;:—-]$/, "").trim();
   let kept = cut.split(" ");

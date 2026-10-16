@@ -57,6 +57,15 @@ describe("clampWords", () => {
       "Gamma delta epsilon zeta."
     );
   });
+  test("an initial or abbreviation is not a sentence end (blind audit witness-H3)", () => {
+    const a = clampWords("Interview with David Whitmer at his home in Richmond, Missouri, in I. Woodbury Pratt papers collection here", 14);
+    expect(a).not.toMatch(/ I\.$/);
+    expect(a).toMatch(/…$/);
+    // a real sentence end is still preferred
+    expect(clampWords("Gamma delta epsilon zeta. Eta theta iota", 6)).toBe("Gamma delta epsilon zeta.");
+    expect(clampWords("Letter to the editor, rep. Saints' Herald 22, no. 4 (1875) pp. 1-3 more", 9)).not.toMatch(/no\.$/);
+    expect(clampWords("Letter to the editor, rep. Saints' Herald 22, no. 4 (1875) pp. 1-3 more", 9)).toMatch(/…$/);
+  });
   test("never strands an open parenthetical", () => {
     expect(clampWords("word word word word (open paren here", 5)).toBe(
       "word word word word…"

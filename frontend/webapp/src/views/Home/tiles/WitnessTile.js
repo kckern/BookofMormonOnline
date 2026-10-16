@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import { label } from "src/models/Utils";
 import { flatten, clampWords } from "./textUtils";
@@ -7,14 +7,17 @@ import TileDeepLink from "./_ds/TileDeepLink";
 import TileImage from "./_ds/TileImage";
 import ExpandableText from "./ExpandableText";
 
-// Which witness the previous witness tile in the feed featured — so the same
-// principal (David Whitmer has by far the most rows) doesn't clog consecutive
-// tiles as fresh batches append on scroll. Module-scoped, resets per page load.
-let lastFeaturedWitness = null;
-// The choice per payload array, so a REMOUNT of the same tile (the masonry
-// re-flows tiles between columns as the page grows) re-features the same
-// witness instead of skipping to another one mid-read.
-const chosenByData = new WeakMap();
+/**
+ * The witness a payload features: its first row with an editorially prepared
+ * money quote (NEVER a teaser/transcript — that would fabricate an attribution).
+ * A pure function of the rows, so a payload restored from the Home session on
+ * Back features the same witness (blind audit witness-E2: a module-level "last
+ * featured" guard plus a WeakMap on the payload object picked a different
+ * witness after every Back). Variety down the feed is arranged on the batch
+ * payload instead (archiveFeed.arrangeWitnesses).
+ */
+export const featuredWitness = (rows) =>
+  (Array.isArray(rows) ? rows : []).find((x) => x?.principal && x?.moneyQuote) || null;
 
 const initials = (name) =>
   (name || "")
@@ -39,8 +42,11 @@ const withBrackets = (text) =>
 // Source lines carry light Markdown (publication titles in _italics_). Render
 // _x_ / *x* as <em>; an underscore inside a word (snake_case) is left alone.
 const MD_RE = /(?<![\w*])([_*])(?=\S)([^_*]+?)(?<=\S)\1(?![\w*])/g;
+// Source lines also carry Markdown backslash escapes ("(April 12, 1875): \\[3\\]");
+// unescape them so the reader sees "[3]" (blind audit witness-A7).
+const unescapeMd = (t) => t.replace(/\\([\\`*_{}[\]()#+\-.!|])/g, "$1");
 export const inlineMarkdown = (text) => {
-  const s = String(text || "");
+  const s = unescapeMd(String(text || ""));
   const out = [];
   let last = 0;
   let m;
@@ -65,33 +71,7 @@ export const inlineMarkdown = (text) => {
  * (A monogram stands in if a portrait fails to load.)
  */
 export default function WitnessTile({ data }) {
-  // Choose the featured witness ONCE — the first render where data is available —
-  // then freeze it for this tile's lifetime. Without this, every re-render recomputes
-  // pool[0], and because the pool depends on the mutable module-level lastFeaturedWitness
-  // (which other witness tiles keep changing), the card's content would randomly swap
-  // after it had already loaded. The choice is stable once made.
-  const chosenRef = useRef(null);
-  if (!chosenRef.current && data && typeof data === "object" && chosenByData.has(data)) {
-    chosenRef.current = chosenByData.get(data);
-  }
-  if (!chosenRef.current) {
-    // Only rows with an editorially-prepared money quote are quotable — NEVER a
-    // teaser/transcript (that would fabricate an attribution).
-    const witnesses = (data || []).filter((x) => x?.principal && x?.moneyQuote);
-    // Avoid repeating the previous tile's witness (David Whitmer has by far the most
-    // rows); otherwise feature the seeded-first row, so BOTH first-person quotes and
-    // attributed third-party accounts ("Speaker: …") surface across the feed.
-    const notLast = witnesses.filter((x) => x.principal !== lastFeaturedWitness);
-    const pool = notLast.length ? notLast : witnesses;
-    if (pool.length) {
-      chosenRef.current = pool[0];
-      if (data && typeof data === "object") chosenByData.set(data, pool[0]);
-    }
-  }
-  const w = chosenRef.current;
-  // Remember who this tile featured so the next witness tile can skip them.
-  // (hook runs unconditionally — before any early return; w is now stable so it fires once)
-  useEffect(() => { if (w) lastFeaturedWitness = w.principal; }, [w?.principal]);
+  const w = featuredWitness(data);
   if (!w) return null;
   const quote = flatten(w.moneyQuote);
   // flatten() strips HTML but keeps Markdown marks; clamp on words, then render.
@@ -121,7 +101,7 @@ export default function WitnessTile({ data }) {
           </Link>
           <span className="witnessBody">
             {reporter ? <span className="witnessSpeaker">{reporter}:</span> : null}
-            <ExpandableText className="witnessStatementWrap" lines={4}>
+            <ExpandableText className="witnessStatementWrap" lines={4} persistKey={w.slug ? `witness:${w.slug}` : undefined}>
               <span className="witnessStatement">&ldquo;{withBrackets(quote)}&rdquo;</span>
             </ExpandableText>
             {source ? <span className="witnessSource">{inlineMarkdown(source)}</span> : null}

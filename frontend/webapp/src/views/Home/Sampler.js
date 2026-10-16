@@ -5,6 +5,7 @@ import { useAppController } from "src/contexts/AppControllerContext";
 import { label } from "src/models/Utils";
 import Masonry from "react-masonry-css";
 import { tileRegistry, reservePool, batchTiles } from "./tiles/registry";
+import { arrangeArchives, featuredArchiveKeys } from "./tiles/archiveFeed";
 import { featuredPlaceSlugs, withoutSeenPlaces } from "./tiles/PlacesTile";
 import { read as readCache, write as writeCache, isFresh as cacheIsFresh } from "./tiles/homeSamplerCache";
 import { readSession, writeSession, clearSession, readAnchor, writeAnchor } from "./tiles/samplerSession";
@@ -348,7 +349,12 @@ export default function Sampler() {
         // places already featured up the feed don't come back as cards/profile
         const seen = new Set();
         shownPayloadsRef.current.forEach((sp) => featuredPlaceSlugs(sp).forEach((x) => seen.add(x)));
-        reserveRef.current = { payload: withoutSeenPlaces(assembleSampler(r), seen), tiles: shuffle(batchTiles) };
+        // …and the witness / Joseph Smith tiles don't repeat a statement either
+        const archives = featuredArchiveKeys(shownPayloadsRef.current);
+        reserveRef.current = {
+          payload: arrangeArchives(withoutSeenPlaces(assembleSampler(r), seen), archives),
+          tiles: shuffle(batchTiles),
+        };
         // the latest closure: this one may predate a Retry that cleared feedEnd
         if (atBottomRef.current) loadMoreRef.current();
       })

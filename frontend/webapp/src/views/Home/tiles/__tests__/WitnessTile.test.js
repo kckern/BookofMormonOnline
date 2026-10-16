@@ -58,20 +58,24 @@ describe("WitnessTile", () => {
     expect(sp.closest(".witnessStatementWrap")).toBeNull();
   });
 
-  test("a remount with the same payload re-features the same witness (no mid-read swap)", () => {
+  test("E2: the featured witness is a pure function of the payload — a copy restored on Back features the same one", () => {
     const two = [
       { slug: "a", principal: "Martin Harris", witnessSlug: "martin-harris", moneyQuote: "Q1." },
       { slug: "b", principal: "Hyrum Smith", witnessSlug: "hyrum-smith", moneyQuote: "Q2." },
     ];
     const first = setup(two);
-    const name = first.container.querySelector(".witnessName").textContent;
-    first.unmount(); // lastFeaturedWitness is now `name`
-    const again = setup(two);
-    expect(again.container.querySelector(".witnessName")).toHaveTextContent(name);
-    again.unmount();
-    // a DIFFERENT payload (a new batch) still skips the previous witness
-    const next = setup(two.map((x) => ({ ...x })));
-    expect(next.container.querySelector(".witnessName")).not.toHaveTextContent(name);
+    expect(first.container.querySelector(".witnessName")).toHaveTextContent("Martin Harris");
+    first.unmount();
+    // sessionStorage restores a NEW object with the same rows
+    const again = setup(JSON.parse(JSON.stringify(two)));
+    expect(again.container.querySelector(".witnessName")).toHaveTextContent("Martin Harris");
+  });
+
+  test("A7: backslash-escaped Markdown brackets in the source render as plain brackets", () => {
+    const { container } = setup([{ ...data[0], source: "_Deseret Evening News_ 8, no. 119 (April 12, 1875): \\[3\\]" }]);
+    const src = container.querySelector(".witnessSource").textContent;
+    expect(src).not.toMatch(/\\/);
+    expect(src).toContain("[3]");
   });
 
   test("portrait goes through TileImage and is decorative (the name is the link text)", () => {
@@ -96,6 +100,16 @@ describe("WitnessTile long quotes (Layer-1 reveal)", () => {
   afterAll(() => {
     if (sh) Object.defineProperty(HTMLElement.prototype, "scrollHeight", sh); else delete HTMLElement.prototype.scrollHeight;
     if (ch) Object.defineProperty(HTMLElement.prototype, "clientHeight", ch); else delete HTMLElement.prototype.clientHeight;
+  });
+
+  test("XC3: an expanded quote stays expanded across a remount (Back)", () => {
+    sessionStorage.clear();
+    const a = setup(data);
+    fireEvent.click(screen.getByRole("button", { name: "Read more" }));
+    a.unmount();
+    setup(JSON.parse(JSON.stringify(data)));
+    expect(screen.getByRole("button", { name: "Show less" })).toBeInTheDocument();
+    sessionStorage.clear();
   });
 
   test("a clamped quote offers a reversible Read more / Show less", () => {
