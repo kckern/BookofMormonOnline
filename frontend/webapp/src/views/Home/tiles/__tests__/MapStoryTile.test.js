@@ -443,3 +443,65 @@ describe("MapStory source/CSS guards", () => {
     expect(story).not.toMatch(/#45679e|69,\s*103,\s*158|#96362f|#2f6749|#397054|#8b2f29|#8b302a|#7f2d28|#2e5943|#9f3932|#c85a51|#b95850/i);
   });
 });
+
+describe("MapStoryTile — story audit fixes (2026-10-16)", () => {
+  const css = fs.readFileSync(path.resolve(__dirname, "../../Sampler.css"), "utf8");
+  const rule = (sel) => {
+    const i = css.indexOf(`${sel} {`);
+    return i < 0 ? "" : css.slice(i, css.indexOf("}", i));
+  };
+
+  test("C4/H3: the move description is an in-place Read more, not a dead CSS clamp", () => {
+    const long = Array.from({ length: 80 }, (_, i) => `w${i}`).join(" ");
+    const { container } = renderTile({ ...data, moves: data.moves.map((m) => ({ ...m, description: long })) });
+    const desc = container.querySelector(".mapStoryDesc");
+    expect(desc.querySelector(".clampLines")).toBeTruthy();
+    expect(rule(".mapStoryTile .mapStoryDesc")).not.toMatch(/line-clamp/);
+  });
+
+  test("clicking inside the beat card (Read more, ref) pauses autoplay", () => {
+    const { container } = renderTile();
+    act(() => { vi.advanceTimersByTime(10); });
+    fireEvent.click(container.querySelector(".mapStoryStage"));
+    expect(mapState("playing")).toBe("false");
+  });
+
+  test("B2: the paused hint lives inside the map frame (no tile growth)", () => {
+    const { container } = renderTile();
+    fireEvent.click(screen.getByTestId("map-manipulate"));
+    const hint = screen.getByText("Playback paused while you explore the map.");
+    expect(container.querySelector(".mapTileFrame").contains(hint)).toBe(true);
+  });
+
+  test("A1: the title wraps to two lines instead of a one-line ellipsis", () => {
+    const t = rule(".mapStoryTitle");
+    expect(t).not.toMatch(/white-space:\s*nowrap/);
+    expect(t).toMatch(/line-clamp:\s*2/);
+  });
+
+  test("C5: the scrubber gets the gold house focus ring", () => {
+    expect(rule(".mapStoryScrubber:focus-visible")).toMatch(/outline:\s*2px solid #c9a24b/);
+  });
+
+  test("F2: coarse pointers get a 44px scrubber", () => {
+    expect(css).toMatch(/@media \(pointer: coarse\)\s*\{[^}]*\.mapStoryScrubber\s*\{\s*height:\s*44px/);
+  });
+
+  test("A4: gold stays on the primary action; scrubber fill and the complete mark are neutral", () => {
+    expect(rule(".mapStoryScrubber::-webkit-slider-runnable-track")).not.toMatch(/#c9a24b/);
+    expect(rule(".mapStoryScrubber::-webkit-slider-thumb")).not.toMatch(/#c9a24b/);
+    expect(rule(".mapStoryCompleteMark")).not.toMatch(/#c9a24b/);
+    // Visited reads as a hollow ring, not a second near-identical red dot
+    expect(rule(".mapStoryLegend i.isVisited")).toMatch(/background:\s*transparent/);
+  });
+});
+
+// Story audit A2: labels collided on screen although the collision solver
+// placed them apart. syncOverlay writes left/top straight to the DOM every
+// frame; after the settle-time layout, React skipped rewriting a style whose
+// prop value had not changed since ITS last render, so the DOM kept a stale,
+// mid-animation position. The settled overlay must be pushed to the DOM.
+test("MapStoryTileInner re-syncs the DOM overlay whenever a new layout lands", () => {
+  const inner = fs.readFileSync(path.resolve(__dirname, "../MapStoryTileInner.js"), "utf8");
+  expect(inner).toMatch(/useLayoutEffect\(\(\) => \{\s*syncOverlayRef\.current\?\.\(\);?\s*\}, \[overlay\]\)/);
+});

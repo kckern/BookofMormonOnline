@@ -10,6 +10,18 @@ const rectForCenter = (id, x, y, width, height) => ({
   height,
 });
 
+/**
+ * Where a solved overlay item (marker or label) sits when its place's live
+ * pixel is `pixel`: the solved position translated by how far the TRUE point
+ * moved since layout. Measuring from a displaced marker instead snapped every
+ * solved pair back on top of each other (story audit A2).
+ */
+export const livePosition = (item, pixel) => {
+  const px = item.pointX ?? item.anchorX ?? item.x;
+  const py = item.pointY ?? item.anchorY ?? item.y;
+  return { x: item.x + (pixel[0] - px), y: item.y + (pixel[1] - py) };
+};
+
 export const rectanglesOverlap = (a, b, gap = 0) =>
   a.x < b.x + b.width + gap &&
   a.x + a.width + gap > b.x &&
@@ -189,6 +201,9 @@ export const layoutLabels = ({ items, obstacles, width, height, padding = 8, pre
       ...rect,
       anchorX: item.x,
       anchorY: item.y,
+      // the place's TRUE pixel at layout time (item.x/y may be a displaced marker)
+      pointX: item.anchorX ?? item.x,
+      pointY: item.anchorY ?? item.y,
       leader: leaderLength > 12 ? { x1: item.x, y1: item.y, x2: end.x, y2: end.y } : null,
     };
     placed.push(label);

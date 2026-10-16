@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import OlMap from "ol/Map";
 import View from "ol/View";
@@ -14,7 +14,7 @@ import { boundingExtent } from "ol/extent";
 import * as Interaction from "ol/interaction";
 import "ol/ol.css";
 import { framedLegIndices, legVisibility, legsOf, stopsOf } from "./mapStoryPath";
-import { buildStoryOverlay, storyStepForStop, travelerPosition } from "./mapStoryLayout";
+import { buildStoryOverlay, livePosition, storyStepForStop, travelerPosition } from "./mapStoryLayout";
 import TileImage from "./_ds/TileImage";
 import labelOr from "./_ds/labelOr";
 import { supDigits } from "./textUtils";
@@ -238,22 +238,24 @@ export default function MapStoryTileInner({
       const p = px(marker.lat, marker.lng);
       if (!finite(p)) return;
       const node = nodes.markers.get(marker.slug);
-      if (node) { node.style.left = `${p[0]}px`; node.style.top = `${p[1]}px`; }
-      shiftLeader(nodes.markerLeaders.get(marker.slug), marker.leader, p[0] - marker.x, p[1] - marker.y);
+      // Solved (possibly displaced) spot, translated by the true point's motion.
+      const at = livePosition(marker, p);
+      if (node) { node.style.left = `${at.x}px`; node.style.top = `${at.y}px`; }
+      shiftLeader(nodes.markerLeaders.get(marker.slug), marker.leader, at.x - marker.x, at.y - marker.y);
     });
 
     const frameW = mapElementRef.current?.clientWidth || 0;
     ov.labels.forEach((label) => {
       const p = px(label.lat, label.lng);
       if (!finite(p)) return;
-      const offX = label.x - label.anchorX, offY = label.y - label.anchorY;
+      const at = livePosition(label, p);
       const node = nodes.labels.get(label.slug);
       // Keep the label box inside the frame while the camera moves, so a stop
       // near the edge never reads as a clipped fragment ("elek" for Melek).
-      let left = p[0] + offX;
+      let left = at.x;
       if (frameW > label.width) left = Math.min(frameW - label.width - 4, Math.max(4, left));
-      if (node) { node.style.left = `${left}px`; node.style.top = `${p[1] + offY}px`; }
-      shiftLeader(nodes.labelLeaders.get(label.slug), label.leader, p[0] - label.anchorX, p[1] - label.anchorY);
+      if (node) { node.style.left = `${left}px`; node.style.top = `${at.y}px`; }
+      shiftLeader(nodes.labelLeaders.get(label.slug), label.leader, at.x - label.x, at.y - label.y);
     });
 
     ov.clusters.forEach((cluster, index) => {
@@ -292,6 +294,15 @@ export default function MapStoryTileInner({
       }
     }
   };
+
+  // A new settled layout must reach the DOM. syncOverlay writes left/top
+  // directly every frame, so React's own style diff (against ITS last props)
+  // could skip a label whose x/y prop didn't change and leave the DOM at a
+  // stale mid-animation spot — labels drawn over each other although the
+  // solver had placed them apart (story audit A2). Re-sync after each commit.
+  useLayoutEffect(() => {
+    syncOverlayRef.current?.();
+  }, [overlay]);
 
   function positionTraveler(coordinate, from, to) {
     travelerRouteRef.current = { coordinate, from, to };

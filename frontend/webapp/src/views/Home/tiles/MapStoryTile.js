@@ -291,6 +291,13 @@ export default function MapStoryTile({ data }) {
           )}
         </MapStoryErrorBoundary>
         <div className="mapStoryMapShade" aria-hidden="true" />
+        {/* Inside the frame, over the map: showing it never grows the tile and
+            shoves the masonry column (audit B2). */}
+        {mapMoved ? (
+          <div className="mapStoryInteractionHint" role="status">
+            {labelOr("mapstory_paused_hint", "Playback paused while you explore the map.")}
+          </div>
+        ) : null}
       </div>
 
       {mapFailed ? null : (
@@ -355,13 +362,9 @@ export default function MapStoryTile({ data }) {
         </>
       )}
 
-      {mapMoved ? (
-        <div className="mapStoryInteractionHint">
-          {labelOr("mapstory_paused_hint", "Playback paused while you explore the map.")}
-        </div>
-      ) : null}
-
-      <div className="mapStoryStage">
+      {/* Clicking into the beat (Read more, the ref pill) is reading: stop the
+          autoplay from replacing the card under the reader. */}
+      <div className="mapStoryStage" onClickCapture={() => setPaused(true)}>
         {showComplete ? (
           <MapStoryCompleteCard
             heading={route}
@@ -369,6 +372,7 @@ export default function MapStoryTile({ data }) {
           />
         ) : (
           <MapStoryMoveCard
+            key={step}
             move={{ ...currentMove, detached: legs[step]?.detached }}
             step={step}
           />

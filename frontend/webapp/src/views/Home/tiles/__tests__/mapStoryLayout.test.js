@@ -3,6 +3,7 @@ import {
   clusterFutureStops,
   layoutLabels,
   layoutSymbols,
+  livePosition,
   rectanglesOverlap,
   roleForStop,
   storyStepForStop,
@@ -308,5 +309,30 @@ describe("label placement hysteresis", () => {
     });
     expect(reused[0].x).toBe(58);
     expect(reused[0].y).toBe(106);
+  });
+});
+
+// Story audit A2: the per-frame retether placed markers at their TRUE pixel and
+// offset labels from the DISPLACED marker, so every displaced pair snapped back
+// on top of each other after the solver had separated them.
+describe("live retether keeps the solved layout", () => {
+  test("at the layout-time pixel, displaced markers and their labels stay where the solver put them", () => {
+    const markers = layoutSymbols({
+      width: 320,
+      height: 240,
+      symbols: [
+        { id: "marker:a", slug: "a", name: "City of A", x: 150, y: 120, width: 18, height: 18, priority: 1, firstStep: 0, required: true },
+        { id: "marker:b", slug: "b", name: "City of B", x: 152, y: 121, width: 18, height: 18, priority: 1, firstStep: 1, required: true },
+      ],
+    });
+    const displaced = markers.find((m) => m.leader);
+    expect(displaced).toBeTruthy();
+    const truePixel = [displaced.anchorX, displaced.anchorY];
+    expect(livePosition(displaced, truePixel)).toEqual({ x: displaced.x, y: displaced.y });
+    const labels = layoutLabels({ items: markers.map((m) => ({ ...m, required: true })), obstacles: [], width: 320, height: 240 });
+    const label = labels.find((l) => l.slug === displaced.slug);
+    expect(livePosition(label, truePixel)).toEqual({ x: label.x, y: label.y });
+    // and a pan translates both by the same delta
+    expect(livePosition(label, [truePixel[0] + 10, truePixel[1] - 4])).toEqual({ x: label.x + 10, y: label.y - 4 });
   });
 });

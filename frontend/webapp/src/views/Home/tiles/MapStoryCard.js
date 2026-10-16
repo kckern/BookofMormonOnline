@@ -1,6 +1,7 @@
 import React from "react";
 import RefPill from "./RefPill";
 import TileImage from "./_ds/TileImage";
+import ExpandableText from "./ExpandableText";
 import labelOr from "./_ds/labelOr";
 import { supDigits } from "./textUtils";
 
@@ -63,7 +64,11 @@ export function MapStoryMoveCard({ move, step }) {
             </span>
           ) : null}
         </div>
-        {move.description ? <p className="mapStoryDesc">{move.description}</p> : null}
+        {/* Word-safe fade clamp + in-place Read more (audit C4/H3: the CSS
+            ellipsis cut "ministerin…" with no way to read on in Layer 1). */}
+        {move.description ? (
+          <ExpandableText className="mapStoryDesc" lines={3} fade>{move.description}</ExpandableText>
+        ) : null}
         {travelers ? (
           <p className="mapStoryTravelerText">
             <span aria-hidden="true">●</span>
@@ -82,7 +87,9 @@ export function MapStoryCompleteCard({ heading, description }) {
       <div className="mapStoryCompleteMark" aria-hidden="true">✓</div>
       <div className="mapStoryBeatBody">
         <div className="mapStoryCompleteHeading">{heading}</div>
-        {description ? <p className="mapStoryDesc">{description}</p> : null}
+        {description ? (
+          <ExpandableText className="mapStoryDesc" lines={5} fade>{description}</ExpandableText>
+        ) : null}
       </div>
     </section>
   );

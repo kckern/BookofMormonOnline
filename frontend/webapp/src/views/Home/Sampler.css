@@ -2426,8 +2426,11 @@ html[data-theme="dark"] .notesTile .notesCover { border-color: #444; }
   font-size: 1.18rem;
   font-weight: 750;
   line-height: 1.12;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* two lines, balanced, never "The Mission of Nephi and L…" (audit A1) */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  text-wrap: balance;
 }
 .mapStoryTitle:hover { color: #000; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: #c9a24b; }
 .mapStoryCounts {
@@ -2535,7 +2538,7 @@ html[data-theme="dark"] .notesTile .notesCover { border-color: #444; }
   pointer-events: auto;
   transition: left 200ms ease, top 200ms ease, width 200ms ease;
 }
-.mapStoryPlaceLabel:hover { color: #fffdf8; }
+.mapStoryPlaceLabel:hover { color: #fffdf8; text-decoration: underline; text-underline-offset: 2px; }
 .mapStoryPlaceLabel:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 0.2rem; }
 .mapStoryPlaceLabel.is-active {
   /* Brightest state — crisp white with a slightly stronger halo, never red. */
@@ -2665,7 +2668,7 @@ html[data-theme="dark"] .notesTile .notesCover { border-color: #444; }
 .mapStoryMoveState.isComplete { color: #333; }
 .mapStoryLegend { display: flex; align-items: center; gap: 4px; color: var(--tile-meta); font-size: 0.66rem; }
 .mapStoryLegend i { width: 7px; height: 7px; margin-left: 3px; border-radius: 50%; background: #9f3029; }
-.mapStoryLegend i.isVisited { background: #a5524c; }
+.mapStoryLegend i.isVisited { background: transparent; box-shadow: inset 0 0 0 1.5px #a5524c; }
 .mapStoryLegend i.isFuture { background: #8a8a8a; opacity: 0.6; }
 
 .mapStoryControls { display: flex; align-items: center; gap: 0.4rem; }
@@ -2701,10 +2704,10 @@ html[data-theme="dark"] .notesTile .notesCover { border-color: #444; }
 .mapStoryScrubber::-webkit-slider-runnable-track {
   height: 6px;
   border-radius: 999px;
-  background: linear-gradient(to right, #c9a24b 0 var(--map-story-progress), #dcdcdc var(--map-story-progress) 100%);
+  background: linear-gradient(to right, #555 0 var(--map-story-progress), #dcdcdc var(--map-story-progress) 100%);
 }
 .mapStoryScrubber::-moz-range-track { height: 6px; border-radius: 999px; background: #dcdcdc; }
-.mapStoryScrubber::-moz-range-progress { height: 6px; border-radius: 999px; background: #c9a24b; }
+.mapStoryScrubber::-moz-range-progress { height: 6px; border-radius: 999px; background: #555; }
 .mapStoryScrubber::-webkit-slider-thumb {
   width: 20px;
   height: 20px;
@@ -2713,7 +2716,7 @@ html[data-theme="dark"] .notesTile .notesCover { border-color: #444; }
   -webkit-appearance: none;
   border: 3px solid #fff;
   border-radius: 50%;
-  background: #c9a24b;
+  background: #333;
   box-shadow: 0 1px 5px rgba(35, 43, 38, 0.35);
 }
 .mapStoryScrubber::-moz-range-thumb {
@@ -2721,11 +2724,22 @@ html[data-theme="dark"] .notesTile .notesCover { border-color: #444; }
   height: 16px;
   border: 3px solid #fff;
   border-radius: 50%;
-  background: #c9a24b;
+  background: #333;
   box-shadow: 0 1px 5px rgba(35, 43, 38, 0.35);
 }
-.mapStoryScrubber:focus-visible { border-radius: 999px; }
-.mapStoryInteractionHint { margin-top: 0.25rem; color: var(--tile-meta); font-size: 0.66rem; text-align: center; }
+.mapStoryScrubber:focus-visible { border-radius: 999px; outline: 2px solid #c9a24b; outline-offset: 2px; }
+.mapStoryScrubber:focus:not(:focus-visible) { outline: none; }
+/* F2: a 44px touch row (the visible track stays 6px). */
+@media (pointer: coarse) {
+  .mapStoryScrubber { height: 44px; }
+}
+/* Over the map, beside the Recenter pill: never grows the tile (audit B2). */
+.mapStoryInteractionHint {
+  position: absolute; left: 10px; bottom: 10px; z-index: 6;
+  max-width: calc(100% - 9rem); padding: 0.3rem 0.6rem; border-radius: 0.4rem;
+  background: rgba(255, 255, 255, 0.92); color: #333; font-size: 0.68rem; line-height: 1.25;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2); pointer-events: none;
+}
 
 .mapStoryStage { min-width: 0; margin-top: 0.55rem; }
 /* B2: a FIXED reserve sized for the tallest beat (two-line place names, ref
@@ -2754,7 +2768,7 @@ html[data-theme="dark"] .notesTile .notesCover { border-color: #444; }
   font-size: 0.76rem;
   font-weight: 800;
 }
-.mapStoryCompleteMark { color: #1f1f1f; background: #c9a24b; }
+.mapStoryCompleteMark { color: #fff; background: #2a2a2a; }
 /* Column so the traveler line pins to the card foot: the fixed reserve reads
    as a designed card, not a box with a gap. */
 .mapStoryBeatBody { display: flex; flex: 1 1 auto; flex-direction: column; min-width: 0; }
@@ -2798,15 +2812,12 @@ html[data-theme="dark"] .notesTile .notesCover { border-color: #444; }
 }
 .mapStoryTile .mapStoryDuration { color: var(--tile-meta); font-size: 0.68rem; }
 .mapStoryTile .mapStoryDesc {
-  display: -webkit-box;
-  overflow: hidden;
   margin: 0.34rem 0 0;
   color: #555;
   font-size: 0.77rem;
   line-height: 1.35;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
 }
+.mapStoryTile .mapStoryDesc .tileCTA { margin-top: 0.2rem; }
 .mapStoryDetached {
   padding: 0.08rem 0.35rem;
   border: 1px dashed #999;
@@ -2818,11 +2829,9 @@ html[data-theme="dark"] .notesTile .notesCover { border-color: #444; }
   text-transform: uppercase;
 }
 .mapStoryTravelerText { margin: auto 0 0; padding-top: 0.4rem; color: #555; font-size: 0.7rem; line-height: 1.25; }
-.mapStoryTravelerText > span { margin-right: 0.25rem; color: #c9a24b; font-size: 0.52rem; }
+.mapStoryTravelerText > span { margin-right: 0.25rem; color: #888; font-size: 0.52rem; }
 .mapStoryTravelerText strong { color: #333; }
 .mapStoryCompleteHeading { color: #222; font-size: 0.9rem; font-weight: 800; }
-/* The whole-journey card has the room: show more of the story before clamping. */
-.mapStoryComplete .mapStoryDesc { -webkit-line-clamp: 5; }
 
 .mapStoryFooter {
   display: flex;
@@ -2876,7 +2885,10 @@ html[data-theme="dark"] .mapStoryTravelerText strong { color: #e0e0e0; }
 html[data-theme="dark"] .mapStoryDetached { border-color: #777; color: #c4c4c4; }
 html[data-theme="dark"] .mapStoryControlButton { color: #ddd; border-color: #4a4a4a; background: #2a2a2a; }
 html[data-theme="dark"] .mapStoryControlButton.isPrimary { color: #1f1f1f; border-color: #c9a24b; background: #c9a24b; }
-html[data-theme="dark"] .mapStoryScrubber::-webkit-slider-runnable-track { background: linear-gradient(to right, #c9a24b 0 var(--map-story-progress), #4a4a4a var(--map-story-progress) 100%); }
+html[data-theme="dark"] .mapStoryScrubber::-webkit-slider-runnable-track { background: linear-gradient(to right, #bbb 0 var(--map-story-progress), #4a4a4a var(--map-story-progress) 100%); }
+html[data-theme="dark"] .mapStoryScrubber::-webkit-slider-thumb { background: #e0e0e0; border-color: #222; }
+html[data-theme="dark"] .mapStoryCompleteMark { color: #1f1f1f; background: #e0e0e0; }
+html[data-theme="dark"] .mapStoryInteractionHint { background: rgba(30, 30, 30, 0.92); color: #e0e0e0; }
 html[data-theme="dark"] .mapStoryScrubber::-moz-range-track { background: #4a4a4a; }
 /* Boxless labels read over map terrain identically in both themes — no dark override. */
 
