@@ -63,7 +63,30 @@ export function writeSession(snapshot) {
 export function clearSession() {
   try {
     store()?.removeItem(KEY);
+    store()?.removeItem(ANCHOR_KEY);
   } catch {
     /* ignore */
+  }
+}
+
+// The tile the reader was looking at (scrollAnchor.captureAnchor), saved on
+// scroll. Kept apart from the snapshot so a scroll never re-serialises batches.
+const ANCHOR_KEY = "bom:homeAnchor:v1";
+
+export function writeAnchor(seed, anchor) {
+  try {
+    if (seed && anchor) store()?.setItem(ANCHOR_KEY, JSON.stringify({ seed, ...anchor }));
+  } catch {
+    /* quota / disabled storage — Back falls back to the shell's scrollY restore */
+  }
+}
+
+export function readAnchor(seed) {
+  try {
+    const a = JSON.parse(store()?.getItem(ANCHOR_KEY) || "null");
+    if (!a || !seed || a.seed !== seed || !Number.isInteger(a.index)) return null;
+    return { index: a.index, cls: a.cls, offset: a.offset };
+  } catch {
+    return null;
   }
 }

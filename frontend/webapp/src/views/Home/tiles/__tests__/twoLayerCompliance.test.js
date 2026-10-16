@@ -34,6 +34,7 @@ const EXEMPT = new Set([
   "homeSamplerCache.js",
   "samplerSession.js",
   "samplerLayout.js",
+  "scrollAnchor.js",
   "planPreviewCache.js",
   "registry.js",
   "MapStoryTileInner.js",

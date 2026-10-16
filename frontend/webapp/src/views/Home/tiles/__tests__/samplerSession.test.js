@@ -64,3 +64,19 @@ describe("samplerSession", () => {
     expect(readSession(42)).toBeNull();
   });
 });
+
+import { readAnchor, writeAnchor } from "../samplerSession";
+
+describe("scroll anchor (Back restores the tile the reader was looking at)", () => {
+  beforeEach(() => sessionStorage.clear());
+  test("round-trips for the same seed only", () => {
+    writeAnchor(42, { index: 7, cls: "tile-art", offset: 210 });
+    expect(readAnchor(42)).toEqual({ index: 7, cls: "tile-art", offset: 210 });
+    expect(readAnchor(43)).toBeNull();
+  });
+  test("clearSession forgets it too", () => {
+    writeAnchor(42, { index: 7, cls: "tile-art", offset: 210 });
+    clearSession();
+    expect(readAnchor(42)).toBeNull();
+  });
+});

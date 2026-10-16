@@ -72,3 +72,11 @@ describe("Sampler CSS", () => {
     ["tile-art", "tile-chiasmus", "tile-biblephrases"].forEach((span) => expect(sels).toContain(`.tile.${span}:empty`));
   });
 });
+
+// B3/E1: a placeholder-sized (content-visibility) infinite tile takes its real
+// height only near the viewport, so on-screen tiles shifted while scrolling and
+// a Back restore landed on placeholder geometry (3567 -> 3071 measured).
+test("infinite tiles render at their real height (no content-visibility placeholder)", () => {
+  expect(norm(css)).not.toMatch(/content-visibility\s*:\s*auto/);
+  expect(norm(mcss)).not.toMatch(/content-visibility\s*:\s*auto/);
+});

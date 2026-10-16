@@ -1,12 +1,13 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigationType } from "react-router-dom";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { label } from "src/models/Utils";
 import Masonry from "react-masonry-css";
 import { tileRegistry, reservePool, batchTiles } from "./tiles/registry";
 import { read as readCache, write as writeCache, isFresh as cacheIsFresh } from "./tiles/homeSamplerCache";
-import { readSession, writeSession, clearSession } from "./tiles/samplerSession";
+import { readSession, writeSession, clearSession, readAnchor, writeAnchor } from "./tiles/samplerSession";
+import { captureAnchor, pinAnchor } from "./tiles/scrollAnchor";
 import { singleColumnOrder } from "./tiles/samplerLayout";
 import TileBoundary from "./tiles/_ds/TileBoundary";
 import BoundedTile from "./tiles/_ds/BoundedTile";
@@ -413,6 +414,36 @@ export default function Sampler() {
       batchSeed: batchSeedRef.current,
     });
   }, [seed, variableTiles, reserves, extraBatches]);
+
+  // Content-anchored Back (tiles/scrollAnchor.js): remember the tile the reader
+  // is looking at; on Back into a restored layout, pin it while tiles above
+  // settle. scrollY alone landed on the wrong content.
+  const navigationType = useNavigationType();
+  const tileNodes = () => [...document.querySelectorAll(".sampler .tile")];
+  useEffect(() => {
+    if (!seed) return undefined;
+    let raf = null;
+    const onScroll = () => {
+      if (raf) return;
+      raf = window.requestAnimationFrame(() => {
+        raf = null;
+        writeAnchor(seed, captureAnchor(tileNodes(), window.innerHeight));
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
+  }, [seed]);
+  useEffect(() => {
+    if (navigationType !== "POP" || !sessionRef.current) return undefined;
+    const anchor = readAnchor(sessionRef.current.seed);
+    if (!anchor) return undefined;
+    return pinAnchor(tileNodes, anchor, { timeoutMs: 3500 });
+    // once per mount: only the arrival is a Back
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Sampler stream — once on mount. A fresh cached entry already painted
   // synchronously, so skip the network entirely; a stale entry revalidates

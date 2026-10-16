@@ -166,13 +166,11 @@ html[data-theme="dark"] .samplerFeedEndAction { color: #eee; border-color: #555;
    the wait in-place. */
 .samplerSentinel { height: 1px; width: 100%; }
 
-/* Infinite-scroll tiles: let the browser reclaim rendering/layout for cards
-   scrolled far off-screen (memory relief on a long feed) WITHOUT ever removing
-   them from the DOM — so scroll position is never rug-pulled. `auto` in
-   contain-intrinsic-size makes the browser remember each card's real rendered
-   height, so a card collapsed after being scrolled past reserves exactly its
-   own space and nothing above shifts when you scroll back up. */
-.infiniteTile { content-visibility: auto; contain-intrinsic-size: auto 320px; }
+/* Infinite-scroll tiles render at their real height. (They used to be
+   content-visibility: auto with a 320px intrinsic placeholder: a never-rendered
+   card only took its real height near the viewport, so on-screen cards shifted
+   while scrolling, and after Back every restored card was a fresh placeholder,
+   so the scroll restore landed on the wrong content.) MAX_BATCHES bounds the DOM. */
 
 /* ---------- tile card ---------- */
 .tile {
