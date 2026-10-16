@@ -23,7 +23,9 @@ export default function TileImage({
 }) {
   const [variantFailed, setVariantFailed] = useState(false);
   if (!path) return null;
-  const useVariants = !variantFailed && widths.length > 0 && variantsEnabled(); // widths=[]: no variants exist (art, home banners)
+  // widths={[]} = an asset family with no uploaded variants (art, source covers):
+  // plain src, so a missing variant never 404s or leaves a broken image.
+  const useVariants = !variantFailed && widths.length > 0 && variantsEnabled();
   const srcSet = useVariants ? widths.map((w) => `${variantUrl(path, w)} ${w}w`).join(", ") : undefined;
   const handleError = (e) => {
     if (useVariants) {

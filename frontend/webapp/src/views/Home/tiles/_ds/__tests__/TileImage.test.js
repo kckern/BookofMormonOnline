@@ -81,4 +81,14 @@ describe("TileImage", () => {
   test("variantUrl shape", () => {
     expect(variantUrl("people/nephi1", 256)).toBe("https://media.test/variants/256/people/nephi1.webp");
   });
+
+  test("widths={[]} (no variants for this asset family): plain src, and onError reaches the caller", () => {
+    process.env[KEY] = "1";
+    const onError = vi.fn();
+    const { container } = render(<TileImage path="source/cover/193" widths={[]} onError={onError} />);
+    const img = container.querySelector("img");
+    expect(img.hasAttribute("srcset")).toBe(false);
+    fireEvent.error(img);
+    expect(onError).toHaveBeenCalled();
+  });
 });
