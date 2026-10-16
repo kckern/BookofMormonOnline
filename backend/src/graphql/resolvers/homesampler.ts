@@ -645,7 +645,11 @@ const sampleArchiveDoc =
       .where(sql<boolean>`teaser IS NOT NULL AND CHAR_LENGTH(teaser) > 30`)
       .where(sql<boolean>`JSON_EXTRACT(metadata,'$.money_quote') IS NOT NULL`);
     if (requireThumb) qb = qb.where('aspect', 'is not', null);
-    const rows = await qb.orderBy(seededOrder('id', seed)).limit(1).execute();
+    // Seed on slug, not id: the joseph-smith-statements (and witnesses /
+    // lost-116-pages) rows have id NULL, so MD5(CONCAT(NULL, …)) was NULL for
+    // every row and every seed returned the same document. slug is non-null
+    // and unique in every archive.
+    const rows = await qb.orderBy(seededOrder('slug', seed)).limit(1).execute();
     const row = rows[0];
     if (!row) return null;
     let money_quote: string | null = null;

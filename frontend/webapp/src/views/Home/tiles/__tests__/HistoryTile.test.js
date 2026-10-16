@@ -1,6 +1,8 @@
 import React from "react";
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
+import fs from "node:fs";
+import path from "node:path";
 import { MemoryRouter } from "react-router-dom";
 import HistoryTile, { parseTeaser } from "../HistoryTile";
 
@@ -62,5 +64,43 @@ describe("HistoryTile quote hero", () => {
     const { container } = setup(base);
     expect(container.querySelector(".historyTileQuote")).toBeNull();
     expect(container.querySelector(".historyTileTeaser")).toBeInTheDocument();
+  });
+});
+
+vi.mock("src/models/BoMOnlineAPI", () => ({ __esModule: true, default: vi.fn(), assetUrl: "https://media.test" }));
+
+describe("HistoryTile frame + links", () => {
+  test("the eyebrow links to the History index, like every sibling archive tile", () => {
+    const { container } = setup({ ...base, mini_quote: "q" });
+    expect(container.querySelector(".tileHeading a")).toHaveAttribute("href", "/history");
+  });
+
+  test("one tab stop to the document: title and rail are mouse shortcuts, the CTA is the stop", () => {
+    const { container } = setup({ ...base, mini_quote: "q" });
+    const toDoc = [...container.querySelectorAll("a[href='/history/d7']")];
+    expect(toDoc.length).toBeGreaterThan(1);
+    expect(toDoc.filter((a) => a.getAttribute("tabindex") !== "-1")).toHaveLength(1);
+    expect(container.querySelector("a.historyTileRail")).toHaveAttribute("aria-hidden", "true");
+  });
+
+  test("thumbnails go through TileImage (relative media paths, no variant srcset)", () => {
+    const { container } = setup({ ...base, mini_quote: "q" });
+    const img = container.querySelector("img.historyTileThumb");
+    expect(img).toHaveClass("tileImage");
+    expect(img.getAttribute("src")).toBe("https://media.test/history/thumbs/0007");
+    expect(img.hasAttribute("srcset")).toBe(false);
+  });
+
+  test("minimal payload: no undefined, no image without an id", () => {
+    const { container } = setup({ slug: "z" });
+    expect(container.textContent).not.toMatch(/undefined|NaN/);
+    expect(container.querySelector("img")).toBeNull();
+  });
+});
+
+describe("archive dark-mode imagery (Sampler.css)", () => {
+  const css = fs.readFileSync(path.resolve(__dirname, "../../Sampler.css"), "utf8");
+  test("tile images are dimmed in dark mode", () => {
+    expect(css).toMatch(/html\[data-theme="dark"\] \.tile img\.tileImage\s*{\s*filter:\s*brightness/);
   });
 });

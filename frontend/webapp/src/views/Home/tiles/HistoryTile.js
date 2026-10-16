@@ -1,6 +1,5 @@
 import React from "react";
-import { assetUrl } from "src/models/BoMOnlineAPI";
-import { label } from "src/models/Utils";
+import labelOr from "./_ds/labelOr";
 import ArchiveDocTile, { parseTeaser } from "./ArchiveDocTile";
 
 // Backward-compat: parseTeaser used to live here.
@@ -22,8 +21,8 @@ export default function HistoryTile({ data }) {
     const pages = Number(data.pages) || 1;
     images = pages > 1
       ? Array.from({ length: Math.min(pages, RAIL_MAX) }, (_, i) =>
-          `${assetUrl}/history/fax/${pad4(data.id)}.${pad3(i + 1)}.jpg`)
-      : [`${assetUrl}/history/thumbs/${pad4(data.id)}`];
+          `history/fax/${pad4(data.id)}.${pad3(i + 1)}.jpg`)
+      : [`history/thumbs/${pad4(data.id)}`];
   }
-  return <ArchiveDocTile data={data} heading={label("history")} to={to} images={images} />;
+  return <ArchiveDocTile data={data} heading={labelOr("history", "History")} headingTo="/history" to={to} images={images} />;
 }

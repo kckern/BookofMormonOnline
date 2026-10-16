@@ -54,4 +54,18 @@ describe("tile registry", () => {
     expect(reservePool.map((t) => t.key)).toContain("matterProfile");
     expect(batchTiles.map((t) => t.key)).toContain("matterProfile");
   });
+
+  // Archive family (Task 10f): translation never had data (0/155 curated
+  // quotes) → out of the reserve pool; Joseph Smith statements rotate in the
+  // infinite feed as well as the reserve.
+  test("translation is not in any pool; josephSmith is a reserve AND a batch tile", () => {
+    [tileRegistry, reservePool, batchTiles].forEach((pool) =>
+      expect(pool.map((t) => t.key)).not.toContain("translation"),
+    );
+    expect(reservePool.map((t) => t.key)).toContain("josephSmith");
+    const js = batchTiles.find((t) => t.key === "josephSmith");
+    expect(js.dataKey).toBe("josephSmith");
+    expect(js.isReady({ josephSmith: { slug: "x" } })).toBe(true);
+    expect(js.isReady({ josephSmith: null })).toBe(false);
+  });
 });

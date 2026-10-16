@@ -71,20 +71,45 @@ describe("archive tile wrappers", () => {
   const doc = { slug: "d1", document: "A Doc", mini_quote: "a quote", citation: "C." };
   const wrap = (ui) => render(<MemoryRouter>{ui}</MemoryRouter>);
 
-  test("TranslationTile renders the quote with NO image and links to the section", () => {
+  test("TranslationTile: localized heading, NO image, links to the document itself", () => {
     const { container } = wrap(<TranslationTile data={{ ...doc, id: 9 }} />);
     expect(screen.getByText(/a quote/)).toBeInTheDocument();
-    expect(container.querySelector("img.historyTileThumb")).toBeNull();
-    expect(container.querySelector("a.historyTileTitle")).toHaveAttribute("href", "/history/translation");
+    expect(container.querySelector("img")).toBeNull();
+    expect(container.querySelector(".tileHeading")).toHaveTextContent("Translation");
+    expect(container.querySelector(".tileHeading a")).toHaveAttribute("href", "/history/translation");
+    expect(container.querySelector("a.tileMoreLink")).toHaveAttribute("href", "/history/d1");
   });
 
-  test("JosephSmithTile renders the witness-style portrait, name, quote and links to the section", () => {
+  test("JosephSmithTile renders the witness-style portrait, name and quote", () => {
     const { container } = wrap(<JosephSmithTile data={doc} />); // no id
     expect(screen.getByText(/a quote/)).toBeInTheDocument();
     expect(container.querySelector(".witnessName")).toHaveTextContent("Joseph Smith");
     const img = container.querySelector(".witnessHero img");
-    expect(img).toBeTruthy();
+    expect(img).toHaveClass("tileImage");
     expect(img.getAttribute("src")).toMatch(/joseph-smith\.jpg$/);
-    expect(container.querySelector("a.witnessLeft")).toHaveAttribute("href", "/history/joseph-smith");
+    expect(img.getAttribute("alt")).toBe("");
+  });
+
+  test("JosephSmithTile: heading → the statements page; CTA → the featured document; portrait is not a 2nd tab stop", () => {
+    const { container } = wrap(<JosephSmithTile data={doc} />);
+    expect(container.querySelector(".tileHeading a")).toHaveAttribute("href", "/history/joseph-smith");
+    const cta = container.querySelector("a.tileMoreLink");
+    expect(cta).toHaveAttribute("href", "/history/d1");
+    expect(cta).toHaveTextContent("See in context");
+    const portrait = container.querySelector("a.witnessLeft");
+    expect(portrait).toHaveAttribute("tabindex", "-1");
+  });
+
+  test("JosephSmithTile: speaker prefix is a meta line outside the clamp; quote clamps via ExpandableText", () => {
+    const { container } = wrap(<JosephSmithTile data={{ ...doc, money_quote: "Long words here", quote_speaker: "Wilford Woodruff", quote_is_witness_voice: false }} />);
+    const sp = container.querySelector(".witnessSpeaker");
+    expect(sp).toHaveTextContent("Wilford Woodruff");
+    expect(sp.closest(".witnessStatementWrap")).toBeNull();
+    expect(container.querySelector(".witnessStatementWrap .witnessStatement")).toHaveTextContent("Long words here");
+  });
+
+  test("JosephSmithTile minimal payload: no undefined", () => {
+    const { container } = wrap(<JosephSmithTile data={{ slug: "x" }} />);
+    expect(container.textContent).not.toMatch(/undefined|NaN/);
   });
 });

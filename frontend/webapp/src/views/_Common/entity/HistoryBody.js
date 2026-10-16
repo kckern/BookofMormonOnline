@@ -51,6 +51,14 @@ export default function HistoryBody({ data }) {
       (transcriptStripped.includes(quoteStripped) &&
         transcriptStripped.length < quoteStripped.length * 1.15));
   const pageCount = Number(doc.pages) || 0;
+  // Reception transcripts open with the citation as their first paragraph;
+  // the citation already renders above, so drop that leading repeat.
+  const citationStripped = strip(doc.citation);
+  let transcript = doc.transcript || "";
+  const firstPara = /^\s*<p[^>]*>([\s\S]*?)<\/p>\s*/i.exec(transcript);
+  if (citationStripped && firstPara && strip(firstPara[1]) === citationStripped) {
+    transcript = transcript.slice(firstPara[0].length);
+  }
 
   return (
       <div id="my-tab-content" className="tab-content">
@@ -79,8 +87,8 @@ export default function HistoryBody({ data }) {
             <div className="historyPopupCitation">{Parser(String(doc.citation))}</div>
           ) : null}
 
-          {doc.transcript && !transcriptDupesQuote ? (
-            <div className="transcript">{Parser(doc.transcript)}</div>
+          {transcript.trim() && !transcriptDupesQuote ? (
+            <div className="transcript">{Parser(transcript)}</div>
           ) : null}
 
           {doc.id && pageCount > 0 ? (

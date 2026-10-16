@@ -78,6 +78,26 @@ describe("TileImage", () => {
     expect(img.className).toBe("tileImage artHero");
   });
 
+  // Variants exist only for people/places/matters (Task 11). Archive media
+  // (fax, history, witnesses, art) must not request a 404ing srcset first.
+  test("variants enabled but no variant family for the path: plain src, onError fires once", () => {
+    process.env[KEY] = "1";
+    const onError = vi.fn();
+    const { container } = render(<TileImage path="fax/covers/1830" alt="" onError={onError} />);
+    const img = container.querySelector("img");
+    expect(img.hasAttribute("srcset")).toBe(false);
+    fireEvent.error(img);
+    expect(onError).toHaveBeenCalledTimes(1);
+  });
+
+  test("an absolute URL is used verbatim (render-host crops), never variant-mapped", () => {
+    process.env[KEY] = "1";
+    const { container } = render(<TileImage path="http://render.test/fax/render/1830/crop/w800/x.jpg" alt="" />);
+    const img = container.querySelector("img");
+    expect(img.getAttribute("src")).toBe("http://render.test/fax/render/1830/crop/w800/x.jpg");
+    expect(img.hasAttribute("srcset")).toBe(false);
+  });
+
   test("variantUrl shape", () => {
     expect(variantUrl("people/nephi1", 256)).toBe("https://media.test/variants/256/people/nephi1.webp");
   });

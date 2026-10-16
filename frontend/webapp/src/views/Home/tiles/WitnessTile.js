@@ -1,15 +1,20 @@
 import React, { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 import { flatten, clampWords } from "./textUtils";
 import { RevealProvider } from "./_ds/Reveal";
 import TileDeepLink from "./_ds/TileDeepLink";
+import TileImage from "./_ds/TileImage";
+import ExpandableText from "./ExpandableText";
 
 // Which witness the previous witness tile in the feed featured — so the same
 // principal (David Whitmer has by far the most rows) doesn't clog consecutive
 // tiles as fresh batches append on scroll. Module-scoped, resets per page load.
 let lastFeaturedWitness = null;
+// The choice per payload array, so a REMOUNT of the same tile (the masonry
+// re-flows tiles between columns as the page grows) re-features the same
+// witness instead of skipping to another one mid-read.
+const chosenByData = new WeakMap();
 
 const initials = (name) =>
   (name || "")
@@ -31,11 +36,33 @@ const withBrackets = (text) =>
         : part
     );
 
+// Source lines carry light Markdown (publication titles in _italics_). Render
+// _x_ / *x* as <em>; an underscore inside a word (snake_case) is left alone.
+const MD_RE = /(?<![\w*])([_*])(?=\S)([^_*]+?)(?<=\S)\1(?![\w*])/g;
+export const inlineMarkdown = (text) => {
+  const s = String(text || "");
+  const out = [];
+  let last = 0;
+  let m;
+  MD_RE.lastIndex = 0;
+  while ((m = MD_RE.exec(s))) {
+    if (m.index > last) out.push(s.slice(last, m.index));
+    out.push(<em key={m.index}>{m[2]}</em>);
+    last = m.index + m[0].length;
+  }
+  if (last < s.length) out.push(s.slice(last));
+  return out;
+};
+
 /**
  * A single featured Book of Mormon witness — Harris, the Cowderys, the Whitmers,
  * Hyrum & Samuel Smith — from the 'witnesses' history archive. Large portrait,
- * name, their statement (money quote, else teaser), and source; deep-links into
- * the Witnesses view. (A monogram stands in if a portrait fails to load.)
+ * name, their statement (money quote), and source. A third-party account names
+ * its reporter as a meta line above the quote (not inside the clamp, where it
+ * ate the first line); a long quote clamps with a reversible Layer-1 reveal.
+ * The portrait goes to the witness page; the CTA lands on the quoted statement
+ * (/history/witnesses/<witness>/<source>, which opens that source).
+ * (A monogram stands in if a portrait fails to load.)
  */
 export default function WitnessTile({ data }) {
   // Choose the featured witness ONCE — the first render where data is available —
@@ -44,6 +71,9 @@ export default function WitnessTile({ data }) {
   // (which other witness tiles keep changing), the card's content would randomly swap
   // after it had already loaded. The choice is stable once made.
   const chosenRef = useRef(null);
+  if (!chosenRef.current && data && typeof data === "object" && chosenByData.has(data)) {
+    chosenRef.current = chosenByData.get(data);
+  }
   if (!chosenRef.current) {
     // Only rows with an editorially-prepared money quote are quotable — NEVER a
     // teaser/transcript (that would fabricate an attribution).
@@ -53,7 +83,10 @@ export default function WitnessTile({ data }) {
     // attributed third-party accounts ("Speaker: …") surface across the feed.
     const notLast = witnesses.filter((x) => x.principal !== lastFeaturedWitness);
     const pool = notLast.length ? notLast : witnesses;
-    if (pool.length) chosenRef.current = pool[0];
+    if (pool.length) {
+      chosenRef.current = pool[0];
+      if (data && typeof data === "object") chosenByData.set(data, pool[0]);
+    }
   }
   const w = chosenRef.current;
   // Remember who this tile featured so the next witness tile can skip them.
@@ -61,8 +94,11 @@ export default function WitnessTile({ data }) {
   useEffect(() => { if (w) lastFeaturedWitness = w.principal; }, [w?.principal]);
   if (!w) return null;
   const quote = flatten(w.moneyQuote);
+  // flatten() strips HTML but keeps Markdown marks; clamp on words, then render.
   const source = w.source ? clampWords(flatten(w.source), 18) : null;
-  const to = w.witnessSlug ? `/history/witnesses/${w.witnessSlug}` : "/history/witnesses";
+  const page = w.witnessSlug ? `/history/witnesses/${w.witnessSlug}` : "/history/witnesses";
+  const to = w.witnessSlug && w.slug ? `${page}/${w.slug}` : page;
+  const reporter = !w.isWitnessVoice && w.speaker ? w.speaker : null;
   return (
     <RevealProvider>
       <div className="samplerTileInner witnessTile">
@@ -70,13 +106,12 @@ export default function WitnessTile({ data }) {
           <Link to="/history/witnesses">{label("witnesses")}</Link>
         </h3>
         <div className="witnessFeatured">
-          <Link to={to} className="witnessLeft">
+          <Link to={page} className="witnessLeft">
             <span className="witnessHero">
               {w.witnessSlug ? (
-                <img
-                  src={`${assetUrl}/history/witnesses/people/${w.witnessSlug}.jpg`}
-                  alt={w.principal}
-                  loading="lazy"
+                <TileImage
+                  path={`history/witnesses/people/${w.witnessSlug}.jpg`}
+                  alt=""
                   onError={(e) => { e.target.style.display = "none"; e.target.parentNode.classList.add("mono"); }}
                 />
               ) : null}
@@ -85,14 +120,14 @@ export default function WitnessTile({ data }) {
             <span className="witnessName">{w.principal}</span>
           </Link>
           <span className="witnessBody">
-            <span className="witnessStatement clampLines" style={{ WebkitLineClamp: 4 }}>
-              {!w.isWitnessVoice && w.speaker ? <span className="witnessSpeaker">{w.speaker}: </span> : null}
-              &ldquo;{withBrackets(quote)}&rdquo;
-            </span>
-            {source ? <span className="witnessSource">{source}</span> : null}
+            {reporter ? <span className="witnessSpeaker">{reporter}:</span> : null}
+            <ExpandableText className="witnessStatementWrap" lines={4}>
+              <span className="witnessStatement">&ldquo;{withBrackets(quote)}&rdquo;</span>
+            </ExpandableText>
+            {source ? <span className="witnessSource">{inlineMarkdown(source)}</span> : null}
           </span>
         </div>
-        <TileDeepLink to={to}>{label("view_in_context")}</TileDeepLink>
+        <TileDeepLink to={to} verb="seeInContext" />
       </div>
     </RevealProvider>
   );

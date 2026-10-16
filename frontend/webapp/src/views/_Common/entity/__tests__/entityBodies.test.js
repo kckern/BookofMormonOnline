@@ -77,6 +77,20 @@ describe("entity bodies render from props with no modal chrome", () => {
     expect(container.querySelector("#popUp")).toBeNull();
   });
 
+  // Reception transcripts open with the citation paragraph (bold-italic); the
+  // body also prints doc.citation — the destination showed it twice in a row.
+  test("HistoryBody drops a transcript's leading paragraph when it repeats the citation", () => {
+    const doc = {
+      ...DOC,
+      citation: "Painesville Telegraph (Painesville, Ohio) (1 March 1831).",
+      transcript:
+        "<p><i><strong>Painesville Telegraph</strong></i><strong> (Painesville, Ohio) (1 March 1831). </strong></p>\r\n<p>We have received a pamphlet of 12 pages.</p>",
+    };
+    const { container } = wrap(<HistoryBody data={doc} />);
+    expect(container.textContent.match(/Painesville Telegraph/g)).toHaveLength(1);
+    expect(screen.getByText(/We have received a pamphlet/)).toBeInTheDocument();
+  });
+
   test("historyMeta builds the meta line the modal header also needs", () => {
     expect(historyMeta(DOC)).toContain("Palmyra Freeman");
     expect(historyMeta(null)).toEqual([]);

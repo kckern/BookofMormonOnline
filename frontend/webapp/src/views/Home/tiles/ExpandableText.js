@@ -22,16 +22,19 @@ export default function ExpandableText({ children, lines = 6, className }) {
   // Measure PRE-paint (useLayoutEffect) so the gate registers before the browser
   // paints — otherwise the deeplink flashes visible for one frame before the
   // gate hides it. Two-way setTruncated so a re-measure can retract a stale pill.
+  // Only the COLLAPSED box is measured: expanded, it never overflows, so a
+  // re-measure triggered by a parent re-render (new JSX children) would drop
+  // the pill and strand the reader with no Show less. Collapsing re-measures.
   useLayoutEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || open) return;
     const over = el.scrollHeight > el.clientHeight + 2;
     setTruncated(over);
     if (over) registerGate(); // there IS something to expand → gate a sibling deeplink
     // registerGate is intentionally omitted from deps (stable-enough; matches the
     // no-op default when there is no provider).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [children, lines]);
+  }, [children, lines, open]);
   const toggle = (e) => {
     e.preventDefault();
     e.stopPropagation();

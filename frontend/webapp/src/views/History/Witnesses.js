@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 
 import './Witnesses.css';
@@ -155,7 +155,10 @@ const SingleWitness = ({ witness, sourceSlug }) => {
         });
     }, [witness?.slug]);
 
-    const openSource = (doc) => {
+    // replaceSlug: true when the popup auto-opens as part of landing on a
+    // /:source deep link — its URL replaces the deep link rather than pushing a
+    // second history entry, so one Back returns to wherever the link was tapped.
+    const openSource = (doc, { replaceSlug = false } = {}) => {
         if (!appController || !doc) return;
         appController.functions.setPopUp({
             type: "history",
@@ -163,12 +166,23 @@ const SingleWitness = ({ witness, sourceSlug }) => {
             popUpData: doc,
             underSlug: `history/witnesses/${witness.slug}`,
             vhtop: 10,
+            ...(replaceSlug ? { replaceSlug: true } : {}),
         });
     };
 
+    // Auto-open once per (witness, source). appController stays in the deps for
+    // freshness, but setPopUp hands every consumer a NEW appController, so
+    // without this guard the effect re-fired on each dispatch ("Maximum update
+    // depth exceeded" — a blank app on every /:source deep link).
+    const autoOpened = useRef(null);
     useEffect(() => {
         if (!sourceSlug || !sources?.length || !appController) return;
-        openSource(sources.find(s => s.slug === sourceSlug));
+        const key = `${witness?.slug}/${sourceSlug}`;
+        if (autoOpened.current === key) return;
+        const doc = sources.find(s => s.slug === sourceSlug);
+        if (!doc) return;
+        autoOpened.current = key;
+        openSource(doc, { replaceSlug: true });
     }, [sourceSlug, sources, appController, witness?.slug]);
 
     const visibleSources = useMemo(() => {
