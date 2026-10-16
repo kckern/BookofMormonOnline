@@ -422,6 +422,12 @@ describe("witness hero", () => {
   // KNOWN DIFFERENCE, not a regression: dev's own later, independent change to this hero
   // renders a "Biography coming soon." placeholder for an empty bio -- deliberate, and kept
   // as-is rather than reverted to the branch's original no-placeholder choice.
+  // blind audit archive witness-D5: the plain witness page had no tab title.
+  it("titles the tab with the witness's name", async () => {
+    renderWitness("/history/witnesses/david-whitmer");
+    await screen.findByText("Born");
+    expect(document.title).toMatch(/^David Whitmer \|/);
+  });
   it("shows a placeholder when the biography is empty", async () => {
     renderWitness("/history/witnesses/david-whitmer");
     await screen.findByText("Born");

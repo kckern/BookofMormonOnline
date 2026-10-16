@@ -140,6 +140,12 @@ const SingleWitness = ({ witness, sourceSlug }) => {
     const [sources, setSources] = useState(null);
     const [selectedYearMonth, setSelectedYearMonth] = useState(null);
 
+    // A tab title of its own (blind audit archive witness-D5); a source popup
+    // opened over the page sets its own title on top of this.
+    useEffect(() => {
+        if (witness?.name) document.title = `${witness.name} | ${label('home_title')}`;
+    }, [witness?.name]);
+
     useEffect(() => {
         setSelectedYearMonth(null);
         if (!witness?.principalNames?.length) {

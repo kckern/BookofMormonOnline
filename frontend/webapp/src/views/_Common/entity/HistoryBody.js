@@ -23,6 +23,13 @@ export function historyMeta(doc) {
   return [...new Set([doc.source, doc.principal, doc.author, dateText].filter(Boolean))];
 }
 
+/** Tab title for a history doc: "Document (Source)", without "(undefined)". */
+export function historyDocTitle(doc) {
+  if (!doc) return "";
+  const title = doc.document || doc.slug || "";
+  return doc.source ? `${title} (${doc.source})` : title;
+}
+
 export default function HistoryBody({ data }) {
   const doc = data;
   if (!doc) return null;

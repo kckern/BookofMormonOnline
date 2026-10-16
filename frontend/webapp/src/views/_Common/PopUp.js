@@ -19,7 +19,7 @@ import MaximizeButton from "./entity/MaximizeButton";
 import PersonBody, { PersonChooser } from "./entity/PersonBody";
 import PlaceBody, { PlaceChooser } from "./entity/PlaceBody";
 import MatterBody, { MatterChooser } from "./entity/MatterBody";
-import HistoryBody, { historyMeta } from "./entity/HistoryBody";
+import HistoryBody, { historyMeta, historyDocTitle } from "./entity/HistoryBody";
 
 export function Loading({ type, callingAPI }) {
   const appController = useAppController();
@@ -594,9 +594,8 @@ function History() {
   let slug = appController.states.popUp.ids;
 
   useEffect(() => {
-    document.title =
-      doc?.document + " (" + doc?.source + ") | " + label("home_title");
-  }, doc);
+    if (doc) document.title = `${historyDocTitle(doc)} | ${label("home_title")}`;
+  }, [doc]);
 
   useEffect(() => {
     setData(null);

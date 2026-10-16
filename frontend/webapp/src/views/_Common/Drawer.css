@@ -276,3 +276,62 @@
   {
      border: none;
   }
+
+/* History source drawer (HistoryDrawer.js): sticky meta + close header over a
+   scrolling body, sized inside the drawer (blind audit witness-D1). */
+.popupDrawer .historyDrawer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-width: 0;
+}
+.popupDrawer .historyDrawerHead {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 0 0 auto;
+    padding: 0 0.25rem 0 1rem;
+    border-bottom: 1px solid #ddd;
+    background: inherit;
+}
+.popupDrawer .historyDrawerMeta {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #666;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.popupDrawer .historyDrawerClose {
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    background: none;
+    font-size: 1.8rem;
+    line-height: 1;
+    color: #333;
+}
+.popupDrawer .historyDrawerBody {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0.75rem 1rem 30vh;
+    font-size: 1rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+    text-align: left;
+}
+.popupDrawer .historyDrawerBody .transcript { text-align: left; }
+.popupDrawer .historyDrawerBody h3 {
+    border-top: 0;
+    font-size: 1.25rem;
+    line-height: 1.25;
+    margin: 0 0 0.6rem;
+}
+html[data-theme="dark"] .popupDrawer .historyDrawerHead { border-color: var(--border); }
+html[data-theme="dark"] .popupDrawer .historyDrawerMeta,
+html[data-theme="dark"] .popupDrawer .historyDrawerClose { color: var(--text-secondary); }

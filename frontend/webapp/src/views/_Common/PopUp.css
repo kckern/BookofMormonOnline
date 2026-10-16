@@ -608,7 +608,8 @@ ul.source_tabs li:hover
 }
 
 /* History popup lead quote — polymorphic across all four archives. */
-#popUp.historycard .historyPopupQuote {
+#popUp.historycard .historyPopupQuote,
+.historyDrawer .historyPopupQuote {
     margin: 0.5rem 0 0.9rem;
     padding: 0.5rem 0.9rem;
     border-left: 3px solid #c9a24b;
@@ -616,18 +617,21 @@ ul.source_tabs li:hover
     line-height: 1.3;
     color: #333;
 }
-#popUp.historycard .historyPopupQuote .historyPopupQuoteBy {
+#popUp.historycard .historyPopupQuote .historyPopupQuoteBy,
+.historyDrawer .historyPopupQuote .historyPopupQuoteBy {
     display: block;
     margin-top: 0.35rem;
     font-size: 0.82rem;
     font-weight: 700;
     color: #555;
 }
-#popUp.historycard .historyPopupQuote .historyPopupQuoteBy.prefix {
+#popUp.historycard .historyPopupQuote .historyPopupQuoteBy.prefix,
+.historyDrawer .historyPopupQuote .historyPopupQuoteBy.prefix {
     display: inline;
     margin: 0 0.25rem 0 0;
 }
-#popUp.historycard .historyPopupCitation {
+#popUp.historycard .historyPopupCitation,
+.historyDrawer .historyPopupCitation {
     margin: 0.4rem 0 0.8rem;
     font-size: 0.82rem;
     font-style: italic;
@@ -635,9 +639,12 @@ ul.source_tabs li:hover
     text-align: center;
 }
 
+/* sized to the document, capped (a short witness statement left ~half the
+   viewport-tall card blank — blind audit witness-D1) */
 .popupwindow.historycard .card-body
 {
-    height: 80vh;
+    height: auto;
+    max-height: 80vh;
 }
 .history_fax img:last-of-type
 {

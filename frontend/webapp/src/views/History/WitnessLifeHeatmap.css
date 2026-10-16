@@ -145,6 +145,9 @@ html[data-theme="dark"] .witness-life-heatmap {
 
 .witness-life-heatmap-meta {
     display: flex;
+    /* wraps on a phone: the unwrapped row pushed the page 27px wider than the
+       viewport, which also pushed the fixed source drawer off-screen */
+    flex-wrap: wrap;
     align-items: center;
     gap: 0.5em;
     /* reserve room for the (taller) control buttons so the grid below never

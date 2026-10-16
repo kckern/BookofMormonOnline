@@ -24,6 +24,7 @@ import { ScripturePanelSingle } from "../Page/Narration";
 import { findAncestor } from "../../models/Utils";
 import { useAppController } from "src/contexts/AppControllerContext";
 import XrelSection from "./XrelSection";
+import HistoryDrawer from "./HistoryDrawer";
 
 
 export function MobileDrawer() {
@@ -59,7 +60,10 @@ export function MobileDrawer() {
         setLocalOpen(appController.states.popUp.open);
         setSwipe()
     }, [appController.states.popUp.open])
-    const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
+    // documentElement.clientWidth, not innerWidth: a page that overflows
+    // sideways (the witness heatmap) widens innerWidth, and a drawer sized from
+    // it ran off the right edge, clipping its text (blind audit witness-D1).
+    const vw = document.documentElement.clientWidth || window.innerWidth || 0
 
     return (
         <Drawer
@@ -87,7 +91,16 @@ function DrawerContent({ setLocalOpen }) {
     if (type === "user/progress")
         return <ProgressDrawer setLocalOpen={setLocalOpen} />;
     if (type === "history")
-        return <HistoryDrawer />;
+        return (
+            <HistoryDrawer
+                slug={id}
+                onClose={() => {
+                    setLocalOpen(false);
+                    setTimeout(appController.functions.clearPopUp, 550);
+                    setTimeout(appController.functions.closePopUp, 500);
+                }}
+            />
+        );
     if (type === "places")
         return <Place key={id} setLocalOpen={setLocalOpen} />;
     if (type === "people")
@@ -330,32 +343,6 @@ function ObjectDrawer() {
             <XrelSection xrels={obj.xrels} showEmpty />
         </div>
     );
-}
-
-function HistoryDrawer() {
-    const appController = useAppController();
-    const slug = appController.states.popUp.activeId;
-    const [doc, setHistoryData] = useState(null);
-    useEffect(() => {
-        setTimeout(() => {
-            BoMOnlineAPI(
-                { history: slug }
-            ).then((response) => {
-                setHistoryData(response.history[slug]);
-            });
-        }, [])
-    }, 500);
-
-    if (!doc) return <Spinner />;
-    return <div className="historyDrawer">
-        <h4>{doc.source} <span>• {displayDate(doc.date)}</span></h4>
-        <h3>{doc.document}</h3>
-        <div className="teaser">{Parser(doc.teaser)}</div>
-        <div className="transcript">{Parser(doc.transcript)}</div>
-        <div className='history_fax'>{[...Array(doc.pages).keys()].map(i => {
-            return <img src={`${assetUrl}/history/fax/${String(doc.id).padStart(4, '0')}.${String(i + 1).padStart(3, '0')}.jpg`} />
-       })}</div>
-    </div>
 }
 
 function ProgressDrawer({ setLocalOpen }) {
