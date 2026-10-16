@@ -291,6 +291,13 @@ html[data-theme="dark"] .sampler .scripture_link {
   border-color: rgba(255, 255, 255, 0.22);
   color: #d6d6d6;
 }
+/* Touch: the chip is ~18px tall; give EVERY ref pill an invisible >=44px hit
+   area (18 + 2x13) without changing its look (audit F2). Tiles that sit the
+   pill over a whole-card link override position/z-index/inset below. */
+@media (pointer: coarse) {
+  .sampler .scripture_link { position: relative; }
+  .sampler .scripture_link::after { content: ""; position: absolute; inset: -13px -4px; }
+}
 
 /* ---------- skeleton ----------
    Per-span min-heights are set inline from tiles/_ds/skeletonHeights.js (the
