@@ -291,12 +291,13 @@ html[data-theme="dark"] .sampler .scripture_link {
   border-color: rgba(255, 255, 255, 0.22);
   color: #d6d6d6;
 }
-/* Touch: the chip is ~18px tall; give EVERY ref pill an invisible >=44px hit
-   area (18 + 2x13) without changing its look (audit F2). Tiles that sit the
-   pill over a whole-card link override position/z-index/inset below. */
+/* Touch: the chip is ~17px tall; give EVERY ref pill an invisible >=44px hit
+   area without changing its look (audit F2). The inset counts from the padding
+   box (15px inside the 1px border), so 15 + 2x15 = 45px measured. Tiles that
+   sit the pill over a whole-card link override position/z-index/inset below. */
 @media (pointer: coarse) {
   .sampler .scripture_link { position: relative; }
-  .sampler .scripture_link::after { content: ""; position: absolute; inset: -13px -4px; }
+  .sampler .scripture_link::after { content: ""; position: absolute; inset: -15px -4px; }
 }
 
 /* ---------- skeleton ----------

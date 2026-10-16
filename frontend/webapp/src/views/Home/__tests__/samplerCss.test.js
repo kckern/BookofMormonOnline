@@ -85,7 +85,7 @@ test("every sampler ref pill gets a >=44px coarse-pointer hit area (audit F2)", 
   const n = norm(css);
   const blocks = n.split("@media (pointer: coarse)").slice(1);
   const hit = blocks.some((b) =>
-    /\.sampler \.scripture_link::after\s*\{[^}]*content: ""[^}]*position: absolute[^}]*inset: -13px/.test(b) &&
+    /\.sampler \.scripture_link::after\s*\{[^}]*content: ""[^}]*position: absolute[^}]*inset: -15px/.test(b) &&
     /\.sampler \.scripture_link\s*\{[^}]*position: relative/.test(b));
   expect(hit).toBe(true);
 });
