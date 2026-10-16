@@ -14,11 +14,23 @@ import { flatten } from "./textUtils";
  * `personIndex` is given. Same anatomy as the People tile's featured block
  * (PersonFeature), which stacks portrait-over-bio in this narrow column.
  */
-export default function PersonProfileTile({ payload, personIndex }) {
+const pickPerson = (payload, personIndex) => {
   const people = (payload?.people || []).filter((p) => p?.slug);
   if (!people.length) return null;
   const person = personIndex != null ? people[personIndex % people.length] : peopleLayout(people).profile || people[0];
-  if (!person?.slug || !flatten(person.description)) return null;
+  return person?.slug && flatten(person.description) ? person : null;
+};
+
+/**
+ * Registry isReady: true only when the tile would actually render (someone with
+ * a bio). Otherwise an infinite batch draws the bordered shell around a null
+ * component — a blank card (audit B4).
+ */
+export const hasPersonProfile = (payload) => !!pickPerson(payload);
+
+export default function PersonProfileTile({ payload, personIndex }) {
+  const person = pickPerson(payload, personIndex);
+  if (!person) return null;
   return (
     <RevealProvider>
       <div className="samplerTileInner personProfileTile">

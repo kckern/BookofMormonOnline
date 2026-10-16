@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import PersonProfileTile from "../PersonProfileTile";
+import PersonProfileTile, { hasPersonProfile } from "../PersonProfileTile";
 import { peopleLayout } from "../PeopleTile";
 
 vi.mock("src/models/BoMOnlineAPI", () => ({
@@ -70,5 +70,22 @@ describe("PersonProfileTile: CTA + regressions", () => {
     const pill = container.querySelector(".scripture_link");
     expect(pill.tagName).toBe("BUTTON");
     expect(container.textContent).not.toMatch(/\(\s*Ether/);
+  });
+});
+
+// Audit B4: an infinite batch rendered the tile shell before the component
+// returned null (no bio) — a bordered blank card. isReady must agree with render.
+describe("hasPersonProfile (registry isReady)", () => {
+  test("true only when the tile would render a bio", () => {
+    expect(hasPersonProfile({ people: [person(0)] })).toBe(true);
+    expect(hasPersonProfile({ people: [{ slug: "x", name: "X" }] })).toBe(false);
+    expect(hasPersonProfile({ people: [] })).toBe(false);
+    expect(hasPersonProfile(undefined)).toBe(false);
+  });
+  test("registry personProfile entries use it", async () => {
+    const { batchTiles, reservePool } = await import("../registry");
+    const defs = [...batchTiles, ...reservePool].filter((d) => d.key === "personProfile");
+    expect(defs.length).toBeGreaterThan(0);
+    defs.forEach((d) => expect(d.isReady({ people: Array.from({ length: 20 }, (_, i) => ({ slug: `s${i}`, name: "N" })) })).toBe(false));
   });
 });

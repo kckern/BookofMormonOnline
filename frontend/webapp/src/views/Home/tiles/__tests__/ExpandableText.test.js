@@ -80,3 +80,71 @@ test("a parent re-render while expanded keeps the Show less control", () => {
     Object.defineProperty(HTMLElement.prototype, "scrollHeight", sh);
   }
 });
+
+// Audit G2 (people/personProfile): Tab must not reach controls hidden below the
+// collapsed clamp — focusing one scrolls the overflow:hidden box and scrambles
+// the prose. Hidden controls leave the Tab order while collapsed; visible ones
+// stay; expanding restores them; a stray scroll of the clamp box snaps back.
+describe("collapsed clamp keeps hidden controls out of the Tab order", () => {
+  const rect = (top, bottom) => ({ top, bottom, left: 0, right: 100, width: 100, height: bottom - top, x: 0, y: top, toJSON() {} });
+  let gbcr;
+  beforeEach(() => {
+    gbcr = HTMLElement.prototype.getBoundingClientRect;
+    HTMLElement.prototype.getBoundingClientRect = function () {
+      if (this.classList.contains("clampLines")) return rect(0, 100);
+      const y = Number(this.dataset.y || 0);
+      return rect(y, y + 17);
+    };
+  });
+  afterEach(() => {
+    HTMLElement.prototype.getBoundingClientRect = gbcr;
+  });
+  const ui = () => (
+    <ExpandableText lines={2}>
+      <span>
+        intro <button data-y="10">Alma 1:1</button> more <button data-y="90">Alma 2:2</button> later{" "}
+        <button data-y="140">Alma 3:3</button> <button data-y="300">Alma 4:4</button>
+      </span>
+    </ExpandableText>
+  );
+
+  test("controls below (or cut by) the clamp edge are tabindex=-1; visible ones untouched", () => {
+    render(ui());
+    expect(screen.getByText("Alma 1:1")).not.toHaveAttribute("tabindex");
+    expect(screen.getByText("Alma 2:2")).toHaveAttribute("tabindex", "-1"); // 90–107 straddles the 100px edge
+    expect(screen.getByText("Alma 3:3")).toHaveAttribute("tabindex", "-1");
+    expect(screen.getByText("Alma 4:4")).toHaveAttribute("tabindex", "-1");
+    expect(screen.getByRole("button", { name: "Read more" })).not.toHaveAttribute("tabindex");
+  });
+
+  test("expanding restores every control to the Tab order", () => {
+    render(ui());
+    fireEvent.click(screen.getByRole("button", { name: "Read more" }));
+    ["Alma 1:1", "Alma 2:2", "Alma 3:3", "Alma 4:4"].forEach((t) =>
+      expect(screen.getByText(t)).not.toHaveAttribute("tabindex")
+    );
+  });
+
+  test("a scroll of the collapsed clamp box snaps back to the top", () => {
+    const { container } = render(ui());
+    const box = container.querySelector(".clampLines");
+    box.scrollTop = 130;
+    fireEvent.scroll(box);
+    expect(box.scrollTop).toBe(0);
+  });
+});
+
+// Audit H3: -webkit-line-clamp drops its ellipsis at any character ("The nex…").
+// `fade` clamps by whole line boxes (max-height in lh) and fades the end of the
+// last line instead, so the cut always falls between words.
+test("fade mode clamps whole lines (no line-clamp ellipsis) via --clamp-lines", () => {
+  const { container } = render(
+    <ExpandableText lines={7} fade>
+      <span>lots of text that overflows the clamp box</span>
+    </ExpandableText>
+  );
+  const box = container.querySelector(".clampLines");
+  expect(box).toHaveClass("clampFade");
+  expect(box.style.getPropertyValue("--clamp-lines")).toBe("7");
+  expect(box.style.WebkitLineClamp || "").toBe("");
+});

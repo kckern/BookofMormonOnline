@@ -46,14 +46,37 @@ const DANGLING = /^(of|and|the|a|an|to|by|in|on|at|for|from|with|or|as|who|whose
  * NEVER cuts mid-word, never strands an open parenthetical, and never ends on
  * a dangling function word.
  */
-export const clampWords = (text, words) => {
+const isDangling = (w) => DANGLING.test((w || "").replace(/[,;:]$/, ""));
+
+/**
+ * `phrase: true` (short labels such as person titles) also drops a trailing
+ * fragment that a function word opened within the last three words — "…assisted
+ * Giddonah² in dealing…" → "…assisted Giddonah²…", "…Zeniff to the Land…" →
+ * "…Zeniff…" — as long as at least three words remain.
+ */
+export const clampWords = (text, words, { phrase = false } = {}) => {
   const parts = (text || "").split(" ");
   if (parts.length <= words) return text || "";
   let cut = parts.slice(0, words).join(" ");
   const lastEnd = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("; "));
   if (lastEnd > cut.length * 0.5) return cut.slice(0, lastEnd + 1).trim();
   cut = cut.replace(/\s*\([^)]*$/, "").replace(/[,;:—-]$/, "").trim();
-  const kept = cut.split(" ");
-  while (kept.length > 1 && DANGLING.test(kept[kept.length - 1].replace(/[,;:]$/, ""))) kept.pop();
+  let kept = cut.split(" ");
+  const popDangling = () => {
+    while (kept.length > 1 && isDangling(kept[kept.length - 1])) kept.pop();
+  };
+  popDangling();
+  if (phrase) {
+    for (let j = kept.length - 1; j >= Math.max(3, kept.length - 3); j--) {
+      if (isDangling(kept[j])) {
+        kept = kept.slice(0, j);
+        popDangling();
+        break;
+      }
+    }
+  }
   return kept.join(" ").replace(/[,;:—-]$/, "") + "…";
 };
+
+/** Display hygiene for data strings: typographic apostrophes, trimmed. */
+export const tidy = (s) => (s || "").replace(/(\w)'(\w)/g, "$1’$2").trim();

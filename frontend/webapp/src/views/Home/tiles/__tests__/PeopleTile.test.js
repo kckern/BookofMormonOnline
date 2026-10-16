@@ -1,8 +1,8 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import PeopleTile, { peopleLayout } from "../PeopleTile";
-import { clampWords, supDigits } from "../textUtils";
+import PeopleTile, { peopleLayout, faceHook } from "../PeopleTile";
+import { clampWords, supDigits, tidy } from "../textUtils";
 
 vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
@@ -171,5 +171,71 @@ describe("textUtils hygiene used by the people tiles", () => {
   });
   test("supDigits normalizes subscript disambiguators", () => {
     expect(supDigits("Attendees at Nephi₂'s Trial")).toBe("Attendees at Nephi²'s Trial");
+  });
+});
+
+describe("PeopleTile: blind-audit fixes (2026-10-16)", () => {
+  test("A2: portrait sizes cover the cover-scaled box (picks the 640w variant at 2x)", () => {
+    const prev = process.env.REACT_APP_MEDIA_VARIANTS;
+    process.env.REACT_APP_MEDIA_VARIANTS = "1";
+    try {
+      const { container } = renderIn(<PeopleTile data={sample()} />);
+      const face = container.querySelector(".peopleFaceCard:not(.viewAllCard) img");
+      expect(face.getAttribute("srcset")).toMatch(/640w/);
+      // 3:4 card 132px wide → a square source cover-scales to 176px: ask for ≥176
+      const px = Number(face.getAttribute("sizes").match(/(\d+)px\s*$/)[1]);
+      expect(px).toBeGreaterThanOrEqual(176);
+      const feat = container.querySelector(".peopleFeature img");
+      expect(Number(feat.getAttribute("sizes").match(/(\d+)px\s*$/)[1])).toBeGreaterThanOrEqual(171);
+    } finally {
+      process.env.REACT_APP_MEDIA_VARIANTS = prev;
+    }
+  });
+
+  test("H2: a face card's hook prefers a real sentence over a 2-word concordance stub", () => {
+    const p = person(1, {
+      index: [
+        { ref: "Alma 1:1", text: "Is pacified" },
+        { ref: "Alma 2:2", text: "Leads the armies of the Nephites against Zerahemnah" },
+      ],
+    });
+    for (let seed = 0; seed < 4; seed++) {
+      const hook = faceHook(p, seed, 0);
+      expect(hook.ref).toBe("Alma 2:2");
+      expect(hook.text).toMatch(/^Leads the armies/);
+    }
+  });
+
+  test("H2: with only stubs, the card keeps the ref but drops the stub text", () => {
+    const p = person(1, { index: [{ ref: "Alma 1:1", text: "Is pacified" }] });
+    expect(faceHook(p, 0, 0)).toEqual({ ref: "Alma 1:1", text: "" });
+  });
+
+  test("H2: faces prefer people with a real hook line (stub-only people move to the mosaic)", () => {
+    const data = sample(15); // 13 after featured + profile: 9 faces, 4 mosaic
+    data[3] = person(3, { index: [{ ref: "Alma 1:1", text: "Is pacified" }] });
+    const { faces, mosaic } = peopleLayout(data);
+    expect(faces.map((p) => p.slug)).not.toContain("p3");
+    expect(mosaic.map((p) => p.slug)).toContain("p3");
+  });
+
+  test("H3: face titles cut at a phrase boundary, never on 'in dealing…' / 'to the Land…'", () => {
+    expect(clampWords("Chief Judge who assisted Giddonah² in dealing with Korihor", 8, { phrase: true })).toBe(
+      "Chief Judge who assisted Giddonah²…"
+    );
+    expect(clampWords("Colonist who accompanied Zeniff to the Land of Nephi", 8, { phrase: true })).toBe(
+      "Colonist who accompanied Zeniff…"
+    );
+    // short titles untouched
+    expect(clampWords("Wife of Abraham", 8, { phrase: true })).toBe("Wife of Abraham");
+  });
+
+  test("A7: straight apostrophes become typographic and titles are trimmed", () => {
+    expect(tidy("One of Ammon's Brethren ")).toBe("One of Ammon’s Brethren");
+    const data = sample();
+    data[2] = person(2, { title: "Attacker of Limhi's People " });
+    const { container } = renderIn(<PeopleTile data={data} />);
+    expect(container.textContent).toMatch("Attacker of Limhi’s People");
+    expect(container.textContent).not.toMatch("Limhi's");
   });
 });

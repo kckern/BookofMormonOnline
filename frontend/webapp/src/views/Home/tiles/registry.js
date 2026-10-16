@@ -14,7 +14,7 @@ import ImageArtTile from "./ImageArtTile";
 import NotesTile from "./NotesTile";
 import FaxVerseTile from "./FaxVerseTile";
 import MapStoryTile from "./MapStoryTile";
-import PersonProfileTile from "./PersonProfileTile";
+import PersonProfileTile, { hasPersonProfile } from "./PersonProfileTile";
 import PlaceProfileTile from "./PlaceProfileTile";
 import WitnessTile from "./WitnessTile";
 // eslint-disable-next-line no-unused-vars -- parked until translation quotes are curated (see reservePool)
@@ -83,7 +83,7 @@ export const tileRegistry = [
  * read by Sampler's renderReserve.
  */
 export const reservePool = [
-  { key: "personProfile", component: PersonProfileTile, isReady: (p) => (p?.people?.length || 0) > 14 },
+  { key: "personProfile", component: PersonProfileTile, isReady: (p) => (p?.people?.length || 0) > 14 && hasPersonProfile(p) },
   { key: "witness",       component: WitnessTile,       dataKey: "witnesses", isReady: (p) => (p?.witnesses?.length || 0) > 0 },
   // translation: REMOVED from the pool (audit R2.5 translation H1). Every
   // translation-archive row is still "needs-editorial-quote" (0/155 carry a
@@ -106,7 +106,7 @@ export const batchTiles = [
   ...tileRegistry
     .filter((t) => INFINITE_REGISTRY_KEYS.includes(t.key))
     .map((t) => ({ key: t.key, component: t.component, isReady: t.isReady, span: t.span })),
-  { key: "personProfile", component: PersonProfileTile, isReady: (p) => (p?.people?.length || 0) > 0, span: "tile-personProfile" },
+  { key: "personProfile", component: PersonProfileTile, isReady: hasPersonProfile, span: "tile-personProfile" },
   { key: "placeProfile",  component: PlaceProfileTile,  isReady: (p) => (p?.places?.length || 0) > 0, span: "tile-placeProfile" },
   { key: "matterProfile", component: MatterProfileTile, props: { group: "concept" }, isReady: (p) => hasProfileMatter(p, "concept"), span: "tile-matterProfile" },
   { key: "witness",       component: WitnessTile, dataKey: "witnesses", isReady: (p) => (p?.witnesses?.length || 0) > 0, span: "tile-witness" },

@@ -506,8 +506,57 @@ html[data-theme="dark"] .peopleTile .peopleFaceCard:hover { border-color: #555; 
   .peopleTile .peopleFaceName:not(.viewAllOverlay) { font-size: 0.74rem; }
   .peopleTile .peopleFaceTitle { font-size: 0.68rem; }
 }
+/* phone (3-up, ~99px cards): the overlaid name chip + title band smothered the
+   faces (audit F1). The portrait owns the whole 3:4 box; the name moves into
+   the card chrome below it and the title band drops (the person page has it). */
+@container (max-width: 440px) {
+  .peopleTile .peopleFaceImgWrap {
+    aspect-ratio: auto;
+    overflow: visible;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+  }
+  .peopleTile .peopleFaceImg { aspect-ratio: 3 / 4; height: auto; background: #e2e2e2; }
+  html[data-theme="dark"] .peopleTile .peopleFaceImg { background: #333; }
+  .peopleTile .peopleFaceName:not(.viewAllOverlay) {
+    position: static;
+    max-width: none;
+    border-radius: 0;
+    background: none;
+    color: #2a2a2a;
+    font-weight: 700;
+    font-size: 0.74rem;
+    line-height: 1.2;
+    padding: 0.35rem 0.45rem 0.45rem;
+  }
+  html[data-theme="dark"] .peopleTile .peopleFaceName:not(.viewAllOverlay) { color: #f0f0f0; }
+  .peopleTile .peopleFaceTitle { display: none; }
+}
+/* featured bio ref pills (People + PersonProfile): ≥44px tap target without
+   changing the look (audit F2; same recipe as the matter profile) */
+@media (pointer: coarse) {
+  .peopleFeatureDesc .scripture_link { position: relative; z-index: 1; }
+  .peopleFeatureDesc .scripture_link::after {
+    content: "";
+    position: absolute;
+    top: calc((100% - 44px) / 2);
+    bottom: calc((100% - 44px) / 2);
+    left: -0.4rem;
+    right: -0.4rem;
+  }
+  /* the clamp clips at its padding box: pad its top (offset by a negative
+     margin, nothing moves) so first-line chips keep their full hit */
+  .peopleFeatureDesc > .clampLines.clampFade {
+    padding-top: 14px;
+    margin-top: -14px;
+    max-height: calc(var(--clamp-lines, 6) * 1lh + 14px);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .peopleTile .peopleFaceCard:hover { transform: none; }
+  /* loading shimmer stops too (audit A6) */
+  .tile.skeleton { animation: none; }
 }
 /* view-all end cells (people face strip + places grid) */
 .viewAllBox {
@@ -1819,6 +1868,21 @@ html[data-theme="dark"] .readMorePill:hover { background: rgba(201, 162, 75, 0.2
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+/* fade variant: whole line boxes only (never a mid-word cut), the tail of the
+   last line fading out. The fade is ~6em wide so a short last line still
+   reads as "continues". */
+.clampLines.clampFade {
+  display: block;
+  max-height: calc(var(--clamp-lines, 6) * 1lh);
+}
+.clampLines.clampFade.isClipped {
+  -webkit-mask:
+    linear-gradient(#000, #000) top / 100% calc(100% - 1lh) no-repeat,
+    linear-gradient(to left, transparent, #000 6em) bottom / 100% 1lh no-repeat;
+  mask:
+    linear-gradient(#000, #000) top / 100% calc(100% - 1lh) no-repeat,
+    linear-gradient(to left, transparent, #000 6em) bottom / 100% 1lh no-repeat;
+}
 
 /* ================================================================
    BIBLE PHRASES — intertext pair with shared wording highlighted
@@ -1828,7 +1892,12 @@ html[data-theme="dark"] .readMorePill:hover { background: rgba(201, 162, 75, 0.2
    fetch or a failed image. */
 .tile.tile-biblephrases:empty,
 .tile.tile-chiasmus:empty,
-.tile.tile-art:empty { display: none; }
+.tile.tile-art:empty,
+/* profile reserves render null for a person/place/matter with no description
+   (audit B4: no bordered blank card in an infinite batch) */
+.tile.tile-personProfile:empty,
+.tile.tile-placeProfile:empty,
+.tile.tile-matterProfile:empty { display: none; }
 /* In-tile loading block while a self-fetching tile resolves (the tile shell
    carries the measured skeleton min-height). */
 .biblePhrasesTile .tileInnerSkeleton,

@@ -34,7 +34,7 @@ vi.mock("../tiles/registry", async (importOriginal) => {
 
 const sampler = {
   seed: 42,
-  people: [{ slug: "nephi", name: "Nephi", title: "Prophet" }],
+  people: [{ slug: "nephi", name: "Nephi", title: "Prophet", description: "Son of Lehi; kept the small plates." }],
   places: [{ slug: "zarahemla", name: "Zarahemla", info: null }],
   fax: { slug: "1830", title: "1830 Edition", pages: 590, info: null },
   commentary: { id: "77", title: "On Faith", text: "x".repeat(600), preview: "…", publication: { source_title: "Journal" } },

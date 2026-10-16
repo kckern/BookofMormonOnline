@@ -5,7 +5,7 @@ import TileImage from "./_ds/TileImage";
 import TileDeepLink from "./_ds/TileDeepLink";
 import refProse from "./_ds/refProse";
 import ExpandableText from "./ExpandableText";
-import { flatten, supDigits } from "./textUtils";
+import { flatten, supDigits, tidy } from "./textUtils";
 
 /**
  * Display name for a person row: DB names are stored inverted ("Gideon, Chief
@@ -53,20 +53,20 @@ export function PersonPortrait({ slug, name, className = "", eager = false, size
 export default function PersonFeature({ person, eager = false, lines = 7 }) {
   const href = `/people/${person.slug}`;
   const name = personName(person.name);
-  const bio = flatten(person.description);
+  const bio = tidy(flatten(person.description));
   return (
     <div className="peopleFeature">
       <Link to={href} className="peopleFeatureImgLink" tabIndex={-1} aria-hidden="true">
-        <PersonPortrait slug={person.slug} name={person.name} className="peopleFeatureImg" eager={eager} sizes="128px" />
+        <PersonPortrait slug={person.slug} name={person.name} className="peopleFeatureImg" eager={eager} sizes="172px" />
       </Link>
       <div className="peopleFeatureHead">
         <Link to={href} className="peopleFeatureNameLink" tabIndex={-1}>
           <span className="peopleFeatureName">{name}</span>
         </Link>
-        {person.title ? <span className="peopleFeatureTitle">{supDigits(person.title)}</span> : null}
+        {person.title ? <span className="peopleFeatureTitle">{tidy(supDigits(person.title))}</span> : null}
       </div>
       {bio ? (
-        <ExpandableText className="peopleFeatureDesc" lines={lines}>
+        <ExpandableText className="peopleFeatureDesc" lines={lines} fade>
           {refProse(bio)}
         </ExpandableText>
       ) : null}
