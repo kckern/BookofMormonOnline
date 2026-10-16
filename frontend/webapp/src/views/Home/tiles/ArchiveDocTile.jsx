@@ -30,8 +30,15 @@ export const parseTeaser = (html) => {
 // Catalog-form authors ("Howe, Eber D., b. 1798", "Scott, Walter") read as raw
 // database text in a human meta line: drop life dates, flip to display order
 // (blind audit history-A7). Anything else is left alone.
-export const displayAuthor = (a) => {
-  const s = String(a || "").replace(/,?\s*(?:b\.|d\.|fl\.)\s*\d{3,4}\??\s*$/i, "").replace(/,?\s*\d{3,4}\s*[-–]\s*(?:\d{3,4})?\s*$/, "").trim();
+// `datedOnly`: flip only when life dates marked it as a catalog name — a
+// source field also holds publications ("Wayne Sentinel, Palmyra").
+export const displayAuthor = (a, { datedOnly = false } = {}) => {
+  const raw = String(a || "").trim();
+  const s = raw
+    .replace(/,?\s*(?:b\.|d\.|fl\.)\s*\d{3,4}\??\s*$/i, "")
+    .replace(/,?\s*\d{3,4}\s*[-–]\s*(?:\d{3,4})?\s*$/, "")
+    .trim();
+  if (datedOnly && s === raw) return raw;
   const m = /^([^,]+),\s*([^,]+)$/.exec(s);
   return m ? `${m[2].trim()} ${m[1].trim()}` : s;
 };
@@ -45,7 +52,7 @@ const tidyCitation = (c) => clampWords(flatten(c).replace(/:(?=[A-Za-z])/g, ": "
 export default function ArchiveDocTile({ data, heading, headingTo, to, images = [] }) {
   if (!data) return null;
   const rail = (Array.isArray(images) ? images : [images]).filter(Boolean);
-  const meta = [data.year, data.source, displayAuthor(data.author)].filter(Boolean).join(" · ");
+  const meta = [...new Set([data.year, displayAuthor(data.source, { datedOnly: true }), displayAuthor(data.author)].filter(Boolean))].join(" · ");
   const aspect = parseFloat(data.aspect) || null; // stored as height/width
   const { lead, bullets } = parseTeaser(data.teaser);
   // Show the FULL money quote with the mini-quote excerpts highlighted in place

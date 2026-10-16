@@ -72,6 +72,14 @@ describe("ArchiveDocTile meta hygiene (blind audit history-A7/H3)", () => {
     const { container } = setup({ data: { ...base, source: null, author: "Howe, Eber D., b. 1798" } });
     expect(container.querySelector(".historyTileMeta").textContent).toBe("1830 · Eber D. Howe");
   });
+  test("a catalog-form SOURCE ('Brown, Henry, 1789-1849') reads as a name too", () => {
+    const { container } = setup({ data: { ...base, source: "Brown, Henry, 1789-1849" } });
+    expect(container.querySelector(".historyTileMeta").textContent).toBe("1830 · Henry Brown");
+  });
+  test("a publication source with a place is left alone", () => {
+    const { container } = setup({ data: { ...base, source: "Wayne Sentinel, Palmyra" } });
+    expect(container.querySelector(".historyTileMeta").textContent).toBe("1830 · Wayne Sentinel, Palmyra");
+  });
   test("a plain 'Last, First' author flips too", () => {
     const { container } = setup({ data: { ...base, source: null, author: "Scott, Walter" } });
     expect(container.querySelector(".historyTileMeta").textContent).toBe("1830 · Walter Scott");
