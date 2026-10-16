@@ -837,3 +837,63 @@ Add a triangle notch pointing down at the bottom of the tooltip
 .mapPanelHeadRow .closePanelButton { line-height: 1; }
 .mapPanel .info { margin-top: 0.25rem; }
 .mapPanel .desc .scripture_link { white-space: nowrap; }
+
+/* Story panel header: a real button (44px target) beside the title. */
+.mapStoryPanelHead {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.mapStoryPanelHead .title { flex: 1; margin: 0; }
+.mapStoryBack {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #444;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.mapStoryBack:hover { background: rgba(0, 0, 0, 0.06); }
+.mapStoryBack:focus-visible { outline: 2px solid #c9a24b; outline-offset: 2px; }
+
+/* Phone: the side panel has no room beside the canvas, and it used to render
+   UNDER it (a deeplink landed on a bare map). Story routes get a bottom sheet
+   over the map instead: title + back stay pinned, the movements scroll. */
+@media screen and (max-width: 900px) {
+  .mappanel_wrapper .mapPanel.mapStoryPanel,
+  .open .mapPanel.mapStoryPanel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    max-height: 46%;
+    opacity: 1;
+    z-index: 20;
+    background: #fff;
+    border-radius: 14px 14px 0 0;
+    box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.28);
+    overflow: hidden;
+  }
+  .mapStoryPanel .mapPanelCardContainer {
+    padding: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+  .mapStoryPanel .card { border: 0; border-radius: 0; }
+  .mapStoryPanel .mapStoryPanelHead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #fff;
+    padding: 0.25rem 0.75rem 0.25rem 0.25rem;
+  }
+  .mapStoryPanel .mapStoryPanelHead .title { text-align: left; font-size: 1.05rem; }
+}

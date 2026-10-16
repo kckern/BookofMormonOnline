@@ -9,6 +9,7 @@ import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 // CSS
 import { getDistance } from 'geolib';
 import { isMobile } from "src/models/Utils";
+import labelOr from "src/views/Home/tiles/_ds/labelOr";
 import searchIcon from "../_Common/svg/search.svg";
 import "./Map.css";
 
@@ -510,14 +511,19 @@ function MapStoryPanel()
     const selectedMove = selectedStory.moves.find((m) => m.seq === selectedMoveSeq) || selectedStory.moves[0];
     const selectedPeople = selectedMove?.people || [];
 
-    return <div className="mapPanel">
+    // Phone: .mapStoryPanel is a bottom sheet OVER the canvas (Map.css), so the
+    // story title, back control and movements are reachable on a deeplink
+    // (audit D3/D4/D5: it used to sit underneath the map).
+    return <div className="mapPanel mapStoryPanel">
     <div className="mapPanelCardContainer">
         <Card>
-            <CardHeader>
-                <span
+            <CardHeader className="mapStoryPanelHead">
+                <button
+                    type="button"
+                    className="mapStoryBack"
                     onClick={closeStory}
-                    style={{cursor: "pointer", fontSize: "1.5rem", marginRight: "1rem", float: "left", opacity: 0.5}}
-                >⬅</span>
+                    aria-label={labelOr("back", "Back")}
+                >⬅</button>
                 <h5 className="title">{selectedStory.title}</h5>
             </CardHeader>
             <CardBody innerRef={cardBodyRef}>
