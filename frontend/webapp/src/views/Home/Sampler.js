@@ -15,6 +15,7 @@ import TileBoundary from "./tiles/_ds/TileBoundary";
 import BoundedTile from "./tiles/_ds/BoundedTile";
 import { skeletonHeight } from "./tiles/_ds/skeletonHeights";
 import labelOr from "./tiles/_ds/labelOr";
+import { isMessengerEnabled } from "src/models/featureFlags";
 import "./Sampler.css";
 import "./Sampler.m.css";
 
@@ -105,6 +106,7 @@ export const assembleCommunity = (r) => {
       return true;
     });
   };
+  // fresh = within 90 days; the tile now prints each post's age (audit I2)
   const FRESH_MS = 90 * 86400 * 1000;
   const sorted = groups
     .filter((g) => g?.url)
@@ -125,6 +127,14 @@ export const assembleCommunity = (r) => {
     : null;
 };
 
+// The last live community payload, kept in memory (never persisted: it is
+// real user content) per auth token. Coming Back to Home remounts the Sampler;
+// starting from this instead of "pending" keeps the tile in place while the
+// refetch runs, so the content-anchored Back has nothing re-inserting above it.
+let communityMemo = null; // { token, value }
+export const __resetCommunityMemo = () => { communityMemo = null; };
+const memoFor = (token) => (communityMemo && communityMemo.token === token ? communityMemo.value : undefined);
+
 /** Compose both streams — kept for callers/tests that want the merged shape. */
 export const assemblePayload = (r) => ({ ...assembleSampler(r), community: assembleCommunity(r) });
 
@@ -137,7 +147,9 @@ export default function Sampler() {
   // Two independent streams. The render payload derives from the SAMPLER only, so
   // community landing first can never blank the page (it just fills its own tile).
   const [samplerPayload, setSamplerPayload] = useState(() => cachedRef.current?.payload ?? null);
-  const [community, setCommunity] = useState(null);
+  // undefined = live fetch pending (a skeleton holds the slot); null = nothing
+  // to show (or messenger off) → no tile.
+  const [community, setCommunity] = useState(() => (isMessengerEnabled() ? memoFor(token) : null));
   const [failed, setFailed] = useState(false);
   const payload = useMemo(
     () => (samplerPayload ? { ...samplerPayload, community } : null),
@@ -198,14 +210,23 @@ export default function Sampler() {
 
   // Community stream — always live, never cached. Fills its own tile when it
   // lands; a failure just leaves the community tile empty (non-fatal).
+  // Messenger off on this host → /home/community redirects to Home, so the tile
+  // (all links into it) is never fetched or shown (audit community L5).
   const fetchCommunity = () => {
+    if (!isMessengerEnabled()) return;
     const gen = genRef.current;
+    const release = () => {
+      if (mountedRef.current && gen === genRef.current) setCommunity((c) => (c === undefined ? null : c));
+    };
     BoMOnlineAPI({ homegroups: { token }, leaderboard: { token } }, { useCache: false })
       .then((r) => {
-        if (!mountedRef.current || gen !== genRef.current || r?.error) return;
-        setCommunity(assembleCommunity(r));
+        if (!mountedRef.current || gen !== genRef.current) return;
+        if (r?.error) return release();
+        const value = assembleCommunity(r);
+        communityMemo = { token, value };
+        setCommunity(value);
       })
-      .catch(() => {});
+      .catch(release);
   };
 
   // Sampler stream. `explicitSeed` null → front-door (server picks the shared
@@ -244,7 +265,6 @@ export default function Sampler() {
     sessionRef.current = null;
     setFeedEnd(null);
     setSamplerPayload(null);
-    setCommunity(null);
     setFailed(false);
     setReserves([]);
     setVariableTiles(shuffle(VARIABLE_DEFAULT()));
@@ -494,8 +514,11 @@ export default function Sampler() {
 
   // Each tile renders inside its own error boundary: a throw drops that tile
   // (shell included) and the rest of the grid survives.
-  const renderTile = ({ key, component: Tile, span, isReady }, spanOverride) => {
+  const renderTile = ({ key, component: Tile, span, isReady, pending }, spanOverride) => {
     if (!payload) return skeleton(key, span);
+    // A live tile whose own stream is still in flight keeps its slot, so its
+    // arrival never re-flows the masonry (audit community B2).
+    if (pending?.(payload)) return skeleton(key, span);
     if (!isReady(payload)) return null;
     return (
       <TileBoundary key={key} tileKey={key}>
@@ -535,7 +558,7 @@ export default function Sampler() {
       case "mattersNarrative":
       case "mattersMaterial":
       case "mattersConcept": return 20;
-      case "community": return 8 + (payload.community?.groups?.length || 0) * 4 + (payload.community?.messages?.length || 0) * 2.5;
+      case "community": return 25; // ~395px editorial layout, constant while pending (2026-10-16)
       case "biblephrases": return 20;
       case "chiasmus": return 20;
       case "notes": return 24;
@@ -544,6 +567,8 @@ export default function Sampler() {
       default: return 14;
     }
   };
+  // takes a slot: ready, or a live tile still fetching (renders its skeleton)
+  const shows = (t) => t.isReady(payload) || Boolean(t.pending?.(payload));
   const leftTiles = FIXED_LEFT.map((k) => tileRegistry.find((t) => t.key === k)).filter(Boolean);
   // Totals FIRST, then move tiles: the old greedy pass compared each tile
   // against a not-yet-grown grid estimate and never railed anything.
@@ -553,7 +578,7 @@ export default function Sampler() {
   // masonry is 2-up: each variable tile costs half its height in column terms
   let rightH =
     est("people") +
-    gridVars.reduce((a, t) => (payload && t.isReady(payload) ? a + est(t.key) / 2 : a), 0);
+    gridVars.reduce((a, t) => (payload && shows(t) ? a + est(t.key) / 2 : a), 0);
   // While the rail runs short, pull the best-fitting tile over. The text tile
   // is designed for width — never strand it in the narrow rail (round-6
   // review: a rail-binned scripture tile ended the page on a viewport void).
@@ -565,7 +590,7 @@ export default function Sampler() {
     let best = -1;
     let bestAfter = deficit;
     gridVars.forEach((t, i) => {
-      if (t.key === "text" || !payload || !t.isReady(payload)) return;
+      if (t.key === "text" || !payload || !shows(t)) return;
       const after = Math.abs(deficit - est(t.key) * 1.5);
       if (after < bestAfter) { bestAfter = after; best = i; }
     });
@@ -586,7 +611,7 @@ export default function Sampler() {
   const isCommentary = (t) => /^commentary/.test(t.key);
   // During loading (no payload) keep every tile so its skeleton renders (no
   // layout shift); once loaded, keep only the ready ones.
-  const renderable = gridVars.filter((t) => !payload || t.isReady(payload));
+  const renderable = gridVars.filter((t) => !payload || shows(t));
   const commentaryTiles = renderable.filter(isCommentary);
   const orderedGrid = renderable.filter((t) => !isCommentary(t));
   if (commentaryTiles.length) {
@@ -668,7 +693,7 @@ export default function Sampler() {
   // One curated order (samplerLayout.singleColumnOrder); no balancer, no rail.
   // Commentary is spaced out as in the masonry, and batches append at the end.
   if (single) {
-    const vars = variableTiles.filter((t) => !payload || t.isReady(payload));
+    const vars = variableTiles.filter((t) => !payload || shows(t));
     const others = vars.filter((t) => !isCommentary(t));
     const comms = vars.filter(isCommentary);
     comms.forEach((c, i) => {

@@ -1785,34 +1785,57 @@ html[data-theme="dark"] .sampler .faxTilePage .faxPageBarRef { border-color: #44
 html[data-theme="dark"] .historyTileBullets { color: #c4c4c4; }
 .historyTileCitation { margin-top: auto; padding-top: 0.4rem; font-size: 0.68rem; font-style: italic; color: var(--tile-meta); }
 
-/* community (merged): group strip, facepiles, chip-tagged messages, finishers */
-.communityGroupStrip { display: flex; gap: 0.55rem; margin-bottom: 0.65rem; }
+/* community — editorial, not dashboard (story audit: beauty 2). The freshest
+   message leads as a serif pull quote (the witness-tile idiom), attributed
+   who · where · when; groups follow as full-width rows with whole names. */
+.communityQuote {
+  display: flex; flex-direction: column; gap: 0.55rem;
+  margin: 0.1rem 0 0.85rem; padding: 0.15rem 0 0.15rem 0.85rem;
+  border-left: 2px solid #c9a24b; color: inherit; text-decoration: none;
+}
+.communityQuote .communityMsgText {
+  font-family: "Scripture", Georgia, serif; font-size: 1.05rem; line-height: 1.38; color: #333;
+  overflow-wrap: anywhere;
+}
+.communityQuote:hover .communityMsgText { color: #000; }
+.communityMessage:focus-visible { outline: 2px solid #c9a24b; outline-offset: 3px; border-radius: 2px; }
+html[data-theme="dark"] .communityQuote .communityMsgText { color: #ddd; }
+html[data-theme="dark"] .communityQuote:hover .communityMsgText { color: #fff; }
+.communityQuoteBy { display: flex; align-items: center; gap: 0.45rem; min-width: 0; font-size: 0.78rem; color: var(--tile-meta); }
+.communityQuoteBy img,
+.communityQuoteBy .communityAvatarBlank { width: 1.5rem; height: 1.5rem; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: #eee; }
+html[data-theme="dark"] .communityQuoteBy img,
+html[data-theme="dark"] .communityQuoteBy .communityAvatarBlank { background: #444; }
+.communityQuoteWho { min-width: 0; flex: 0 1 auto; line-height: 1.3; }
+.communityMsgUser { font-weight: 700; color: #2a2a2a; }
+html[data-theme="dark"] .communityMsgUser { color: #f0f0f0; }
+.communityWhen { flex-shrink: 0; white-space: nowrap; color: var(--tile-meta); }
+.communityQuoteBy .communityWhen::before { content: "· "; }
+
+.communityGroupStrip { list-style: none; margin: 0; padding: 0; border-top: 1px solid #eee; }
+html[data-theme="dark"] .communityGroupStrip { border-top-color: #333; }
+.communityGroupStrip > li { border-bottom: 1px solid #eee; }
+html[data-theme="dark"] .communityGroupStrip > li { border-bottom-color: #333; }
 .communityGroupCard {
-  flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 0.45rem;
-  padding: 0.45rem 0.5rem; border: 1px solid #e6e6e6; border-radius: 0.5rem;
-  background: #fbfbfb; color: inherit; text-decoration: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  display: flex; align-items: center; gap: 0.7rem; min-height: 44px;
+  padding: 0.55rem 0.25rem; color: inherit; text-decoration: none;
+  transition: background 0.15s ease;
 }
-.communityGroupCard:hover,
-.communityGroupCard:focus-visible { border-color: #c9c9c9; box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
-html[data-theme="dark"] .communityGroupCard { background: #262626; border-color: #3a3a3a; }
-html[data-theme="dark"] .communityGroupCard:hover,
-html[data-theme="dark"] .communityGroupCard:focus-visible { border-color: #555; box-shadow: 0 3px 10px rgba(0,0,0,0.45); }
-.communityGroupAvatar { width: 1.9rem; height: 1.9rem; border-radius: 0.45rem; object-fit: cover; flex-shrink: 0; background: #eee; }
+.communityGroupCard:hover { background: rgba(0,0,0,0.03); }
+.communityGroupCard:focus-visible,
+.communityMoreCard:focus-visible { outline: 2px solid #c9a24b; outline-offset: -2px; border-radius: 0.35rem; }
+html[data-theme="dark"] .communityGroupCard:hover { background: rgba(255,255,255,0.05); }
+.communityGroupAvatar { width: 2.5rem; height: 2.5rem; border-radius: 0.4rem; object-fit: cover; flex-shrink: 0; background: #eee; }
 html[data-theme="dark"] .communityGroupAvatar { background: #333; }
-.communityGroupBody { min-width: 0; }
-.communityGroupName {
-  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
-  font-weight: 700; font-size: 0.78rem; line-height: 1.15; color: #2a2a2a; overflow-wrap: anywhere;
-}
+.communityGroupBody { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+.communityGroupName { font-weight: 700; font-size: 0.9rem; line-height: 1.2; color: #222; text-wrap: balance; }
 html[data-theme="dark"] .communityGroupName { color: #f0f0f0; }
-.communityGroupMeta { display: flex; align-items: center; gap: 0.3rem; margin-top: 0.15rem; font-size: 0.68rem; color: var(--tile-meta); white-space: nowrap; }
-.communityMemberCount { font-weight: 700; color: #444; }
-html[data-theme="dark"] .communityMemberCount { color: #ddd; }
+.communityGroupMeta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; font-size: 0.76rem; color: var(--tile-meta); }
+.communityMemberCount { white-space: nowrap; }
 .communityFacepile { display: inline-flex; flex-shrink: 0; }
 .communityFacepile img,
 .communityFacepile .communityAvatarBlank {
-  width: 1.1rem; height: 1.1rem; border-radius: 50%; object-fit: cover;
+  width: 1.15rem; height: 1.15rem; border-radius: 50%; object-fit: cover;
   border: 1.5px solid #fff; background: #ddd; margin-left: -0.35rem;
 }
 .communityFacepile > :first-child { margin-left: 0; }
@@ -1820,65 +1843,32 @@ html[data-theme="dark"] .communityFacepile img,
 html[data-theme="dark"] .communityFacepile .communityAvatarBlank { border-color: #222; background: #444; }
 .communityAvatarBlank { display: inline-block; flex-shrink: 0; background: #ddd; }
 html[data-theme="dark"] .communityAvatarBlank { background: #444; }
-/* "+N groups": a compact end card, always visible (it was width-hidden). */
-.communityGroupCard.communityMoreCard {
-  flex: 0 0 auto; flex-direction: column; justify-content: center; gap: 0;
-  padding: 0.45rem 0.7rem; color: #444; line-height: 1.1;
+/* "+N more groups": a quiet text row, always visible. */
+.communityMoreCard {
+  display: flex; align-items: center; min-height: 44px; padding: 0 0.25rem;
+  font-size: 0.8rem; font-weight: 700; color: #333; text-decoration: none;
 }
-.communityMoreCard strong { font-size: 0.9rem; }
-.communityMoreCard span { font-size: 0.66rem; color: var(--tile-meta); }
+.communityMoreCard:hover { color: #000; text-decoration: underline; }
 html[data-theme="dark"] .communityMoreCard { color: #ddd; }
-.communityMessages { display: flex; flex-direction: column; gap: 0.3rem; }
-/* Message rows are two-line: who/where, then WHAT WAS SAID — the text used to
-   be hidden at every real tile width by a 460px container query. */
-.communityMessage {
-  display: flex; flex-direction: column; gap: 0.2rem; padding: 0.4rem 0.45rem;
-  border-radius: 0.45rem; color: inherit; text-decoration: none; min-width: 0;
-  transition: background 0.15s ease;
-}
-.communityMessage:hover,
-.communityMessage:focus-visible { background: rgba(0,0,0,0.04); }
-html[data-theme="dark"] .communityMessage:hover,
-html[data-theme="dark"] .communityMessage:focus-visible { background: rgba(255,255,255,0.06); }
-.communityMsgHead { display: flex; align-items: center; gap: 0.4rem; min-width: 0; }
-.communityGroupChip {
-  flex-shrink: 1; min-width: 0; font-size: 0.62rem; font-weight: 700; padding: 0.12rem 0.45rem;
-  border-radius: 0.6rem; background: rgba(0,0,0,0.06); color: #444;
-  max-width: 9rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
-}
-html[data-theme="dark"] .communityGroupChip { background: rgba(255,255,255,0.1); color: #d6d6d6; }
-.communityMsgHead img,
-.communityMsgHead .communityAvatarBlank { width: 1.4rem; height: 1.4rem; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: #eee; }
-html[data-theme="dark"] .communityMsgHead img { background: #444; }
-.communityMsgUser { flex-shrink: 0; max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: 0.74rem; color: #2a2a2a; }
-html[data-theme="dark"] .communityMsgUser { color: #f0f0f0; }
-.communityMsgText {
-  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
-  padding-left: 1.8rem; font-size: 0.78rem; line-height: 1.4; color: #444;
-}
-html[data-theme="dark"] .communityMsgText { color: #c4c4c4; }
-.communityReadingNow { display: flex; flex-wrap: wrap; gap: 0.6rem; font-size: 0.74rem; color: #555; }
+.communityReadingNow { flex-wrap: wrap; column-gap: 0.75rem; row-gap: 0.4rem; }
 html[data-theme="dark"] .communityReadingNow { color: #c4c4c4; }
 .communityReader { display: inline-flex; align-items: center; gap: 0.3rem; }
 .communityReader img,
-.communityReader .communityAvatarBlank { width: 1.3rem; height: 1.3rem; border-radius: 50%; object-fit: cover; background: #eee; }
+.communityReader .communityAvatarBlank { width: 1.4rem; height: 1.4rem; border-radius: 50%; object-fit: cover; background: #eee; }
 .communityFinishers {
-  display: flex; align-items: center; gap: 0.45rem; margin-top: 0.55rem; padding-top: 0.55rem;
-  border-top: 1px solid #eee; font-size: 0.74rem; color: #555; min-width: 0;
+  display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem;
+  font-size: 0.78rem; color: #555; min-width: 0;
 }
-html[data-theme="dark"] .communityFinishers { color: #c4c4c4; border-top-color: #333; }
-.communityFinisherLabel { flex-shrink: 0; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--tile-eyebrow); }
+html[data-theme="dark"] .communityFinishers { color: #c4c4c4; }
+.communityFinisherLabel { flex-shrink: 0; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--tile-eyebrow); }
 .communityFinisherNames { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.communityInvite { font-weight: 700; font-size: 0.85rem; color: #333; text-decoration: none; padding: 0.6rem 0; }
+.communityInvite { display: inline-flex; align-items: center; min-height: 44px; font-weight: 700; font-size: 0.85rem; color: #333; text-decoration: none; }
 html[data-theme="dark"] .communityInvite { color: #ccc; }
 
-/* community is WIDTH-AWARE via container queries: only very narrow slots
-   (< 340px) let the group strip wrap. Message text is never hidden. */
+/* Narrow slots: the finisher row wraps rather than clipping its names. */
 .tile-community { container-type: inline-size; }
 @container (max-width: 339px) {
-  .communityGroupStrip { flex-wrap: wrap; }
-  .communityGroupCard { flex-basis: calc(50% - 0.3rem); }
-  .communityMsgText { padding-left: 0; }
+  .communityFinishers { flex-wrap: wrap; }
 }
 
 /* THE standardized read-more pill (used everywhere prose clamps: people bio,

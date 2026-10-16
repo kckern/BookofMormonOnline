@@ -24,7 +24,7 @@ import MattersNarrativeTile from "./MattersNarrativeTile";
 import MattersMaterialTile from "./MattersMaterialTile";
 import MattersConceptTile from "./MattersConceptTile";
 import MatterProfileTile, { hasProfileMatter } from "./MatterProfileTile";
-import { HIDE_PASSAGE_NOTES } from "src/models/featureFlags";
+import { HIDE_PASSAGE_NOTES, isMessengerEnabled } from "src/models/featureFlags";
 
 /**
  * Sampler tile registry. Adding a tile type:
@@ -47,7 +47,12 @@ export const tileRegistry = [
   { key: "readingplan", component: ReadingPlanTile, span: "tile-readingplan", isReady: () => true },
   { key: "section",     component: NarrationTile,   span: "tile-narration",   isReady: (p) => p?.section?.rows?.some?.((r) => r?.narration) },
   { key: "contents",    component: ContentsTile,    span: "tile-contents",    isReady: (p) => !!p?.contents },
-  { key: "community",   component: CommunityTile,   span: "tile-community",   isReady: (p) => !!p?.community },
+  // community: its own live stream. `pending` (undefined = fetch in flight)
+  // tells the Sampler to hold the slot with a skeleton so the arrival never
+  // re-flows the grid. Messenger off on this host → /home/community redirects
+  // to Home, so neither ready nor pending (no tile at all).
+  { key: "community",   component: CommunityTile,   span: "tile-community",   isReady: (p) => isMessengerEnabled() && !!p?.community,
+    pending: (p) => isMessengerEnabled() && !!p && p.community === undefined },
   { key: "people",      component: PeopleTile,      span: "tile-people",      isReady: (p) => p?.people?.length > 0 },
   { key: "text",        component: TextTile,        span: "tile-text",        isReady: (p) => !!p?.text },
   { key: "commentary",  component: CommentaryTile,  span: "tile-commentary",  isReady: (p) => !!p?.commentary },

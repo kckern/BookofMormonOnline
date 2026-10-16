@@ -18,7 +18,7 @@ const DESKTOP = {
   "tile-readingplan": "233px",
   "tile-narration": "650px", // 4:3 art cells (rail fix) add ~35px
   "tile-contents": "560px", // 2026-10-15 rail fix: pages-only outline (was a 1000px section wall)
-  "tile-community": "252px",
+  "tile-community": "395px", // 2026-10-16 editorial redesign (quote + group rows)
   "tile-people": "810px",
   "tile-text": "360px",
   "tile-commentary": "280px",
@@ -65,7 +65,7 @@ const PHONE = {
   "tile-mapstory": "655px",
   "tile-placeProfile": "322px",
   "tile-witness": "240px",
-  "tile-community": "283px",
+  "tile-community": "446px", // 2026-10-16 editorial redesign
 };
 
 /** CSS length for the skeleton of `spanClass`; `single` = phone single-column layout. */
