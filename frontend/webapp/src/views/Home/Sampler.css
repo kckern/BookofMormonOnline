@@ -2118,19 +2118,19 @@ html[data-theme="dark"] .faxTileEdition { color: #9a9a9a; }
 .imageArtFrame img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.35s ease, filter 0.2s ease; }
 .imageArtLink:hover .imageArtFrame img { transform: scale(1.025); }
 html[data-theme="dark"] .imageArtFrame { background: #2c2c2c; }
-/* title: shaded header directly ABOVE the image, center-aligned */
+/* header: the shared eyebrow, then the title in the heading tier — left-aligned
+   on the tile ground like every sibling (audit A3; was a centred grey bar) */
+.imageArtEyebrow { padding: 0.75rem 0.85rem 0; margin-bottom: 0.2rem; }
 .imageArtTitleBar {
   display: block;
-  padding: 0.5rem 0.75rem;
-  text-align: center;
-  font-size: 0.85rem;
-  font-weight: 700;
+  padding: 0 0.85rem 0.6rem;
+  font-size: 0.95rem;
+  font-weight: 800;
   line-height: 1.25;
   color: #2a2a2a;
-  background: #f0efec;
 }
 .imageArtLink:hover .imageArtTitleBar { text-decoration: underline; text-decoration-color: #c9a24b; text-underline-offset: 3px; }
-html[data-theme="dark"] .imageArtTitleBar { background: #262626; color: #f0f0f0; }
+html[data-theme="dark"] .imageArtTitleBar { color: #f0f0f0; }
 .imageArtLink:focus-visible { outline: 2px solid #c9a24b; outline-offset: -2px; }
 /* artist: translucent ©-badge, bottom-right over the image */
 .imageArtArtistBadge {
@@ -3200,4 +3200,34 @@ html[data-theme="dark"] .faxVerseTile .read-content .read-block { background: tr
     left: -0.4rem;
     right: -0.4rem;
   }
+}
+
+/* Analysis tiles (Biblical language / Chiasmus / Art) — blind audit fixes.
+   A4: the chiasm glyph's centre bars take the house gold, matching the gold
+   echo marks beneath them (the shared token is Bootstrap amber #f0ad4e). */
+.sampler .chiasmGlyph .glyphBar.pivot { fill: #c9a24b; }
+/* art-A4: the art excerpt's anchor phrase uses the same gold wash as its two
+   sibling analysis tiles instead of the Read page's yellow. */
+.imageArtScripture .scriptureAnchorMark { background: rgba(201, 162, 75, 0.24); }
+html[data-theme="dark"] .imageArtScripture .scriptureAnchorMark { background: rgba(201, 162, 75, 0.26); }
+/* art-G1: the excerpt's section ref is now a <button>; the Read header's link
+   styling no longer applies, so keep it on the chip's own line metrics. */
+.imageArtScripture .read-section-header button.scripture_link { vertical-align: baseline; }
+/* F2 (touch): the Biblical-language and Chiasmus eyebrows get the 44px hit the
+   other families' eyebrows have; the chiasm speaker link (40px box, 32px hit)
+   grows to 44px and sits above the eyebrow's downward hit extension. */
+@media (pointer: coarse) {
+  .biblePhrasesTile .tileHeading a,
+  .chiasmusTile .tileHeading a { position: relative; z-index: 2; }
+  .biblePhrasesTile .tileHeading a::after,
+  .chiasmusTile .tileHeading a::after {
+    content: "";
+    position: absolute;
+    top: -12px;
+    bottom: calc(100% - 44px + 12px);
+    left: -0.4rem;
+    right: -0.4rem;
+  }
+  .chiasmusTileSpeaker { position: relative; z-index: 3; min-height: 44px; }
+  .biblePhrasesTile .scripture_link { z-index: 3; } /* a pill under the eyebrow keeps its own hit */
 }

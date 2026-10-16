@@ -6,8 +6,8 @@ import TileImage from "./_ds/TileImage";
 import labelOr from "./_ds/labelOr";
 
 /**
- * Standalone artwork tile. A shaded centered header carries the title above the
- * piece, which shows at its real aspect with the artist credited in a
+ * Standalone artwork tile. The shared uppercase eyebrow, then the title in the
+ * heading tier (left-aligned, no fill) above the piece, which shows at its real aspect with the artist credited in a
  * translucent ©-badge bottom-right over the image. Title + image are ONE link to
  * the artwork page. Beneath the image, the ACTUAL scripture it illustrates
  * rendered in the Read experience (via ScriptureExcerpt), plus a see-in-context
@@ -18,6 +18,9 @@ import labelOr from "./_ds/labelOr";
  * A failed image drops the whole tile (`.tile-art:empty` collapses the shell)
  * rather than leaving a blank frame that still credits an absent picture.
  */
+/** Verses shown in the tile excerpt (anchor verse +-1). */
+export const ART_EXCERPT_VERSES = 3;
+
 export default function ImageArtTile({ payload, artIndex = 0 }) {
   const [failedId, setFailedId] = useState(null);
   const pool = payload?.art || [];
@@ -28,6 +31,9 @@ export default function ImageArtTile({ payload, artIndex = 0 }) {
   const to = art.ref ? readPath(art.ref) : null;
   return (
     <div className="samplerTileInner imageArtTile">
+      {/* the Home eyebrow every sibling carries (audit A3): names the category
+          before the title ("Dissenters Are Hewn Down" — of what?) */}
+      <h3 className="tileHeading imageArtEyebrow">{labelOr("art_eyebrow", "Art")}</h3>
       <Link to={`/art/${art.id}`} className="imageArtLink">
         {art.title ? <span className="imageArtTitleBar">{art.title}</span> : null}
         <span className="imageArtFrame" style={{ aspectRatio: `1 / ${ratio}` }}>
@@ -47,8 +53,9 @@ export default function ImageArtTile({ payload, artIndex = 0 }) {
         {art.ref ? (
           <div className="imageArtScripture read-content scriptureExcerptCompact">
             {/* the header + "see in context" already navigate — drop the
-                redundant Study button */}
-            <ScriptureExcerpt refText={art.ref} hideStudy refAsPopup highlight={art.title} />
+                redundant Study button. focusVerses: the anchor verse +-1, not
+                the whole section range (audit H3); See in context has the rest. */}
+            <ScriptureExcerpt refText={art.ref} hideStudy refAsPopup highlight={art.title} focusVerses={ART_EXCERPT_VERSES} />
           </div>
         ) : null}
         {to ? <TileDeepLink to={to} always verb="seeInContext" className="imageArtContext" /> : null}

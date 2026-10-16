@@ -13,7 +13,7 @@ import { variantUrl, variantsEnabled } from "src/views/Home/tiles/_ds/mediaVaria
  * takes the 256px variant instead of the 150-650KB original; a missing variant
  * falls back to the original once, then the slot hides (as before).
  */
-export function GutterAvatar({ slug, voice }) {
+export function GutterAvatar({ slug }) {
   if (!slug) return null;
   const path = `people/${slug}`;
   const onError = (e) => {
@@ -26,8 +26,10 @@ export function GutterAvatar({ slug, voice }) {
     img.style.visibility = "hidden";
   };
   return (
+    // decorative: the speaker's name is rendered beside it (and `voice` is a raw
+    // label key like "vox_mormon", never readable alt text — audit G3)
     <img
-      alt={voice || ""}
+      alt=""
       src={`${assetUrl}/${path}`}
       srcSet={variantsEnabled() ? `${variantUrl(path, 256)} 256w` : undefined}
       sizes="4rem"
@@ -205,7 +207,59 @@ export const highlightPhrase = (text, phrase) => {
   return parts;
 };
 
-export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = false, refAsPopup = false, highlight = null, onBoMSections = null }) {
+/**
+ * Narrow loaded Read segments to a window of `max` verses for an inline tile
+ * excerpt (audit art-H3: a whole section range made one art tile three verses
+ * and the next a nine-verse wall). The window is centred on the verse holding
+ * the anchor phrase (anchor +-1), else it is the first `max` verses. Sections
+ * outside the window drop; a cut at the head sets `partial` (leading ellipsis),
+ * a cut at the tail sets `tail` (trailing ellipsis). Bible `passages`
+ * segments, and excerpts already within `max`, pass through untouched.
+ */
+export const focusSegments = (segments, anchor, max) => {
+  if (!max || !Array.isArray(segments)) return segments;
+  const order = [];
+  let hit = -1;
+  for (const seg of segments) {
+    for (const sec of seg.sections || []) {
+      for (const b of sec.blocks || []) {
+        for (const l of b.lines || []) {
+          if (!order.includes(l.verse_id)) order.push(l.verse_id);
+          if (hit < 0 && anchor) {
+            const parts = highlightPhrase(l.text, anchor);
+            if (Array.isArray(parts)) hit = order.indexOf(l.verse_id);
+          }
+        }
+      }
+    }
+  }
+  if (order.length <= max) return segments;
+  const start = hit < 0 ? 0 : Math.max(0, Math.min(hit - 1, order.length - max));
+  const keep = new Set(order.slice(start, start + max));
+  const lastKept = order[start + max - 1];
+  return segments.map((seg) => {
+    if (!seg.sections) return seg;
+    const sections = seg.sections
+      .map((sec) => {
+        const all = (sec.blocks || []).flatMap((b) => b.lines || []);
+        const blocks = (sec.blocks || [])
+          .map((b) => ({ ...b, lines: (b.lines || []).filter((l) => keep.has(l.verse_id)) }))
+          .filter((b) => b.lines.length);
+        if (!blocks.length) return null;
+        const shown = blocks.flatMap((b) => b.lines);
+        return {
+          ...sec,
+          blocks,
+          partial: !!sec.partial || shown[0].verse_id !== all[0]?.verse_id,
+          tail: shown[shown.length - 1].verse_id !== all[all.length - 1]?.verse_id || shown[shown.length - 1].verse_id === lastKept && lastKept !== order[order.length - 1],
+        };
+      })
+      .filter(Boolean);
+    return { ...seg, sections };
+  });
+};
+
+export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = false, refAsPopup = false, highlight = null, onBoMSections = null, focusVerses = 0 }) {
   const anchor = cleanPhrase(highlight);
   const ref = refText ? canonical(refText) : null;
   // One entry per compound segment, IN ORDER — each is either a BoM result
@@ -295,24 +349,18 @@ export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = fals
               // inside a tile: the ref opens the app-wide scripture popup (same
               // samplerScripture event as RefPill/openScripture) rather than
               // navigating away. Dispatched inline to avoid a circular import.
-              <span
+              // A native button (like RefPill): keyboard + role for free.
+              <button
+                type="button"
                 className="scripture_link"
-                role="button"
-                tabIndex={0}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   window.dispatchEvent(new CustomEvent("samplerScripture", { detail: canonical(s.ref) }));
                 }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    window.dispatchEvent(new CustomEvent("samplerScripture", { detail: canonical(s.ref) }));
-                  }
-                }}
               >
                 {s.ref}
-              </span>
+              </button>
             ) : (
               <Link to={`/study/${slugify(getEnglishReference(s.ref))}`} onClick={onNavigate}>
                 {s.ref}
@@ -325,7 +373,7 @@ export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = fals
       {s.blocks.map((b, i) => (
         <div key={i} className="read-block">
           <div className="left-gutter">
-            <GutterAvatar slug={b.person_slug} voice={b.voice} />
+            <GutterAvatar slug={b.person_slug} />
             {b.voice ? <div className="read-voice">{label(b.voice)}</div> : null}
           </div>
           <div className="main-content">
@@ -344,6 +392,7 @@ export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = fals
                   </span>
                 );
               })}
+              {s.tail && i === s.blocks.length - 1 ? <span className="samplerScriptureEllipsis">…</span> : null}
             </p>
           </div>
         </div>
@@ -370,7 +419,8 @@ export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = fals
 
   // Render every segment in the ORIGINAL order, mixing Read sections and Bible
   // passages as they came.
-  return segments.flatMap((seg, si) => {
+  const shownSegments = focusVerses ? focusSegments(segments, anchor, focusVerses) : segments;
+  return shownSegments.flatMap((seg, si) => {
     if (seg.sections?.length) return seg.sections.map((s, i) => renderSection(s, `s-${si}-${i}`));
     if (seg.passages?.length) return [renderPassages(seg.passages, `p-${si}`)];
     return [];

@@ -12,7 +12,7 @@ vi.mock("src/models/BoMOnlineAPI", () => ({
 }));
 vi.mock("src/views/_Common/ScriptureExcerpt", () => ({
   __esModule: true,
-  default: () => null,
+  default: (props) => { globalThis.__excerptProps = props; return null; },
   readPath: (ref) => (ref ? "/read/alma-17/7" : null),
 }));
 
@@ -31,6 +31,23 @@ describe("ImageArtTile", () => {
   afterEach(() => {
     if (saved === undefined) delete process.env[KEY];
     else process.env[KEY] = saved;
+  });
+
+  // H3: the excerpt is clamped to the anchor verse +-1, not the whole range.
+  test("excerpt is focused to 3 verses around the title anchor", () => {
+    renderTile();
+    expect(globalThis.__excerptProps).toMatchObject({ refText: "Alma 17:7", highlight: "Zarahemla is Rebuilt", focusVerses: 3, refAsPopup: true });
+  });
+
+  // A3: the art tile speaks the Home header grammar — an uppercase eyebrow
+  // (outside the title+image link), then the title in the heading tier.
+  test("carries the shared tileHeading eyebrow outside the artwork link", () => {
+    const { container } = renderTile();
+    const h = container.querySelector("h3.tileHeading");
+    expect(h).not.toBeNull();
+    expect(h.textContent).toMatch(/art/i);
+    expect(h.closest("a")).toBeNull();
+    expect(h.compareDocumentPosition(container.querySelector(".imageArtLink")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   test("empty payload / art without id collapse", () => {

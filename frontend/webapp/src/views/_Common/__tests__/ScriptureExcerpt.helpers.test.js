@@ -44,3 +44,44 @@ describe("highlightPhrase (notes anchor mark)", () => {
     expect(highlightPhrase("plain text", "absent phrase")).toBe("plain text");
   });
 });
+
+import { focusSegments } from "../ScriptureExcerpt";
+
+// Art-H3: a tile excerpt is the anchor verse +-1, not the whole section range.
+describe("focusSegments (tile excerpt window)", () => {
+  const line = (v, text) => ({ verse_id: v, verse_num: v - 100, text });
+  const seg = (vs, extra = []) => ({
+    sections: [
+      { heading: "A", ref: "X 1:1-6", partial: false, blocks: [{ voice: "v", lines: vs.map((v) => line(v, `verse ${v} text`)) }] },
+      ...extra,
+    ],
+  });
+  const shown = (segs) => segs.flatMap((s) => (s.sections || []).flatMap((x) => x.blocks.flatMap((b) => b.lines.map((l) => l.verse_id))));
+
+  test("anchor in a late verse → that verse +-1, ellipses both ends", () => {
+    const segs = [seg([101, 102, 103, 104, 105, 106])];
+    segs[0].sections[0].blocks[0].lines[4].text = "I did find peace to my soul";
+    const out = focusSegments(segs, "Peace to my soul", 3);
+    expect(shown(out)).toEqual([104, 105, 106]);
+    expect(out[0].sections[0].partial).toBe(true);
+  });
+
+  test("no anchor match → first N verses, trailing cut flagged", () => {
+    const out = focusSegments([seg([101, 102, 103, 104, 105])], "nowhere", 3);
+    expect(shown(out)).toEqual([101, 102, 103]);
+    expect(out[0].sections[0].partial).toBe(false);
+    expect(out[0].sections[0].tail).toBe(true);
+  });
+
+  test("a second section outside the window is dropped", () => {
+    const second = { heading: "B", ref: "Y 2:8", partial: false, blocks: [{ lines: [line(900, "other")] }] };
+    const out = focusSegments([seg([101, 102, 103], [second])], null, 3);
+    expect(out[0].sections).toHaveLength(1);
+    expect(shown(out)).toEqual([101, 102, 103]);
+  });
+
+  test("short excerpts pass through untouched; passages untouched", () => {
+    const segs = [seg([101, 102]), { passages: [{ verses: [] }] }];
+    expect(focusSegments(segs, null, 3)).toEqual(segs);
+  });
+});

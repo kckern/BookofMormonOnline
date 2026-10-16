@@ -27,7 +27,8 @@ describe("GutterAvatar", () => {
     const img = container.querySelector("img");
     expect(img.getAttribute("srcset")).toBe("https://media.test/variants/256/people/nephi1.webp 256w");
     expect(img.getAttribute("loading")).toBe("lazy");
-    expect(img.getAttribute("alt")).toBe("Nephi");
+    // decorative: the voice name is rendered beside it (audit art-G3)
+    expect(img.getAttribute("alt")).toBe("");
   });
 
   test("a missing variant falls back to the original once, then hides", () => {
