@@ -69,4 +69,35 @@ describe("pinAnchor", () => {
     run();
     expect(nodes[0].getBoundingClientRect().top).toBe(500);
   });
+
+  // Audit E1 (phone Back from an infinite-batch Profile): on the first frames
+  // after Back a tile above the anchor has not mounted yet, so nodes[index] is
+  // its neighbour. The pin must not give up — it follows the same-class tile
+  // nearest the saved index and keeps it pinned once the layout catches up.
+  test("follows the anchored tile when a late tile above shifts the indexes", () => {
+    let nodes = [node("tile-a", 0, 400), node("tile-c", 600, 500), node("tile-d", 1200, 300)];
+    let now = 0;
+    pinAnchor(() => nodes, { index: 2, cls: "tile-c", offset: 200 }, { win, now: () => now, timeoutMs: 3000 });
+    run();
+    expect(nodes[1].getBoundingClientRect().top).toBe(200); // found one slot early
+    // the missing tile mounts above: indexes shift and the page grows 900px
+    nodes = [node("tile-a", 0, 400), node("tile-b", 400, 900), ...nodes.slice(1)];
+    node.offset += 900;
+    now = 400;
+    run();
+    expect(nodes[2].getBoundingClientRect().top).toBe(200);
+  });
+
+  test("keeps waiting (no scroll) while no same-class tile is near the index", () => {
+    let nodes = [node("tile-x", 600, 500)];
+    let now = 0;
+    pinAnchor(() => nodes, { index: 0, cls: "tile-c", offset: 200 }, { win, now: () => now, timeoutMs: 3000 });
+    run();
+    expect(scrolled).toBe(0);
+    nodes = [node("tile-x", 0, 500), node("tile-c", 700, 500)];
+    now = 600;
+    run();
+    expect(nodes[1].getBoundingClientRect().top).toBe(200);
+  });
 });
+

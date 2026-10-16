@@ -24,10 +24,27 @@ export function captureAnchor(nodes, viewportHeight) {
 const INPUTS = ["wheel", "touchstart", "keydown", "mousedown"];
 
 /**
+ * The anchored tile in the current node list: the same-class tile nearest the
+ * saved index, within NEAR slots. Right after Back a tile above may not have
+ * mounted yet (a reserve or self-fetching tile), so the anchor sits one or two
+ * slots early until it does (audit E1: the old exact-index check gave up on the
+ * first frame and the phone landed ~800px low). Null when no such tile is near.
+ */
+const NEAR = 3;
+export function findAnchor(nodes, anchor) {
+  for (let d = 0; d <= NEAR; d++) {
+    for (const i of d ? [anchor.index - d, anchor.index + d] : [anchor.index]) {
+      if (nodes[i] && tileClass(nodes[i]) === anchor.cls) return nodes[i];
+    }
+  }
+  return null;
+}
+
+/**
  * Re-pin `anchor` every frame until the reader acts or `timeoutMs` passes.
- * Gives up quietly if the node at `anchor.index` isn't the same tile class
- * (the restored layout differs, so pinning would land somewhere arbitrary).
- * Returns a stop() function.
+ * While no same-class tile is near the saved index (layout still restoring, or
+ * a different layout) it waits without scrolling rather than pin somewhere
+ * arbitrary. Returns a stop() function.
  */
 export function pinAnchor(getNodes, anchor, { win = window, now = () => Date.now(), timeoutMs = 3000 } = {}) {
   let stopped = false;
@@ -43,8 +60,7 @@ export function pinAnchor(getNodes, anchor, { win = window, now = () => Date.now
   const tick = () => {
     if (stopped) return;
     if (now() > deadline) return stop();
-    const el = getNodes()[anchor.index];
-    if (el && tileClass(el) !== anchor.cls) return stop();
+    const el = findAnchor(getNodes(), anchor);
     if (el) {
       const delta = Math.round(el.getBoundingClientRect().top - anchor.offset);
       if (Math.abs(delta) > 1) win.scrollBy({ top: delta, left: 0, behavior: "instant" });
