@@ -255,6 +255,16 @@ describe('homesampler.mapstory', () => {
     }
   });
 
+  // Story audit H1: a two-move, two-place "journey" behind a full transport
+  // read as over-built and thin (3 of 5 seeds). The tile wants a real route.
+  it('only samples journeys of three or more moves', async () => {
+    for (const seed of [1, 2, 1212, 35005]) {
+      const s = await exec<MapStoryPayload>(MAPSTORY_SEL, seed);
+      expect(s.mapstory, `seed ${seed}`).toBeTruthy();
+      expect(s.mapstory!.moves.length, `seed ${seed}`).toBeGreaterThanOrEqual(3);
+    }
+  }, 120_000);
+
   it('is deterministic per seed', async () => {
     const [a, b] = await Promise.all([
       exec<MapStoryPayload>(MAPSTORY_SEL, 1212),

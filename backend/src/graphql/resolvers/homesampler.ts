@@ -431,7 +431,8 @@ const sampleRelationship = async (ctx: AppContext, seed: number) => {
 // One scripture journey for the map-story tile: seeded story pick among stories
 // whose moves ALL have start+end coords on the FARMS 'internal' map (the tile
 // renders that projection — a partially-coordinated story would draw a broken
-// path). Join shape mirrors storiesByMapSlug in loaders/maps.ts.
+// path). Join shape mirrors storiesByMapSlug in loaders/maps.ts. Three or more
+// moves: a two-move hop behind a full transport read as thin (story audit H1).
 const INTERNAL_MAP = 'internal';
 const sampleMapStory = async (ctx: AppContext, seed: number) => {
   const hub = await sql<{ guid: string }>`
@@ -442,7 +443,7 @@ const sampleMapStory = async (ctx: AppContext, seed: number) => {
     INNER JOIN bom_places_coords spc ON spc.guid = sp.guid AND spc.map = ${INTERNAL_MAP}
     INNER JOIN bom_places ep ON ep.slug = m.end
     INNER JOIN bom_places_coords epc ON epc.guid = ep.guid AND epc.map = ${INTERNAL_MAP}
-    GROUP BY s.guid HAVING COUNT(*) >= 2
+    GROUP BY s.guid HAVING COUNT(*) >= 3
     ORDER BY MD5(CONCAT(s.guid, ':', ${seed}))
     LIMIT 1
   `.execute(ctx.db);
