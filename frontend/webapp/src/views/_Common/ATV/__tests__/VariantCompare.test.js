@@ -102,3 +102,15 @@ test("crops carry edition + reference alt text, never empty", () => {
     expect(a).toMatch(/1 Nephi 1:3/);
   });
 });
+
+test("Escape pressed with focus inside the panel closes it exactly once (audit D2)", () => {
+  // Focus moves into the panel on open; the panel stops keydown propagation so
+  // Commentary's own key handler does not fire — Escape must still close.
+  const unit = unitOf("[<em>x</em> A|<em>y</em> B]");
+  const onClose = vi.fn();
+  render(<VariantCompare unit={unit} verseId={1} reference="r" onClose={onClose} />);
+  const close = screen.getByRole("button", { name: /close/i });
+  expect(document.activeElement).toBe(close);
+  fireEvent.keyDown(close, { key: "Escape" });
+  expect(onClose).toHaveBeenCalledTimes(1);
+});

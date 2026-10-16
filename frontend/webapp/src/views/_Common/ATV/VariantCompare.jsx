@@ -229,6 +229,14 @@ export function VariantCompare({ unit, verseId, reference, onClose }) {
   const onPanelKeyDown = (e) => {
     // Keep Commentary.js's own arrow/Tab keyboard listener from also firing.
     e.stopPropagation();
+    // Stopping propagation also keeps the document-level Escape listener from
+    // ever seeing a keydown that starts inside the panel (focus lives here
+    // once open), so Escape is handled here too (audit D2).
+    if (e.key === "Escape" || e.key === "Esc") {
+      e.preventDefault();
+      onCloseRef.current();
+      return;
+    }
     if (e.key !== "Tab" || !panelRef.current) return;
     const focusables = Array.prototype.slice
       .call(panelRef.current.querySelectorAll(FOCUSABLE))
