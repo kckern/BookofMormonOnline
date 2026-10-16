@@ -2,7 +2,7 @@ import React from "react";
 import fs from "node:fs";
 import path from "node:path";
 import "@testing-library/jest-dom";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, within, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import PlacesTile from "../PlacesTile";
 import PlaceProfileTile from "../PlaceProfileTile";
@@ -191,5 +191,32 @@ describe("PlacesTile blind-audit fixes", () => {
     expect(container.textContent).toContain("City and Land of Shilom");
     expect(container.textContent).toContain("Shilom is possessed by Zeniff");
     expect(container.textContent).not.toContain("Retained");
+  });
+});
+
+describe("PlaceProfileTile blind-audit fixes", () => {
+  beforeEach(() => sessionStorage.clear());
+  test("H2: eyebrow says it is a profile, like the person profile", () => {
+    const { container } = renderIn(<PlaceProfileTile payload={{ places: PAYLOAD_17 }} />);
+    expect(container.querySelector(".tileHeading").textContent).toMatch(/Profile/);
+  });
+  test("E1: an expanded profile stays expanded across a remount (Back)", () => {
+    const long = { ...mkPlace(16), description: "Long ".repeat(200) };
+    const places = [...PAYLOAD_17.slice(0, 16), long];
+    const sh = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "scrollHeight");
+    const ch = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "clientHeight");
+    Object.defineProperty(HTMLElement.prototype, "scrollHeight", { configurable: true, get: () => 500 });
+    Object.defineProperty(HTMLElement.prototype, "clientHeight", { configurable: true, get: () => 100 });
+    try {
+      const a = renderIn(<PlaceProfileTile payload={{ places }} />);
+      fireEvent.click(screen.getByRole("button", { name: "Read more" }));
+      a.unmount();
+      renderIn(<PlaceProfileTile payload={{ places }} />);
+      expect(screen.getByRole("button", { name: "Show less" })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /Open/ })).toBeInTheDocument();
+    } finally {
+      if (sh) Object.defineProperty(HTMLElement.prototype, "scrollHeight", sh); else delete HTMLElement.prototype.scrollHeight;
+      if (ch) Object.defineProperty(HTMLElement.prototype, "clientHeight", ch); else delete HTMLElement.prototype.clientHeight;
+    }
   });
 });

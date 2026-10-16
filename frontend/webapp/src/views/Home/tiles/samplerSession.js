@@ -64,6 +64,7 @@ export function clearSession() {
   try {
     store()?.removeItem(KEY);
     store()?.removeItem(ANCHOR_KEY);
+    store()?.removeItem(EXPANDED_KEY);
   } catch {
     /* ignore */
   }
@@ -88,5 +89,34 @@ export function readAnchor(seed) {
     return { index: a.index, cls: a.cls, offset: a.offset };
   } catch {
     return null;
+  }
+}
+
+// Layer-1 reveals the reader opened (ExpandableText persistKey), so Back lands
+// on the same, still-expanded tile rather than a shorter collapsed one whose
+// Layer-2 link has vanished. Cleared with the snapshot on a resample.
+const EXPANDED_KEY = "bom:homeExpanded:v1";
+
+const readExpandedSet = () => {
+  try {
+    const a = JSON.parse(store()?.getItem(EXPANDED_KEY) || "[]");
+    return Array.isArray(a) ? a : [];
+  } catch {
+    return [];
+  }
+};
+
+export function readExpanded(key) {
+  return !!key && readExpandedSet().includes(key);
+}
+
+export function writeExpanded(key, open) {
+  if (!key) return;
+  try {
+    const set = readExpandedSet().filter((k) => k !== key);
+    if (open) set.push(key);
+    store()?.setItem(EXPANDED_KEY, JSON.stringify(set.slice(-50)));
+  } catch {
+    /* storage unavailable — the reveal just won't survive a Back */
   }
 }

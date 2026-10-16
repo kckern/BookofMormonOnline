@@ -1,6 +1,7 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useReveal } from "./_ds/Reveal";
 import TileCTA from "./_ds/TileCTA";
+import { readExpanded, writeExpanded } from "./samplerSession";
 
 /**
  * Width-aware clamp: collapsed state is a CSS line-clamp (so the cut point
@@ -22,6 +23,10 @@ import TileCTA from "./_ds/TileCTA";
  * `fade`: clamp by whole line boxes (max-height: N lh) and fade the tail of the
  * last line instead of -webkit-line-clamp's ellipsis, which cuts mid-word
  * ("The nex…") and can strand an ellipsis after a ref pill (audit H3).
+ *
+ * `persistKey`: remember the expanded state for this Home session, so a Back
+ * remounts the box expanded (same height, Layer-2 still revealed) instead of
+ * collapsing it under the scroll anchor.
  */
 const FOCUSABLE = "a[href], button, input, select, textarea, [tabindex]";
 const HIDDEN = "data-clamp-hidden";
@@ -47,11 +52,44 @@ function hideClippedFocusables(box) {
   });
 }
 
-export default function ExpandableText({ children, lines = 6, className, fade = false }) {
-  const [open, setOpen] = useState(false);
-  const [truncated, setTruncated] = useState(false);
+/**
+ * Does the collapsed box hide content? Measured off the CONTENT's own boxes (a
+ * Range over the children), not scrollHeight: a ref chip's absolutely
+ * positioned 44px touch hit (::after) on the last line also counts toward
+ * scrollHeight and made short prose grow a needless "Read more". jsdom has no
+ * Range layout, so it falls back to scrollHeight.
+ */
+function overflows(el) {
+  try {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const rects = range.getClientRects?.();
+    if (rects && rects.length) {
+      let bottom = -Infinity;
+      for (const r of rects) if (r.height > 0) bottom = Math.max(bottom, r.bottom);
+      if (bottom > -Infinity) return bottom > el.getBoundingClientRect().bottom + 2;
+    }
+  } catch {
+    /* no Range layout */
+  }
+  return el.scrollHeight > el.clientHeight + 2;
+}
+
+export default function ExpandableText({ children, lines = 6, className, fade = false, persistKey }) {
+  // restored open = it was truncated when the reader expanded it
+  const [open, setOpen] = useState(() => readExpanded(persistKey));
+  const [truncated, setTruncated] = useState(open);
   const ref = useRef(null);
   const { reveal, registerGate } = useReveal();
+  // A restored expansion re-fires the gate + reveal pre-paint, so the Layer-2
+  // link (and any enclosing bound) come back open with it.
+  useLayoutEffect(() => {
+    if (!open) return;
+    registerGate();
+    reveal();
+    // mount only
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // Measure PRE-paint (useLayoutEffect) so the gate registers before the browser
   // paints — otherwise the deeplink flashes visible for one frame before the
   // gate hides it. Two-way setTruncated so a re-measure can retract a stale pill.
@@ -65,7 +103,7 @@ export default function ExpandableText({ children, lines = 6, className, fade = 
       restoreFocusables(el);
       return;
     }
-    const over = el.scrollHeight > el.clientHeight + 2;
+    const over = overflows(el);
     setTruncated(over);
     if (over) registerGate(); // there IS something to expand → gate a sibling deeplink
     hideClippedFocusables(el);
@@ -89,6 +127,7 @@ export default function ExpandableText({ children, lines = 6, className, fade = 
     e.preventDefault();
     e.stopPropagation();
     if (!open) reveal();
+    writeExpanded(persistKey, !open);
     setOpen(!open);
   };
   return (

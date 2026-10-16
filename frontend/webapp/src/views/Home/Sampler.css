@@ -1666,6 +1666,7 @@ html[data-theme="dark"] .placesTilePlaces .placesTileCard:not(.viewAllCard):has(
   /* the collapsed clamp clips at its padding box: pad its top (offset by a
      negative margin, so nothing moves) so first-line chips keep their hit */
   .placeProfilePlace .placeProfileDesc > .clampLines { padding-top: 14px; margin-top: -14px; }
+  .placeProfilePlace .placeProfileDesc > .clampLines.clampFade { max-height: calc(var(--clamp-lines, 6) * 1lh + 14px); }
   /* the pin is inset for its 44px hit: keep the name chip clear of it */
   .placesTilePlaces .placesNameOverlay { max-width: calc(100% - 3.3rem); }
   .placesTilePlaces .placesTileIndexRow.fitWords {
@@ -2188,6 +2189,19 @@ html[data-theme="dark"] .placeProfileDesc { color: #c4c4c4; }
    16:9 hero alone was ~420px); "(" + ref pill + ")" never break apart */
 .placeProfilePlace .placeProfileImgLink > img { max-height: 15rem; }
 .placeProfilePlace .refParen { white-space: nowrap; }
+/* wide single column (tablet): hero beside the prose — a 4:3 picture at
+   ~5/11 of the width, not a 3:1 letterbox strip upscaled from 640w (audit A2) */
+.placeProfilePlace { container-type: inline-size; }
+@container (min-width: 560px) {
+  .placeProfilePlace .placeProfileBody {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    gap: 0 1rem;
+    align-items: start;
+  }
+  .placeProfilePlace .placeProfileHead { margin-bottom: 0; }
+  .placeProfilePlace .placeProfileImgLink > img { max-height: none; aspect-ratio: 4 / 3; }
+}
 
 /* ================================================================
    MAP FRAME — shared by the MapStory tile (the standalone Map tile was

@@ -148,3 +148,37 @@ test("fade mode clamps whole lines (no line-clamp ellipsis) via --clamp-lines", 
   expect(box.style.getPropertyValue("--clamp-lines")).toBe("7");
   expect(box.style.WebkitLineClamp || "").toBe("");
 });
+
+describe("persistKey: the reveal survives a Back (audit placeProfile E1)", () => {
+  beforeEach(() => sessionStorage.clear());
+  const ui = () => (
+    <RevealProvider>
+      <RevealState />
+      <ExpandableText lines={2} persistKey="placeProfile:zarahemla">
+        <span>lots of text that overflows the clamp box</span>
+      </ExpandableText>
+    </RevealProvider>
+  );
+  test("an expanded box remounts expanded, with its Layer-2 revealed", () => {
+    const first = render(ui());
+    fireEvent.click(screen.getByRole("button", { name: "Read more" }));
+    first.unmount();
+    render(ui());
+    expect(screen.getByRole("button", { name: "Show less" })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByTestId("revealed").textContent).toBe("yes");
+  });
+  test("collapsing forgets it; clearSession (resample) forgets it", async () => {
+    const { clearSession } = await import("../samplerSession");
+    const a = render(ui());
+    fireEvent.click(screen.getByRole("button", { name: "Read more" }));
+    fireEvent.click(screen.getByRole("button", { name: "Show less" }));
+    a.unmount();
+    const b = render(ui());
+    expect(screen.getByRole("button", { name: "Read more" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Read more" }));
+    b.unmount();
+    clearSession();
+    render(ui());
+    expect(screen.getByRole("button", { name: "Read more" })).toBeTruthy();
+  });
+});
