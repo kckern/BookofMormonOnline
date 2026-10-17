@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { detectScriptures } from "scripture-guide";
 import { Collapse } from 'bootstrap';
 import { determineLanguage } from '../../models/Utils';
@@ -16,7 +16,10 @@ export function useIsMounted() {
     };
   }, []);
 
-  return isMounted?.current; // returning the ref, so we can access its current value
+  // A live check, not the value at render time: callers test it inside async
+  // callbacks, where the first render's `false` dropped every response (the
+  // phone commentary drawer spun forever — blind audit r4 commentary C4).
+  return useCallback(() => isMounted.current, []);
 }
 
 // a react hook for self clearing timeouts when component unmounts

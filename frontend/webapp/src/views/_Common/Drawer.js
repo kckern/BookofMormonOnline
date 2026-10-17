@@ -25,6 +25,7 @@ import { findAncestor } from "../../models/Utils";
 import { useAppController } from "src/contexts/AppControllerContext";
 import XrelSection from "./XrelSection";
 import HistoryDrawer from "./HistoryDrawer";
+import labelOr from "src/views/Home/tiles/_ds/labelOr";
 
 
 export function MobileDrawer() {
@@ -395,6 +396,7 @@ function CommentaryDrawer() {
     const [activeScriptureReference, setActiveScriptureReference] = useState(null);
     const [debug, setDebug] = useState("init");
     const [showLegal, setLegal] = useState(false);
+    const [failed, setFailed] = useState(false);
     const scripturePanelRef = useRef(null);
 
     useEffect(() => setLegal(false), [appController.states.popUp.activeId])
@@ -406,9 +408,11 @@ function CommentaryDrawer() {
             setDebug("timeout")
             BoMOnlineAPI({ commentary: appController.states.popUp.ids }).then(
                 (response) => {
-                    if (!isMounted) return;
+                    if (!isMounted()) return;
                     setDebug(JSON.stringify(response, null, 2));
-                    const commentary = response.commentary || {};
+                    const commentary = response?.commentary || {};
+                    // nothing came back: say so instead of an endless spinner
+                    if (!Object.keys(commentary).length) return setFailed(true);
                     appController.functions.setPopUp({
                         type: "commentary",
                         underSlug: localStorage.getItem("studybookmark") || "study",
@@ -416,7 +420,7 @@ function CommentaryDrawer() {
                         popUpData: commentary,
                     });
                 }
-            );
+            ).catch(() => isMounted() && setFailed(true));
         }, 500);
     }, [])
 
@@ -425,6 +429,13 @@ function CommentaryDrawer() {
         setCommentaryData(appController.popUpData[appController.states.popUp.activeId])
     }, [appController.popUpData[appController.states.popUp.activeId]]);
 
+    if (!commentaryData && failed)
+        return <div className="subject p-4">
+            <p>{labelOr("commentary_unavailable", "This commentary couldn’t be loaded.")}</p>
+            <button type="button" className="btn btn-outline-secondary btn-sm" onClick={appController.functions.closePopUp}>
+                {labelOr("close", "Close")}
+            </button>
+        </div>
     if (!commentaryData) return <><Spinner /></>
 
     let tabs = (appController.states.popUp.ids.length === 1) ? null :
@@ -473,10 +484,10 @@ function CommentaryDrawer() {
             <h3>{commentaryData.title}</h3>
 
             <div className="container">
-                <div class="row align-items-start">
+                <div className="row align-items-start">
                     <div id="bodytext">{Parser(html, parserOptions)}</div>
                 </div>
-                <div class="row align-items-start">
+                <div className="row align-items-start">
                     {!showLegal ? <div className="setLegal" onClick={() => setLegal(true)} >⚖️ {label("legal_notice")}</div> : null}
                     <LegalNotice commentaryData={commentaryData} showLegal={showLegal} />
                 </div>
