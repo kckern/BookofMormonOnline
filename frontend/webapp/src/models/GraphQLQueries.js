@@ -372,6 +372,10 @@ const queries = {
       type: "verses",
       key: "verse_ids",
       val: verse_ids,
+      // The server returns rows in ITS order (by verse_id), not the request's:
+      // key each row by its own id or an unsorted request poisons the cache
+      // ("verses.13151" → Exodus 10:22) and the Bible reader spins forever.
+      keyFn: (row) => row.verse_id,
       query: q("verses", "verse_ids", verse_ids) +
         `{
                   verse_id

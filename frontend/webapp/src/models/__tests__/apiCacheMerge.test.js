@@ -1,5 +1,5 @@
 import { mergeResults, structureResults } from "../BoMOnlineAPI";
-import { prepareCacheObject, responseKeyOf } from "../Cache";
+import { prepareCacheObject, responseKeyOf, isStaleCacheItem } from "../Cache";
 import { prepareQueries } from "../GraphQLQueries";
 
 // Regression tests for two shared-cache-layer bugs surfaced by the Bible
@@ -123,5 +123,27 @@ describe("prepareCacheObject — versehighlights cache keys by row ids (bug 2: p
     const cacheObj = prepareCacheObject(queries, apiResults);
     expect(cacheObj["versehighlights.200,2"]).toBeDefined();
     expect(cacheObj["versehighlights.100,1"]).toBeUndefined();
+  });
+});
+
+// Bug 3 (Home Biblical-language tile → reader stuck on a spinner, audit R3 D5):
+// `verses` was keyed by input POSITION, but the server returns rows in its own
+// (verse_id) order, so an unsorted id list cached "verses.13151" as Exodus 10:22.
+// The reader then found every needed id "cached", got the wrong verses back and
+// never left its spinner.
+describe("verses cache keying (bug 3: poisoned verse cache)", () => {
+  test("keys each verse row by its own verse_id, not by input position", () => {
+    const queries = prepareQueries({ verses: [300, 100, 200] });
+    const api = { verses: [{ verse_id: 100 }, { verse_id: 200 }, { verse_id: 300 }] };
+    const cache = prepareCacheObject(queries, api);
+    expect(cache["verses.100"].verse_id).toBe(100);
+    expect(cache["verses.200"].verse_id).toBe(200);
+    expect(cache["verses.300"].verse_id).toBe(300);
+  });
+
+  test("a cached verse whose verse_id disagrees with its key is treated as stale", () => {
+    expect(isStaleCacheItem("verses", 13151, { verse_id: 1800 })).toBe(true);
+    expect(isStaleCacheItem("verses", "13151", { verse_id: 13151 })).toBe(false);
+    expect(isStaleCacheItem("verses", 5, false)).toBe(true);
   });
 });

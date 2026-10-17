@@ -56,7 +56,7 @@ export async function getCache(input) {
                 // query gained speaker (tile header shows avatar+name); commentary
                 // gained text_highlight (see COMMENTARY_SHAPE_V above)
                 // — refetch cached items predating any of those shape changes
-                if (!item || (key==="page" && !item.sections) || (key.startsWith("passagenotes") && item.chiasmus?.length && !item.chiasmus[0].chiasmus_id) || (key==="chiasm" && item && !("speaker" in item)) || (key==="commentary" && item._v !== COMMENTARY_SHAPE_V)) {
+                if (isStaleCacheItem(key, val, item)) {
                     if (!Array.isArray(items.missing[key])) items.missing[key] = []
                     items.missing[key].push(val)
                 }
@@ -71,6 +71,21 @@ export async function getCache(input) {
     return new Promise(function (resolve, reject) {
         resolve(items);
     });
+}
+
+/**
+ * A cached keyed item that must be refetched: absent, or predating a query
+ * shape change, or (verses) stored under the wrong id by the positional keying
+ * bug — rows keyed by input position before verses gained a keyFn.
+ */
+export function isStaleCacheItem(key, val, item) {
+    if (!item) return true;
+    if (key === "page" && !item.sections) return true;
+    if (key.startsWith("passagenotes") && item.chiasmus?.length && !item.chiasmus[0].chiasmus_id) return true;
+    if (key === "chiasm" && !("speaker" in item)) return true;
+    if (key === "commentary" && item._v !== COMMENTARY_SHAPE_V) return true;
+    if (key === "verses" && item.verse_id != null && String(item.verse_id) !== String(val)) return true;
+    return false;
 }
 
 export function normalizeVal(val) {
