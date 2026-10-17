@@ -1649,6 +1649,8 @@ html[data-theme="dark"] .placesImgWrap { background: #333; }
   margin-top: -4px;
   padding-bottom: 4px;
   margin-bottom: -4px;
+  padding-inline: 4px;
+  margin-inline: -4px;
   max-height: calc(var(--fit-lines, 2) * 1lh + 8px);
 }
 /* ONE place link stretched over the whole card — image and body (audit C1),

@@ -36,6 +36,8 @@ test("every pointer: the index row leaves room for the chip's 2px focus ring (pl
   const base = bodies.find((b) => /padding-top:\s*4px/.test(b));
   expect(base).toMatch(/margin-top:\s*-4px/);
   expect(base).toMatch(/padding-bottom:\s*4px/);
+  expect(base).toMatch(/padding-inline:\s*4px/);
+  expect(base).toMatch(/margin-inline:\s*-4px/);
 });
 
 test("place profile: Read more (left) and Open <place> (right) share one CTA row, as the person profile does (placeProfile-A5)", () => {
