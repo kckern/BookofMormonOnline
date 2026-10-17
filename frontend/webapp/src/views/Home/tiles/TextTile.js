@@ -57,7 +57,7 @@ function TextTileInner({ data }) {
         ) : null}
         {ref ? <RefPill refText={ref} className="textTileRef" /> : null}
       </div>
-      <ExpandableText lines={9} className="textTileBody">
+      <ExpandableText lines={9} fade persistKey={`text:${data.slug}`} className="textTileBody">
         <div className="textTilePassage">{renderHTMLContentInFeed(data.content)}</div>
       </ExpandableText>
       {narration ? (

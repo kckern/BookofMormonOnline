@@ -108,3 +108,19 @@ describe("TextTile", () => {
     expect(css).toMatch(/\.textTilePassage\s*\{[^}]*font-family:\s*"Scripture"/);
   });
 });
+
+// Audit 2026-10-15 text-H3 / text-E2: the passage clamps on whole lines (fade,
+// never a mid-word ellipsis) and its expansion survives Back.
+import { writeExpanded } from "../samplerSession";
+describe("TextTile clamp", () => {
+  afterEach(() => sessionStorage.clear());
+  test("collapsed passage uses the whole-line fade clamp", () => {
+    const { container } = renderTile(full);
+    expect(container.querySelector(".textTileBody .clampFade")).not.toBeNull();
+  });
+  test("a restored expansion remounts open", () => {
+    writeExpanded(`text:${full.slug}`, true);
+    const { container } = renderTile(full);
+    expect(container.querySelector(".textTileBody .clampLines")).toBeNull();
+  });
+});

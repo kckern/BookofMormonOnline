@@ -11,7 +11,8 @@ import TileCTA from "./_ds/TileCTA";
 import TileDeepLink from "./_ds/TileDeepLink";
 import TileImage from "./_ds/TileImage";
 import labelOr from "./_ds/labelOr";
-import RefPill, { refPillParserOptions } from "./RefPill";
+import RefPill, { makeRefPillParserOptions } from "./RefPill";
+import { readExpanded, writeExpanded } from "./samplerSession";
 
 // Block-level boundaries become paragraph breaks; every other tag is dropped.
 const BLOCK_BREAK = /<\/?(p|div|li|ul|ol|br|blockquote|h[1-6]|tr|td|table)\b[^>]*>/gi;
@@ -92,8 +93,18 @@ function CommentaryTileInner({ data }) {
   const asideRef = useRef(null);
   const bodyRef = useRef(null);
   const [maxH, setMaxH] = useState(null);
-  const [truncated, setTruncated] = useState(false);
-  const [expanded, setExpanded] = useState(false);
+  // The reveal survives Back (audit commentary-E2): restored expanded = it was
+  // truncated when the reader opened it, so the Show less toggle comes back too.
+  const persistKey = data?.id ? `commentary:${data.id}` : undefined;
+  const [expanded, setExpanded] = useState(() => readExpanded(persistKey));
+  const [truncated, setTruncated] = useState(expanded);
+  useLayoutEffect(() => {
+    if (!expanded) return;
+    registerGate();
+    reveal();
+    // mount only
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ATV (Skousen textual-variants) commentaries lead with a <div class="source">
   // apparatus block. Lift it out and render it as the interactive apparatus (the
@@ -148,6 +159,7 @@ function CommentaryTileInner({ data }) {
   const shown = expanded ? budgetParagraphs(bodyParas, EXPANDED_BUDGET) : bodyParas;
   const toggle = () => {
     if (!expanded) reveal();
+    writeExpanded(persistKey, !expanded);
     setExpanded(!expanded);
   };
   const coverPath = pub.source_id ? `source/cover/${String(pub.source_id).padStart(3, "0")}` : null;
@@ -170,7 +182,7 @@ function CommentaryTileInner({ data }) {
             style={!expanded && maxH ? { maxHeight: maxH } : undefined}
           >
             {shown.map((p, i) => (
-              <p key={i}>{Parser(getDetectedScripturesHtml(p), refPillParserOptions)}</p>
+              <p key={i}>{Parser(getDetectedScripturesHtml(p), makeRefPillParserOptions({ contextRef: data.reference }))}</p>
             ))}
           </div>
           {!isAtv && truncated ? (

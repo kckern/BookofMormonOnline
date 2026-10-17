@@ -5,7 +5,7 @@ import ScriptureExcerpt, { readPath } from "src/views/_Common/ScriptureExcerpt";
 import TileDeepLink from "./_ds/TileDeepLink";
 import TileImage from "./_ds/TileImage";
 import labelOr from "./_ds/labelOr";
-import RefPill, { refPillParserOptions } from "./RefPill";
+import RefPill, { makeRefPillParserOptions } from "./RefPill";
 
 // A note that already opens with a quotation ("<i>“Driven forth…”</i> …") must
 // not be wrapped in a second pair of smart quotes.
@@ -38,7 +38,7 @@ export default function NotesTile({ data }) {
   // options object carries no language, so abbreviation matching is unaffected;
   // chainAcrossMarkers:false stops "see also"/"cf." being swallowed (>=1.0.95).
   const noteHtml = detectReferences(note.text || "", (s) => `<a class="scripture_link">${s}</a>`, { chainAcrossMarkers: false });
-  const body = Parser(noteHtml, refPillParserOptions);
+  const body = Parser(noteHtml, makeRefPillParserOptions({ contextRef: note.reference }));
   const quoted = !anchor && !OPENS_WITH_QUOTE.test(plainText(note.text));
   return (
     <div className="samplerTileInner notesTile">

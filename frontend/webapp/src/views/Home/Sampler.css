@@ -1533,11 +1533,17 @@ html[data-theme="dark"] .textTileTitle:hover { color: #fff; }
   overflow-wrap: break-word;
 }
 html[data-theme="dark"] .textTilePassage { color: #d6d6d6; }
-.textTilePassage p { margin: 0 0 0.45rem; }
-.textTilePassage p:last-child { margin-bottom: 0; }
+/* Every line sits on one 1lh grid (no fractional paragraph gaps) so the
+   collapsed fade clamp cuts between whole lines, never through glyphs (audit
+   text-H3). Paragraphs are marked book-style with a first-line indent. */
+.textTileBody { font-size: 1rem; line-height: 1.35; }
+.textTilePassage p { margin: 0; }
+.textTilePassage p + p { text-indent: 1.2em; }
 /* poetry: a quiet indent with a hairline gold rule, no off-palette bar */
+.textTilePassage blockquote p { text-indent: 0; }
 .textTilePassage blockquote {
-  margin: 0.35rem 0 0.45rem;
+  line-height: inherit; /* the site blockquote sets 1 — off the line grid */
+  margin: 0;
   padding-left: 0.75rem;
   border-left: 2px solid rgba(201, 162, 75, 0.45);
   background: none;
@@ -2441,8 +2447,8 @@ html[data-theme="dark"] .notesTile .read-content .read-section { background: tra
 /* anchor phrase: the exact scripture snippet the note annotates (note.title) */
 .notesTile .notesAnchor { font-weight: 700; }
 /* the same phrase, highlighted where it appears in the passage above */
-.scriptureAnchorMark { background: rgba(255, 213, 79, 0.45); color: inherit; padding: 0 1px; border-radius: 2px; }
-html[data-theme="dark"] .scriptureAnchorMark { background: rgba(255, 213, 79, 0.28); }
+.scriptureAnchorMark { background: rgba(201, 162, 75, 0.28); color: inherit; padding: 0 1px; border-radius: 2px; }
+html[data-theme="dark"] .scriptureAnchorMark { background: rgba(201, 162, 75, 0.3); }
 html[data-theme="dark"] .notesTile .notesBubble { background: #1e1e1e; border-color: #444; }
 html[data-theme="dark"] .notesTile .notesBubble::before { border-bottom-color: #444; }
 html[data-theme="dark"] .notesTile .notesBubble::after { border-bottom-color: #1e1e1e; }

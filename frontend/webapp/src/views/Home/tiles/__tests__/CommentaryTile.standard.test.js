@@ -31,6 +31,8 @@ const long = {
 };
 
 describe("CommentaryTile — tile standard", () => {
+  // expansion persists for the Home session (commentary-E2); isolate tests
+  beforeEach(() => sessionStorage.clear());
   let sh;
   beforeAll(() => {
     sh = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "scrollHeight");

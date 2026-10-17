@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI.js";
 import { lookup, generateReference } from "scripture-guide";
 import { label } from "src/models/Utils";
+import labelOr from "src/views/Home/tiles/_ds/labelOr";
 import { slugify, getEnglishReference, verseIdToSlug } from "src/utils/scriptureUtils";
 import "../Read/Read.scss";
 import "./ScriptureExcerpt.css";
@@ -39,6 +40,9 @@ export function GutterAvatar({ slug }) {
     />
   );
 }
+
+// Same typographic range as RefPill / the popup title ("8:13–25") — audit popup-A7.
+const enDash = (s) => (s || "").replace(/(\d)\s*-\s*(\d)/g, "$1–$2");
 
 /** Canonicalize abbreviated refs ("ps 67:2" → "Psalm 67:2"). */
 export const canonical = (ref) => {
@@ -337,7 +341,7 @@ export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = fals
   if (!ref) return null;
   if (!segments) return <div className="samplerScriptureLoading isLoading" aria-busy="true">…</div>;
   const hasAny = segments.some((s) => (s.sections?.length || s.passages?.length));
-  if (!hasAny) return <div className="samplerScriptureLoading">{label("rp_error_loading")}</div>;
+  if (!hasAny) return <div className="samplerScriptureLoading">{labelOr("scripture_not_found", "This passage could not be found.")}</div>;
 
   const renderSection = (s, key) => (
     <div key={key} className="read-section">
@@ -359,11 +363,11 @@ export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = fals
                   window.dispatchEvent(new CustomEvent("samplerScripture", { detail: canonical(s.ref) }));
                 }}
               >
-                {s.ref}
+                {enDash(s.ref)}
               </button>
             ) : (
               <Link to={`/study/${slugify(getEnglishReference(s.ref))}`} onClick={onNavigate}>
-                {s.ref}
+                {enDash(s.ref)}
                 {hideStudy ? null : <button className="btn btn-sm btn-outline-secondary">{label("study_button")}</button>}
               </Link>
             )}

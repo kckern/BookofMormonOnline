@@ -54,3 +54,17 @@ test("plain commentary renders its text excerpt with no apparatus box", () => {
     "Faith is not to have a perfect knowledge"
   );
 });
+
+// Audit 2026-10-15 commentary-E2: an expanded excerpt survives Back (session
+// persistence keyed by commentary id), with its Show less control.
+import { writeExpanded } from "../samplerSession";
+test("a restored expansion remounts expanded with a Show less toggle", () => {
+  sessionStorage.clear();
+  writeExpanded("commentary:7", true);
+  const { container } = wrap(plainData);
+  expect(container.querySelector(".commentaryTileExcerpt")).toHaveClass("expanded");
+  const btn = container.querySelector("[aria-expanded]");
+  expect(btn).not.toBeNull();
+  expect(btn).toHaveAttribute("aria-expanded", "true");
+  sessionStorage.clear();
+});

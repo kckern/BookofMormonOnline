@@ -56,6 +56,12 @@ html[data-theme="dark"] .samplerScriptureHead button:hover { color: #fff; }
 .samplerScriptureBody:empty {
   min-height: 40vh;
 }
+/* The loading row makes the body non-empty, so :empty never applied and a cold
+   ref opened at ~125px then jumped to its settled size (audit popup-D1). Hold a
+   typical passage height while the fetch is in flight. */
+.samplerScriptureBody:has(> .isLoading) {
+  min-height: min(16rem, 40vh);
+}
 .samplerScripturePassage p {
   margin: 0.3rem 0 0.8rem;
   font-family: "Scripture", serif;
