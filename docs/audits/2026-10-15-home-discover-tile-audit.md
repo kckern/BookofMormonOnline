@@ -1605,3 +1605,105 @@ Decisions: - **"Explore full journey" is now "Explore".** It uses the TileCTA `e
 | community | J1/A2 avatars (TileImage) | P3 | accepted: community avatars are external user-profile URLs, not media-CDN paths, so TileImage variants don't apply. They are now lazy/async, and a missing picture renders a neutral disc instead of a broken &lt;img> |
 
 Open: **Needs another task or owner** 1. Every key in newLabelKeys needs `en`/`ko` rows (Task 12). Until then the English fallbacks render. 2. Community E1 (Back from `/home/community/&lt;group>` lands at scrollY 0) is page-level tab-route scroll restoration and was not touched (Sampler/routeHistory, Task 8/13). 3. I changed a shared primitive: `tiles/_ds/skeletonHeights.js`, the tile-community and tile-mapstory rows only. Other families editing that file may conflict on adjacent lines. Community height also depends on the payload (messages vs reading-now): about 250–283px. 4. I edited `views/Map/MapContents.js`, outside the tile family, one Icon option for D5.    - The story page's own palette (blue run-colors, blue distance badges) is not house style.    - Its out-of-extent tile 404s also remain.    - Both belong to the Map view, not Home. **Residual polish (accepted)** 5. MapStory overlay nodes are positioned with left/top, so the layout-shift API logs many tiny (0.0001–0.0006) non-input entries during camera moves. These predate this task; the tile's own height is now constant. Moving the overlay to transform/translate would remove them; I didn't do it here. 6. Long complete-card descriptions still end with an ellipsis after 5 lines (needs editorial copy). 7. A 20-move story was still not captured live. 8. Korean was not driven. **Process** 9. The scratchpad is shared with the other parallel families, and another agent overwrote my first `cap.mjs`. My scripts now live in `scratchpad/t10story/`.
+
+## R5. Blind Fable review — rounds 1–3 (2026-10-16)
+
+Reviewers: fresh Fable agents per tile family and round, given only `scripts/home-audit/rubric-blind.md`, the harness and the tile source; told not to read docs/, prior reviews or git history. Pass = no P0/P1 and Craft/Beauty/Belonging each ≥ 3. Failing families got a non-blind fixer, then a fresh reviewer.
+
+### Round 1
+
+| Family | Tile | Verdict | C | B | L | P0/P1 findings |
+|---|---|---|---|---|---|---|
+| rail | readingplan | **FAIL** | 4 | 3 | 4 | P1 XC-1 readingplan·A1: On phone (390) and tablet (820) the first tile sits under the 60px fixed header at scrollY 0: the READING PLAN eyebrow is fully covered and the plan title is half-clipped, and there is no way to scroll above 0 to see it. |
+| rail | section | **FAIL** | 3 | 3 | 4 | P1 XC-2 narration·G2: In the phone/tablet bounded shell the links hidden under the fade stay in the tab order; focusing one makes the browser scroll the overflow:hidden card, leaving the eyebrow, crumb, title and art pushed off the top and a  |
+| rail | contents | **FAIL** | 4 | 4 | 4 | P1 XC-2 contents·G2: Same root cause as XC-2 (narration): under the phone/tablet bound, the 2–6 page links and "See in context" hidden by the fade remain tabbable and focusing them scrolls the overflow-hidden card out of shape. |
+| people | people | **FAIL** | 4 | 4 | 4 | P1 G2: Keyboard Tab reaches reference pills hidden below the bio clamp and scrolls the overflow:hidden clamp box, scrambling the featured bio (text starts mid-sentence, ellipsis gone, Read more now meaningless). Cross-cutting:  |
+| people | personProfile | **FAIL** | 3 | 3 | 4 | P1 E1: On phone, Back from 'Open &lt;name>' on an infinite-batch Profile tile lands the reader 700–800px below where they were: the tile that was on screen is now 606px above the viewport (two tiles later are visible). Desktop <br>P1 G2: Same keyboard-into-hidden-pill clamp scroll as the people tile (shared PersonFeature/ExpandableText); profiles carry 4–16 pills of which most sit below the 7-line clamp. |
+| places | places | **FAIL** | 3 | 4 | 4 | P1 XC-B2-STALE-PAYLOAD: Cross-cutting (Sampler shell; hits every tile incl. places/placeProfile): a slow or superseded homesampler response overwrites the page the reader is already looking at — no latest-request-wins guard<br>P1 XC-E3-POPUP-SCROLL: Cross-cutting (app-wide ScripturePopup, desktop): opening a RefPill popup throws the page to scrollY 0 and it stays there after close — the reader loses their place in the feed |
+| places | placeProfile | **FAIL** | 2 | 4 | 4 | P1 PP-E1-BACK-DRIFT: On phone, Back from any placeProfile link lands 626px past the tile (tile top -391px, off-screen) and the expanded reveal collapses; desktop Back from 'Open &lt;place>' is 106px off for the same collapse reason<br>P1 PP-G2-CLAMP-FOCUS: Tab moves focus to RefPills clipped inside the 5-line clamp; the overflow:hidden box scrolls to reveal them, so the paragraph's opening lines vanish, 'Read more' sits under text that now looks complete, and the offset su |
+| matters | mattersNarrative | **FAIL** | 4 | 4 | 4 | P0 matters-01: [Cross-cutting: all four matters tiles + every tile with a RefPill] Opening the scripture popup from a ref chip resets page scroll to 0 on desktop and never restores it; closing leaves the reader at the top of Home.<br>P1 matters-02: [Cross-cutting: batch copies of all matters tiles, phone] Back from a tile deep in the infinite feed lands ~740px past it on phone, so a different tile (People Profile) fills the viewport. |
+| matters | mattersMaterial | pass | 4 | 3 | 4 |  |
+| matters | mattersConcept | pass | 3 | 3 | 4 |  |
+| matters | matterProfile | **FAIL** | 2 | 4 | 4 | P0 matters-11: Tile never renders in the live app: the sampler payload carries 17 matters per group and the tile demands an 18th, so both the reserve and the batch slot are dead. |
+| scripture | shared-refpill-expandable-popup | **FAIL** | 2 | 4 | 5 | P0 E3: Opening the scripture popup on desktop scrolls Home to the top and the position is not restored on close — every RefPill in text, commentary, notes (and every other tile) loses the reader's place.<br>P1 D2: The variant-compare modal opened from the ATV reading chips inside ATV commentary tiles does not close on Escape (backdrop and × work). |
+| scripture | text | pass | 4 | 4 | 5 |  |
+| scripture | commentary | pass | 3 | 3 | 4 |  |
+| scripture | notes | pass | 4 | 5 | 5 |  |
+| archive | fax | **FAIL** | 4 | 4 | 4 | P0 XC1-popup-scroll-loss: Opening the scripture popup (RefPill above each page) scrolls Home to the top on desktop and leaves it there after close — the reader loses their place. Cross-cutting: fax, faxVerse (and every RefPill on Home).<br>P1 XC2-back-lands-elsewhere: Browser Back does not return to the same content: on phone every round-trip (all 5 tiles, 6 trips) lands ~1050px lower; on desktop the fax/faxVerse tiles are restored at ~369px and grow to ~600px once their lazy images l<br>P1 fax-B1-image-jump: The tile grows after first paint when its page thumbnails load (no reserved aspect; flex-grow is set from naturalWidth/Height on load), producing the largest layout shifts on the page. |
+| archive | faxVerse | pass | 3 | 3 | 4 |  |
+| archive | history | pass | 3 | 3 | 4 |  |
+| archive | josephSmith | **FAIL** | 3 | 4 | 4 | P1 josephSmith-H1-seed-invariant: The tile never changes: the same 1839 'title-page … literal translation' statement appears in every seed, every resample and every infinite batch — 19 identical tiles in one scroll — because only one joseph-smith-stateme |
+| archive | witness | **FAIL** | 3 | 4 | 3 | P0 witness-E1-drawer-survives-back: The 'See in context' CTA opens the quoted source as an app-level drawer/modal over the witness page (and redirects the URL); pressing Back returns to /home with that drawer still open over the feed, intercepting taps — t<br>P1 witness-E2-different-witness-after-back: After any link → Back round-trip the tile features a different witness: the module-level 'last featured' guard survives the SPA navigation while the WeakMap keyed on the payload object misses the payload restored from se<br>P1 witness-D1-drawer-clipped-no-close: On phone the source drawer is wider than the viewport — the document text is cut off at the right edge, the title is printed twice, and no close/back control is visible above the fold (also D3, F3). On desktop the modal  |
+| analysis | biblephrases | **FAIL** | 4 | 4 | 4 | P0 XC-E3: CROSS-CUTTING (biblephrases, chiasmus, art, and every RefPill on Home): opening the scripture popup on desktop throws the page to scrollY=0; closing it leaves you at the top, so the reader loses their place in the feed |
+| analysis | chiasmus | **FAIL** | 4 | 4 | 4 | P0 XC-E3: Cross-cutting popup scroll reset (filed in full under biblephrases XC-E3): clicking the chiasm's ref chip on desktop resets the page to the top |
+| analysis | art | **FAIL** | 3 | 4 | 3 | P0 XC-E3: Cross-cutting popup scroll reset (see biblephrases XC-E3): the art excerpt's ref chip opens the popup and the desktop page jumps to the top<br>P1 E1: On phone, Back from either art deeplink (title/image -> /art, See in context -> /read) lands 700-1300px past the tile when it sits deep in the feed; desktop restores exactly |
+| story | mapstory | **FAIL** | 4 | 4 | 3 | P0 D5: On phone the Explore/title deeplink lands on a bare map: the story panel (title, description, 5 movements, back arrow) is rendered underneath the map canvas and cannot be reached by scrolling or any control<br>P1 D3: No back/return control above the fold on the phone destination (the ⬅ lives in the hidden panel); the bottom nav offers Home, not back<br>P1 E1: On phone, browser Back from the story page lands 480–800px past the tile (2 of 3 trials), so the reader returns to a different tile than the one they left |
+| story | community | **FAIL** | 3 | 2 | 3 | P1 B2: The tile is not rendered until its live fetch lands (~1.4s after the cached sampler paints), then it is inserted mid-masonry and re-flows 14 tiles across columns; after every Back the same gap/re-insert moves in-view con |
+
+Fixes after round 1:
+
+- **rail:** `5b3a81fd`, `a3bbd568`
+- **people:** `df59b44c`, `cf893c98`
+- **places:** `ade5d5b2`, `10e24177`, `34c4c87a`, `f0dc9374`, `411afbb8`
+- **matters:** `d0d5f1f4`, `40e42d4a`
+- **scripture:** `ca4602f7`, `916e8f84`, `bf04a515`, `b3b8983f`
+- **archive:** `c14b5ee1`, `56dcb2e5`, `93de5a3d`, `99e476e5`, `aeda7f21`
+- **analysis:** `0b90ba6c`, `1bbebd8c`
+- **story:** `957896a2`, `cf17f5b0`, `7915df52`, `c51c490b`, `55d66a2c`
+
+### Round 2
+
+| Family | Tile | Verdict | C | B | L | P0/P1 findings |
+|---|---|---|---|---|---|---|
+| rail | readingplan | pass | 4 | 3 | 4 |  |
+| rail | section | pass | 4 | 4 | 4 |  |
+| rail | contents | pass | 3 | 4 | 4 |  |
+| people | people | **FAIL** | 4 | 4 | 4 | P1 E1: Browser Back from any People-tile link lands Home at the top of the page, not where the reader was (5/5 desktop trials; scroll position lost). |
+| people | personProfile | pass | 4 | 3 | 4 |  |
+| places | places | **FAIL** | 4 | 3 | 4 | P1 places-D5: On phone the map-pin destination is visibly broken: the place panel is a ~660px-wide overlay on a 390px map with its header/close control cut off, and the URL is rewritten to /places/&lt;slug> while still showing the map<br>P1 places-B3: Cross-cutting (all infinite-batch tiles incl. places/placeProfile): appending a batch shifts on-screen content — layout-shift entries of 0.24-0.26 with no input, sourced from infiniteTile.tile-places et al.; react-masonr |
+| places | placeProfile | **FAIL** | 3 | 4 | 4 | P1 placeProfile-E2: Back from the profile's 'Open &lt;place>' deeplink (a reserve/infinite tile deep in the feed) returns to a reshuffled page: tile count 65→66 / 66→68, the two masonry columns re-split (tile-notes became tile-art at the sa |
+| matters | mattersNarrative | pass | 4 | 4 | 4 |  |
+| matters | mattersMaterial | pass | 3 | 4 | 4 |  |
+| matters | mattersConcept | pass | 3 | 3 | 4 |  |
+| matters | matterProfile | pass | 3 | 4 | 4 |  |
+| scripture | text | pass | 4 | 4 | 5 |  |
+| scripture | commentary | pass | 3 | 4 | 4 |  |
+| scripture | notes | **FAIL** | 4 | 4 | 5 | P1 notes-D4: 'See in context' (href /read/mormon.8/23) lands on the Read page at the chapter top (scrollY 0 for 15s), with the verse segment stripped from the URL (/read/mormon.8); verse 23 is marked .highlighted but sits several scr |
+| scripture | refpill-popup | **FAIL** | 4 | 4 | 5 | P1 popup-B4: A detected relative reference ('v. 25' inside a commentary excerpt) becomes a RefPill; clicking it opens a popup titled 'v. 25' whose only content is 'Could not load your reading plan.' (an unrelated reading-plan error l |
+| scripture | cross-cutting | pass | 4 | 4 | 5 |  |
+| archive | fax | pass | 4 | 4 | 4 |  |
+| archive | faxVerse | pass | 3 | 3 | 4 |  |
+| archive | history | pass | 3 | 3 | 4 |  |
+| archive | josephSmith | pass | 3 | 3 | 4 |  |
+| archive | witness | pass | 3 | 4 | 4 |  |
+| analysis | biblephrases | **FAIL** | 4 | 4 | 4 | P1 XC2-biblephrases-B2-E2: Cross-cutting (biblephrases, chiasmus): the self-fetching tiles remount in `loading` on every Back, replace their content with a fixed-height skeleton (320/400px) and then re-fill at a different height (241-461 / 311-488<br>P1 XC3-biblephrases-E2: Cross-cutting (all tiles incl. artFill/chiasmus2 reserves): once infinite batches exist, Back re-runs the balancer and inserts two reserve tiles mid-page, shifting every tile below by two slots. |
+| analysis | chiasmus | **FAIL** | 4 | 4 | 4 | P1 chiasmus-D5-phone: The 'See in context' destination (/analysis/chiasmus/:id) clips its chiasm lines and the Previous / Read in context / Copy link / Next bar at the right edge of a 390px phone; text is cut mid-word above the fold. |
+| analysis | art | **FAIL** | 3 | 4 | 4 | P1 art-D4-read-landing: 'See in context' (/read/&lt;book>.&lt;ch>/&lt;verse>) lands at the top of the chapter: the target verse is highlighted but sits 1.7 screens below the fold, the page never scrolls to it, and the URL is rewritten to the ba |
+| story | mapstory | **FAIL** | 3 | 4 | 4 | P1 B2: Autoplay changes the tile's height every few seconds: the beat card's fixed reserve (min-height 10.5rem = 168px) is smaller than beats that carry a 3-line description plus a Read-more pill (180px), so the footer and ever |
+| story | community | pass | 3 | 3 | 4 |  |
+
+Fixes after round 2:
+
+- **people:** `d600bc2b`, `443eb62f`
+- **places:** `18440755`, `448f5731`, `bd7f43af`, `41000603`, `bd4ea7c0`, `3384d64c`
+- **scripture:** `d1728730`, `506bf6bf`
+- **analysis:** `26f6a998`, `0c534fd4`, `eee7c8f0`, `77f5fff3`
+- **story:** `092b2a8b`
+
+### Round 3
+
+| Family | Tile | Verdict | C | B | L | P0/P1 findings |
+|---|---|---|---|---|---|---|
+| people | people | pass | 4 | 4 | 4 |  |
+| people | personProfile | pass | 4 | 3 | 4 |  |
+| places | places | **FAIL** | 3 | 3 | 4 | P1 E1: Browser Back from a card or map pin intermittently lands thousands of px from where the reader left (cross-cutting: Sampler anchor/batch restore, not tile-owned) |
+| places | placeProfile | pass | 4 | 4 | 4 |  |
+| scripture | text | pass | 4 | 4 | 5 |  |
+| scripture | commentary | pass | 3 | 3 | 4 |  |
+| scripture | notes | **FAIL** | 3 | 4 | 5 | P1 notes-A1: No verse window: the tile renders the note's entire reference range, so a note on Moroni 7:20-39 becomes a 1343px wall of 20 verses (3 Nephi 4:1-14 = 515px, 1 Nephi 19:8-21 = 589px) with the one-line gloss at the very bo<br>P1 notes-B2: Rug-pull after paint (also B1/B3, one root cause): the passage is fetched after mount behind a fixed 7.5rem placeholder, so the tile grows once the verses land - measured +53 to +234px on short refs and ~+1200px on the M |
+| scripture | scripture-popup | pass | 4 | 4 | 5 |  |
+| analysis | biblephrases | **FAIL** | 2 | 3 | 4 | P0 D5: "See in context" lands on a spinner that never resolves whenever the tile already cached the pair (every 1-reference chapter pairing seen)<br>P1 B2: Self-fetch pop-in resizes the tile while it is on screen, shoving the column below |
+| analysis | chiasmus | **FAIL** | 3 | 4 | 4 | P1 B2: Chiasm resolves to a different height than its skeleton while on screen, yanking the tile below |
+| analysis | art | **FAIL** | 3 | 4 | 4 | P1 B2: The 18rem excerpt placeholder collapses to the real excerpt while the tile is on screen, pulling the next tile up by 64-171 px |
+| story | mapstory | pass | 3 | 3 | 3 |  |
+| story | community | **FAIL** | 4 | 4 | 4 | P1 D4: Tapping the pull quote lands on the channel page with the quoted message far below the fold and the message panel unscrolled, so the reader cannot tell they arrived at the message they chose |
