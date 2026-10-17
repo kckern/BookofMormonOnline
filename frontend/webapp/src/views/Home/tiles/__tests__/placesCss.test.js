@@ -55,3 +55,31 @@ test("cards clip rather than hide overflow, so a chip's widened hit box can't ma
   const body = ruleBodies(css, ".samplerCard").find((b) => /border-radius/.test(b));
   expect(body).toMatch(/overflow:\s*clip/);
 });
+
+// blind audit r3 places-F2: the eyebrow links were 12px tap targets on touch.
+test("touch: the Places and Places · Profile eyebrows get the 44px eyebrow hit (places-F2)", () => {
+  const coarse = css.slice(css.indexOf("link was an 11px tap target on touch (blind audit XC4)"));
+  const block = coarse.slice(0, coarse.indexOf("\n}\n"));
+  expect(block).toMatch(/\.placesTilePlaces \.tileHeading a::after/);
+  expect(block).toMatch(/\.placeProfilePlace \.tileHeading a::after/);
+  expect(block).toMatch(/\.placesTilePlaces \.tileHeading a[,\s][^{]*\{\s*position:\s*relative/);
+});
+
+// blind audit r3 places-A1: "Carchemis / h" — the name chip may wrap between
+// words only, never inside one.
+test("the place name chip never breaks inside a word (places-A1)", () => {
+  const bodies = ruleBodies(css, ".placesTilePlaces .placesNameOverlay");
+  expect(bodies.some((b) => /overflow-wrap:\s*normal/.test(b))).toBe(true);
+});
+
+// blind audit r3 places-A2/H3: on the ~105px desktop card the name chip, pin
+// and a 2-line info band covered most of the picture, and band + gloss both
+// elided. Narrow cards drop the band (it stays in the card link's tooltip) and
+// carry the name as a full-width caption along the image's foot.
+test("narrow cards drop the info band and caption the name along the foot (places-A2/H3)", () => {
+  expect(ruleBodies(css, ".placesTilePlaces .placesTileCard:not(.viewAllCard)").some((b) => /container-type:\s*inline-size/.test(b))).toBe(true);
+  const q = css.split("@container").find((b) => /^\s*placeCard\s*\(max-width:\s*\d+px\)/.test(b));
+  expect(q).toBeTruthy();
+  expect(q).toMatch(/\.placesInfoOverlay\s*\{\s*display:\s*none/);
+  expect(q).toMatch(/\.placesNameOverlay\s*\{[^}]*bottom:\s*0\.35rem/);
+});

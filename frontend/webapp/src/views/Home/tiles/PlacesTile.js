@@ -22,12 +22,22 @@ const wordCount = (s) => flatten(s || "").split(/\s+/).filter(Boolean).length;
 // …and a statement beats a quoted rhetorical question or an alias note ("Is
 // not Hamath as Arpad?", "Also known as Ai…") — duds on the card (audit H2)
 const weakHook = (s) => /\?\s*$/.test(flatten(s || "")) || /^\s*(also )?(known|called) as\b/i.test(flatten(s || ""));
+// …and it fits the card: on the ~105px desktop card the gloss shares ~3 short
+// lines with its ref chip, so a long line ended "The Lord will stir up…"
+// (blind audit r3 H1). Chip + gloss characters, the chip's padding counted.
+const HOOK_BUDGET = 48;
+const hookCost = (x) => String(x.ref).length + 3 + flatten(x.text || "").length;
+const fitting = (lines) => {
+  const fit = lines.filter((x) => hookCost(x) <= HOOK_BUDGET);
+  if (fit.length || lines.length < 2) return fit.length ? fit : lines;
+  return [lines.reduce((a, b) => (hookCost(b) < hookCost(a) ? b : a))];
+};
 export const hookLines = (index) => {
   const idx = (index || []).filter((x) => x?.ref);
   const good = idx.filter((x) => wordCount(x.text) >= 3);
   const best = good.filter((x) => !weakHook(x.text));
-  if (best.length) return best;
-  return good.length ? good : idx;
+  if (best.length) return fitting(best);
+  return good.length ? fitting(good) : idx;
 };
 const MOSAIC_MAX = 12; // 3×4 fills the end card
 
@@ -105,7 +115,12 @@ export default function PlacesTile({ data, seed = 0, payload }) {
           const gloss = item?.text ? tidy(flatten(item.text)) : "";
           return (
             <div className="placesTileCard samplerCard" key={p.slug}>
-              <Link to={`/places/${p.slug}`} className="placesCardLink" aria-label={name} />
+              <Link
+                to={`/places/${p.slug}`}
+                className="placesCardLink"
+                aria-label={name}
+                title={p.info ? `${name}: ${cleanInfo(p.info)}` : name}
+              />
               <div className="placesImgWrap">
                 <TileImage
                   path={`places/${p.slug}`}

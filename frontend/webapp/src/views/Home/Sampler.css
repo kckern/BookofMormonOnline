@@ -1638,6 +1638,13 @@ html[data-theme="dark"] .placesImgWrap { background: #333; }
   max-width: calc(100% - 2.6rem);
   font-size: 0.7rem;
   line-height: 1.18;
+  /* wrap between words only — never "Carchemis / h" (blind audit r3 A1) */
+  overflow-wrap: normal;
+  word-break: normal;
+  /* vertical padding as transparent borders: overflow clips at the padding
+     edge, so a clamped name's next line can't peek through the chip's foot */
+  padding-block: 0;
+  border-block: 0.15rem solid transparent;
 }
 /* one truncation: the band is a plain block; its text fits 2 whole lines by
    words (FitWords) — no mid-word line-clamp ellipsis (audit H3) */
@@ -1713,6 +1720,22 @@ html[data-theme="dark"] .placesTilePlaces .placesTileCard:not(.viewAllCard):has(
   /* …and the card keeps 15px below a last-row chip, or its clip cuts the hit
      (a one-line gloss in the tightest card measured 37px) */
   .placesTilePlaces .placesTileInfo.samplerCardBody { padding-bottom: 15px; }
+}
+
+/* Narrow cards (the ~105px desktop grid): a name chip, the pin AND a 2-line
+   info band left ~35px of the painting, and band + gloss both elided (blind
+   audit r3 A2/H3). Here the band goes (the info stays in the card link's
+   tooltip and on the place page) and the name becomes a full-width caption
+   along the image's foot, so the picture is the card's first read and a long
+   name has the whole width to wrap by words. */
+.placesTilePlaces .placesTileCard:not(.viewAllCard) { container-type: inline-size; container-name: placeCard; }
+@container placeCard (max-width: 140px) {
+  .placesTilePlaces .placesInfoOverlay { display: none; }
+  .placesTilePlaces .placesNameOverlay {
+    top: auto;
+    bottom: 0.35rem;
+    max-width: calc(100% - 0.7rem);
+  }
 }
 
 /* map pin (Places cards + PlaceProfile hero): a small glyph on a dark scrim
@@ -3331,13 +3354,17 @@ html[data-theme="dark"] .faxVerseTile .read-content .read-block { background: tr
   .historyTile .tileHeading a,
   .witnessTile .tileHeading a,
   .peopleTile .tileHeading a,
-  .personProfileTile .tileHeading a { position: relative; z-index: 2; } /* above the portrait img (z 1) */
+  .personProfileTile .tileHeading a,
+  .placesTilePlaces .tileHeading a,
+  .placeProfilePlace .tileHeading a { position: relative; z-index: 2; } /* above the portrait img / card link (z 1) */
   .faxTile .tileHeading a::after,
   .faxVerseTile .tileHeading a::after,
   .historyTile .tileHeading a::after,
   .witnessTile .tileHeading a::after,
   .peopleTile .tileHeading a::after,
-  .personProfileTile .tileHeading a::after {
+  .personProfileTile .tileHeading a::after,
+  .placesTilePlaces .tileHeading a::after,
+  .placeProfilePlace .tileHeading a::after {
     content: "";
     position: absolute;
     top: -12px;

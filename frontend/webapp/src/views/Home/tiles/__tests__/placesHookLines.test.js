@@ -20,3 +20,31 @@ describe("hookLines", () => {
     expect(hookLines(idx).map((x) => x.text)).toEqual(["Moroni makes camp"]);
   });
 });
+
+// blind audit r3 places-H1: on the 105px desktop card the gloss gets ~3 lines
+// beside its ref chip, so long index lines ended as "The Lord will stir up…".
+// Lines that fit the card's budget win; when none does, the shortest does.
+describe("hookLines card budget (places-H1)", () => {
+  test("a line that fits the card beats one that would be cut", () => {
+    const idx = [
+      { ref: "2 Nephi 20:28", text: "The Lord will stir up a scourge for him according to the slaughter of Midian" },
+      { ref: "Alma 47:5", text: "Amalickiah goes to place of Onidah" },
+    ];
+    expect(hookLines(idx).map((x) => x.text)).toEqual(["Amalickiah goes to place of Onidah"]);
+  });
+  test("the budget counts the ref chip too", () => {
+    const idx = [
+      { ref: "2 Nephi 20:28", text: "Assyria laid up carriages at Michmash" },
+      { ref: "Alma 47:5", text: "Nephites pitch their tents" },
+    ];
+    expect(hookLines(idx).map((x) => x.ref)).toEqual(["Alma 47:5"]);
+  });
+  test("when nothing fits, the shortest real line is the hook", () => {
+    const idx = [
+      { ref: "Alma 50:1", text: "Key location in Moroni's tactical defense of the whole Nephite land" },
+      { ref: "Alma 50:2", text: "Ammaron deposited records here for safekeeping until a later day" },
+      { ref: "Alma 50:3", text: "The children of Ammon shall obey Ephraim in that day" },
+    ];
+    expect(hookLines(idx).map((x) => x.ref)).toEqual(["Alma 50:3"]);
+  });
+});
