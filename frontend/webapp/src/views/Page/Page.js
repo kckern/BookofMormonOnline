@@ -26,7 +26,7 @@ import { usePageInit, pageScrollManager } from "./usePageInit";
 import { createAutoClickTracker } from "./autoClickTracker";
 import { addToPageCommentIndex, updateToPageComment, deleteToPageComments } from "./commentIndex";
 import { usePageComments } from "./usePageComments";
-import { setBaseDocTitle, pushDocTitle, popDocTitle } from "./docTitle";
+import { setBaseDocTitle, pushDocTitle, popDocTitle, resetDocTitleStack } from "./docTitle";
 import { createScrollSpy, step } from "src/scroll";
 import { appFunctions } from "src/models/appController";
 import { parsePagePath } from "src/models/pagePath";
@@ -357,7 +357,11 @@ export default function Page() {
   const isMounted = useRef(true);
   useEffect(() => {
     isMounted.current = true;
-    return () => { isMounted.current = false; };
+    return () => {
+      isMounted.current = false;
+      // rows left open here must not title the next page (audit r4 D4)
+      resetDocTitleStack();
+    };
   }, []);
 
   const { commentState, readyToScroll, setReadyToScroll, needToLoadComments } =
@@ -522,6 +526,9 @@ export default function Page() {
           pageController.functions.setNotFound({ type: "commentary", id: params.commentaryId });
           return;
         }
+        // Title the tab from the commentary while its host page resolves
+        // (the host row/section titles take over once they open).
+        if (commentary.title) setBaseDocTitle(`${commentary.title} | ${label("home_title")}`);
         pageSlug = commentary.location.slug.replace(/\/\d+$/, "");
         textId = commentary.location.slug.match(/\d+$/)?.[0];
       }

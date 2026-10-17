@@ -30,6 +30,16 @@ export function popDocTitle(key) {
   apply();
 }
 
+/**
+ * Drop every pushed entry WITHOUT re-applying. Page calls this on unmount: rows
+ * left open on the page you navigated away from must not resurface as the tab
+ * title of the next page (blind audit r4 commentary D4 — a /commentary/:id
+ * arrival kept "3 Nephi 19:10–11 | …" from the previous visit).
+ */
+export function resetDocTitleStack() {
+  stack = [];
+}
+
 // Test hook only — module state must not leak between tests.
 export function __resetDocTitleForTests() {
   base = "";
