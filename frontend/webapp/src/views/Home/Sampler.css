@@ -1967,15 +1967,16 @@ html[data-theme="dark"] .readMorePill:hover { background: rgba(201, 162, 75, 0.2
    ================================================================ */
 /* The three self-fetching / image tiles of the analysis family collapse to
    nothing (no 2px bordered shell) when they render null: a dud pick, a failed
-   fetch or a failed image. */
-.tile.tile-biblephrases:empty,
-.tile.tile-chiasmus:empty,
-.tile.tile-art:empty,
+   fetch or a failed image. Never the page / "loading more" skeleton, which is
+   an empty div too and must hold its footprint (audit XC1). */
+.tile:not(.skeleton).tile-biblephrases:empty,
+.tile:not(.skeleton).tile-chiasmus:empty,
+.tile:not(.skeleton).tile-art:empty,
 /* profile reserves render null for a person/place/matter with no description
    (audit B4: no bordered blank card in an infinite batch) */
-.tile.tile-personProfile:empty,
-.tile.tile-placeProfile:empty,
-.tile.tile-matterProfile:empty { display: none; }
+.tile:not(.skeleton).tile-personProfile:empty,
+.tile:not(.skeleton).tile-placeProfile:empty,
+.tile:not(.skeleton).tile-matterProfile:empty { display: none; }
 /* In-tile loading block while a self-fetching tile resolves (the tile shell
    carries the measured skeleton min-height). */
 .biblePhrasesTile .tileInnerSkeleton,
@@ -2188,9 +2189,10 @@ html[data-theme="dark"] .imageArtTitleBar { color: #f0f0f0; }
    second, larger section heading (upside-down hierarchy) */
 .imageArtScripture .read-section-header h4 { display: none; }
 /* reserve the excerpt's footprint while it loads — no '…' that grows under the
-   reader after Back */
+   reader after Back. 18rem ~ the measured median of the 3-verse excerpt
+   (260-400px); 9rem let the tile grow ~260px on arrival (audit art-B2). */
 .imageArtScripture .samplerScriptureLoading.isLoading {
-  min-height: 9rem;
+  min-height: 18rem;
   color: transparent;
   border-radius: 0.4rem;
   background: #f0efec;
@@ -3272,9 +3274,8 @@ html[data-theme="dark"] .faxVerseTile .read-content .read-block { background: tr
 }
 
 /* Analysis tiles (Biblical language / Chiasmus / Art) — blind audit fixes.
-   A4: the chiasm glyph's centre bars take the house gold, matching the gold
-   echo marks beneath them (the shared token is Bootstrap amber #f0ad4e). */
-.sampler .chiasmGlyph .glyphBar.pivot { fill: #c9a24b; }
+   A4: the chiasm glyph's centre bars take the house gold — now set once in
+   _Common/ChiasmGlyph.css so the destination pages match the tile. */
 /* art-A4: the art excerpt's anchor phrase uses the same gold wash as its two
    sibling analysis tiles instead of the Read page's yellow. */
 .imageArtScripture .scriptureAnchorMark { background: rgba(201, 162, 75, 0.24); }

@@ -69,7 +69,7 @@ describe("Sampler CSS", () => {
     const sels = rules(css)
       .filter(([, body]) => /display:\s*none/.test(body))
       .flatMap(([sel]) => sel.split(",").map((x) => x.trim()));
-    ["tile-art", "tile-chiasmus", "tile-biblephrases"].forEach((span) => expect(sels).toContain(`.tile.${span}:empty`));
+    ["tile-art", "tile-chiasmus", "tile-biblephrases"].forEach((span) => expect(sels).toContain(`.tile:not(.skeleton).${span}:empty`));
   });
 });
 

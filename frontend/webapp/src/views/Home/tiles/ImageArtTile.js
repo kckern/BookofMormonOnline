@@ -34,7 +34,7 @@ export default function ImageArtTile({ payload, artIndex = 0 }) {
       {/* the Home eyebrow every sibling carries (audit A3): names the category
           before the title ("Dissenters Are Hewn Down" — of what?) */}
       <h3 className="tileHeading imageArtEyebrow">{labelOr("art_eyebrow", "Art")}</h3>
-      <Link to={`/art/${art.id}`} className="imageArtLink">
+      <Link to={`/art/${art.id}`} className="imageArtLink" aria-label={art.title || undefined}>
         {art.title ? <span className="imageArtTitleBar">{art.title}</span> : null}
         <span className="imageArtFrame" style={{ aspectRatio: `1 / ${ratio}` }}>
           {/* art has no resized variants on the media host: original only */}
@@ -46,7 +46,7 @@ export default function ImageArtTile({ payload, artIndex = 0 }) {
             height={art.height || undefined}
             onError={() => setFailedId(art.id)}
           />
-          {art.artist ? <span className="imageArtArtistBadge">&copy;&nbsp;{art.artist}</span> : null}
+          {art.artist ? <span className="imageArtArtistBadge" aria-hidden="true">&copy;&nbsp;{art.artist}</span> : null}
         </span>
       </Link>
       <div className="imageArtCaption">

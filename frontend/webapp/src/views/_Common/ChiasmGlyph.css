@@ -3,4 +3,6 @@
    Imported by the component itself so the glyph is styled wherever it
    renders (Analysis, Home tile, PassageNotes). Tokens theme it in dark mode. */
 .chiasmGlyph .glyphBar { fill: var(--text-faint); }
-.chiasmGlyph .glyphBar.pivot { fill: var(--accent-amber); }
+/* house gold everywhere (tile AND the index/detail it links to), so the
+   fingerprint keeps its colour across the click (audit chiasmus-D4) */
+.chiasmGlyph .glyphBar.pivot { fill: #c9a24b; }

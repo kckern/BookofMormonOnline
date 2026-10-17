@@ -104,4 +104,20 @@ describe("ImageArtTile", () => {
     expect(css).toMatch(/\.imageArtScripture \.samplerScriptureLoading\.isLoading\s*\{[^}]*min-height/);
     expect(css).toMatch(/html\[data-theme="dark"\] \.imageArtScripture[^{]*\{[^}]*background:\s*transparent/);
   });
+
+  // art-G3: the link's name is the title, not "Title© Artist" (the badge is
+  // visual credit; the alt is empty because the title names the link).
+  test("the artwork link is named by the title alone; the © badge is hidden from AT", () => {
+    const { container } = renderTile();
+    expect(screen.getByRole("link", { name: "Zarahemla is Rebuilt" })).toBeTruthy();
+    expect(container.querySelector(".imageArtArtistBadge").getAttribute("aria-hidden")).toBe("true");
+  });
+
+  // art-B2: the excerpt placeholder reserves the measured footprint (the 3-verse
+  // excerpt renders ~260-400px), not 9rem that grows ~260px under the reader.
+  test("the excerpt loading placeholder reserves at least 16rem", () => {
+    const css = fs.readFileSync(path.resolve(__dirname, "../../Sampler.css"), "utf8");
+    const m = css.match(/\.imageArtScripture \.samplerScriptureLoading\.isLoading \{[^}]*min-height:\s*([\d.]+)rem/);
+    expect(Number(m[1])).toBeGreaterThanOrEqual(16);
+  });
 });
