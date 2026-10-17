@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import DiffMatchPatch from "diff-match-patch";
 import { generateReference } from "scripture-guide";
@@ -13,6 +13,7 @@ import labelOr from "./_ds/labelOr";
 import { skeletonHeight } from "./_ds/skeletonHeights";
 import useSingleColumn from "./_ds/useSingleColumn";
 import { createPickMemo } from "./_ds/pickMemo";
+import { estimatePairTextPx } from "./_ds/textFit";
 
 // data.js is ESM with a default export (it was CommonJS); destructure after
 // the imports so import/first stays satisfied.
@@ -32,7 +33,25 @@ export const eligiblePairs = index.filter(([, kjv]) => kjv < ISAIAH[0] || kjv > 
 export const CANDIDATES = 6;
 const STRONG = 4; // words in a phrase worth showing outright
 const PARTIAL = 3; // best-of fallback when no candidate reaches STRONG
-const COMFORT_CHARS = 420; // prefer pairs whose verses fit the tile unclamped
+
+// R3 B2: the tile resolves INTO its reserved box (skeletonHeights, held as
+// min-height after arrival). What the box leaves for the two passages after the
+// eyebrow, the two ref pills and the CTA: measured 153px desktop, 180px phone,
+// plus the touch eyebrow's clearance above the first pill (F2, Sampler.css).
+const HEAD_PX = { desktop: 153, single: 180 };
+const TOUCH_CLEARANCE_PX = 14;
+const FIT_SLACK = 22; // one text row: the estimate is within a row of the measured height
+const coarse = () =>
+  typeof window !== "undefined" && typeof window.matchMedia === "function" && !!window.matchMedia("(pointer: coarse)")?.matches;
+const DEFAULT_MEASURE = { desktop: 334, single: 314 }; // passage width when unmeasured (jsdom)
+export const textBudget = (single) =>
+  parseInt(skeletonHeight("tile-biblephrases", single), 10) -
+  HEAD_PX[single ? "single" : "desktop"] -
+  (coarse() ? TOUCH_CLEARANCE_PX : 0) -
+  FIT_SLACK;
+// a shared run covering this much of BOTH verses is a whole-verse block quote
+// (3 Nephi 24:4 = Malachi 3:4): two identical, fully marked sentences (H1)
+const BLOCK_QUOTE_COVER = 0.8;
 
 /** The candidate pairs for a seed: spread across the index, not adjacent rows. */
 export const candidatePairs = (seed) => {
@@ -146,13 +165,34 @@ export const scorePair = (bomText, kjvText, hl) => {
   return { score: Math.max(...runs.map((r) => r.words)), bomRanges: runs.map((r) => r.a), kjvRanges: runs.map((r) => r.b) };
 };
 
-/** Pick the pair to show: the first strong one that fits, else the first strong, else the best partial. */
-export const choosePair = (scored) => {
-  const strong = scored.filter((c) => c.score >= STRONG);
-  const fits = (c) => c.bomText.length + c.kjvText.length <= COMFORT_CHARS * 2;
-  if (strong.length) return strong.find(fits) || strong[0];
-  const partial = scored.filter((c) => c.score >= PARTIAL).sort((x, y) => y.score - x.score);
-  return partial[0] || null;
+const covered = (text, ranges) =>
+  text.length ? (ranges || []).reduce((n, [a, b]) => n + Math.max(0, b - a), 0) / text.length : 0;
+
+/** A whole-verse block quote: the shared wording is (nearly) all of both verses. */
+export const isBlockQuote = (c) =>
+  covered(c.bomText, c.bomRanges) >= BLOCK_QUOTE_COVER && covered(c.kjvText, c.kjvRanges) >= BLOCK_QUOTE_COVER;
+
+/**
+ * Pick the pair to show. Strong (4+ word) echoes before 3-word partials, real
+ * echoes before block quotes; within a tier, the pair that fills the reserved
+ * box best without overflowing it (no dead space, no growth on arrival). When
+ * nothing fits, the smallest pair is the least growth.
+ */
+export const choosePair = (scored, { budgetPx = textBudget(false), widthPx = DEFAULT_MEASURE.desktop } = {}) => {
+  const est = (c) => estimatePairTextPx(c.bomText.length, c.kjvText.length, widthPx);
+  const tiers = [
+    (c) => c.score >= STRONG && !isBlockQuote(c),
+    (c) => c.score >= PARTIAL && !isBlockQuote(c),
+    (c) => c.score >= PARTIAL,
+  ];
+  for (const inTier of tiers) {
+    const pool = scored.filter(inTier);
+    if (!pool.length) continue;
+    const fitting = pool.filter((c) => est(c) <= budgetPx);
+    if (fitting.length) return fitting.reduce((a, b) => (est(b) > est(a) ? b : a));
+    return pool.reduce((a, b) => (est(b) < est(a) ? b : a));
+  }
+  return null;
 };
 
 // Chapter of a verse id, from its English reference ("Alma 9:15" → 9);
@@ -202,6 +242,7 @@ export default function BiblePhrasesTile({ seed }) {
   const single = useSingleColumn();
   const lang = determineLanguage();
   const [state, setState] = useState(() => pickMemo.get(memoKey(seed, lang)) || { status: "loading", pair: null });
+  const measureRef = useRef(null);
 
   useEffect(() => {
     const key = memoKey(seed, lang);
@@ -239,7 +280,8 @@ export default function BiblePhrasesTile({ seed }) {
             return { bomVid, kjvVid, bomText, kjvText, ...scorePair(bomText, kjvText, hls[`${bomVid},${kjvVid}`]) };
           })
           .filter(Boolean);
-        const pick = choosePair(scored);
+        const widthPx = measureRef.current?.getBoundingClientRect?.().width || DEFAULT_MEASURE[single ? "single" : "desktop"];
+        const pick = choosePair(scored, { budgetPx: textBudget(single), widthPx });
         settle(pick ? { status: "ready", pair: pick } : { status: "empty", pair: null });
       })
       .catch(() => {
@@ -248,6 +290,8 @@ export default function BiblePhrasesTile({ seed }) {
     return () => {
       cancelled = true;
     };
+    // `single` is read once per pick: the memo keeps the first resolution
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seed, lang]);
 
   if (state.status === "loading") {
@@ -258,7 +302,7 @@ export default function BiblePhrasesTile({ seed }) {
         style={{ minHeight: `calc(${skeletonHeight("tile-biblephrases", single)} - 2px)` }}
       >
         <h3 className="tileHeading">{heading()}</h3>
-        <div className="tileInnerSkeleton" aria-hidden="true" />
+        <div className="tileInnerSkeleton" aria-hidden="true" ref={measureRef} />
       </div>
     );
   }
@@ -268,7 +312,10 @@ export default function BiblePhrasesTile({ seed }) {
   const bomRef = generateReference([bomVid], lang);
   const kjvRef = generateReference([kjvVid], lang);
   return (
-    <div className="samplerTileInner biblePhrasesTile">
+    <div
+      className="samplerTileInner biblePhrasesTile"
+      style={{ minHeight: `calc(${skeletonHeight("tile-biblephrases", single)} - 2px)` }}
+    >
       <h3 className="tileHeading">
         <Link to="/analysis/bible">{heading()}</Link>
       </h3>

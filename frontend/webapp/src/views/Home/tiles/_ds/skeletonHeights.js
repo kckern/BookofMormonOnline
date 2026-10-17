@@ -29,8 +29,8 @@ const DESKTOP = {
   "tile-mattersNarrative": "407px",
   "tile-mattersMaterial": "407px",
   "tile-mattersConcept": "407px", // re-measured 2026-10-16 (matters-06),
-  "tile-biblephrases": "320px", // re-measured 2026-10-15 after the Task 10g redesign (6 seeds: 219–395)
-  "tile-chiasmus": "400px", // 10g: 6 seeds 311–488 with the ≤600-char filter
+  "tile-biblephrases": "352px", // R3 B2: a FIXED box — the tile picks the candidate pair that best fills it (textFit) and holds it
+  "tile-chiasmus": "440px", // R3 B2: a FIXED box — the tile picks only chiasms estimated to fit (textFit) and holds it
   "tile-art": "600px",
   "tile-notes": "440px",
   "tile-mapstory": "662px",
@@ -58,8 +58,8 @@ const PHONE = {
   "tile-mattersMaterial": "706px",
   "tile-mattersConcept": "732px", // 2026-10-16: concept names wrap more
   "tile-matterProfile": "410px",
-  "tile-biblephrases": "420px", // 10g: pair stacks on phone
-  "tile-chiasmus": "400px",
+  "tile-biblephrases": "414px", // R3 B2: fixed box (pair stacks on phone; 9 text rows + one row of slack)
+  "tile-chiasmus": "440px", // R3 B2: fixed box, fit-filtered (76 of 118 fit at 334px, 55 at 314px)
   "tile-art": "580px",
   "tile-notes": "370px",
   "tile-mapstory": "655px",

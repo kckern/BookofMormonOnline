@@ -4,7 +4,8 @@ import path from "node:path";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
-import ChiasmusTile, { speakerLabel, displayable, pickMemo } from "../ChiasmusTile";
+import ChiasmusTile, { speakerLabel, displayable, pickMemo, fitsTile, fillsTile } from "../ChiasmusTile";
+import { skeletonHeight } from "../_ds/skeletonHeights";
 
 vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
@@ -119,5 +120,40 @@ describe("ChiasmusTile", () => {
     const css = fs.readFileSync(path.resolve(__dirname, "../../Sampler.css"), "utf8");
     expect(css).toMatch(/\.chiasmusTile \.miniChiasmKey\s*\{[^}]*color:\s*var\(--tile-meta\)/);
     expect(css).toMatch(/\.chiasmusTile \.miniChiasmText\s*\{[^}]*line-height:\s*1\.3/);
+  });
+
+  // R3 B2/B1: the chiasm resolved 311-519px against a 400px skeleton, shoving
+  // the column on screen. It must resolve INTO the reserved box.
+  test("the resolved chiasm keeps the reserved footprint (no shrink on arrival)", async () => {
+    api();
+    const { container } = renderTile();
+    await screen.findByRole("link", { name: "See in context" });
+    const inner = container.querySelector(".chiasmusTile");
+    expect(inner.style.minHeight).toContain(`${parseInt(skeletonHeight("tile-chiasmus", false), 10) - 2}px`);
+  });
+
+  test("picks only a chiasm whose estimated lines fit the box (no growth on arrival)", async () => {
+    const tall = { chiasmus_id: "tall", scheme: "ABCDEFFEDCBA", line_lengths: Array(12).fill(48) };
+    const fit = { chiasmus_id: "abc123", scheme: "ABCCBA", line_lengths: [40, 40, 40, 40, 40, 40] };
+    expect(displayable(tall)).toBe(true);
+    expect(fitsTile(tall, false, 334)).toBe(false);
+    expect(fitsTile(fit, false, 334)).toBe(true);
+    // seed 1 % 2 → index 1 would be `tall`; the fit filter leaves only abc123
+    api(CHIASM, { a: fit, b: tall });
+    renderTile();
+    await screen.findByRole("link", { name: "See in context" });
+    expect(BoMOnlineAPI).toHaveBeenCalledWith({ chiasm: ["abc123"] });
+  });
+
+  test("prefers a chiasm that fills the box over a short one (no hole under it)", async () => {
+    const short = { chiasmus_id: "short", scheme: "ABCCBA", line_lengths: [20, 20, 20, 20, 20, 20] };
+    const full = { chiasmus_id: "abc123", scheme: "ABCCBA", line_lengths: [70, 70, 40, 40, 70, 70] };
+    expect(fitsTile(short, false, 334)).toBe(true);
+    expect(fillsTile(short, false, 334)).toBe(false);
+    expect(fillsTile(full, false, 334)).toBe(true);
+    api(CHIASM, { a: full, b: short });
+    renderTile();
+    await screen.findByRole("link", { name: "See in context" });
+    expect(BoMOnlineAPI).toHaveBeenCalledWith({ chiasm: ["abc123"] });
   });
 });

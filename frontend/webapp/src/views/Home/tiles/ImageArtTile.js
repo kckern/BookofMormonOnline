@@ -18,8 +18,12 @@ import labelOr from "./_ds/labelOr";
  * A failed image drops the whole tile (`.tile-art:empty` collapses the shell)
  * rather than leaving a blank frame that still credits an absent picture.
  */
-/** Verses shown in the tile excerpt (anchor verse +-1). */
-export const ART_EXCERPT_VERSES = 3;
+/**
+ * Verses fed to the tile excerpt: from the anchor verse -1 onward, enough to
+ * fill the fixed excerpt box (Sampler.css --art-excerpt-h), which clips the
+ * rest with a fade (R3 B2: a 3-verse excerpt ran 99-564px and resized the tile).
+ */
+export const ART_EXCERPT_VERSES = 6;
 
 export default function ImageArtTile({ payload, artIndex = 0 }) {
   const [failedId, setFailedId] = useState(null);
@@ -53,8 +57,8 @@ export default function ImageArtTile({ payload, artIndex = 0 }) {
         {art.ref ? (
           <div className="imageArtScripture read-content scriptureExcerptCompact">
             {/* the header + "see in context" already navigate — drop the
-                redundant Study button. focusVerses: the anchor verse +-1, not
-                the whole section range (audit H3); See in context has the rest. */}
+                redundant Study button. focusVerses: from the anchor verse -1, not
+                the whole section range (audit H3); the box clips, See in context has the rest. */}
             <ScriptureExcerpt refText={art.ref} hideStudy refAsPopup highlight={art.title} focusVerses={ART_EXCERPT_VERSES} />
           </div>
         ) : null}

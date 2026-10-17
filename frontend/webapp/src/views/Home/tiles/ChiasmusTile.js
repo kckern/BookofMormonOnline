@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import MiniChiasm from "../../_Common/MiniChiasm";
@@ -10,6 +10,7 @@ import labelOr from "./_ds/labelOr";
 import { skeletonHeight } from "./_ds/skeletonHeights";
 import useSingleColumn from "./_ds/useSingleColumn";
 import { createPickMemo } from "./_ds/pickMemo";
+import { estimateChiasmLinesPx } from "./_ds/textFit";
 
 // Displayable in a tile: plain-letter mirrored schemes deep enough to be
 // interesting, short enough not to scroll (ABCCBA … up to 12 lines), and with
@@ -19,6 +20,24 @@ const MAX_CHARS = 600;
 const textLength = (c) => (Array.isArray(c.line_lengths) ? c.line_lengths.reduce((a, b) => a + (Number(b) || 0), 0) : 0);
 export const displayable = (c) =>
   /^[A-Z]+$/.test(c.scheme || "") && c.scheme.length >= 6 && c.scheme.length <= 12 && textLength(c) <= MAX_CHARS;
+
+// R3 B2: the tile resolves INTO its reserved box (skeletonHeights, held as
+// min-height after arrival), so it may only pick a chiasm whose lines fit what
+// the box leaves after the head (eyebrow, glyph/speaker row, title + ref) and
+// the CTA — measured 157px desktop / 180px phone. The list already carries
+// scheme + line_lengths, so the fit is known before the detail fetch.
+const HEAD_PX = { desktop: 157, single: 180 };
+const FIT_SLACK = 8; // px of headroom for a title or font that runs long
+const DEFAULT_MEASURE = { desktop: 334, single: 314 }; // lines' width when unmeasured (jsdom)
+// …and prefers one that fills it to within ~3 rows, so the held box never
+// shows a hole under a short chiasm (41 of 118 at 334px, 38 at 314px).
+const FILL_BAND = 64;
+const linesBudget = (single) =>
+  parseInt(skeletonHeight("tile-chiasmus", single), 10) - HEAD_PX[single ? "single" : "desktop"] - FIT_SLACK;
+export const fitsTile = (c, single, widthPx) =>
+  estimateChiasmLinesPx(c.scheme, c.line_lengths, widthPx) <= linesBudget(single);
+export const fillsTile = (c, single, widthPx) =>
+  fitsTile(c, single, widthPx) && estimateChiasmLinesPx(c.scheme, c.line_lengths, widthPx) >= linesBudget(single) - FILL_BAND;
 
 // "Alma2" → "Alma²": keep the disambiguator, in the People-tile convention.
 const SUP = { 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴", 5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
@@ -40,6 +59,7 @@ export const pickMemo = createPickMemo();
 export default function ChiasmusTile({ seed }) {
   const [state, setState] = useState(() => pickMemo.get(String(seed)) || { status: "loading", chiasm: null });
   const single = useSingleColumn();
+  const measureRef = useRef(null);
 
   useEffect(() => {
     const key = String(seed);
@@ -58,8 +78,13 @@ export default function ChiasmusTile({ seed }) {
     Promise.resolve(BoMOnlineAPI({ chiasmus: true }))
       .then((res) => {
         if (res?.error) throw new Error("chiasmus unavailable");
-        const list = Object.values(res?.chiasmus || {}).filter(displayable);
+        const shown = Object.values(res?.chiasmus || {}).filter(displayable);
         if (cancelled) return undefined;
+        const w = measureRef.current?.getBoundingClientRect?.().width || DEFAULT_MEASURE[single ? "single" : "desktop"];
+        const filling = shown.filter((c) => fillsTile(c, single, w));
+        const fitting = shown.filter((c) => fitsTile(c, single, w));
+        // nothing estimated to fit (a very narrow column): any displayable one
+        const list = filling.length ? filling : fitting.length ? fitting : shown;
         if (!list.length) return null;
         const pick = list[Math.abs(seed || 1) % list.length];
         return BoMOnlineAPI({ chiasm: [pick.chiasmus_id] });
@@ -74,6 +99,8 @@ export default function ChiasmusTile({ seed }) {
     return () => {
       cancelled = true;
     };
+    // `single` is read once per pick: the memo keeps the first resolution
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seed]);
 
   if (state.status === "loading") {
@@ -84,7 +111,7 @@ export default function ChiasmusTile({ seed }) {
         style={{ minHeight: `calc(${skeletonHeight("tile-chiasmus", single)} - 2px)` }}
       >
         <h3 className="tileHeading">{heading()}</h3>
-        <div className="tileInnerSkeleton" aria-hidden="true" />
+        <div className="tileInnerSkeleton" aria-hidden="true" ref={measureRef} />
       </div>
     );
   }
@@ -111,7 +138,10 @@ export default function ChiasmusTile({ seed }) {
     </>
   ) : null;
   return (
-    <div className="samplerTileInner chiasmusTile">
+    <div
+      className="samplerTileInner chiasmusTile"
+      style={{ minHeight: `calc(${skeletonHeight("tile-chiasmus", single)} - 2px)` }}
+    >
       <h3 className="tileHeading">
         <Link to="/analysis/chiasmus">{heading()}</Link>
       </h3>

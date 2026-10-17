@@ -1,9 +1,11 @@
 import React from "react";
+import fs from "node:fs";
+import path from "node:path";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { generateReference } from "scripture-guide";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
-import BiblePhrasesTile, { markShared, candidatePairs, pairPath, scorePair, pickMemo } from "../BiblePhrasesTile";
+import BiblePhrasesTile, { markShared, candidatePairs, pairPath, scorePair, choosePair, isBlockQuote, pickMemo } from "../BiblePhrasesTile";
 import { skeletonHeight } from "../_ds/skeletonHeights";
 
 vi.mock("src/models/BoMOnlineAPI", () => ({
@@ -108,6 +110,45 @@ describe("pairing helpers", () => {
   test("pairPath deep-links to the pair's two chapters by English slug", () => {
     // Alma 26:12 ↔ Philippians 4:13
     expect(pairPath(34356, 29456)).toBe("/analysis/bible/bom/alma/26~philippians?bch=4");
+  });
+});
+
+// R3 B2/B1/H1: the pair resolves INTO the reserved box, and a whole-verse
+// block quote (two identical, fully marked sentences) is a last resort.
+describe("choosePair — fit the box, skip block-quote duds", () => {
+  const cand = (id, bomLen, kjvLen, score = 6, cover = 0.3) => ({
+    bomVid: id,
+    kjvVid: id + 1,
+    bomText: "x".repeat(bomLen),
+    kjvText: "y".repeat(kjvLen),
+    score,
+    bomRanges: [[0, Math.round(bomLen * cover)]],
+    kjvRanges: [[0, Math.round(kjvLen * cover)]],
+  });
+  const fit = { budgetPx: 180, widthPx: 334 }; // 8 rows of 22px
+
+  test("a strong pair that overflows the box loses to one that fits", () => {
+    const pick = choosePair([cand(1, 600, 400), cand(3, 200, 150)], fit);
+    expect(pick.bomVid).toBe(3);
+  });
+
+  test("among fitting strong pairs, the one that fills the box best wins (least dead space)", () => {
+    const pick = choosePair([cand(1, 60, 60), cand(3, 220, 160), cand(5, 120, 100)], fit);
+    expect(pick.bomVid).toBe(3);
+  });
+
+  test("a whole-verse block quote is skipped while a real echo exists", () => {
+    const dud = cand(1, 200, 200, 30, 1);
+    expect(isBlockQuote(dud)).toBe(true);
+    expect(choosePair([dud, cand(3, 100, 100)], fit).bomVid).toBe(3);
+  });
+
+  test("a block quote still beats an empty tile when it is all there is", () => {
+    expect(choosePair([cand(1, 200, 200, 30, 1)], fit).bomVid).toBe(1);
+  });
+
+  test("with nothing that fits, the smallest strong pair is the least growth", () => {
+    expect(choosePair([cand(1, 900, 900), cand(3, 500, 400)], fit).bomVid).toBe(3);
   });
 });
 
@@ -248,5 +289,24 @@ describe("BiblePhrasesTile", () => {
     BoMOnlineAPI.mockImplementation(() => new Promise(() => {}));
     renderTile();
     expect(BoMOnlineAPI).toHaveBeenCalledTimes(1);
+  });
+
+  test("the resolved pair keeps the reserved footprint (no shrink on arrival)", async () => {
+    const [b0, k0] = candidatePairs(3)[0];
+    VERSE_TEXT[b0] = "for behold I say unto you that ye must repent";
+    VERSE_TEXT[k0] = "verily I say unto you that ye must be born";
+    respond((i) => (i === 0 ? { bom_highlight: ["I say unto you that ye must"], bible_highlight: ["I say unto you that ye must"] } : null));
+    const { container } = renderTile();
+    await screen.findAllByText("I say unto you that ye must", { selector: "mark" });
+    const inner = container.querySelector(".biblePhrasesTile");
+    expect(inner.style.minHeight).toContain(`${parseInt(skeletonHeight("tile-biblephrases", false), 10) - 2}px`);
+  });
+
+  // R3 F2: the first pill (z-index 3) sat inside the eyebrow's 44px touch hit and
+  // cut it to 21px; the eyebrow clears it and that pill's hit grows downward.
+  test("Sampler.css: touch eyebrow clears the first pill's hit area", () => {
+    const css = fs.readFileSync(path.resolve(__dirname, "../../Sampler.css"), "utf8");
+    expect(css).toMatch(/\.biblePhrasesTile > \.tileHeading \{ margin-bottom: 1\.3rem; \}/);
+    expect(css).toMatch(/\.biblePhrasesPassage:first-child \.scripture_link::after \{ inset: -4px -4px -26px; \}/);
   });
 });

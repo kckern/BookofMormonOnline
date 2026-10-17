@@ -2015,6 +2015,10 @@ html[data-theme="dark"] .biblePhrasesPassage.kjv { border-left-color: #3a3a3a; }
   .biblePhrasesPassage.kjv { border-left: 0; padding-left: 0; border-top: 1px solid #ececec; padding-top: 0.6rem; }
   html[data-theme="dark"] .biblePhrasesPassage.kjv { border-top-color: #3a3a3a; }
 }
+/* R3 B2: the tile holds its reserved box after arrival; the CTA sits on the
+   floor so any slack the fit leaves reads as a margin, not a gap mid-tile. */
+.biblePhrasesTile > .tileCTA { margin-top: auto; }
+.biblePhrasesPair { margin-bottom: 0.45rem; }
 .biblePhrasesTile mark {
   background: rgba(201, 162, 75, 0.24);
   color: inherit;
@@ -2082,6 +2086,10 @@ html[data-theme="dark"] .chiasmusTileTitle { color: #f0f0f0; }
 /* MiniChiasm in the tile: legend keys in the meta token (was --link #cfcfcf,
    1.6:1, and blue in dark), wrapped lines that don't collide, and a quieter
    gold for the mirrored words so the accent stays an accent. */
+/* R3 B2: the tile holds its reserved box after arrival; the fit filter picks a
+   chiasm that nearly fills it, and the CTA sits on the floor. */
+.chiasmusTile > .tileCTA { margin-top: auto; }
+.chiasmusTile .chiasmusTileLines { margin-bottom: 0.45rem; }
 .chiasmusTile .miniChiasmLine { margin-bottom: 0.3rem; }
 .chiasmusTile .miniChiasmKey { color: var(--tile-meta); line-height: 1.75; }
 .chiasmusTile .miniChiasmText { line-height: 1.38; color: #333; }
@@ -2183,16 +2191,29 @@ html[data-theme="dark"] .imageArtTitleBar { color: #f0f0f0; }
 /* Read.scss pulls .read-content out by -0.6rem and stacks the speaker above
    the verses at <=900px (page layout); inside the tile keep the caption
    padding and the desktop row (face beside the verses) at every width. */
-.imageArtScripture.read-content { margin: 0.1rem 0 0; }
+/* R3 B2/B1/E1: a FIXED excerpt box. The 3-verse excerpt ran 99-564px against
+   an 18rem placeholder, so the tile collapsed on screen and churned on every
+   Back. Now placeholder and excerpt share one height (the tile's footprint is
+   known from the payload at first paint) and the excerpt — fed enough verses
+   to fill it — clips with a fade; See in context carries the rest. `clip`, not
+   `hidden`: a focused link below the cut can't scroll the box. */
+.imageArtTile { --art-excerpt-h: 13.5rem; }
+.imageArtScripture.read-content {
+  margin: 0.1rem 0 0;
+  height: var(--art-excerpt-h);
+  overflow: clip;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 2.75rem), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 2.75rem), transparent);
+}
+/* a passage that failed to load: no empty box (the artwork stands alone) */
+.imageArtScripture.read-content:has(> .samplerScriptureLoading:not(.isLoading)) { height: auto; -webkit-mask-image: none; mask-image: none; }
 .imageArtScripture .read-block { flex-direction: row; }
 /* the art title is the tile's title: the excerpt keeps its ref chip but not a
    second, larger section heading (upside-down hierarchy) */
 .imageArtScripture .read-section-header h4 { display: none; }
-/* reserve the excerpt's footprint while it loads — no '…' that grows under the
-   reader after Back. 18rem ~ the measured median of the 3-verse excerpt
-   (260-400px); 9rem let the tile grow ~260px on arrival (audit art-B2). */
+/* the placeholder fills the fixed excerpt box exactly (R3 B2) */
 .imageArtScripture .samplerScriptureLoading.isLoading {
-  min-height: 18rem;
+  height: 100%;
   color: transparent;
   border-radius: 0.4rem;
   background: #f0efec;
@@ -3321,4 +3342,10 @@ html[data-theme="dark"] .imageArtScripture .scriptureAnchorMark { background: rg
   }
   .chiasmusTileSpeaker { position: relative; z-index: 3; min-height: 44px; }
   .biblePhrasesTile .scripture_link { z-index: 3; } /* a pill under the eyebrow keeps its own hit */
+  /* R3 F2: the first pill began 18px under the eyebrow, inside its 44px hit
+     extension, and (z-index 3) cut the eyebrow's hit to 21px. Clear it. */
+  .biblePhrasesTile > .tileHeading { margin-bottom: 1.3rem; }
+  /* …and the first pill grows its 44px hit downward (over its own verse), not
+     up into the eyebrow's */
+  .biblePhrasesPassage:first-child .scripture_link::after { inset: -4px -4px -26px; }
 }

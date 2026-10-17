@@ -33,10 +33,13 @@ describe("ImageArtTile", () => {
     else process.env[KEY] = saved;
   });
 
-  // H3: the excerpt is clamped to the anchor verse +-1, not the whole range.
-  test("excerpt is focused to 3 verses around the title anchor", () => {
+  // H3 + R3 B2: the excerpt starts at the anchor verse -1 and carries enough
+  // verses to FILL its fixed box (the box clips with a fade; See in context
+  // has the rest), so a short excerpt never leaves the box half empty.
+  test("excerpt is focused around the title anchor with enough verses to fill the box", () => {
     renderTile();
-    expect(globalThis.__excerptProps).toMatchObject({ refText: "Alma 17:7", highlight: "Zarahemla is Rebuilt", focusVerses: 3, refAsPopup: true });
+    expect(globalThis.__excerptProps).toMatchObject({ refText: "Alma 17:7", highlight: "Zarahemla is Rebuilt", refAsPopup: true });
+    expect(globalThis.__excerptProps.focusVerses).toBeGreaterThanOrEqual(5);
   });
 
   // A3: the art tile speaks the Home header grammar — an uppercase eyebrow
@@ -101,7 +104,7 @@ describe("ImageArtTile", () => {
   test("Sampler.css: no doubled title in the excerpt, reserved excerpt height, transparent dark inset", () => {
     const css = fs.readFileSync(path.resolve(__dirname, "../../Sampler.css"), "utf8");
     expect(css).toMatch(/\.imageArtScripture \.read-section-header h4\s*\{[^}]*display:\s*none/);
-    expect(css).toMatch(/\.imageArtScripture \.samplerScriptureLoading\.isLoading\s*\{[^}]*min-height/);
+    expect(css).toMatch(/\.imageArtScripture \.samplerScriptureLoading\.isLoading\s*\{[^}]*height/);
     expect(css).toMatch(/html\[data-theme="dark"\] \.imageArtScripture[^{]*\{[^}]*background:\s*transparent/);
   });
 
@@ -113,11 +116,18 @@ describe("ImageArtTile", () => {
     expect(container.querySelector(".imageArtArtistBadge").getAttribute("aria-hidden")).toBe("true");
   });
 
-  // art-B2: the excerpt placeholder reserves the measured footprint (the 3-verse
-  // excerpt renders ~260-400px), not 9rem that grows ~260px under the reader.
-  test("the excerpt loading placeholder reserves at least 16rem", () => {
+  // R3 B2/B1/E1: the 18rem placeholder collapsed to the real excerpt (99-564px)
+  // on screen and churned on every Back. The excerpt is now a FIXED box —
+  // placeholder and resolved excerpt alike — that clips (no focus-scroll) with
+  // a fade, so the tile's height is known from the payload at first paint.
+  test("the excerpt is a fixed-height clipped box the placeholder fills exactly", () => {
     const css = fs.readFileSync(path.resolve(__dirname, "../../Sampler.css"), "utf8");
-    const m = css.match(/\.imageArtScripture \.samplerScriptureLoading\.isLoading \{[^}]*min-height:\s*([\d.]+)rem/);
-    expect(Number(m[1])).toBeGreaterThanOrEqual(16);
+    const box = css.match(/\.imageArtScripture\.read-content \{[^}]*\}/)[0];
+    expect(box).toMatch(/height:\s*var\(--art-excerpt-h\)/);
+    expect(box).toMatch(/overflow:\s*clip/);
+    expect(box).toMatch(/mask-image:/);
+    expect(css).toMatch(/--art-excerpt-h:\s*[\d.]+rem/);
+    expect(css).toMatch(/\.imageArtScripture \.samplerScriptureLoading\.isLoading\s*\{[^}]*height:\s*100%/);
+    expect(css).not.toMatch(/\.imageArtScripture \.samplerScriptureLoading\.isLoading\s*\{[^}]*min-height:\s*18rem/);
   });
 });
