@@ -85,3 +85,17 @@ describe("focusSegments (tile excerpt window)", () => {
     expect(focusSegments(segs, null, 3)).toEqual(segs);
   });
 });
+
+// notes-A1: the notes tile leads with the annotated verse itself (lead 0) so
+// the highlighted phrase sits at the top of its clipped box, never below the cut.
+describe("focusSegments lead", () => {
+  const line = (v, text) => ({ verse_id: v, verse_num: v - 100, text });
+  const seg = (vs) => ({ sections: [{ heading: "A", ref: "X 1:1-9", partial: false, blocks: [{ lines: vs.map((v) => line(v, `verse ${v} text`)) }] }] });
+  const shown = (segs) => segs.flatMap((s) => s.sections.flatMap((x) => x.blocks.flatMap((b) => b.lines.map((l) => l.verse_id))));
+  test("lead 0 starts the window at the anchor verse", () => {
+    const segs = [seg([101, 102, 103, 104, 105, 106, 107])];
+    segs[0].sections[0].blocks[0].lines[3].text = "I did find peace to my soul";
+    expect(shown(focusSegments(segs, "peace to my soul", 3, 0))).toEqual([104, 105, 106]);
+    expect(shown(focusSegments(segs, "peace to my soul", 3))).toEqual([103, 104, 105]);
+  });
+});

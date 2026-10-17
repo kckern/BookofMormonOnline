@@ -2454,10 +2454,42 @@ html[data-theme="dark"] a.rpContinue { color: #f0f0f0; }
 .notesTile .notesBody { flex: 1 1 auto; min-width: 0; font-size: 0.82rem; line-height: 1.45; color: #333; }
 .notesTile .notesAttr { font-size: 0.78rem; color: var(--tile-meta); white-space: nowrap; }
 html[data-theme="dark"] .notesTile .notesBody { color: #d0d0d0; }
-/* passage loading: a sized, quiet placeholder instead of a lone "…" that
-   then grows the tile (B2) */
+/* notes-A1/B2: a FIXED excerpt box. The passage is fetched after mount, so it
+   used to land behind a 7.5rem placeholder and grow the tile (+53px to
+   ~+1200px on a 20-verse note; CLS 0.67). Now the box height comes from the
+   verse count (data-verses, known from the reference at first paint; the
+   excerpt is windowed to <=3 verses led by the annotated one), placeholder and
+   passage share it, and a long verse clips with a fade — See in context has the
+   rest. `hidden` (not `clip`) so NotesTile can scroll an anchor phrase that
+   fell under the fade up into view (scrollTop moves no layout). */
+.notesTile { --notes-excerpt-h: 9.5rem; }
+.notesTile .notesExcerpt[data-verses="2"] { --notes-excerpt-h: 14rem; }
+.notesTile .notesExcerpt[data-verses="3"] { --notes-excerpt-h: 17rem; }
+.notesTile .read-content.notesExcerpt {
+  height: var(--notes-excerpt-h);
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 2.25rem), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 2.25rem), transparent);
+}
+/* scrolled to the anchor: the ref row stays pinned (where am I) and the
+   speaker stays whole beside the verse; the section title gives up its line
+   to scripture. The pinned row is the top edge, so no top fade. */
+.notesTile .notesExcerpt.isScrolled .read-section-header h4 { display: none; }
+.notesTile .notesExcerpt.isScrolled .read-section-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #fff;
+  box-shadow: 0 0.35rem 0.5rem 0.15rem #fff;
+}
+/* room to lift a last-line anchor clear of the bottom fade (the box height is
+   fixed, so this pads the scroll range, not the layout) */
+.notesTile .notesExcerpt.isScrolled > :last-child { padding-bottom: 2.25rem; }
+.notesTile .notesExcerpt.isScrolled .left-gutter { position: sticky; top: 2rem; align-self: flex-start; }
+html[data-theme="dark"] .notesTile .notesExcerpt.isScrolled .read-section-header { background: #222; box-shadow: 0 0.35rem 0.5rem 0.15rem #222; }
+/* passage loading: the placeholder fills the fixed box exactly */
 .notesTile .samplerScriptureLoading {
-  min-height: 7.5rem;
+  height: 100%;
   border-radius: 0.4rem;
   color: transparent;
   background: linear-gradient(90deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.07), rgba(0, 0, 0, 0.04));

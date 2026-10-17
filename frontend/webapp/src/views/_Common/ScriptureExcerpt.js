@@ -217,10 +217,12 @@ export const highlightPhrase = (text, phrase) => {
  * and the next a nine-verse wall). The window is centred on the verse holding
  * the anchor phrase (anchor +-1), else it is the first `max` verses. Sections
  * outside the window drop; a cut at the head sets `partial` (leading ellipsis),
- * a cut at the tail sets `tail` (trailing ellipsis). Bible `passages`
+ * a cut at the tail sets `tail` (trailing ellipsis). `lead` is how many verses
+ * precede the anchor verse (default 1; the notes tile uses 0 so the annotated
+ * phrase opens its clipped box). Bible `passages`
  * segments, and excerpts already within `max`, pass through untouched.
  */
-export const focusSegments = (segments, anchor, max) => {
+export const focusSegments = (segments, anchor, max, lead = 1) => {
   if (!max || !Array.isArray(segments)) return segments;
   const order = [];
   let hit = -1;
@@ -238,7 +240,7 @@ export const focusSegments = (segments, anchor, max) => {
     }
   }
   if (order.length <= max) return segments;
-  const start = hit < 0 ? 0 : Math.max(0, Math.min(hit - 1, order.length - max));
+  const start = hit < 0 ? 0 : Math.max(0, Math.min(hit - lead, order.length - max));
   const keep = new Set(order.slice(start, start + max));
   const lastKept = order[start + max - 1];
   return segments.map((seg) => {
@@ -263,7 +265,7 @@ export const focusSegments = (segments, anchor, max) => {
   });
 };
 
-export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = false, refAsPopup = false, highlight = null, onBoMSections = null, focusVerses = 0 }) {
+export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = false, refAsPopup = false, highlight = null, onBoMSections = null, focusVerses = 0, focusLead = 1 }) {
   const anchor = cleanPhrase(highlight);
   const ref = refText ? canonical(refText) : null;
   // One entry per compound segment, IN ORDER — each is either a BoM result
@@ -423,7 +425,7 @@ export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = fals
 
   // Render every segment in the ORIGINAL order, mixing Read sections and Bible
   // passages as they came.
-  const shownSegments = focusVerses ? focusSegments(segments, anchor, focusVerses) : segments;
+  const shownSegments = focusVerses ? focusSegments(segments, anchor, focusVerses, focusLead) : segments;
   return shownSegments.flatMap((seg, si) => {
     if (seg.sections?.length) return seg.sections.map((s, i) => renderSection(s, `s-${si}-${i}`));
     if (seg.passages?.length) return [renderPassages(seg.passages, `p-${si}`)];
