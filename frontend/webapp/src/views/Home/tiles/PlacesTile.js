@@ -19,9 +19,14 @@ export const placeName = (s) => supDigits(flatten(s || "")).replace(/\bof and\b/
 // a card hook needs a real phrase: one-word glosses ("Retained") lose to any
 // index line of 3+ words when the place has one (audit H1)
 const wordCount = (s) => flatten(s || "").split(/\s+/).filter(Boolean).length;
+// …and a statement beats a quoted rhetorical question or an alias note ("Is
+// not Hamath as Arpad?", "Also known as Ai…") — duds on the card (audit H2)
+const weakHook = (s) => /\?\s*$/.test(flatten(s || "")) || /^\s*(also )?(known|called) as\b/i.test(flatten(s || ""));
 export const hookLines = (index) => {
   const idx = (index || []).filter((x) => x?.ref);
   const good = idx.filter((x) => wordCount(x.text) >= 3);
+  const best = good.filter((x) => !weakHook(x.text));
+  if (best.length) return best;
   return good.length ? good : idx;
 };
 const MOSAIC_MAX = 12; // 3×4 fills the end card
