@@ -4,7 +4,7 @@ import path from "node:path";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
-import ChiasmusTile, { speakerLabel, displayable } from "../ChiasmusTile";
+import ChiasmusTile, { speakerLabel, displayable, pickMemo } from "../ChiasmusTile";
 
 vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
@@ -35,7 +35,23 @@ const renderTile = () =>
   );
 
 describe("ChiasmusTile", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    pickMemo.clear();
+  });
+
+  // XC2: Back remounts the tile; it must not flash the 400px skeleton.
+  test("a remount for the same seed renders the chiasm synchronously, with no refetch", async () => {
+    api();
+    const first = renderTile();
+    await screen.findByRole("link", { name: "See in context" });
+    first.unmount();
+    BoMOnlineAPI.mockClear();
+    const { container } = renderTile();
+    expect(container.querySelector(".isLoading")).toBeNull();
+    expect(screen.getByRole("link", { name: "See in context" })).toBeTruthy();
+    expect(BoMOnlineAPI).not.toHaveBeenCalled();
+  });
 
   test("shows a sized skeleton while loading (no 2px pop-in)", () => {
     BoMOnlineAPI.mockImplementation(() => new Promise(() => {}));

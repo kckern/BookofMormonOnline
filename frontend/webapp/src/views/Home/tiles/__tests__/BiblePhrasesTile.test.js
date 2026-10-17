@@ -3,7 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { generateReference } from "scripture-guide";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
-import BiblePhrasesTile, { markShared, candidatePairs, pairPath, scorePair } from "../BiblePhrasesTile";
+import BiblePhrasesTile, { markShared, candidatePairs, pairPath, scorePair, pickMemo } from "../BiblePhrasesTile";
 import { skeletonHeight } from "../_ds/skeletonHeights";
 
 vi.mock("src/models/BoMOnlineAPI", () => ({
@@ -127,6 +127,7 @@ const renderTile = (seed = 3) =>
 describe("BiblePhrasesTile", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    pickMemo.clear();
     for (const k of Object.keys(VERSE_TEXT)) delete VERSE_TEXT[k];
   });
 
@@ -219,5 +220,33 @@ describe("BiblePhrasesTile", () => {
     expect(links).toContain("/analysis/bible");
     expect(container.querySelectorAll("a button, a .scripture_link")).toHaveLength(0);
     expect(container.textContent).not.toMatch(/undefined|NaN/);
+  });
+
+  // XC2: Back remounts the tile; it must render the resolved pair at once, not
+  // a fixed-height skeleton that re-fills at a different height.
+  test("a remount for the same seed renders the pair synchronously, with no refetch", async () => {
+    const [b0, k0] = candidatePairs(3)[0];
+    VERSE_TEXT[b0] = "for behold I say unto you that ye must repent";
+    VERSE_TEXT[k0] = "verily I say unto you that ye must be born";
+    respond((i) => (i === 0 ? { bom_highlight: ["I say unto you that ye must"], bible_highlight: ["I say unto you that ye must"] } : null));
+    const first = renderTile();
+    await screen.findAllByText("I say unto you that ye must", { selector: "mark" });
+    first.unmount();
+    BoMOnlineAPI.mockClear();
+    const { container } = renderTile();
+    expect(container.querySelector(".isLoading")).toBeNull();
+    expect(container.querySelectorAll("mark")).toHaveLength(2);
+    expect(BoMOnlineAPI).not.toHaveBeenCalled();
+  });
+
+  test("a failed fetch is not memoized: the next mount retries", async () => {
+    BoMOnlineAPI.mockRejectedValue(new Error("network"));
+    const first = renderTile();
+    await waitFor(() => expect(first.container.firstChild).toBeNull());
+    first.unmount();
+    BoMOnlineAPI.mockClear();
+    BoMOnlineAPI.mockImplementation(() => new Promise(() => {}));
+    renderTile();
+    expect(BoMOnlineAPI).toHaveBeenCalledTimes(1);
   });
 });

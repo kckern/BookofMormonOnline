@@ -9,6 +9,7 @@ import TileImage from "./_ds/TileImage";
 import labelOr from "./_ds/labelOr";
 import { skeletonHeight } from "./_ds/skeletonHeights";
 import useSingleColumn from "./_ds/useSingleColumn";
+import { createPickMemo } from "./_ds/pickMemo";
 
 // Displayable in a tile: plain-letter mirrored schemes deep enough to be
 // interesting, short enough not to scroll (ABCCBA … up to 12 lines), and with
@@ -26,6 +27,9 @@ export const speakerLabel = (name) =>
 
 const heading = () => labelOr("chiasmus", "Chiasmus");
 
+/** Resolved chiasm per seed: a remount (Back) renders at once, no skeleton flash (audit XC2). */
+export const pickMemo = createPickMemo();
+
 /**
  * One sampled chiasm rendered as its mirrored structure — indent tracks the
  * letter depth in, then back out. A live taste of /analysis/chiasmus.
@@ -34,25 +38,39 @@ const heading = () => labelOr("chiasmus", "Chiasmus");
  * displayable or a failed fetch → null (`.tile-chiasmus:empty` collapses it).
  */
 export default function ChiasmusTile({ seed }) {
-  const [state, setState] = useState({ status: "loading", chiasm: null });
+  const [state, setState] = useState(() => pickMemo.get(String(seed)) || { status: "loading", chiasm: null });
   const single = useSingleColumn();
 
   useEffect(() => {
+    const key = String(seed);
+    const memo = pickMemo.get(key);
+    if (memo) {
+      setState(memo);
+      return undefined;
+    }
     let cancelled = false;
     setState({ status: "loading", chiasm: null });
-    const done = (chiasm) => !cancelled && setState(chiasm ? { status: "ready", chiasm } : { status: "empty", chiasm: null });
+    const settle = (next) => {
+      pickMemo.set(key, next);
+      if (!cancelled) setState(next);
+    };
+    const fail = () => !cancelled && setState({ status: "empty", chiasm: null });
     Promise.resolve(BoMOnlineAPI({ chiasmus: true }))
       .then((res) => {
+        if (res?.error) throw new Error("chiasmus unavailable");
         const list = Object.values(res?.chiasmus || {}).filter(displayable);
-        if (!list.length || cancelled) return null;
+        if (cancelled) return undefined;
+        if (!list.length) return null;
         const pick = list[Math.abs(seed || 1) % list.length];
         return BoMOnlineAPI({ chiasm: [pick.chiasmus_id] });
       })
       .then((r) => {
+        if (r === undefined) return;
+        if (r?.error) throw new Error("chiasm unavailable");
         const full = r ? Object.values(r.chiasm || {})[0] : null;
-        done(full?.lines?.length ? full : null);
+        settle(full?.lines?.length ? { status: "ready", chiasm: full } : { status: "empty", chiasm: null });
       })
-      .catch(() => done(null));
+      .catch(fail);
     return () => {
       cancelled = true;
     };

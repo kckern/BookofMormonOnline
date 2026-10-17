@@ -12,6 +12,7 @@ import TileDeepLink from "./_ds/TileDeepLink";
 import labelOr from "./_ds/labelOr";
 import { skeletonHeight } from "./_ds/skeletonHeights";
 import useSingleColumn from "./_ds/useSingleColumn";
+import { createPickMemo } from "./_ds/pickMemo";
 
 // data.js is ESM with a default export (it was CommonJS); destructure after
 // the imports so import/first stays satisfied.
@@ -185,6 +186,10 @@ export const pairPath = (bomVid, kjvVid) => {
 
 const heading = () => labelOr("analysis_bible", "Biblical language");
 
+/** Resolved pick per (seed, language): a remount (Back) renders at once (audit XC2). */
+export const pickMemo = createPickMemo();
+const memoKey = (seed, lang) => `${seed}|${lang}`;
+
 /**
  * One sampled Book of Mormon ↔ Bible intertext pair with the shared wording
  * highlighted in both passages — a live taste of /analysis/bible.
@@ -194,14 +199,24 @@ const heading = () => labelOr("analysis_bible", "Biblical language");
  * `.tile-biblephrases:empty` rule collapses (no 2px shell).
  */
 export default function BiblePhrasesTile({ seed }) {
-  const [state, setState] = useState({ status: "loading", pair: null });
   const single = useSingleColumn();
   const lang = determineLanguage();
+  const [state, setState] = useState(() => pickMemo.get(memoKey(seed, lang)) || { status: "loading", pair: null });
 
   useEffect(() => {
+    const key = memoKey(seed, lang);
+    const memo = pickMemo.get(key);
+    if (memo) {
+      setState(memo);
+      return undefined;
+    }
+    const settle = (next) => {
+      pickMemo.set(key, next);
+      setState(next);
+    };
     const cands = candidatePairs(seed);
     if (!cands.length) {
-      setState({ status: "empty", pair: null });
+      settle({ status: "empty", pair: null });
       return undefined;
     }
     let cancelled = false;
@@ -212,6 +227,7 @@ export default function BiblePhrasesTile({ seed }) {
     )
       .then((r) => {
         if (cancelled) return;
+        if (r?.error) throw new Error("verses unavailable");
         const verses = {};
         for (const v of Object.values(r?.verses || {})) if (v?.verse_id) verses[v.verse_id] = v;
         const hls = r?.versehighlights || {};
@@ -224,7 +240,7 @@ export default function BiblePhrasesTile({ seed }) {
           })
           .filter(Boolean);
         const pick = choosePair(scored);
-        setState(pick ? { status: "ready", pair: pick } : { status: "empty", pair: null });
+        settle(pick ? { status: "ready", pair: pick } : { status: "empty", pair: null });
       })
       .catch(() => {
         if (!cancelled) setState({ status: "empty", pair: null });
