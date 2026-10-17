@@ -18,12 +18,12 @@ describe("skeletonHeights — matters family", () => {
 });
 
 // Re-measured live 2026-10-16 (3 seeds each) after the places fixes: the old
-// 347/641 and phone profile 322 jumped 24-53px on paint (audit places-B1,
+// 347/641 (now 371/677) and phone profile 322 jumped 24-53px on paint (audit places-B1,
 // placeProfile-B1).
 describe("skeletonHeights — places family", () => {
   test.each([
     ["tile-places", false, "371px"],
-    ["tile-places", true, "653px"],
+    ["tile-places", true, "677px"],
     ["tile-placeProfile", false, "370px"],
     ["tile-placeProfile", true, "377px"],
   ])("%s (phone=%s) reserves %s", (span, single, h) => {

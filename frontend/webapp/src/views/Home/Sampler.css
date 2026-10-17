@@ -594,6 +594,9 @@ html[data-theme="dark"] .viewAllCard:hover .viewAllBox { border-color: #ddd; col
   border: 1px solid #e6e6e6;
   background: #fbfbfb;
   overflow: hidden;
+  /* clip, not a scroll container: a chip's padded hit box (negative margins)
+     must never let focus/scrollIntoView scroll the card's image up */
+  overflow: clip;
   min-width: 0;
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
@@ -1699,6 +1702,9 @@ html[data-theme="dark"] .placesTilePlaces .placesTileCard:not(.viewAllCard):has(
     margin-bottom: -16px;
     max-height: calc(var(--fit-lines, 2) * 1lh + 32px);
   }
+  /* …and the card keeps 15px below a last-row chip, or its clip cuts the hit
+     (a one-line gloss in the tightest card measured 37px) */
+  .placesTilePlaces .placesTileInfo.samplerCardBody { padding-bottom: 15px; }
 }
 
 /* map pin (Places cards + PlaceProfile hero): a small glyph on a dark scrim

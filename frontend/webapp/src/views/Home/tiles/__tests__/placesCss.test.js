@@ -48,3 +48,8 @@ test("place profile: Read more (left) and Open <place> (right) share one CTA row
   expect(open).toMatch(/grid-area:\s*open/);
   expect(open).toMatch(/justify-self:\s*end/);
 });
+
+test("cards clip rather than hide overflow, so a chip's widened hit box can't make the card a scroll container (focus/scrollIntoView shifted the image up)", () => {
+  const body = ruleBodies(css, ".samplerCard").find((b) => /border-radius/.test(b));
+  expect(body).toMatch(/overflow:\s*clip/);
+});

@@ -53,7 +53,7 @@ const PHONE = {
   "tile-history": "450px",
   "tile-fax": "650px",
   "tile-faxVerse": "640px",
-  "tile-places": "653px", // re-measured 2026-10-16 (places-B1: 641–665)
+  "tile-places": "677px", // re-measured 2026-10-16 (places-B1: 665–689 with the touch chip padding)
   "tile-mattersNarrative": "706px",
   "tile-mattersMaterial": "706px",
   "tile-mattersConcept": "732px", // 2026-10-16: concept names wrap more
