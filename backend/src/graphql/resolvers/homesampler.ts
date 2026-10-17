@@ -551,6 +551,10 @@ const sampleCommentaries = async (ctx: AppContext, seed: number) => {
   const rows = await ctx.db
     .selectFrom('bom_xtras_commentary')
     .innerJoin('bom_xtras_source', 'bom_xtras_source.source_id', 'bom_xtras_commentary.source')
+    // The tile deep-links to /commentary/:id, which resolves by opening the
+    // host text block; a commentary with no (or a dangling) location_guid has
+    // no host and dead-ends on a not-found card (~6% of the pool).
+    .innerJoin('bom_text', 'bom_text.guid', 'bom_xtras_commentary.location_guid')
     .selectAll('bom_xtras_commentary')
     // one author can publish under several source_ids (e.g. Royal Skousen) —
     // variety means distinct AUTHORS, so carry source_name into the dedupe

@@ -20,9 +20,10 @@
  * keeps serving for up to a full TTL after deploy. v3 = matters groups carry 18
  * (the 17 the group tile shows + 1 for MatterProfile). v4 = mapstory samples
  * only journeys of 3+ moves (story audit H1). v5 = notes skip textual-variant
- * (sigla/ATV) rows (scripture R3 notes-H1).
+ * (sigla/ATV) rows (scripture R3 notes-H1). v6 = commentaries require a host
+ * text block, so their /commentary/:id deeplink resolves (scripture r4 C4).
  */
-export const SAMPLER_KEY_PREFIX = 'homesampler:v5:';
+export const SAMPLER_KEY_PREFIX = 'homesampler:v6:';
 
 /** Front-door window key ({ bucket }) or explicit-seed key ({ seed }). */
 export const samplerCacheKey = (lang: string, at: { bucket: number } | { seed: number }): string =>
