@@ -167,3 +167,19 @@ test("header prev button performs a real navigation after appending chapters", a
   );
   expect(await screen.findByText("Alma 32 verse 1 text.")).toBeTruthy();
 });
+
+// Audit 2026-10-15 notes-D4/E4: a verse deeplink (tile "See in context",
+// popup Read link) must keep the verse in the URL and scroll its section into
+// view once the chapter mounts — verseRefs was never populated, so the
+// first-load scroll never fired, and loadContent replaced the URL with the
+// chapter-only slug.
+test("verse deeplink keeps the verse slug and scrolls to its section on first load", async () => {
+  window.history.replaceState(null, "", "/read/alma.32/21");
+  renderRead("/read/alma.32/21");
+  await screen.findByText("Alma 32 verse 21 text.");
+  await waitFor(() => expect(Element.prototype.scrollIntoView).toHaveBeenCalled(), { timeout: 2000 });
+  const target = Element.prototype.scrollIntoView.mock.instances[0];
+  expect(target.classList.contains("read-section")).toBe(true);
+  expect(target.textContent).toContain("Alma 32 verse 21 text.");
+  expect(window.location.pathname).toBe("/read/alma.32/21");
+});

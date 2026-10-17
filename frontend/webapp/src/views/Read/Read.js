@@ -122,7 +122,15 @@ export default function ReadScripture() {
     const [passageNotesLoading, setPassageNotesLoading] = useState(false);
 
     // Refs
-    const verseRefs = useRef(new Map());
+    // Verse elements are found in the DOM by their `verse_<id>` class
+    // (ChapterContent renders one Link per verse). A verseRefs Map used to be
+    // threaded to ChapterContent but was never populated, so deeplink scrolls
+    // silently never fired (audit 2026-10-15 notes-D4).
+    const findVerseElement = (verseId) =>
+        document.querySelector(`#page.read .verse_${verseId}`);
+    // Latest highlight, read by the load effect (its deps are chapter-scoped).
+    const highlightedVersesRef = useRef(initHighlightedVerses);
+    highlightedVersesRef.current = highlightedVerses;
     const hasUserScrolled = useRef(false);
     const lastScrollY = useRef(0);
     const nextChapterPreloaded = useRef(false);
@@ -327,7 +335,7 @@ export default function ReadScripture() {
 
     const navigateToVerse = useCallback((verseId) => {
         if (!verseId) return;
-        const verseElement = verseRefs.current.get(verseId);
+        const verseElement = findVerseElement(verseId);
         if (verseElement) {
             verseElement.scrollIntoView({ behavior: "smooth", block: "center" });
             navigate(`/read/${verseIdToSlug([verseId])}`);
@@ -445,7 +453,10 @@ export default function ReadScripture() {
                         loadedChapterRefs.current = new Set([chapterRef]);
 
                         const currentSlug = window.location.pathname.replace(/^\/read\//, "");
-                        const expectedSlug = slugify(chapterRef);
+                        // Keep the verse a deeplink pointed at: canonicalize to
+                        // the verse slug, not the bare chapter (notes-E4).
+                        const hv = highlightedVersesRef.current;
+                        const expectedSlug = (hv?.length && verseIdToSlug(hv)) || slugify(chapterRef);
                         if (expectedSlug && expectedSlug !== currentSlug) {
                             window.history.replaceState(null, "", `/read/${expectedSlug}`);
                             document.title = chapterRef;
@@ -491,11 +502,16 @@ export default function ReadScripture() {
         // links (e.g. from the fax modal) should land at the section heading for
         // context, not the bare verse. Falls back to the verse if it's sectionless.
         const maxVerse = Math.max(...debouncedHighlightedVerses);
-        const verseElement = verseRefs.current.get(maxVerse);
+        const verseElement = findVerseElement(maxVerse);
         if (verseElement) {
             lastScrolledHighlightKey.current = key;
             const section = verseElement.closest(".read-section");
-            (section || verseElement).scrollIntoView({ behavior: "smooth", block: "start" });
+            // A long section (Mormon 8:13–25 on a phone) would leave the verse
+            // screens below its heading — then center the verse itself.
+            const fits = section &&
+                verseElement.getBoundingClientRect().top - section.getBoundingClientRect().top <= window.innerHeight * 0.45;
+            if (fits) section.scrollIntoView({ behavior: "smooth", block: "start" });
+            else verseElement.scrollIntoView({ behavior: "smooth", block: "center" });
         }
     }, [debouncedHighlightedVerses, isContentLoading]);
 
@@ -587,7 +603,6 @@ export default function ReadScripture() {
                         setHoveredVerse={setHoveredVerse}
                         activeChapterRef={activeChapterRef}
                         DEBUG_SKELETON={DEBUG_SKELETON}
-                        verseRefs={verseRefs}
                         passageNotesData={passageNotesData}
                         passageNotesLoading={passageNotesLoading}
                     />
