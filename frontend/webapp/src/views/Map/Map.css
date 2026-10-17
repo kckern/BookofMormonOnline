@@ -439,6 +439,14 @@ Add a triangle notch pointing down at the bottom of the tooltip
 }
 
 .closePanelButton{
+  background: none;
+  border: 0;
+  padding: 0;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-family: 'Courier New', Courier, monospace;
   font-size: 3rem;
   line-height: 4rem;
@@ -897,3 +905,4 @@ Add a triangle notch pointing down at the bottom of the tooltip
   }
   .mapStoryPanel .mapStoryPanelHead .title { text-align: left; font-size: 1.05rem; }
 }
+.closePanelButton:focus-visible { outline: 2px solid #c9a24b; outline-offset: 2px; border-radius: 4px; }

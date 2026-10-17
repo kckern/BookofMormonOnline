@@ -1722,6 +1722,14 @@ html[data-theme="dark"] .placesTilePlaces .placesTileCard:not(.viewAllCard):has(
     inset: calc((1.6rem - 44px) / 2);
   }
 }
+/* At ≤900px (Utils.isMobile, the map's own breakpoint) the map route opens the
+   place drawer and canonicalises to /places/<slug> — the card's own target —
+   so the pin would be a second, differently-drawn link to the same page
+   (audit places-C1/D5). The place page keeps "View on map". */
+@media screen and (max-width: 900px) {
+  .placesTilePlaces .placesImgWrap > a.placesMapBtn,
+  .placeProfilePlace .placesMapBtn { display: none; }
+}
 
 /* text tile: the feed card centers in its slot, both axes — no blank interior */
 .textTile { align-items: center; justify-content: center; }

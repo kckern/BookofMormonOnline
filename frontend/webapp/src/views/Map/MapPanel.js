@@ -435,18 +435,20 @@ if(isMobile()) return null;
         </span>
         <h5 className="title" style={{ flexGrow: 1, textAlign: 'center' }}>{Parser((title||"").replace(/([0-9])/, "<sup>$1</sup>"))
         }</h5>
-        <span
+        {/* a real button; closing REPLACES the place entry so one Back leaves
+            the map (audit places-D3: it pushed, so Back re-opened the panel) */}
+        <button
+          type="button"
           className="closePanelButton"
+          aria-label={labelOr("close", "Close")}
           onClick={()=>{
 						setPanelContents(false)
-						navigate({
-							pathname:`/map/${currentMap.slug}`
-						})
+						navigate({ pathname:`/map/${currentMap.slug}` }, { replace: true })
 						}}
           style={{ flexShrink: 0 }}
         >
           ×
-        </span>
+        </button>
         </div>
         <div className="info">{Parser((info||"").replace(/([0-9])/, "<sup>$1</sup>"))}</div>
       </CardHeader>
