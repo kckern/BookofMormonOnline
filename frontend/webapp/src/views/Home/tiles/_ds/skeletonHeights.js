@@ -25,7 +25,7 @@ const DESKTOP = {
   "tile-history": "520px",
   "tile-fax": "630px",
   "tile-faxVerse": "600px",
-  "tile-places": "347px",
+  "tile-places": "371px", // re-measured 2026-10-16 (places-B1: 3 seeds 371–373)
   "tile-mattersNarrative": "407px",
   "tile-mattersMaterial": "407px",
   "tile-mattersConcept": "407px", // re-measured 2026-10-16 (matters-06),
@@ -35,7 +35,7 @@ const DESKTOP = {
   "tile-notes": "440px",
   "tile-mapstory": "662px",
   "tile-personProfile": "330px",
-  "tile-placeProfile": "368px",
+  "tile-placeProfile": "370px", // re-measured 2026-10-16 (CTA row)
   "tile-matterProfile": "420px",
   "tile-witness": "225px", // archive pass 2026-10-15: reporter meta line + reveal
   "tile-josephSmith": "190px",
@@ -53,7 +53,7 @@ const PHONE = {
   "tile-history": "450px",
   "tile-fax": "650px",
   "tile-faxVerse": "640px",
-  "tile-places": "641px",
+  "tile-places": "653px", // re-measured 2026-10-16 (places-B1: 641–665)
   "tile-mattersNarrative": "706px",
   "tile-mattersMaterial": "706px",
   "tile-mattersConcept": "732px", // 2026-10-16: concept names wrap more
@@ -63,7 +63,7 @@ const PHONE = {
   "tile-art": "580px",
   "tile-notes": "370px",
   "tile-mapstory": "655px",
-  "tile-placeProfile": "322px",
+  "tile-placeProfile": "377px", // re-measured 2026-10-16 (placeProfile-B1)
   "tile-witness": "240px",
   "tile-community": "446px", // 2026-10-16 editorial redesign
 };

@@ -145,8 +145,13 @@ export default function PlacesTile({ data, seed = 0, payload }) {
               />
             ))}
           </div>
-          <span className="peopleFaceName viewAllOverlay">
-            {more > 0 ? labelOr("plus_n_places", "+$1 Places", [more]) : verbLabel("viewAll")}
+          {/* the card-grid family's one end-card label: "View all" + "+N more",
+              exactly as the Matters twin (audit places-C3) */}
+          <span className="peopleFaceName viewAllOverlay mattersViewAllLabel">
+            <span className="mattersViewAllVerb viewAllVerb">{verbLabel("viewAll")}</span>
+            {more > 0 ? (
+              <span className="mattersViewAllCount viewAllCount">{labelOr("plus_n_more", "+$1 more", [String(more)])}</span>
+            ) : null}
           </span>
         </Link>
       </div>

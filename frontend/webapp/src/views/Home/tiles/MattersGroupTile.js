@@ -106,9 +106,9 @@ export default function MattersGroupTile({
             </div>
           ) : null}
           <span className="peopleFaceName viewAllOverlay mattersViewAllLabel">
-            <span className="mattersViewAllVerb">{verbLabel("viewAll")}</span>
+            <span className="mattersViewAllVerb viewAllVerb">{verbLabel("viewAll")}</span>
             {more > 0 ? (
-              <span className="mattersViewAllCount">
+              <span className="mattersViewAllCount viewAllCount">
                 {labelOr("plus_n_more", "+$1 more", [String(more)])}
               </span>
             ) : null}

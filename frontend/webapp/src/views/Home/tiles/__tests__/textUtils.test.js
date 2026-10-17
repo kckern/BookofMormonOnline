@@ -82,3 +82,17 @@ describe("clampWords — no orphan punctuation before the ellipsis (blind audit 
     expect(clampWords(text, n)).toBe(want);
   });
 });
+
+describe("clampWords phrase mode: no dangling verbs/time words (audit places-H3)", () => {
+  test.each([
+    ["Land established by Nephi, later occupied by Lamanites, Zeniffites", 5, "Land established by Nephi…"],
+    ["Lamanites in Shimnilom are converted to the Lord", 4, "Lamanites in Shimnilom…"],
+    ["City in Northwest Syria, currently known as Hama", 5, "City in Northwest Syria…"],
+    ["Site of battle between Shared and Coriantumr", 5, "Site of battle…"],
+  ])("%s / %d", (text, n, out) => {
+    expect(clampWords(text, n, { phrase: true })).toBe(out);
+  });
+  test("non-phrase mode is unchanged", () => {
+    expect(clampWords("Lamanites in Shimnilom are converted to the Lord", 4)).toBe("Lamanites in Shimnilom are…");
+  });
+});

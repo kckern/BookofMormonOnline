@@ -75,9 +75,11 @@ describe("PlacesTile", () => {
     expect(screen.getByText("Land of Bountiful¹")).toBeInTheDocument();
   });
 
-  test("view-all card: '+N Places' with a count, 'View all' without", () => {
+  test("view-all card: 'View all' + '+N more' like its Matters twin, 'View all' alone without a count (audit places-C3)", () => {
     const a = renderIn(<PlacesTile data={PAYLOAD_17} payload={{ placesCount: 188 }} />);
-    expect(a.container.querySelector(".viewAllCard").textContent).toMatch(/\+171 Places/);
+    const card = a.container.querySelector(".viewAllCard");
+    expect(card.querySelector(".viewAllVerb").textContent).toBe("View all");
+    expect(card.querySelector(".viewAllCount").textContent).toBe("+171 more");
     a.unmount();
     const b = renderIn(<PlacesTile data={PAYLOAD_17} payload={{}} />);
     expect(b.container.querySelector(".viewAllCard").textContent).toMatch(/^View all$/);

@@ -52,6 +52,10 @@ const DANGLING = /^(of|and|the|a|an|to|by|in|on|at|for|from|with|or|as|who|whose
  * a dangling function word.
  */
 const isDangling = (w) => DANGLING.test((w || "").replace(/[,;:]$/, ""));
+// Phrase mode also refuses to end on a copula or time/relation word: "Land
+// established by Nephi, later…", "Lamanites in Shimnilom are…" (audit places-H3).
+const PHRASE_DANGLING = /^(is|are|was|were|has|have|had|later|currently|now|then|between|after|before|when|where|while|into|upon|near|until|also)$/i;
+const isPhraseDangling = (w) => isDangling(w) || PHRASE_DANGLING.test((w || "").replace(/[,;:]$/, ""));
 
 // A ". " after an initial ("in I. Woodbury") or a citation abbreviation
 // ("no. 119", "rep. Saints' Herald") is not a sentence end; cutting there left
@@ -83,8 +87,9 @@ export const clampWords = (text, words, { phrase = false } = {}) => {
   };
   popDangling();
   if (phrase) {
+    while (kept.length > 3 && isPhraseDangling(kept[kept.length - 1])) kept.pop();
     for (let j = kept.length - 1; j >= Math.max(3, kept.length - 3); j--) {
-      if (isDangling(kept[j])) {
+      if (isPhraseDangling(kept[j])) {
         kept = kept.slice(0, j);
         popDangling();
         break;

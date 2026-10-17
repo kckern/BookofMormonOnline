@@ -29,7 +29,10 @@ export default function FitWords({ text = "", lines = 2, className = "", prefix 
       const rects = target.getClientRects();
       const last = rects[rects.length - 1];
       if (!last) return box.scrollHeight <= box.clientHeight + 1; // no layout (jsdom)
-      return last.bottom <= box.getBoundingClientRect().bottom + 0.5;
+      // against the CONTENT bottom: a box may pad its edges (negative margins)
+      // only to widen a chip's hit/focus area — text must not spill into it
+      const padB = parseFloat(getComputedStyle(box).paddingBottom) || 0;
+      return last.bottom <= box.getBoundingClientRect().bottom - padB + 0.5;
     };
     target.textContent = text;
     if (fits()) {

@@ -1638,6 +1638,16 @@ html[data-theme="dark"] .placesImgWrap { background: #333; }
   max-height: calc(var(--fit-lines, 2) * 1lh);
   overflow: hidden;
 }
+/* the index row's ref chip sits on its first line: 4px of room each side
+   (offset by negative margins, so nothing moves) keeps the chip's 2px gold
+   focus ring from being clipped by the fit box (audit places-C5) */
+.placesTilePlaces .placesTileIndexRow.fitWords {
+  padding-top: 4px;
+  margin-top: -4px;
+  padding-bottom: 4px;
+  margin-bottom: -4px;
+  max-height: calc(var(--fit-lines, 2) * 1lh + 8px);
+}
 /* ONE place link stretched over the whole card — image and body (audit C1),
    as the People cards do; the pin and the ref pill are raised above it */
 .placesTilePlaces .placesTileCard:not(.viewAllCard) { position: relative; }
@@ -1679,10 +1689,15 @@ html[data-theme="dark"] .placesTilePlaces .placesTileCard:not(.viewAllCard):has(
   .placeProfilePlace .placeProfileDesc > .clampLines.clampFade { max-height: calc(var(--clamp-lines, 6) * 1lh + 14px); }
   /* the pin is inset for its 44px hit: keep the name chip clear of it */
   .placesTilePlaces .placesNameOverlay { max-width: calc(100% - 3.3rem); }
+  /* pad BOTH edges (offset by negative margins, so nothing moves): a one-line
+     gloss otherwise clipped the chip's hit below the line to ~31px (audit
+     places-F2) */
   .placesTilePlaces .placesTileIndexRow.fitWords {
     padding-top: 16px;
     margin-top: -16px;
-    max-height: calc(var(--fit-lines, 2) * 1lh + 16px);
+    padding-bottom: 16px;
+    margin-bottom: -16px;
+    max-height: calc(var(--fit-lines, 2) * 1lh + 32px);
   }
 }
 
@@ -2197,6 +2212,28 @@ html[data-theme="dark"] .placeProfileDesc { color: #c4c4c4; }
    16:9 hero alone was ~420px); "(" + ref pill + ")" never break apart */
 .placeProfilePlace .placeProfileImgLink > img { max-height: 15rem; }
 .placeProfilePlace .refParen { white-space: nowrap; }
+/* one CTA row like the person profile: Read more ⇄ Show less left, "Open
+   <place>" flush right. ExpandableText's wrapper dissolves into the grid
+   (type inherits through display:contents) (audit placeProfile-A5). */
+.placeProfilePlace .placeProfileText {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "desc desc"
+    "more open";
+  align-items: start;
+}
+.placeProfilePlace .placeProfileDesc { display: contents; }
+.placeProfilePlace .placeProfileDesc > div { grid-area: desc; min-width: 0; font-size: 0.8rem; line-height: 1.45; }
+.placeProfilePlace .placeProfileDesc > .readMorePill { grid-area: more; justify-self: start; align-self: start; margin: 0.55rem 0 0; }
+.placeProfilePlace .placeProfileText > .tileMoreLink {
+  grid-area: open;
+  justify-self: end;
+  align-self: start;
+  margin: 0.55rem 0 0 0.5rem;
+  max-width: 100%;
+  white-space: normal;
+}
 /* wide single column (tablet): hero beside the prose — a 4:3 picture at
    ~5/11 of the width, not a 3:1 letterbox strip upscaled from 640w (audit A2) */
 .placeProfilePlace { container-type: inline-size; }
