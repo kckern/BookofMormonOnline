@@ -48,4 +48,14 @@ describe("ScriptureExcerpt inside a tile (refAsPopup)", () => {
     await waitFor(() => expect(container.querySelector(".left-gutter img")).not.toBeNull());
     expect(container.querySelector(".left-gutter img").getAttribute("alt")).toBe("");
   });
+
+  // blind audit r4 refpill-popup G1: a <button> nested in the section <a> is
+  // invalid interactive nesting and a second tab stop for the same target.
+  test("the Study label inside the section link is not a nested button", async () => {
+    const { container } = render(<MemoryRouter><ScriptureExcerpt refText="Alma 17:7" /></MemoryRouter>);
+    await waitFor(() => expect(container.querySelector(".read-section-header a")).not.toBeNull());
+    const a = container.querySelector(".read-section-header a");
+    expect(a.querySelector("button, a, [tabindex]")).toBeNull();
+    expect(a.querySelector(".btn")).not.toBeNull();
+  });
 });

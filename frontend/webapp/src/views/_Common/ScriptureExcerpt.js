@@ -370,7 +370,9 @@ export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = fals
             ) : (
               <Link to={`/study/${slugify(getEnglishReference(s.ref))}`} onClick={onNavigate}>
                 {enDash(s.ref)}
-                {hideStudy ? null : <button className="btn btn-sm btn-outline-secondary">{label("study_button")}</button>}
+                {/* a styled label, not a <button>: interactive content can't nest
+                    inside the link (one target, one tab stop — audit r4 G1) */}
+                {hideStudy ? null : <span className="btn btn-sm btn-outline-secondary">{label("study_button")}</span>}
               </Link>
             )}
           </p>
