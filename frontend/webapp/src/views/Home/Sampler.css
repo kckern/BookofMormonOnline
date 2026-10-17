@@ -3356,6 +3356,7 @@ html[data-theme="dark"] .faxVerseTile .read-content .read-block { background: tr
   .peopleTile .tileHeading a,
   .personProfileTile .tileHeading a,
   .placesTilePlaces .tileHeading a,
+  .communityTile .tileHeading a,
   .placeProfilePlace .tileHeading a { position: relative; z-index: 2; } /* above the portrait img / card link (z 1) */
   .faxTile .tileHeading a::after,
   .faxVerseTile .tileHeading a::after,
@@ -3364,6 +3365,7 @@ html[data-theme="dark"] .faxVerseTile .read-content .read-block { background: tr
   .peopleTile .tileHeading a::after,
   .personProfileTile .tileHeading a::after,
   .placesTilePlaces .tileHeading a::after,
+  .communityTile .tileHeading a::after,
   .placeProfilePlace .tileHeading a::after {
     content: "";
     position: absolute;

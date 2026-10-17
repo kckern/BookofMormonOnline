@@ -46,3 +46,16 @@
     max-width: 60%;
     opacity: 0.55;
 }
+/* Blind story audit D4: the deep-linked message (/home/community/:ch/:id)
+   is scrolled to the top of the feed panel and quietly marked in the house
+   gold so the reader knows this is the post they chose. scroll-margin keeps
+   it clear of the panel edge / a mobile top bar. */
+.homeFeed.homeFeedTarget,
+.commentThreadItem.homeFeedTarget {
+  scroll-margin-top: 12px;
+  box-shadow: 0 0 0 2px #c9a24b;
+}
+@media (max-width: 767.98px) {
+  .homeFeed.homeFeedTarget,
+  .commentThreadItem.homeFeedTarget { scroll-margin-top: 72px; }
+}

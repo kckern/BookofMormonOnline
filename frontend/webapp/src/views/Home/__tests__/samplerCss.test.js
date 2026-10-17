@@ -89,3 +89,12 @@ test("every sampler ref pill gets a >=44px coarse-pointer hit area (audit F2)", 
     /\.sampler \.scripture_link\s*\{[^}]*position: relative/.test(b));
   expect(hit).toBe(true);
 });
+
+// Blind story audit F2: the community eyebrow was an 11px tap target on touch.
+describe("community eyebrow hit area", () => {
+  const css = fs.readFileSync(path.resolve(__dirname, "..", "Sampler.css"), "utf8");
+  test("coarse pointer gives .communityTile .tileHeading a an ::after hit", () => {
+    const blocks = css.replace(/\/\*[\s\S]*?\*\//g, "").split("@media (pointer: coarse)").slice(1);
+    expect(blocks.some((b) => /\.communityTile \.tileHeading a::after/.test(b))).toBe(true);
+  });
+});

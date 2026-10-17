@@ -48,6 +48,7 @@ import { GroupCallToAction, GroupLeaderBoard, communityHref, groupImgFallback } 
 import { md5 } from "../../models/Utils.js";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { useMessenger } from "src/contexts/MessengerContext";
+import { scrollToFeedTarget } from "./feedTarget";
 
 export async function loadLinkedContent(items) {
   const groups = new Map();
@@ -149,6 +150,25 @@ export function HomeFeed({
       cancelled = true;
     };
   }, [activeGroup, messageId, unlistedBeta]);
+
+  // D4: a deep-linked message lands at the top of the feed panel, not below
+  // the fold. Re-run briefly while banner/card images settle, but stop the
+  // moment the reader scrolls on their own.
+  useEffect(() => {
+    if (!messageId || !homeItems.length) return undefined;
+    let userMoved = false;
+    const stop = () => { userMoved = true; };
+    const evts = ["wheel", "touchstart", "keydown", "pointerdown"];
+    evts.forEach((e) => window.addEventListener(e, stop, { passive: true, once: true }));
+    const go = () => { if (!userMoved) scrollToFeedTarget(document, messageId); };
+    const raf = requestAnimationFrame(go);
+    const timers = [400, 1200, 2500].map((ms) => setTimeout(go, ms));
+    return () => {
+      cancelAnimationFrame(raf);
+      timers.forEach(clearTimeout);
+      evts.forEach((e) => window.removeEventListener(e, stop));
+    };
+  }, [homeItems, messageId]);
 
   if (loader) return loader;
   let bannerGroup = activeGroup
@@ -441,7 +461,7 @@ function HomeFeedItem({
   <div className="progress">{item.user.progress}%</div>;
   return (
     <>
-      <Card className="homeFeed" innerRef={cardRef} key={item.id}>
+      <Card className="homeFeed" innerRef={cardRef} key={item.id} data-feed-id={item.id}>
         <CardHeader className="homeFeedHeader group noselect" key={item.id}>
           <div className="topLine" key={item.id}>
             <Link
