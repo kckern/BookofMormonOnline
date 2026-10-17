@@ -751,11 +751,18 @@ h4.chiasm-title {
     .chiasmPanel.open {
         position: fixed;
         inset: 0;
-        width: 100%;
-        height: 100%;
+        /* the insets size it; width:100% + padding in content-box ran 45px past
+           a 390px phone and clipped the lines and action bar (audit D5) */
+        width: auto;
+        height: auto;
+        box-sizing: border-box;
         background: var(--surface-0);
-        z-index: 1050;
+        /* above the fixed site header (.heading-bar 5300), which otherwise hid
+           the speaker + reference at the top of the overlay; the popup (9000)
+           opened by "Read in context" still stacks above it */
+        z-index: 5400;
         padding: 1rem;
+        padding-top: calc(1rem + env(safe-area-inset-top, 0px));
         overflow: auto;
         /* base rule transitions width 0.5s — animating 0→100vw on open flashes */
         transition: none;
@@ -787,6 +794,21 @@ h4.chiasm-title {
 @media (max-width: 480px) {
     .chiasmus_list {
         grid-template-columns: 1fr;
+    }
+    /* the one-row toolbar spilled ~130px past a 390px phone, which widened the
+       layout viewport and with it the fixed detail overlay (audit D5): wrap */
+    .browse_toolbar {
+        flex-wrap: wrap;
+    }
+    /* Previous / Read in context / Copy link / Next: two rows, never clipped */
+    .chiasmus_nav {
+        flex-wrap: wrap;
+        gap: .5rem;
+        justify-content: center;
+    }
+    .chiasmus_nav button {
+        flex: 1 1 40%;
+        min-height: 44px;
     }
 }
 
