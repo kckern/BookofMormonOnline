@@ -1,4 +1,4 @@
-import { captureAnchor, pinAnchor } from "../scrollAnchor";
+import { captureAnchor, pinAnchor, trackAnchor } from "../scrollAnchor";
 
 const node = (cls, top, height) => ({
   classList: ["tile", cls],
@@ -101,3 +101,46 @@ describe("pinAnchor", () => {
   });
 });
 
+
+describe("trackAnchor", () => {
+  const makeWin = (pathname) => {
+    const w = {
+      location: { pathname },
+      innerHeight: 900,
+      frames: [],
+      listeners: {},
+      requestAnimationFrame: (cb) => w.frames.push(cb),
+      cancelAnimationFrame: () => {},
+      addEventListener: (t, f) => { w.listeners[t] = f; },
+      removeEventListener: (t) => { delete w.listeners[t]; },
+    };
+    w.scroll = () => { w.listeners.scroll?.(); w.frames.splice(0).forEach((f) => f()); };
+    return w;
+  };
+
+  test("records the anchor as the reader scrolls Home", () => {
+    node.offset = 0;
+    const win = makeWin("/");
+    const saved = [];
+    trackAnchor(() => [node("tile-a", -500, 400), node("tile-b", 200, 500)], (a) => saved.push(a), { win });
+    win.scroll();
+    expect(saved).toEqual([{ index: 1, cls: "tile-b", offset: 200 }]);
+  });
+
+  test("ignores the shell's reset-to-top once the URL has left Home (audit people E1)", () => {
+    node.offset = 0;
+    const win = makeWin("/");
+    const saved = [];
+    trackAnchor(() => [node("tile-readingplan", 120, 400)], (a) => saved.push(a), { win });
+    win.location.pathname = "/people/heth2"; // link clicked: history pushed, shell resets scroll
+    win.scroll();
+    expect(saved).toEqual([]);
+  });
+
+  test("stop() removes the listener", () => {
+    const win = makeWin("/");
+    const stop = trackAnchor(() => [], () => {}, { win });
+    stop();
+    expect(win.listeners.scroll).toBeUndefined();
+  });
+});

@@ -70,3 +70,28 @@ export function pinAnchor(getNodes, anchor, { win = window, now = () => Date.now
   raf = win.requestAnimationFrame(tick);
   return stop;
 }
+
+/**
+ * Record the anchor (via `onCapture`) as the reader scrolls, but only while the
+ * URL is still the page this started on. Opening a link pushes history first;
+ * the shell's reset-to-top scroll then fires while Home is still mounted, and
+ * capturing it overwrote the reader's real place with "top of the page" so
+ * Back pinned the first tile (audit people E1). Returns a stop() function.
+ */
+export function trackAnchor(getNodes, onCapture, { win = window } = {}) {
+  const path = win.location.pathname;
+  const here = () => win.location.pathname === path;
+  let raf = null;
+  const onScroll = () => {
+    if (raf || !here()) return;
+    raf = win.requestAnimationFrame(() => {
+      raf = null;
+      if (here()) onCapture(captureAnchor(getNodes(), win.innerHeight));
+    });
+  };
+  win.addEventListener("scroll", onScroll, { passive: true });
+  return () => {
+    win.removeEventListener("scroll", onScroll);
+    if (raf) win.cancelAnimationFrame(raf);
+  };
+}

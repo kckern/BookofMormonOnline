@@ -9,7 +9,7 @@ import { arrangeArchives, featuredArchiveKeys } from "./tiles/archiveFeed";
 import { featuredPlaceSlugs, withoutSeenPlaces } from "./tiles/PlacesTile";
 import { read as readCache, write as writeCache, isFresh as cacheIsFresh } from "./tiles/homeSamplerCache";
 import { readSession, writeSession, clearSession, readAnchor, writeAnchor } from "./tiles/samplerSession";
-import { captureAnchor, pinAnchor } from "./tiles/scrollAnchor";
+import { pinAnchor, trackAnchor } from "./tiles/scrollAnchor";
 import { singleColumnOrder } from "./tiles/samplerLayout";
 import TileBoundary from "./tiles/_ds/TileBoundary";
 import BoundedTile from "./tiles/_ds/BoundedTile";
@@ -466,19 +466,7 @@ export default function Sampler() {
   const tileNodes = () => [...document.querySelectorAll(".sampler .tile")];
   useEffect(() => {
     if (!seed) return undefined;
-    let raf = null;
-    const onScroll = () => {
-      if (raf) return;
-      raf = window.requestAnimationFrame(() => {
-        raf = null;
-        writeAnchor(seed, captureAnchor(tileNodes(), window.innerHeight));
-      });
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (raf) window.cancelAnimationFrame(raf);
-    };
+    return trackAnchor(tileNodes, (anchor) => writeAnchor(seed, anchor));
   }, [seed]);
   useEffect(() => {
     if (navigationType !== "POP" || !sessionRef.current) return undefined;
