@@ -10,7 +10,7 @@ import { featuredPlaceSlugs, withoutSeenPlaces } from "./tiles/PlacesTile";
 import { read as readCache, write as writeCache, isFresh as cacheIsFresh } from "./tiles/homeSamplerCache";
 import { readSession, writeSession, clearSession, readAnchor, writeAnchor } from "./tiles/samplerSession";
 import { pinAnchor, trackAnchor } from "./tiles/scrollAnchor";
-import { singleColumnOrder } from "./tiles/samplerLayout";
+import { singleColumnOrder, canGrowReserves, placeBatchTiles } from "./tiles/samplerLayout";
 import TileBoundary from "./tiles/_ds/TileBoundary";
 import BoundedTile from "./tiles/_ds/BoundedTile";
 import { skeletonHeight } from "./tiles/_ds/skeletonHeights";
@@ -294,7 +294,8 @@ export default function Sampler() {
   // and re-measure. Converges when the columns bottom out together (or the
   // pool/cap is hit). The map is masonry-only, so it lands below the fold.
   useLayoutEffect(() => {
-    if (!payload || single || reserves.length >= MAX_RESERVES) return;
+    if (!payload || single) return;
+    if (!canGrowReserves({ reserves: reserves.length, max: MAX_RESERVES, batches: extraBatches.length })) return;
     const railH = railRef.current?.offsetHeight || 0;
     const mainH = mainRef.current?.offsetHeight || 0;
     if (!railH || !mainH) return;
@@ -308,7 +309,7 @@ export default function Sampler() {
     );
     if (!next) return;
     setReserves((prev) => [...prev, { key: next.key, side: next.mainOnly ? "main" : shorter }]);
-  }, [payload, reserves, settleTick, single]);
+  }, [payload, reserves, settleTick, single, extraBatches.length]);
 
   // Re-measure a few times after load: images and the lazy map change column
   // heights after the first paint, so a single measurement can converge early.
@@ -631,19 +632,41 @@ export default function Sampler() {
       default: return est(key);
     }
   };
-  const railInfinite = [];
-  const mainInfinite = [];
-  let railH = leftH;      // approx current rail column height
-  let mainColH = rightH;  // approx current per-column main height (incl people)
+  // The main masonry's fixed items (grid, tail, main reserves), rendered once
+  // here so the batch placement below knows exactly how many precede the
+  // batch tiles (masonry column = index % 2) and what each column ends with.
+  const mainBase = [
+    ...orderedGrid.map((t) => [t.key, renderTile(t)]),
+    ...FIXED_TAIL.map((k) => tileRegistry.find((t) => t.key === k))
+      .filter(Boolean)
+      .map((t) => [t.key, renderTile(t)]),
+    ...reserves.filter((r) => r.side === "main").map((r) => [r.key, renderReserve(r)]),
+  ].filter(([, node]) => node);
+  const railKeys = [
+    ...leftTiles.map((t) => t.key),
+    ...railExtra.map((t) => t.key),
+    ...reserves.filter((r) => r.side === "rail").map((r) => r.key),
+  ];
+  const lastIn = (col) => mainBase.filter((_, i) => i % 2 === col).map(([k]) => k).at(-1) ?? null;
+  const familyKey = (k) => k.replace(/Fill\d*$|\d+$|B$/, ""); // commentary2 / artB / chiasmus2 read as their family
+  const batchEntries = [];
   extraBatches.forEach((b, bi) => {
     b.tiles.forEach((def, ti) => {
       const node = renderBatchTile(b.payload, def, `${bi}-${ti}`);
-      if (!node) return;
-      const e = estBatch(def.key);
-      if (railH <= mainColH) { railInfinite.push(node); railH += e; }
-      else { mainInfinite.push(node); mainColH += e / 2; }
+      if (node) batchEntries.push({ node, key: familyKey(def.key), e: estBatch(def.key) });
     });
   });
+  const sides = placeBatchTiles({
+    railH: leftH,
+    mainColH: rightH,
+    mainCount: mainBase.length,
+    last: { rail: familyKey(railKeys.at(-1) || ""), main: [lastIn(0), lastIn(1)].map((k) => (k ? familyKey(k) : null)) },
+    tiles: batchEntries,
+  });
+  const railInfinite = batchEntries.filter((_, i) => sides[i] === "rail").map((x) => x.node);
+  const mainInfinite = batchEntries.filter((_, i) => sides[i] === "main").map((x) => x.node);
+  let railH = leftH + batchEntries.reduce((a, x, i) => (sides[i] === "rail" ? a + x.e : a), 0);
+  let mainColH = rightH + batchEntries.reduce((a, x, i) => (sides[i] === "main" ? a + x.e / 2 : a), 0);
   // Skeleton loaders while the next batch is in flight — same 3-column
   // balancing so they appear right at the growing edge.
   if (!single && loadingMore && extraBatches.length < MAX_BATCHES) {
@@ -728,14 +751,7 @@ export default function Sampler() {
             className="samplerMasonry"
             columnClassName="samplerMasonryCol"
           >
-            {[
-              ...orderedGrid.map((t) => renderTile(t)),
-              ...FIXED_TAIL.map((k) => tileRegistry.find((t) => t.key === k))
-                .filter(Boolean)
-                .map((t) => renderTile(t)),
-              ...reserves.filter((r) => r.side === "main").map(renderReserve),
-              ...mainInfinite,
-            ].filter(Boolean)}
+            {[...mainBase.map(([, node]) => node), ...mainInfinite]}
           </Masonry>
         </div>
       </div>
