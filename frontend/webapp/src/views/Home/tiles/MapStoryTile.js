@@ -22,15 +22,14 @@ export const playbackTiming = (move) => {
   return { travelMs: TRAVEL_MS, dwellMs, stepMs: TRAVEL_MS + dwellMs };
 };
 
-export const homeStoryTitle = (title) => {
-  const clean = String(title || "").trim();
-  // "Recolonization <Name>" source titles are inverted database labels, not
-  // readable editorial copy ("Recolonization Limhi"). Keep the correction
-  // explicit until Home-specific titles are stored.
-  const inverted = clean.match(/^recolonization\s+(.+)$/i);
-  if (inverted) return `${supDigits(inverted[1])}’s Recolonization`;
-  return supDigits(clean);
-};
+/**
+ * The story's own title, as its destination page shows it — only the
+ * disambiguation digits are styled. (A "<Name>'s Recolonization" rewrite used
+ * to live here; it misnamed the Noah story, which is Alma's flight from King
+ * Noah, and broke title parity with the story page — blind story audit D4.
+ * Editorial fixes belong in bom_map_story, not in the tile.)
+ */
+export const homeStoryTitle = (title) => supDigits(String(title || "").trim());
 
 /** Display name for a traveler: disambiguation digits as superscripts (Alma2 → Alma²). */
 export const personName = (person) => supDigits(person?.name || person?.slug || "");
@@ -124,9 +123,12 @@ export default function MapStoryTile({ data }) {
   const destination = moves.length
     ? (moves[moves.length - 1].endName || moves[moves.length - 1].end)
     : labelOr("mapstory_destination", "Destination");
-  // Autoplay runs only while the tile is on screen, the tab is visible, the map
-  // is alive, and the reader hasn't asked for reduced motion (audit J2/M2/A6).
-  const playing = visible && !pageHidden && mapMounted && !mapFailed && !paused && !complete && !reducedMotion
+  // Autoplay runs only while the tile is on screen, the tab is visible and the
+  // map is alive (audit J2/M2/A6).
+  // Reduced motion never STARTS playback (the tile opens paused on the whole
+  // journey), but an explicit Play steps through the moves with hard cuts —
+  // the map gets animate=false (audit C1: Play used to look live and do nothing).
+  const playing = visible && !pageHidden && mapMounted && !mapFailed && !paused && !complete
     && moves.length >= 2;
   // A failed map shows the static route + whole-journey summary, never a
   // stepping transport over a fallback that cannot show the steps.
@@ -214,7 +216,7 @@ export default function MapStoryTile({ data }) {
     if (complete) {
       setStep(0);
       setComplete(false);
-      setPaused(reducedMotion);
+      setPaused(false);
       return;
     }
     setPaused((current) => !current);
@@ -291,24 +293,27 @@ export default function MapStoryTile({ data }) {
           )}
         </MapStoryErrorBoundary>
         <div className="mapStoryMapShade" aria-hidden="true" />
-        {/* Inside the frame, over the map: showing it never grows the tile and
-            shoves the masonry column (audit B2). */}
-        {mapMoved ? (
-          <div className="mapStoryInteractionHint" role="status">
-            {labelOr("mapstory_paused_hint", "Playback paused while you explore the map.")}
-          </div>
-        ) : null}
       </div>
 
       {mapFailed ? null : (
         <>
           <div className="mapStoryPlaybackStatus">
             <span className={`mapStoryMoveState${complete ? " isComplete" : ""}`}>{movementLabel}</span>
-            <span className="mapStoryLegend" aria-hidden="true">
-              {complete ? null : <><i className="isActive" /> {labelOr("mapstory_active", "Now")}</>}
-              <i className="isVisited" /> {labelOr("mapstory_visited", "Visited")}
-              {complete ? null : <><i className="isFuture" /> {labelOr("mapstory_later", "Later")}</>}
-            </span>
+            {/* While the reader explores the map, the hint takes the legend's
+                place in this fixed-height row: never over the map (where it
+                hid the active marker and the party, audit A1) and never a new
+                row that grows the tile (audit B2). */}
+            {mapMoved ? (
+              <span className="mapStoryInteractionHint" role="status">
+                {labelOr("mapstory_paused_hint", "Playback paused while you explore the map.")}
+              </span>
+            ) : (
+              <span className="mapStoryLegend" aria-hidden="true">
+                {complete ? null : <><i className="isActive" /> {labelOr("mapstory_active", "Now")}</>}
+                <i className="isVisited" /> {labelOr("mapstory_visited", "Visited")}
+                {complete ? null : <><i className="isFuture" /> {labelOr("mapstory_later", "Later")}</>}
+              </span>
+            )}
           </div>
 
           <div className="mapStoryControls" role="group" aria-label={labelOr("mapstory_controls", "Journey playback controls")}>
@@ -328,9 +333,6 @@ export default function MapStoryTile({ data }) {
               aria-label={complete
                 ? labelOr("mapstory_replay", "Replay journey")
                 : paused ? labelOr("mapstory_play", "Play journey") : labelOr("mapstory_pause", "Pause journey")}
-              title={reducedMotion
-                ? labelOr("mapstory_reduced_motion", "Automatic movement is off because reduced motion is enabled")
-                : undefined}
             >
               <Icon>{complete ? "↻" : paused ? "▶" : "Ⅱ"}</Icon>
             </button>
@@ -364,19 +366,34 @@ export default function MapStoryTile({ data }) {
 
       {/* Clicking into the beat (Read more, the ref pill) is reading: stop the
           autoplay from replacing the card under the reader. */}
+      {/* B2 (blind story audit, P1): every beat and the complete card are
+          stacked in ONE grid cell as invisible sizers, so the stage is always
+          exactly as tall as the tallest beat at the current width and
+          autoplay can never resize the tile or shift its masonry column.
+          Sizers are aria-hidden + inert and skip images. */}
       <div className="mapStoryStage" onClickCapture={() => setPaused(true)}>
-        {showComplete ? (
-          <MapStoryCompleteCard
-            heading={route}
-            description={data.description}
-          />
-        ) : (
-          <MapStoryMoveCard
-            key={step}
-            move={{ ...currentMove, detached: legs[step]?.detached }}
-            step={step}
-          />
-        )}
+        {moves.map((move, index) => (
+          <div className="mapStoryBeatSizer" aria-hidden="true" inert key={`sizer-${index}`}>
+            <MapStoryMoveCard move={{ ...move, detached: legs[index]?.detached }} step={index} sizer />
+          </div>
+        ))}
+        <div className="mapStoryBeatSizer" aria-hidden="true" inert>
+          <MapStoryCompleteCard heading={route} description={data.description} />
+        </div>
+        <div className="mapStoryBeatLive">
+          {showComplete ? (
+            <MapStoryCompleteCard
+              heading={route}
+              description={data.description}
+            />
+          ) : (
+            <MapStoryMoveCard
+              key={step}
+              move={{ ...currentMove, detached: legs[step]?.detached }}
+              step={step}
+            />
+          )}
+        </div>
       </div>
 
       <div className="mapStoryFooter">

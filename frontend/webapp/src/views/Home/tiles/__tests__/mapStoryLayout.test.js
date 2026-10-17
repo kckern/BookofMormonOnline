@@ -336,3 +336,51 @@ describe("live retether keeps the solved layout", () => {
     expect(livePosition(label, [truePixel[0] + 10, truePixel[1] - 4])).toEqual({ x: label.x + 10, y: label.y - 4 });
   });
 });
+
+// Blind story audit A2 (2026-10-16): a required anchor whose true point lies
+// off-frame was pinned to the TOP-LEFT corner (the fallback grid scan started
+// at padding,padding), so "Land of Nephi" — far south — appeared in the north.
+describe("off-frame required anchors stay on their own side of the map", () => {
+  test("a required symbol below the frame lands on the bottom edge, near its column", () => {
+    const [placed] = layoutSymbols({
+      width: 340,
+      height: 292,
+      symbols: [{ id: "marker:nephi", slug: "nephi", x: 240, y: 520, width: 20, height: 20, priority: 1, firstStep: 0, required: true }],
+    });
+    expect(placed).toBeTruthy();
+    expect(placed.y).toBeGreaterThan(292 - 40);
+    expect(Math.abs(placed.x - 240)).toBeLessThan(20);
+  });
+
+  test("a required symbol off the right edge lands on the right edge, not the corner", () => {
+    const [placed] = layoutSymbols({
+      width: 340,
+      height: 292,
+      symbols: [{ id: "marker:east", slug: "east", x: 600, y: 150, width: 20, height: 20, priority: 1, firstStep: 0, required: true }],
+    });
+    expect(placed.x).toBeGreaterThan(340 - 40);
+    expect(Math.abs(placed.y - 150)).toBeLessThan(20);
+  });
+
+  test("the required-label fallback also searches outward from the place, not from the corner", () => {
+    // Fill the radial candidates with an obstacle ring so the fallback runs.
+    const item = { slug: "s", name: "Land of Nephi", x: 300, y: 270, priority: 1, firstStep: 0, required: true };
+    const obstacles = [{ id: "block", x: 160, y: 160, width: 180, height: 132 }];
+    const [label] = layoutLabels({ items: [item], obstacles, width: 340, height: 292 });
+    expect(label).toBeTruthy();
+    const cx = label.x + label.width / 2;
+    const cy = label.y + label.height / 2;
+    // nearest free slot to (300,270) is just above or left of the block, never the top-left corner
+    expect(Math.hypot(cx - 300, cy - 270)).toBeLessThan(200);
+    expect(cx > 60 || cy > 60).toBe(true);
+  });
+});
+
+describe("traveler party respects reserved controls", () => {
+  test("a reserved Recenter rect is an obstacle like any label", () => {
+    const reserved = { id: "control:recenter", x: 202, y: 234, width: 128, height: 48 };
+    const at = travelerPosition({ x: 300, y: 270, dx: 1, dy: 0, width: 340, height: 292, obstacles: [reserved] });
+    const box = { x: at.x - 31, y: at.y - 19, width: 62, height: 38 };
+    expect(rectanglesOverlap(box, reserved, 0)).toBe(false);
+  });
+});

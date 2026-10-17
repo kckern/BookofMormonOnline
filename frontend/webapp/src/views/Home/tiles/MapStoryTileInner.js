@@ -26,6 +26,24 @@ const MIN_ZOOM = 6;
 const MAX_ZOOM = 10;
 const EMPTY_STYLE = new Style({});
 
+/**
+ * Where the FARMS artwork actually has pixels, in EPSG:3857. Measured off the
+ * published z6 tiles (x 14–15, y 27–29 are the only ones that exist; the art
+ * fills x 14.217–15.228, y 27.867–29.484 in z6 tile units, inset ~1px). The
+ * view is bounded by it so a fit near the art's edge slides inward instead of
+ * showing blank frame (blind story audit F1); `showFullExtent` still lets a
+ * wide story zoom out to the whole art, whose overflow the frame paints as the
+ * art's own sea (#85cbf7, Sampler.css).
+ */
+const WORLD = 20037508.342789244;
+const Z6_TILE = (2 * WORLD) / 64;
+export const ARTWORK_EXTENT = [
+  -WORLD + 14.217 * Z6_TILE, // minX
+  WORLD - 29.484 * Z6_TILE, // minY
+  -WORLD + 15.228 * Z6_TILE, // maxX
+  WORLD - 27.867 * Z6_TILE, // maxY
+];
+
 const ACTIVE = "#9f3029";
 
 /**
@@ -82,6 +100,12 @@ const travelerLabel = (move) => {
     ? labelOr("mapstory_travelers", "$1 traveling", [supDigits(move.travelers)])
     : labelOr("mapstory_travelers_generic", "Travelers moving to the next place");
 };
+
+/** Map controls drawn over the frame that labels, markers and the party avoid. */
+const reservedControlRects = (target, mapMoved) =>
+  mapMoved
+    ? [{ id: "control:recenter", x: target.clientWidth - 138, y: target.clientHeight - 58, width: 128, height: 48 }]
+    : [];
 
 /** Clusters key on id + index: two clusters can share a first-stop id (duplicate React keys). */
 const clusterKey = (cluster, index) => `${cluster.id}-${index}`;
@@ -197,9 +221,7 @@ export default function MapStoryTileInner({
       width: target.clientWidth,
       height: target.clientHeight,
       clusterRadius: target.clientWidth < 360 ? 52 : 46,
-      reservedRects: mapMovedRef.current
-        ? [{ id: "control:recenter", x: target.clientWidth - 138, y: target.clientHeight - 58, width: 128, height: 48 }]
-        : [],
+      reservedRects: reservedControlRects(target, mapMovedRef.current),
     });
     overlayRef.current = nextOverlay;
     setOverlay(nextOverlay);
@@ -344,6 +366,9 @@ export default function MapStoryTileInner({
       width: marker.width,
       height: marker.height,
     }));
+    // The Recenter pill is an obstacle for the party too: it used to hide the
+    // avatars behind it after a drag (blind story audit A1).
+    const reservedObstacles = reservedControlRects(target, mapMovedRef.current);
     const position = travelerPosition({
       x: pixel[0],
       y: pixel[1],
@@ -351,7 +376,7 @@ export default function MapStoryTileInner({
       dy: toPixel[1] - fromPixel[1],
       width: target.clientWidth,
       height: target.clientHeight,
-      obstacles: [...labelObstacles, ...clusterObstacles, ...markerObstacles],
+      obstacles: [...reservedObstacles, ...labelObstacles, ...clusterObstacles, ...markerObstacles],
       partyWidth: selectedPeople.length
         ? 36 + Math.max(0, selectedPeople.length - 1) * 25 + (overflowPeople > 0 ? 18 : 0)
         : 36,
@@ -424,6 +449,8 @@ export default function MapStoryTileInner({
         zoom: MIN_ZOOM,
         minZoom: MIN_ZOOM,
         maxZoom: MAX_ZOOM,
+        extent: ARTWORK_EXTENT,
+        showFullExtent: true,
       }),
       controls: [],
       interactions: Interaction.defaults({ mouseWheelZoom: false }),
@@ -481,7 +508,7 @@ export default function MapStoryTileInner({
       // large while recent context stays faintly visible around the edges.
       frameLegs(framedLegIndices(state.step, state.complete, legs.length, 1), withAnimation);
     };
-    fitStoryRef.current = () => frameStory(true);
+    fitStoryRef.current = (withAnimation = true) => frameStory(withAnimation);
     frameStepRef.current = frameStep;
 
     const finishMove = () => {
@@ -622,13 +649,14 @@ export default function MapStoryTileInner({
       return;
     }
     if (mapMovedRef.current) return;
-    frameStepRef.current(true);
+    // Reduced motion: hard cuts, no camera easing (audit C1).
+    frameStepRef.current(animate);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, complete]);
 
   const recenter = (event) => {
     event.stopPropagation();
-    fitStoryRef.current();
+    fitStoryRef.current(animate);
     if (onRecenter) onRecenter();
   };
 

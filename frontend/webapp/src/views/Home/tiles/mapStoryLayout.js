@@ -67,6 +67,36 @@ const candidateRects = (item, viewportWidth) => {
   return candidates;
 };
 
+/**
+ * Last-resort slot for a mandatory item: the free card-space slot NEAREST the
+ * item's own point (clamped into the frame), so an off-frame anchor sits on the
+ * frame edge on the side it really lies, with a short leader toward it. The old
+ * scan started at (padding, padding) and pinned a far-south destination to the
+ * top-left corner (blind story audit A2).
+ */
+const nearestFreeSlot = ({ id, x, y, width: w, height: h }, frameWidth, frameHeight, padding, occupied, ownId) => {
+  const maxX = frameWidth - w - padding;
+  const maxY = frameHeight - h - padding;
+  if (maxX < padding || maxY < padding) return null;
+  const targetX = clamp(x - w / 2, padding, maxX);
+  const targetY = clamp(y - h / 2, padding, maxY);
+  let best = null;
+  let bestDistance = Infinity;
+  for (let top = padding; top <= maxY; top += 8) {
+    for (let left = padding; left <= maxX; left += 8) {
+      const candidate = { id, x: left, y: top, width: w, height: h };
+      const d = Math.hypot(left - targetX, top - targetY);
+      if (d < bestDistance && !overlapsAny(candidate, occupied, ownId)) {
+        best = candidate;
+        bestDistance = d;
+      }
+    }
+  }
+  const exact = { id, x: targetX, y: targetY, width: w, height: h };
+  if (!overlapsAny(exact, occupied, ownId)) return exact;
+  return best;
+};
+
 const leaderEnd = (anchor, rect) => ({
   x: clamp(anchor.x, rect.x, rect.x + rect.width),
   y: clamp(anchor.y, rect.y, rect.y + rect.height),
@@ -112,15 +142,7 @@ export const layoutSymbols = ({ symbols, reservedRects = [], width, height, padd
     // dense or co-located data. Low-priority future symbols may be omitted when
     // a cluster cannot be placed without obscuring current context.
     if (!rect && symbol.required) {
-      for (let y = padding; y <= height - symbol.height - padding && !rect; y += 8) {
-        for (let x = padding; x <= width - symbol.width - padding; x += 8) {
-          const candidate = { id: symbol.id, x, y, width: symbol.width, height: symbol.height };
-          if (!overlapsAny(candidate, occupied)) {
-            rect = candidate;
-            break;
-          }
-        }
-      }
+      rect = nearestFreeSlot(symbol, width, height, padding, occupied);
     }
 
     if (!rect) return;
@@ -182,15 +204,8 @@ export const layoutLabels = ({ items, obstacles, width, height, padding = 8, pre
     // connect the displaced label back to its true map position.
     if (!rect && item.required) {
       const dimensions = labelDimensions(item.name, width);
-      for (let y = padding; y <= height - dimensions.height - padding && !rect; y += 8) {
-        for (let x = padding; x <= width - dimensions.width - padding; x += 8) {
-          const candidate = { x, y, ...dimensions };
-          if (!overlapsAny(candidate, occupied, ownId)) {
-            rect = candidate;
-            break;
-          }
-        }
-      }
+      const slot = nearestFreeSlot({ x: item.x, y: item.y, ...dimensions }, width, height, padding, occupied, ownId);
+      if (slot) rect = { x: slot.x, y: slot.y, ...dimensions };
     }
 
     if (!rect) return;

@@ -1,7 +1,7 @@
 import React from "react";
 import fs from "node:fs";
 import path from "node:path";
-import { act, cleanup as cleanupAll, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup as cleanupAll, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import MapStoryTile, {
   homeStoryTitle,
@@ -166,10 +166,14 @@ describe("MapStoryTile", () => {
     expect(screen.queryByText("valley-of-lemuel")).toBeNull();
   });
 
-  test("corrects the known inverted Home title", () => {
-    expect(homeStoryTitle("Recolonization Noah")).toBe("Noah’s Recolonization");
+  // Blind story audit D4: the "<Name>'s Recolonization" rewrite misnamed the
+  // Noah story (Alma's flight from King Noah) and no longer matched the story
+  // page's own title. Home shows the story's title as the destination does.
+  test("shows the story title exactly as its destination page does", () => {
+    expect(homeStoryTitle("Recolonization Noah")).toBe("Recolonization Noah");
     renderTile({ ...data, title: "Recolonization Noah" });
-    expect(screen.getByText("Noah’s Recolonization")).toBeTruthy();
+    expect(screen.getByText("Recolonization Noah")).toBeTruthy();
+    expect(screen.queryByText(/Noah’s Recolonization/)).toBeNull();
   });
 
   test("opens the active move's scripture reference", () => {
@@ -273,13 +277,14 @@ describe("MapStoryTile", () => {
     expect(screen.queryByText("Playback paused while you explore the map.")).toBeNull();
   });
 
-  test("shows only the selected beat instead of height-influencing hidden slides", () => {
-    renderTile();
-    expect(screen.getByText("Fled into the wilderness")).toBeTruthy();
-    expect(screen.queryByText("Eight years in the wilderness")).toBeNull();
+  test("the live card shows only the selected beat", () => {
+    const { container } = renderTile();
+    const live = () => within(container.querySelector(".mapStoryBeatLive"));
+    expect(live().getByText("Fled into the wilderness")).toBeTruthy();
+    expect(live().queryByText("Eight years in the wilderness")).toBeNull();
     fireEvent.click(screen.getByLabelText("Next move"));
-    expect(screen.queryByText("Fled into the wilderness")).toBeNull();
-    expect(screen.getByText("Eight years in the wilderness")).toBeTruthy();
+    expect(live().queryByText("Fled into the wilderness")).toBeNull();
+    expect(live().getByText("Eight years in the wilderness")).toBeTruthy();
   });
 
   test("keeps traveler identity in the text equivalent and active caption", () => {
@@ -293,9 +298,9 @@ describe("MapStoryTile", () => {
       ...data,
       moves: [data.moves[0], { ...data.moves[1], start: "somewhere-else", startName: "Somewhere Else" }],
     };
-    renderTile(broken);
+    const { container } = renderTile(broken);
     fireEvent.click(screen.getByLabelText("Next move"));
-    expect(screen.getByText("story resumes elsewhere")).toBeTruthy();
+    expect(within(container.querySelector(".mapStoryBeatLive")).getByText("story resumes elsewhere")).toBeTruthy();
   });
 
   test("reduced motion opens on a complete static route without automatic churn", () => {
@@ -362,8 +367,9 @@ describe("MapStoryTile — Task 10h regressions", () => {
     expect(container.textContent).toMatch(/Alma²/);
   });
 
-  test("inverted Recolonization titles read naturally", () => {
-    expect(homeStoryTitle("Recolonization Limhi")).toBe("Limhi’s Recolonization");
+  test("titles are not rewritten (only disambiguation digits are styled)", () => {
+    expect(homeStoryTitle("Recolonization Limhi")).toBe("Recolonization Limhi");
+    expect(homeStoryTitle("Alma2 Flees")).toBe("Alma² Flees");
   });
 
   test("a round trip reads 'Round trip from X', not 'X → X'", () => {
@@ -466,11 +472,17 @@ describe("MapStoryTile — story audit fixes (2026-10-16)", () => {
     expect(mapState("playing")).toBe("false");
   });
 
-  test("B2: the paused hint lives inside the map frame (no tile growth)", () => {
+  // Blind story audit A1: inside the frame the hint covered the bottom strip of
+  // the map (active marker, its label, the party). The playback-status row has
+  // a fixed height, so the hint replaces the legend there instead.
+  test("A1/B2: the paused hint sits in the fixed-height status row, not over the map", () => {
     const { container } = renderTile();
     fireEvent.click(screen.getByTestId("map-manipulate"));
     const hint = screen.getByText("Playback paused while you explore the map.");
-    expect(container.querySelector(".mapTileFrame").contains(hint)).toBe(true);
+    expect(container.querySelector(".mapTileFrame").contains(hint)).toBe(false);
+    expect(container.querySelector(".mapStoryPlaybackStatus").contains(hint)).toBe(true);
+    expect(container.querySelector(".mapStoryLegend")).toBeNull();
+    expect(rule(".mapStoryPlaybackStatus")).toMatch(/height:\s*28px/);
   });
 
   test("A1: the title wraps to two lines instead of a one-line ellipsis", () => {
@@ -505,4 +517,99 @@ describe("MapStoryTile — story audit fixes (2026-10-16)", () => {
 test("MapStoryTileInner re-syncs the DOM overlay whenever a new layout lands", () => {
   const inner = fs.readFileSync(path.resolve(__dirname, "../MapStoryTileInner.js"), "utf8");
   expect(inner).toMatch(/useLayoutEffect\(\(\) => \{\s*syncOverlayRef\.current\?\.\(\);?\s*\}, \[overlay\]\)/);
+});
+
+describe("MapStoryTile — blind story audit (2026-10-16)", () => {
+  const css = fs.readFileSync(path.resolve(__dirname, "../../Sampler.css"), "utf8");
+  const rule = (sel) => {
+    const i = css.indexOf(`${sel} {`);
+    return i < 0 ? "" : css.slice(i, css.indexOf("}", i));
+  };
+
+  // B2 (P1): the beat card's fixed min-height was smaller than a beat with a
+  // 3-line description + Read more, so autoplay resized the tile and shifted
+  // the masonry column on every move. Every beat (and the complete card) now
+  // sits in one grid cell as an invisible sizer, so the stage is always as
+  // tall as the tallest beat and never changes height while playing.
+  test("B2: the stage stacks an invisible sizer for every beat and the complete card", () => {
+    const { container } = renderTile();
+    const stage = container.querySelector(".mapStoryStage");
+    const sizers = stage.querySelectorAll(".mapStoryBeatSizer");
+    expect(sizers).toHaveLength(data.moves.length + 1);
+    sizers.forEach((sizer) => {
+      expect(sizer.getAttribute("aria-hidden")).toBe("true");
+      expect(sizer.hasAttribute("inert")).toBe(true);
+      // sizers never fetch images or offer controls
+      expect(sizer.querySelector("img")).toBeNull();
+    });
+    expect(stage.querySelector(".mapStoryBeatSizer .mapStoryComplete")).toBeTruthy();
+    expect(stage.querySelectorAll(".mapStoryBeatLive")).toHaveLength(1);
+    expect(rule(".mapStoryStage")).toMatch(/display:\s*grid/);
+    expect(rule(".mapStoryStage > *")).toMatch(/grid-area:\s*1\s*\/\s*1/);
+    expect(rule(".mapStoryBeatSizer")).toMatch(/visibility:\s*hidden/);
+  });
+
+  test("B2: stepping never changes which sizers exist", () => {
+    const { container } = renderTile();
+    const before = container.querySelector(".mapStoryStage").querySelectorAll(".mapStoryBeatSizer").length;
+    fireEvent.click(screen.getByLabelText("Next move"));
+    fireEvent.click(screen.getByLabelText("Next move"));
+    expect(container.querySelector(".mapStoryStage").querySelectorAll(".mapStoryBeatSizer").length).toBe(before);
+  });
+
+  // C1: under reduced motion Play/Replay looked live but did nothing.
+  test("C1: reduced motion — Replay steps through the moves with hard cuts", () => {
+    reduceMotion = true;
+    renderTile();
+    expect(mapState("complete")).toBe("true");
+    fireEvent.click(screen.getByLabelText("Replay journey"));
+    expect(mapState("step")).toBe("0");
+    expect(mapState("animate")).toBe("false");
+    expect(mapState("playing")).toBe("true");
+    expect(screen.getByLabelText("Pause journey")).toBeTruthy();
+    act(() => { vi.advanceTimersByTime(playbackTiming(data.moves[0]).stepMs + 10); });
+    expect(mapState("step")).toBe("1");
+  });
+
+  test("C1: reduced motion never autoplays on its own", () => {
+    reduceMotion = true;
+    renderTile();
+    act(() => { vi.advanceTimersByTime(60000); });
+    expect(mapState("playing")).toBe("false");
+    expect(mapState("complete")).toBe("true");
+  });
+
+  test("C1: the Inner camera respects reduced motion (frames without easing)", () => {
+    const inner = fs.readFileSync(path.resolve(__dirname, "../MapStoryTileInner.js"), "utf8");
+    expect(inner).not.toMatch(/frameStepRef\.current\(true\)/);
+  });
+
+  // F1: the fitted camera ran past the FARMS artwork, leaving blank gutters.
+  test("F1: the view is bounded by the artwork and overflow reads as its sea", () => {
+    const inner = fs.readFileSync(path.resolve(__dirname, "../MapStoryTileInner.js"), "utf8");
+    expect(inner).toMatch(/extent:\s*ARTWORK_EXTENT/);
+    expect(inner).toMatch(/showFullExtent:\s*true/);
+    expect(rule(".mapStoryTile .mapTileFrame")).toMatch(/background:\s*#85cbf7/i);
+  });
+
+  // F2: touch targets.
+  test("F2: coarse pointers get 44px hits on the eyebrow, the ref chip and map labels", () => {
+    const coarse = [...css.matchAll(/@media \(pointer: coarse\)\s*\{([\s\S]*?)\n\}/g)].map((m) => m[1]).join("\n");
+    expect(coarse).toMatch(/\.mapStoryTile \.tileHeading a::after/);
+    expect(coarse).toMatch(/\.mapStoryPlaceLabel::after/);
+    expect(rule(".mapStoryTile .mapStoryRef")).toMatch(/z-index:\s*1/);
+  });
+
+  // A5: one inner radius, no extra frame chrome.
+  test("A5: frame and beat card share one radius and the frame drops its inset highlight", () => {
+    const radius = (sel) => (rule(sel).match(/border-radius:\s*([\d.]+rem)/) || [])[1];
+    expect(radius(".mapStoryTile .mapTileFrame")).toBe(radius(".mapStoryBeat"));
+    expect(rule(".mapStoryTile .mapTileFrame")).not.toMatch(/inset 0 0 0 1px/);
+  });
+
+  // A1: labels draw above the traveler party, never under it.
+  test("A1: place labels stack above the traveler party", () => {
+    const z = (sel) => Number((rule(sel).match(/z-index:\s*(\d+)/) || [])[1]);
+    expect(z(".mapStoryMapOverlay")).toBeGreaterThan(z(".mapStoryTravelerParty"));
+  });
 });

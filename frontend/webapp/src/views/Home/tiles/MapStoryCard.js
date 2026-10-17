@@ -10,8 +10,8 @@ const placeLabel = (name, slug) => name || slug || "";
 const hide = (event) => { event.currentTarget.style.display = "none"; };
 
 // 24px thumbnails: the 256w variant is plenty even at 3x DPR.
-const PlaceThumb = ({ slug }) =>
-  slug ? (
+const PlaceThumb = ({ slug, sizer }) =>
+  sizer ? <span className="mapStoryPlaceThumb" aria-hidden="true" /> : slug ? (
     <TileImage
       className="mapStoryPlaceThumb"
       path={`places/${slug}`}
@@ -33,7 +33,7 @@ const travelerText = (move) => {
 };
 
 /** Compact current-beat caption; the people themselves now move on the map. */
-export function MapStoryMoveCard({ move, step }) {
+export function MapStoryMoveCard({ move, step, sizer = false }) {
   const travelers = travelerText(move);
   const from = placeLabel(move.startName, move.start);
   const to = placeLabel(move.endName, move.end);
@@ -43,12 +43,12 @@ export function MapStoryMoveCard({ move, step }) {
       <div className="mapStoryBeatBody">
         <div className="mapStoryLeg">
           <span className="mapStoryLegPlace">
-            <PlaceThumb slug={move.start} />
+            <PlaceThumb slug={move.start} sizer={sizer} />
             <span className="mapStoryLegPlaceName" title={from}>{from}</span>
           </span>
           <span className="mapStoryArrow" aria-hidden="true">→</span>
           <span className="mapStoryLegPlace">
-            <PlaceThumb slug={move.end} />
+            <PlaceThumb slug={move.end} sizer={sizer} />
             <span className="mapStoryLegPlaceName" title={to}>{to}</span>
           </span>
         </div>
@@ -87,8 +87,10 @@ export function MapStoryCompleteCard({ heading, description }) {
       <div className="mapStoryCompleteMark" aria-hidden="true">✓</div>
       <div className="mapStoryBeatBody">
         <div className="mapStoryCompleteHeading">{heading}</div>
+        {/* 3 lines like the beats: the complete card is a stage sizer too, and
+            a 5-line clamp set an oversized, hollow reserve for every move. */}
         {description ? (
-          <ExpandableText className="mapStoryDesc" lines={5} fade>{description}</ExpandableText>
+          <ExpandableText className="mapStoryDesc" lines={3} fade>{description}</ExpandableText>
         ) : null}
       </div>
     </section>
