@@ -89,6 +89,10 @@ describe("clampWords phrase mode: no dangling verbs/time words (audit places-H3)
     ["Lamanites in Shimnilom are converted to the Lord", 4, "Lamanites in Shimnilom…"],
     ["City in Northwest Syria, currently known as Hama", 5, "City in Northwest Syria…"],
     ["Site of battle between Shared and Coriantumr", 5, "Site of battle…"],
+    // blind audit r4 places-H3: cuts ended "…rejoice because…", "…followers under…"
+    ["Palestina is told not to rejoice because of its cursings", 7, "Palestina is told…"],
+    ["Escape route for Amulon’s followers under Lamanite pursuit.", 6, "Escape route for Amulon’s followers…"],
+    ["Helaman and his army march past Antiparah towards the City by the Sea", 6, "Helaman and his army march…"],
   ])("%s / %d", (text, n, out) => {
     expect(clampWords(text, n, { phrase: true })).toBe(out);
   });

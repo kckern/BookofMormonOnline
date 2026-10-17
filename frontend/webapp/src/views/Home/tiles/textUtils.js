@@ -54,7 +54,9 @@ const DANGLING = /^(of|and|the|a|an|to|by|in|on|at|for|from|with|or|as|who|whose
 const isDangling = (w) => DANGLING.test((w || "").replace(/[,;:]$/, ""));
 // Phrase mode also refuses to end on a copula or time/relation word: "Land
 // established by Nephi, later…", "Lamanites in Shimnilom are…" (audit places-H3).
-const PHRASE_DANGLING = /^(is|are|was|were|has|have|had|later|currently|now|then|between|after|before|when|where|while|into|upon|near|until|also)$/i;
+// …nor on a conjunction or preposition that opens what was cut: "…rejoice
+// because…", "…followers under…", "…march past…" (blind audit r4 places-H3).
+const PHRASE_DANGLING = /^(is|are|was|were|has|have|had|later|currently|now|then|between|after|before|when|where|while|into|upon|near|until|also|because|since|but|if|than|not|so|under|past|toward|towards|against|through|without|across|over|around|beyond|behind|during|via)$/i;
 const isPhraseDangling = (w) => isDangling(w) || PHRASE_DANGLING.test((w || "").replace(/[,;:]$/, ""));
 
 // A ". " after an initial ("in I. Woodbury") or a citation abbreviation
@@ -92,6 +94,7 @@ export const clampWords = (text, words, { phrase = false } = {}) => {
       if (isPhraseDangling(kept[j])) {
         kept = kept.slice(0, j);
         popDangling();
+        while (kept.length > 3 && isPhraseDangling(kept[kept.length - 1])) kept.pop();
         break;
       }
     }

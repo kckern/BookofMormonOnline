@@ -6,7 +6,7 @@ import { label } from "src/models/Utils";
 import Masonry from "react-masonry-css";
 import { tileRegistry, reservePool, batchTiles } from "./tiles/registry";
 import { arrangeArchives, featuredArchiveKeys } from "./tiles/archiveFeed";
-import { featuredPlaceSlugs, withoutSeenPlaces } from "./tiles/PlacesTile";
+import { featuredPlaceSlugs, rankPlaces, withoutSeenPlaces } from "./tiles/PlacesTile";
 import { read as readCache, write as writeCache, isFresh as cacheIsFresh } from "./tiles/homeSamplerCache";
 import { readSession, writeSession, clearSession, readAnchor, writeAnchor } from "./tiles/samplerSession";
 import { pinAnchor, trackAnchor } from "./tiles/scrollAnchor";
@@ -80,12 +80,14 @@ const fromKeys = (keys, pool) => keys.map((k) => pool.find((t) => t.key === k)).
 /**
  * The cacheable content tiles. Public, seeded server-side — this is what the
  * client cache stores and paints instantly. `commentaries` maps to three 1:1
- * registry keys.
+ * registry keys; `places` is ranked so the Places cards get real hooks.
  */
 export const assembleSampler = (r) => {
   const sampler = r?.homesampler?.[0] || {};
   const [commentary, commentary2, commentary3] = sampler.commentaries || [];
-  return { ...sampler, commentary, commentary2, commentary3 };
+  // strongest card hooks first (tiles/PlacesTile rankPlaces, audit r4 places-H1)
+  const places = Array.isArray(sampler.places) ? { places: rankPlaces(sampler.places) } : {};
+  return { ...sampler, ...places, commentary, commentary2, commentary3 };
 };
 
 /**
