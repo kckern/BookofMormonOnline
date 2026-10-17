@@ -64,3 +64,32 @@ describe("placeBatchTiles (infinite tiles → rail | main)", () => {
     expect(placeBatchTiles(input)).toEqual(placeBatchTiles(input));
   });
 });
+
+import { spaceAcrossColumns } from "../samplerLayout";
+
+// Live audit (scripture r4, 2026-10-17): the old even-fraction spacing put the
+// three commentaries at masonry indices 2/6/10 for a 12-item grid — all in
+// column 0 (item j → column j % 2), the exact "spam column" it meant to avoid.
+describe("spaceAcrossColumns (commentary anti-stacking)", () => {
+  const others = (n) => Array.from({ length: n }, (_, i) => `o${i}`);
+  it.each([3, 5, 8, 9, 10, 12, 15])("%i others: neighbours in the family never share a column", (n) => {
+    const out = spaceAcrossColumns(others(n), ["c1", "c2", "c3"], 2);
+    const at = ["c1", "c2", "c3"].map((c) => out.indexOf(c));
+    expect(at.every((i) => i >= 0)).toBe(true);
+    expect(out).toHaveLength(n + 3);
+    expect(at[0] % 2).not.toBe(at[1] % 2);
+    expect(at[1] % 2).not.toBe(at[2] % 2);
+    // no family tile leads the grid, and the others keep their order
+    expect(at[0]).toBeGreaterThan(0);
+    expect(out.filter((x) => x.startsWith("o"))).toEqual(others(n));
+  });
+  it("single column: evenly spaced, order kept", () => {
+    const out = spaceAcrossColumns(others(9), ["c1", "c2", "c3"], 1);
+    expect(out.indexOf("c1")).toBeGreaterThan(0);
+    expect(out.indexOf("c2") - out.indexOf("c1")).toBeGreaterThan(1);
+    expect(out.indexOf("c3") - out.indexOf("c2")).toBeGreaterThan(1);
+  });
+  it("no family items → others unchanged", () => {
+    expect(spaceAcrossColumns(others(4), [], 2)).toEqual(others(4));
+  });
+});

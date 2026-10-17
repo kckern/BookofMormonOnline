@@ -41,6 +41,14 @@ describe("assemblePayload", () => {
     expect(p.commentary3).toEqual({ id: 3 });
   });
 
+  // blind audit r4 commentary H4: two slots must never show the same commentary
+  test("drops a repeated commentary id instead of rendering it twice", () => {
+    const r = baseResponse();
+    r.homesampler[0].commentaries = [{ id: 1 }, { id: 1 }, { id: 3 }];
+    const p = assemblePayload(r);
+    expect([p.commentary, p.commentary2, p.commentary3]).toEqual([{ id: 1 }, { id: 3 }, undefined]);
+  });
+
   test("passes through the sampler's own fields", () => {
     const p = assemblePayload(baseResponse());
     expect(p.people).toEqual([{ slug: "alma" }]);

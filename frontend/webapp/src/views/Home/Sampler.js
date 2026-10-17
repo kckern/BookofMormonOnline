@@ -10,7 +10,7 @@ import { featuredPlaceSlugs, rankPlaces, withoutSeenPlaces } from "./tiles/Place
 import { read as readCache, write as writeCache, isFresh as cacheIsFresh } from "./tiles/homeSamplerCache";
 import { readSession, writeSession, clearSession, readAnchor, writeAnchor } from "./tiles/samplerSession";
 import { pinAnchor, trackAnchor } from "./tiles/scrollAnchor";
-import { singleColumnOrder, canGrowReserves, placeBatchTiles } from "./tiles/samplerLayout";
+import { singleColumnOrder, canGrowReserves, placeBatchTiles, spaceAcrossColumns } from "./tiles/samplerLayout";
 import TileBoundary from "./tiles/_ds/TileBoundary";
 import BoundedTile from "./tiles/_ds/BoundedTile";
 import { skeletonHeight } from "./tiles/_ds/skeletonHeights";
@@ -84,7 +84,11 @@ const fromKeys = (keys, pool) => keys.map((k) => pool.find((t) => t.key === k)).
  */
 export const assembleSampler = (r) => {
   const sampler = r?.homesampler?.[0] || {};
-  const [commentary, commentary2, commentary3] = sampler.commentaries || [];
+  // distinct ids only: two slots never repeat one commentary (audit r4 H4)
+  const seenCom = new Set();
+  const [commentary, commentary2, commentary3] = (sampler.commentaries || []).filter(
+    (c) => c && !seenCom.has(c.id) && seenCom.add(c.id),
+  );
   // strongest card hooks first (tiles/PlacesTile rankPlaces, audit r4 places-H1)
   const places = Array.isArray(sampler.places) ? { places: rankPlaces(sampler.places) } : {};
   return { ...sampler, ...places, commentary, commentary2, commentary3 };
@@ -603,18 +607,13 @@ export default function Sampler() {
   // During loading (no payload) keep every tile so its skeleton renders (no
   // layout shift); once loaded, keep only the ready ones.
   const renderable = gridVars.filter((t) => !payload || shows(t));
-  const commentaryTiles = renderable.filter(isCommentary);
-  const orderedGrid = renderable.filter((t) => !isCommentary(t));
-  if (commentaryTiles.length) {
-    // even fractional spacing, offset so the first isn't at index 0 (keeps a
-    // non-commentary tile leading each column); re-inserting front-to-back
-    // keeps later indices valid.
-    const slots = orderedGrid.length + commentaryTiles.length;
-    commentaryTiles.forEach((c, i) => {
-      const at = Math.min(orderedGrid.length, Math.round(((i + 0.5) / commentaryTiles.length) * slots));
-      orderedGrid.splice(at, 0, c);
-    });
-  }
+  // Even spacing, never at index 0, and alternating masonry columns
+  // (tiles/samplerLayout spaceAcrossColumns).
+  const orderedGrid = spaceAcrossColumns(
+    renderable.filter((t) => !isCommentary(t)),
+    renderable.filter(isCommentary),
+    2,
+  );
 
   // ---- infinite tiles across the 3 live columns ---------------------------
   // Each incoming tile lands on the shortest of { rail, main-A, main-B }
@@ -707,12 +706,7 @@ export default function Sampler() {
   // Commentary is spaced out as in the masonry, and batches append at the end.
   if (single) {
     const vars = variableTiles.filter((t) => !payload || shows(t));
-    const others = vars.filter((t) => !isCommentary(t));
-    const comms = vars.filter(isCommentary);
-    comms.forEach((c, i) => {
-      const at = Math.min(others.length, Math.round(((i + 0.5) / comms.length) * (others.length + comms.length)));
-      others.splice(at, 0, c);
-    });
+    const others = spaceAcrossColumns(vars.filter((t) => !isCommentary(t)), vars.filter(isCommentary), 1);
     const byKey = (k) => tileRegistry.find((t) => t.key === k);
     const order = singleColumnOrder(others.map((t) => t.key)).map(byKey).filter(Boolean);
     const batchNodes = extraBatches.flatMap((b, bi) => b.tiles.map((def, ti) => renderBatchTile(b.payload, def, `${bi}-${ti}`)));

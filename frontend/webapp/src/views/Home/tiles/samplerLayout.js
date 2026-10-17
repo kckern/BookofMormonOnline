@@ -55,3 +55,30 @@ export function placeBatchTiles({ railH, mainColH, mainCount, last, tiles }) {
     return side;
   });
 }
+
+/**
+ * Space a tile family (the three commentaries) evenly through the others so it
+ * never reads as a spam column. Positions are FINAL indices; with cols > 1 each
+ * family tile also takes the opposite masonry column from the previous one
+ * (react-masonry-css: item j → column j % cols) — even fractional spacing
+ * alone landed all three on 2/6/10 of a 12-item grid, one column.
+ */
+export function spaceAcrossColumns(others, family, cols = 2) {
+  const k = family.length;
+  if (!k) return [...others];
+  const slots = others.length + k;
+  const taken = [];
+  family.forEach((_, i) => {
+    let p = Math.max(1, Math.min(slots - 1, Math.round(((i + 0.5) / k) * slots)));
+    const prev = taken[taken.length - 1];
+    if (cols > 1 && prev != null && p % cols === prev % cols) p = p + 1 < slots ? p + 1 : p - 1;
+    while (taken.includes(p) && p < slots - 1) p++;
+    while (taken.includes(p)) p--;
+    taken.push(p);
+  });
+  const out = new Array(slots);
+  taken.forEach((p, i) => (out[p] = family[i]));
+  let j = 0;
+  for (let i = 0; i < slots; i++) if (out[i] === undefined) out[i] = others[j++];
+  return out;
+}
