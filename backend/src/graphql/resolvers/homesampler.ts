@@ -19,6 +19,7 @@ import { canonicalSelector } from '../../media/fax/canonical.js';
 import { imageScanMeta } from '../../media/fax/resolve.js';
 import { getHomeSamplerCache } from '../homeSamplerCacheStore.js';
 import { currentBucket, samplerCacheKey, seedForBucket } from '../homeSamplerCache.js';
+import { dropVariantNotes } from './noteFilters.js';
 
 // 24 people = 1 featured + 11 face cards + 12 view-all mosaic thumbs (3×4);
 // 17 places = 5 cards + a full 3×4 mosaic.
@@ -592,9 +593,11 @@ const sampleNotes = async (ctx: AppContext, seed: number) => {
     .where('bom_xtras_source.source_lang', '=', lang)
     .where('bom_xtras_source.source_rating', '=', 'G')
     .orderBy(seededOrder('bom_xtras_commentary.id', seed))
-    .limit(10)
+    // 16 (was 10): textual-variant notes are dropped below (notes-H1) — keep
+    // the pool deep enough that two varied readable notes still qualify
+    .limit(16)
     .execute();
-  return pickVaried(rows, 2);
+  return pickVaried(dropVariantNotes(rows), 2);
 };
 
 const sampleContents = async (ctx: AppContext, seed: number) => {
