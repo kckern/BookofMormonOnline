@@ -6,6 +6,8 @@ import TileDeepLink from "./_ds/TileDeepLink";
 import TileImage from "./_ds/TileImage";
 import labelOr from "./_ds/labelOr";
 import RefPill, { makeRefPillParserOptions } from "./RefPill";
+import ExpandableText from "./ExpandableText";
+import { RevealProvider } from "./_ds/Reveal";
 
 // A note that already opens with a quotation ("<i>“Driven forth…”</i> …") must
 // not be wrapped in a second pair of smart quotes.
@@ -64,7 +66,20 @@ export const isVariantNote = (html) => VARIANT_NOTE.test(plainText(html));
  * smart quotes, author attributed with an em dash. Refs are RefPill buttons
  * (popup); "See in context" goes straight to the canonical Read URL.
  */
-export default function NotesTile({ data }) {
+export default function NotesTile(props) {
+  return (
+    <RevealProvider>
+      <NotesTileInner {...props} />
+    </RevealProvider>
+  );
+}
+
+// Long notes clamp to NOTE_LINES with the fade + Read more (Layer 1), like the
+// sibling commentary; See in context (Layer 2) waits for that reveal (blind
+// audit r4 notes C4: a 794-char note made a 616px tile).
+const NOTE_LINES = 8;
+
+function NotesTileInner({ data }) {
   // false = the passage could not be loaded (or is not Book of Mormon text):
   // drop the passage block and surface the reference as a pill instead.
   const [passageOk, setPassageOk] = useState(true);
@@ -136,7 +151,7 @@ export default function NotesTile({ data }) {
               onError={(e) => (e.currentTarget.style.display = "none")}
             />
           ) : null}
-          <div className="notesBody">
+          <ExpandableText className="notesBody" lines={NOTE_LINES} fade persistKey={note.id ? `notes:${note.id}` : undefined}>
             {anchor ? (
               <>
                 <span className="notesAnchor">{anchor}</span>{" "}
@@ -148,11 +163,11 @@ export default function NotesTile({ data }) {
               <span className="notesQuote">{body}</span>
             )}
             {author ? <span className="notesAttr"> &mdash; {author}</span> : null}
-          </div>
+          </ExpandableText>
         </div>
         <div className="notesMeta">
           {passageOk ? <span /> : <RefPill refText={note.reference} className="notesRef" />}
-          {to ? <TileDeepLink to={to} always verb="seeInContext" /> : null}
+          {to ? <TileDeepLink to={to} verb="seeInContext" /> : null}
         </div>
       </div>
     </div>

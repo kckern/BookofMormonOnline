@@ -2585,6 +2585,13 @@ html[data-theme="dark"] .notesTile .notesBody { color: #d0d0d0; }
 .notesTile .notesExcerpt.isScrolled > :last-child { padding-bottom: 2.25rem; }
 .notesTile .notesExcerpt.isScrolled .left-gutter { position: sticky; top: 2rem; align-self: flex-start; }
 html[data-theme="dark"] .notesTile .notesExcerpt.isScrolled .read-section-header { background: #222; box-shadow: 0 0.35rem 0.5rem 0.15rem #222; }
+/* touch: the section-ref chip sits ~3px under the excerpt box's top edge and
+   the box clips (overflow hidden), so the default hit (15px above and below)
+   lost its top half — 35px measured (blind audit r4 notes F2). Extend the hit
+   downward instead, over the verse text, where the box doesn't clip. */
+@media (pointer: coarse) {
+  .sampler .notesTile .notesExcerpt .read-section-header .scripture_link::after { inset: -3px -4px -27px; }
+}
 /* passage loading: the placeholder fills the fixed box exactly */
 .notesTile .samplerScriptureLoading {
   height: 100%;
