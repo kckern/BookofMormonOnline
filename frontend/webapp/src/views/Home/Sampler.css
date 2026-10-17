@@ -3185,7 +3185,8 @@ html[data-theme="dark"] .faxVerseTile .read-content .read-block { background: tr
   .mapStoryCluster:hover { transform: translate(-50%, -50%) !important; }
 }
 
-/* Archive tiles (fax, faxVerse, history, Joseph Smith, witness): the eyebrow
+/* Archive + people tiles (fax, faxVerse, history, Joseph Smith, witness,
+   people, person profile): the eyebrow
    link was an 11px tap target on touch (blind audit XC4). Same treatment as
    the matters eyebrows: a 44px hit, 12px up into the tile padding and the
    rest down over the tile's first row. */
@@ -3193,11 +3194,15 @@ html[data-theme="dark"] .faxVerseTile .read-content .read-block { background: tr
   .faxTile .tileHeading a,
   .faxVerseTile .tileHeading a,
   .historyTile .tileHeading a,
-  .witnessTile .tileHeading a { position: relative; z-index: 2; } /* above the portrait img (z 1) */
+  .witnessTile .tileHeading a,
+  .peopleTile .tileHeading a,
+  .personProfileTile .tileHeading a { position: relative; z-index: 2; } /* above the portrait img (z 1) */
   .faxTile .tileHeading a::after,
   .faxVerseTile .tileHeading a::after,
   .historyTile .tileHeading a::after,
-  .witnessTile .tileHeading a::after {
+  .witnessTile .tileHeading a::after,
+  .peopleTile .tileHeading a::after,
+  .personProfileTile .tileHeading a::after {
     content: "";
     position: absolute;
     top: -12px;

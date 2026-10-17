@@ -1,7 +1,8 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import PeopleTile, { peopleLayout, faceHook } from "../PeopleTile";
+import PeopleTile, { peopleLayout, faceHook, faceTitle } from "../PeopleTile";
+import { personName } from "../PersonFeature";
 import { clampWords, supDigits, tidy } from "../textUtils";
 
 vi.mock("src/models/BoMOnlineAPI", () => ({
@@ -237,5 +238,66 @@ describe("PeopleTile: blind-audit fixes (2026-10-16)", () => {
     const { container } = renderIn(<PeopleTile data={data} />);
     expect(container.textContent).toMatch("Attacker of Limhi’s People");
     expect(container.textContent).not.toMatch("Limhi's");
+  });
+
+  test("A7: person names are typographic too, so names, CTA and titles agree", () => {
+    expect(personName("Ishmael's Daughter")).toBe("Ishmael’s Daughter");
+    const data = sample();
+    data[0] = person(0, { name: "Gilead's Priest", description: long(200) });
+    const { container } = renderIn(<PeopleTile data={data} />);
+    expect(container.textContent).toMatch("Gilead’s Priest");
+    expect(container.textContent).not.toMatch("Gilead's");
+  });
+
+  test("H3: a face title fits its two-line band, so the JS phrase cut (not CSS) ends it", () => {
+    const t = faceTitle("Nephite prophet, king in Zarahemla, father of Benjamin");
+    expect(t.length).toBeLessThanOrEqual(38);
+    expect(t).toMatch(/…$/);
+    expect(t).not.toMatch(/\b(of|in|the|and|to)…$/);
+    expect(faceTitle("Wife of Abraham")).toBe("Wife of Abraham");
+    expect(faceTitle("Attacker of Limhi's People")).toBe("Attacker of Limhi’s People");
+  });
+});
+
+describe("PeopleTile: one figure, one card (audit H4)", () => {
+  test("an alias entry ('Wife of Nephi — Daughter of Ishmael') never sits beside the featured 'Ishmael's Daughter'", () => {
+    const data = sample();
+    data[0] = person(0, { slug: "ishmaels-daughter", name: "Ishmael's Daughter", title: "Pleader with Laman and Lemuel on behalf of Nephi", description: long(200) });
+    data[3] = person(3, { slug: "wife-of-nephi", name: "Wife of Nephi", title: "Daughter of Ishmael" });
+    data[4] = person(4, { slug: "ishmaels-wife", name: "Ishmael's Wife", title: "Mother of Ishmaelites" });
+    const { featured, profile, faces, mosaic } = peopleLayout(data);
+    const shown = [featured, profile, ...faces, ...mosaic].map((p) => p.slug);
+    expect(featured.slug).toBe("ishmaels-daughter");
+    expect(shown).not.toContain("wife-of-nephi");
+    expect(shown).toContain("ishmaels-wife"); // a different person in the same family stays
+  });
+
+  test("shared generic titles alone do not merge people", () => {
+    const data = sample();
+    data[1] = person(1, { slug: "k1", name: "Laman2", title: "King of the Lamanites" });
+    data[2] = person(2, { slug: "k2", name: "Lamoni's Father", title: "King of the Lamanites" });
+    const { featured, profile, faces, mosaic } = peopleLayout(data);
+    const shown = [featured, profile, ...faces, ...mosaic].map((p) => p.slug);
+    expect(shown).toEqual(expect.arrayContaining(["k1", "k2"]));
+  });
+});
+
+describe("Sampler.css: people touch targets", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const css = fs.readFileSync(path.resolve(__dirname, "../../Sampler.css"), "utf8");
+  test("F2: People and People · Profile eyebrows get the 44px coarse-pointer hit", () => {
+    const coarse = css.split("@media (pointer: coarse)").slice(1).join("\n");
+    expect(coarse).toMatch(/\.peopleTile \.tileHeading a::after/);
+    expect(coarse).toMatch(/\.personProfileTile \.tileHeading a::after/);
+  });
+});
+
+describe("PeopleTile skeleton (audit B1)", () => {
+  test("phone skeleton reserves the measured 851–884px footprint, not 775px", async () => {
+    const { skeletonHeight } = await import("../_ds/skeletonHeights");
+    const px = parseInt(skeletonHeight("tile-people", true), 10);
+    expect(px).toBeGreaterThanOrEqual(850);
+    expect(px).toBeLessThanOrEqual(890);
   });
 });

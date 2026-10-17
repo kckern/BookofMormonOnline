@@ -47,7 +47,7 @@ const PHONE = {
 
   "tile-narration": "384px",
   "tile-contents": "384px", // bounded (BoundedTile) on phone
-  "tile-people": "775px",
+  "tile-people": "865px", // 2026-10-16 people-B1: 3×3 faces + bio + CTA row, 4 loads 851–884
   "tile-text": "385px",
   "tile-commentary": "305px",
   "tile-history": "450px",

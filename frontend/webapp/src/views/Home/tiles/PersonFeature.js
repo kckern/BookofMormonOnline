@@ -10,9 +10,10 @@ import { flatten, supDigits, tidy } from "./textUtils";
 /**
  * Display name for a person row: DB names are stored inverted ("Gideon, Chief
  * Judge of") and carry disambiguation digits ("Mosiah2", "Nephi₂") — render
- * "Chief Judge of Gideon", "Mosiah²", "Nephi²".
+ * "Chief Judge of Gideon", "Mosiah²", "Nephi²" — with typographic apostrophes,
+ * like every title beside it ("Gilead’s Priest").
  */
-export const personName = (name) => supDigits(processName(name || "")).trim();
+export const personName = (name) => tidy(supDigits(processName(name || "")));
 
 /**
  * A person's portrait as a TileImage, falling back to a monogram tile in the
