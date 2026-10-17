@@ -291,6 +291,9 @@ html[data-theme="dark"] .sampler .scripture_link {
   border-color: rgba(255, 255, 255, 0.22);
   color: #d6d6d6;
 }
+/* a pill travels with its adjacent bracket/punctuation (refProse
+   bindRefPunctuation): no "(" orphaned at a line end (audit r4 A3) */
+.sampler .refNoBreak { white-space: nowrap; }
 /* Touch: the chip is ~17px tall; give EVERY ref pill an invisible >=44px hit
    area without changing its look (audit F2). The inset counts from the padding
    box (15px inside the 1px border), so 15 + 2x15 = 45px measured. Tiles that
@@ -800,43 +803,65 @@ html[data-theme="dark"] .faxTileTitle { color: #f0f0f0; }
 }
 .commentaryTileTitle:hover { color: #000; text-decoration: underline; text-decoration-color: rgba(201, 162, 75, 0.7); }
 html[data-theme="dark"] .commentaryTileTitle { color: #f0f0f0; }
-/* line-clamp, no scroll trap — a read-more shows only when actually cut */
+/* Clamped by CommentaryTile to a WHOLE-LINE height (aside-matched, max 9
+   lines) — no -webkit-line-clamp, whose mid-word "…" the fade then half-erased
+   (blind audit r4 H3). A read-more shows only when actually cut. */
 .commentaryTileExcerpt {
   margin: 0;
   font-size: 0.8rem;
   line-height: 1.45;
   color: #555;
-  display: -webkit-box;
-  -webkit-line-clamp: 9;
-  -webkit-box-orient: vertical;
+  display: block;
   overflow: hidden;
 }
 .commentaryTileExcerpt.expanded {
-  display: block;
-  -webkit-line-clamp: none;
   overflow: visible;
 }
 .commentaryTileExcerpt p { margin: 0 0 0.4rem; }
 .commentaryTileExcerpt p:last-child { margin-bottom: 0; }
-/* clamped to the aside height: fade the cut instead of slicing a line */
+/* cut: the last visible line's tail fades out where its TEXT ends
+   (--line-end, measured), the same treatment as ExpandableText's fade clamp */
 .commentaryTileExcerpt.isClamped {
-  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 1.6rem), transparent);
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 1.6rem), transparent);
+  -webkit-mask:
+    linear-gradient(#000, #000) top / 100% calc(100% - 1lh) no-repeat,
+    linear-gradient(to right, #000 calc(var(--line-end, 100%) - 6em), transparent var(--line-end, 100%)) bottom / 100% 1lh no-repeat;
+  mask:
+    linear-gradient(#000, #000) top / 100% calc(100% - 1lh) no-repeat,
+    linear-gradient(to right, #000 calc(var(--line-end, 100%) - 6em), transparent var(--line-end, 100%)) bottom / 100% 1lh no-repeat;
 }
 html[data-theme="dark"] .commentaryTileExcerpt { color: #c4c4c4; }
-/* ATV (textual-variants) apparatus inside a commentary tile: the popup's .atv
-   box is tuned for a wide window (width: calc(100% - 9rem), 1rem margin), so
-   pull it back to fill the narrow tile column and shrink the type a notch. */
-.commentaryTile .commentaryTileAtv { align-self: stretch; margin: 0 0 0.5rem; min-width: 0; }
+/* ATV (textual-variants) apparatus inside a commentary tile. The popup's .atv
+   is a gray monospace box that read as a debug block on the card (blind audit
+   r4 A3); here it is the quoted verse — Scripture serif on the page ground with
+   the hairline gold rule the text tile uses for poetry — and the variant
+   reading a cream-tinted pill. */
+.commentaryTile .commentaryTileAtv { align-self: stretch; margin: 0 0 0.55rem; min-width: 0; }
 .commentaryTile .atv {
   width: 100%;
   margin: 0;
-  padding: 0.5ex 0.7ex;
-  font-size: 0.72rem;
-  line-height: 1.35;
+  padding: 0.05rem 0 0.05rem 0.7rem;
+  border: 0;
+  border-left: 2px solid rgba(201, 162, 75, 0.55);
+  border-radius: 0;
+  background: none;
+  font-family: "Scripture", Georgia, "Times New Roman", serif;
+  font-size: 0.92rem;
+  line-height: 1.4;
+  color: #333;
 }
 .commentaryTile .atv .source { width: 100%; }
-.commentaryTile .atv-string { font-size: 0.72rem; padding: 0 0.6ex; }
+.commentaryTile .atv-string {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 700;
+  color: #111;
+  background: #f5ecd6;
+  padding: 0 0.45ex;
+  border-radius: 0.4ex;
+}
+.commentaryTile .atv-string:hover { position: static; border-bottom: 0; }
+html[data-theme="dark"] .commentaryTile .atv { color: #d6d6d6; background: none; }
+html[data-theme="dark"] .commentaryTile .atv-string { color: #f2f2f2; background: rgba(201, 162, 75, 0.22); }
 .commentaryTileReadMore {
   margin-top: 0.3rem;
   font-size: 0.72rem;
@@ -878,6 +903,41 @@ html[data-theme="dark"] .commentaryTileCover { background: #2c2c2c; border-color
    never overruns the narrow aside */
 .commentaryTileFoot { display: flex; justify-content: flex-end; }
 .commentaryTileFoot:empty { display: none; }
+/* Wide card (single column at tablet width, ~770px): beside short prose the
+   cover column (ref + 2:3 cover + four-line attribution) set the card height
+   and left ~200px blank under the text (blind audit r4 A1). There the prose
+   takes the full width and cover + attribution + ref become a footer row,
+   level with "See in context"; the card height follows the prose. */
+.tile-commentary { container-type: inline-size; container-name: commentaryCard; }
+@container commentaryCard (min-width: 520px) {
+  .commentaryTile {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "head head" "main main" "aside foot";
+    column-gap: 1rem;
+    align-items: end;
+  }
+  .commentaryTile > .tileHeading { grid-area: head; }
+  .commentaryTile .commentaryTileBody { display: contents; }
+  .commentaryTile .commentaryTileMain { grid-area: main; }
+  .commentaryTile .commentaryTileFoot { grid-area: foot; }
+  .commentaryTile .commentaryTileAside {
+    grid-area: aside;
+    width: auto;
+    margin-top: 0.75rem;
+    display: grid;
+    grid-template-columns: 2.6rem minmax(0, 1fr);
+    grid-template-areas: "cover src" "cover ref";
+    column-gap: 0.65rem;
+    row-gap: 0.3rem;
+    align-items: start;
+    align-content: start;
+  }
+  .commentaryTile .commentaryTileCoverLink { grid-area: cover; }
+  .commentaryTile .commentaryTileCover { border-radius: 0.2rem; }
+  .commentaryTile .commentaryTileSource { grid-area: src; align-self: end; }
+  .commentaryTile .commentaryTileRef { grid-area: ref; justify-self: start; text-align: left; }
+}
 
 /* ================================================================
    CONTENTS — image + title + description

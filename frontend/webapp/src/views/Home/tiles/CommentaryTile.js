@@ -12,6 +12,9 @@ import TileDeepLink from "./_ds/TileDeepLink";
 import TileImage from "./_ds/TileImage";
 import labelOr from "./_ds/labelOr";
 import RefPill, { makeRefPillParserOptions } from "./RefPill";
+import { bindRefPunctuation } from "./_ds/refProse";
+import { contentRects, snapToLines } from "./_ds/lineClamp";
+import { lastLineEnd } from "./ExpandableText";
 import { readExpanded, writeExpanded } from "./samplerSession";
 
 // Block-level boundaries become paragraph breaks; every other tag is dropped.
@@ -42,6 +45,9 @@ export const toParagraphs = (html) =>
 // paragraphs up to ~EXPANDED_BUDGET chars, the last one cut at a word with "…".
 // "See in context" carries the reader to the full commentary.
 const EXPANDED_BUDGET = 1100;
+// Collapsed clamp bounds, in line boxes (see the clamp effect below).
+const MAX_LINES = 9;
+const WIDE_LINES = 6;
 const budgetParagraphs = (paras, budget) => {
   const out = [];
   let left = budget;
@@ -93,6 +99,7 @@ function CommentaryTileInner({ data }) {
   const asideRef = useRef(null);
   const bodyRef = useRef(null);
   const [maxH, setMaxH] = useState(null);
+  const [lineEnd, setLineEnd] = useState(null);
   // The reveal survives Back (audit commentary-E2): restored expanded = it was
   // truncated when the reader opened it, so the Show less toggle comes back too.
   const persistKey = data?.id ? `commentary:${data.id}` : undefined;
@@ -122,20 +129,31 @@ function CommentaryTileInner({ data }) {
     [isAtv, data?.text, data?.preview],
   );
 
-  // Match the excerpt's clamp height to the aside column so both sides bottom
-  // out together; then detect whether the text actually overflows that height.
+  // Clamp height: beside the aside column, match it so both sides bottom out
+  // together; on a wide card (aside moved to a footer row, see Sampler.css
+  // @container commentaryCard) a fixed WIDE_LINES. Either way at most
+  // MAX_LINES, snapped DOWN to a whole line box (never a sliced line), with the
+  // last line's tail faded where its text ends. Truncation is measured off the
+  // content's own boxes; jsdom (no layout) falls back to scrollHeight.
   useLayoutEffect(() => {
     if (expanded || isAtv) return;
     const aside = asideRef.current;
     const body = bodyRef.current;
     if (!aside || !body) return;
+    const lh = parseFloat(getComputedStyle(body).lineHeight) || 18;
+    const beside = aside.offsetLeft > body.offsetLeft + 4;
     const titleH = body.previousElementSibling ? body.previousElementSibling.offsetHeight + 6 : 0;
-    const target = Math.max(72, aside.offsetHeight - titleH - 30); // 30 ≈ read-more row
-    setMaxH(target);
-    // the CSS line-clamp can cut before the aside-matched height (wide tiles):
-    // either bound counts as truncation, so the reveal is never silently lost
-    const shownH = body.clientHeight ? Math.min(target, body.clientHeight) : target;
-    setTruncated(body.scrollHeight > shownH + 2);
+    const asideTarget = Math.max(72, aside.offsetHeight - titleH - 30); // 30 ≈ read-more row
+    const target = Math.min(beside ? asideTarget : WIDE_LINES * lh, MAX_LINES * lh);
+    const rects = contentRects(body).filter((r) => r.height > 0);
+    const box = body.getBoundingClientRect();
+    const h = snapToLines(rects, box.top, target);
+    const over = rects.length
+      ? Math.max(...rects.map((r) => r.bottom)) - box.top > h + 2
+      : body.scrollHeight > h + 2;
+    setMaxH(h);
+    setTruncated(over);
+    setLineEnd(over && rects.length ? lastLineEnd(rects, { left: box.left, right: box.right, bottom: box.top + h }, lh) : null);
   }, [paragraphs, expanded, isAtv]);
 
   // Gate the deeplink only when a read-more will actually render (pre-paint).
@@ -179,10 +197,10 @@ function CommentaryTileInner({ data }) {
           <div
             ref={bodyRef}
             className={`commentaryTileExcerpt${expanded ? " expanded" : truncated && !isAtv ? " isClamped" : ""}`}
-            style={!expanded && maxH ? { maxHeight: maxH } : undefined}
+            style={!expanded && maxH ? { maxHeight: maxH, ...(lineEnd != null ? { "--line-end": `${lineEnd}px` } : null) } : undefined}
           >
             {shown.map((p, i) => (
-              <p key={i}>{Parser(getDetectedScripturesHtml(p), makeRefPillParserOptions({ contextRef: data.reference }))}</p>
+              <p key={i}>{Parser(bindRefPunctuation(getDetectedScripturesHtml(p)), makeRefPillParserOptions({ contextRef: data.reference }))}</p>
             ))}
           </div>
           {!isAtv && truncated ? (

@@ -13,6 +13,17 @@ const WRAPPED = new RegExp(`\\(\\s*((?:${PILL}[\\s,;]*)+?)\\s*\\)`, "g");
 export const detectedRefsHtml = (text) =>
   getDetectedScripturesHtml(text || "").replace(WRAPPED, (m, inner) => inner.replace(/[\s,;]+$/, ""));
 
+// Brackets/quotes that open right before a pill, and punctuation that closes
+// right after it. The pill is a nowrap inline-block, so on its own the line
+// breaks between "(" and the chip, orphaning the bracket (audit r4 commentary A3).
+const BOUND = new RegExp(`([(\\[“‘"]*)(${PILL})([)\\]”’".,;:!?]*)`, "g");
+
+/** Wrap each pill with its adjacent brackets/punctuation in a nowrap run. */
+export const bindRefPunctuation = (html) =>
+  (html || "").replace(BOUND, (m, open, pill, close) =>
+    open || close ? `<span class="refNoBreak">${open}${pill}${close}</span>` : m,
+  );
+
 // html-react-parser keeps `className` in Node but the browser DOM parser
 // lowercases it — match every spelling (see _Common/scriptureLinkReplacer.js).
 const replace = (node) => {
