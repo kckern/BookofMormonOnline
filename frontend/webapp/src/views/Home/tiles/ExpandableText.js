@@ -75,6 +75,38 @@ function overflows(el) {
   return el.scrollHeight > el.clientHeight + 2;
 }
 
+/**
+ * Where the clamp's last VISIBLE line ends (px from the box's left), or null
+ * when it runs to the box edge or there is no layout. The fade mask ends there,
+ * so a short last line still fades into "continues" instead of fading blank
+ * space (blind audit r4 placeProfile-H3). A line is "the last" when its
+ * vertical centre lies within the bottom line box of the clip.
+ */
+export function lastLineEnd(rects, box, lh) {
+  let right = -Infinity;
+  for (const r of rects || []) {
+    if (!(r.height > 0)) continue;
+    const mid = (r.top + r.bottom) / 2;
+    if (mid > box.bottom - lh && mid <= box.bottom) right = Math.max(right, r.right);
+  }
+  if (right === -Infinity) return null;
+  const end = Math.round(right - box.left);
+  return end >= box.right - box.left - 8 ? null : end;
+}
+
+function markLineEnd(el) {
+  try {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const lh = parseFloat(getComputedStyle(el).lineHeight);
+    const end = lh > 0 ? lastLineEnd(range.getClientRects?.(), el.getBoundingClientRect(), lh) : null;
+    if (end == null) el.style.removeProperty("--line-end");
+    else el.style.setProperty("--line-end", `${end}px`);
+  } catch {
+    /* no Range layout */
+  }
+}
+
 export default function ExpandableText({ children, lines = 6, className, fade = false, persistKey }) {
   // restored open = it was truncated when the reader expanded it
   const [open, setOpen] = useState(() => readExpanded(persistKey));
@@ -107,19 +139,24 @@ export default function ExpandableText({ children, lines = 6, className, fade = 
     setTruncated(over);
     if (over) registerGate(); // there IS something to expand → gate a sibling deeplink
     hideClippedFocusables(el);
+    if (fade && over) markLineEnd(el);
+    else ref.current.style.removeProperty("--line-end");
     // registerGate is intentionally omitted from deps (stable-enough; matches the
     // no-op default when there is no provider).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [children, lines, open]);
+  }, [children, lines, open, fade]);
   // Width changes (container resize, font load) move the clamp edge: re-run the
   // Tab-order pass while collapsed.
   useEffect(() => {
     const el = ref.current;
     if (!el || open || typeof ResizeObserver === "undefined") return undefined;
-    const ro = new ResizeObserver(() => hideClippedFocusables(el));
+    const ro = new ResizeObserver(() => {
+      hideClippedFocusables(el);
+      if (fade) markLineEnd(el);
+    });
     ro.observe(el);
     return () => ro.disconnect();
-  }, [open]);
+  }, [open, fade]);
   const onScroll = (e) => {
     if (!open && e.currentTarget.scrollTop) e.currentTarget.scrollTop = 0;
   };

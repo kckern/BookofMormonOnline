@@ -2,7 +2,7 @@ import "@testing-library/jest-dom";
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { RevealProvider, useReveal } from "../_ds/Reveal";
-import ExpandableText from "../ExpandableText";
+import ExpandableText, { lastLineEnd } from "../ExpandableText";
 
 // Force truncation: jsdom reports 0 for scrollHeight/clientHeight, so stub them
 // so ExpandableText's "overflowing" check is true and the read-more renders.
@@ -180,5 +180,25 @@ describe("persistKey: the reveal survives a Back (audit placeProfile E1)", () =>
     clearSession();
     render(ui());
     expect(screen.getByRole("button", { name: "Read more" })).toBeTruthy();
+  });
+});
+
+// blind audit r4 placeProfile-H3: the fade covered the box's rightmost 6em, so a
+// clamp whose last line ended early ("…the borders of Mormon") faded blank space
+// and the cut read as a finished sentence. The fade ends where the line does.
+describe("lastLineEnd: where the clamp's last visible line ends", () => {
+  const box = { left: 100, right: 500, bottom: 300 };
+  const R = (left, right, top, bottom) => ({ left, right, top, bottom, height: bottom - top });
+  test("a short last line ends at its text, measured from the box's left", () => {
+    const rects = [R(100, 498, 262, 281), R(100, 260, 281, 300), R(100, 400, 300, 319)];
+    expect(lastLineEnd(rects, box, 19)).toBe(160);
+  });
+  test("a chip on the last line counts; lines below the clip don't", () => {
+    const rects = [R(100, 220, 281, 300), R(222, 300, 279, 302), R(100, 490, 300, 319)];
+    expect(lastLineEnd(rects, box, 19)).toBe(200);
+  });
+  test("a full last line (or no layout) leaves the fade at the box edge", () => {
+    expect(lastLineEnd([R(100, 497, 281, 300)], box, 19)).toBeNull();
+    expect(lastLineEnd([], box, 19)).toBeNull();
   });
 });

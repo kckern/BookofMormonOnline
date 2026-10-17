@@ -1970,8 +1970,9 @@ html[data-theme="dark"] .readMorePill:hover { background: rgba(201, 162, 75, 0.2
   overflow: hidden;
 }
 /* fade variant: whole line boxes only (never a mid-word cut), the tail of the
-   last line fading out. The fade is ~6em wide so a short last line still
-   reads as "continues". */
+   last line fading out. The fade is ~6em wide and ends where the last line's
+   TEXT ends (--line-end, measured by ExpandableText), so a short last line
+   still reads as "continues" (blind audit r4 placeProfile-H3). */
 .clampLines.clampFade {
   display: block;
   max-height: calc(var(--clamp-lines, 6) * 1lh);
@@ -1979,10 +1980,10 @@ html[data-theme="dark"] .readMorePill:hover { background: rgba(201, 162, 75, 0.2
 .clampLines.clampFade.isClipped {
   -webkit-mask:
     linear-gradient(#000, #000) top / 100% calc(100% - 1lh) no-repeat,
-    linear-gradient(to left, transparent, #000 6em) bottom / 100% 1lh no-repeat;
+    linear-gradient(to right, #000 calc(var(--line-end, 100%) - 6em), transparent var(--line-end, 100%)) bottom / 100% 1lh no-repeat;
   mask:
     linear-gradient(#000, #000) top / 100% calc(100% - 1lh) no-repeat,
-    linear-gradient(to left, transparent, #000 6em) bottom / 100% 1lh no-repeat;
+    linear-gradient(to right, #000 calc(var(--line-end, 100%) - 6em), transparent var(--line-end, 100%)) bottom / 100% 1lh no-repeat;
 }
 
 /* ================================================================
@@ -2306,6 +2307,20 @@ html[data-theme="dark"] .placeProfileDesc { color: #c4c4c4; }
   }
   .placeProfilePlace .placeProfileHead { margin-bottom: 0; }
   .placeProfilePlace .placeProfileImgLink > img { max-height: none; aspect-ratio: 4 / 3; }
+  /* collapsed, the prose fills the hero's height in whole lines: the hero is
+     5/11 of the row less the gap, at 4:3 → (100cqi − 1rem)·15/44 tall; the
+     Read more ⇄ Open row (~2.6rem) sits under it. Five lines left a ~100px
+     void beside the picture (blind audit r4 placeProfile-A1). */
+  .placeProfilePlace .placeProfileDesc > .clampLines.clampFade {
+    --pp-hero-h: calc((100cqi - 1rem) * 15 / 44);
+    max-height: max(calc(var(--clamp-lines, 6) * 1lh), round(down, calc(var(--pp-hero-h) - 2.6rem), 1lh));
+  }
+  @media (pointer: coarse) {
+    .placeProfilePlace .placeProfileDesc > .clampLines.clampFade {
+      /* the touch pill is 44px tall: reserve 0.55rem + 44px for its row */
+      max-height: calc(max(calc(var(--clamp-lines, 6) * 1lh), round(down, calc(var(--pp-hero-h) - 0.55rem - 44px), 1lh)) + 14px);
+    }
+  }
 }
 
 /* ================================================================

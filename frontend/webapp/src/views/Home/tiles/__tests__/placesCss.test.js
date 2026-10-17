@@ -83,3 +83,16 @@ test("narrow cards drop the info band and caption the name along the foot (place
   expect(q).toMatch(/\.placesInfoOverlay\s*\{\s*display:\s*none/);
   expect(q).toMatch(/\.placesNameOverlay\s*\{[^}]*bottom:\s*0\.35rem/);
 });
+
+// blind audit r4 placeProfile-A1: side by side (≥560px container) the 4:3 hero
+// stood beside only five lines of prose, a ~100px void under "Read more". The
+// collapsed clamp there fills the hero's height in whole lines instead.
+test("side by side, the collapsed prose fills the hero's height in whole lines (placeProfile-A1)", () => {
+  const q = css.split("@container").find((b) => /^\s*\(min-width:\s*560px\)/.test(b) && /placeProfilePlace/.test(b));
+  expect(q).toBeTruthy();
+  const rule = q.match(/\.placeProfilePlace \.placeProfileDesc > \.clampLines\.clampFade\s*\{([^}]*)\}/);
+  expect(rule).toBeTruthy();
+  // the hero is 5/11 of the row (less the 1rem gap) at 4:3 → (100cqi − 1rem)·15/44 tall
+  expect(rule[1]).toMatch(/--pp-hero-h:\s*calc\(\(100cqi - 1rem\) \* 15 \/ 44\)/);
+  expect(rule[1]).toMatch(/max-height:[^;]*round\(down, calc\(var\(--pp-hero-h\) - [^;]*1lh\)/);
+});
