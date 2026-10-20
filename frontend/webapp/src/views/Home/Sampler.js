@@ -12,7 +12,7 @@ import { featuredArtIds, withoutSeenArt } from "./tiles/ImageArtTile";
 import { read as readCache, write as writeCache, isFresh as cacheIsFresh } from "./tiles/homeSamplerCache";
 import { readSession, writeSession, clearSession, readAnchor, writeAnchor } from "./tiles/samplerSession";
 import { findAnchor, findLink, pinAnchor, trackAnchor } from "./tiles/scrollAnchor";
-import { singleColumnOrder, canGrowReserves, placeBatchTiles, spaceAcrossColumns } from "./tiles/samplerLayout";
+import { singleColumnOrder, canGrowReserves, placeBatchTiles, spaceAcrossColumns, familyKey, onePerFamily } from "./tiles/samplerLayout";
 import TileBoundary from "./tiles/_ds/TileBoundary";
 import BoundedTile from "./tiles/_ds/BoundedTile";
 import { TileIdentity } from "./tiles/_ds/tileIdentity";
@@ -400,7 +400,9 @@ export default function Sampler() {
         shownPayloadsRef.current.forEach((sp) => featuredArtIds(sp).forEach((x) => seenArt.add(x)));
         reserveRef.current = {
           payload: withoutSeenArt(arrangeArchives(withoutSeenMatters(withoutSeenPlaces(assembleSampler(r), seen), seenMatters), archives), seenArt),
-          tiles: shuffle(batchTiles),
+          // one matters group tile per batch: three identical 5-card mosaics
+          // per batch clustered down the feed (R8 matters concept-H4)
+          tiles: onePerFamily(shuffle(batchTiles), ["matters"]),
         };
         // the latest closure: this one may predate a Retry that cleared feedEnd
         if (atBottomRef.current) loadMoreRef.current();
@@ -696,7 +698,6 @@ export default function Sampler() {
     ...reserves.filter((r) => r.side === "rail").map((r) => r.key),
   ];
   const lastIn = (col) => mainBase.filter((_, i) => i % 2 === col).map(([k]) => k).at(-1) ?? null;
-  const familyKey = (k) => k.replace(/Fill\d*$|\d+$|B$/, ""); // commentary2 / artB / chiasmus2 read as their family
   const batchEntries = [];
   extraBatches.forEach((b, bi) => {
     b.tiles.forEach((def, ti) => {

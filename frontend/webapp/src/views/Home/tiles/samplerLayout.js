@@ -48,11 +48,35 @@ export function placeBatchTiles({ railH, mainColH, mainCount, last, tiles }) {
   const mainLast = [...(last?.main || [null, null])];
   return tiles.map(({ key, e }) => {
     let side = rH <= mH ? "rail" : "main";
-    const clash = (s) => (s === "rail" ? railLast === key : mainLast[n % 2] === key);
+    // main: the column it lands in, or the other masonry column — a tile
+    // level with its family reads as a pair (R8 matters concept-H4)
+    const clash = (s) => (s === "rail" ? railLast === key : mainLast[n % 2] === key || mainLast[(n + 1) % 2] === key);
     if (clash(side) && !clash(side === "rail" ? "main" : "rail")) side = side === "rail" ? "main" : "rail";
     if (side === "rail") { rH += e; railLast = key; }
     else { mH += e / 2; mainLast[n % 2] = key; n += 1; }
     return side;
+  });
+}
+
+/**
+ * The family a tile key belongs to for anti-clustering: commentary2 / artB /
+ * chiasmus2 read as their base, and the three matters group tiles share one
+ * chassis (5 cards + mosaic), so they are one family (R8 matters concept-H4).
+ */
+export function familyKey(k) {
+  if (/^matters(Narrative|Material|Concept)$/.test(k)) return "matters";
+  return k.replace(/Fill\d*$|\d+$|B$/, "");
+}
+
+/** Keep only the first tile of each listed family (one matters group tile per batch). */
+export function onePerFamily(tiles, families) {
+  const seen = new Set();
+  return tiles.filter((t) => {
+    const f = familyKey(t.key);
+    if (!families.includes(f)) return true;
+    if (seen.has(f)) return false;
+    seen.add(f);
+    return true;
   });
 }
 

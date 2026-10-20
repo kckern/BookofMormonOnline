@@ -53,10 +53,17 @@ describe("placeBatchTiles (infinite tiles → rail | main)", () => {
   });
 
   test("tracks each column's last key across the batch", () => {
-    // places → main col 0, then places again: main col 1 is "notes" (ok) but
-    // the heights say rail; rail last is contents → rail
+    // places → main col 0; the next places would sit beside it in main col 1
+    // (R8 matters concept-H4: same-family tiles side by side) → rail; the
+    // third clashes everywhere and keeps the height choice
     const out = placeBatchTiles({ ...base, railH: 1000, mainColH: 0, tiles: [{ key: "places", e: 10 }, { key: "places", e: 10 }, { key: "places", e: 10 }] });
-    expect(out).toEqual(["main", "main", "rail"]);
+    expect(out).toEqual(["main", "rail", "main"]);
+  });
+
+  test("a tile never lands beside its family in the other masonry column (R8 concept-H4)", () => {
+    // next main item → col 0 ("art"); col 1 ends with "notes": a notes tile
+    // would sit level with it, so it takes the rail
+    expect(placeBatchTiles({ ...base, railH: 150, tiles: [{ key: "notes", e: 10 }] })).toEqual(["rail"]);
   });
 
   test("is deterministic for the same input (re-render places tiles in the same columns)", () => {
@@ -91,5 +98,24 @@ describe("spaceAcrossColumns (commentary anti-stacking)", () => {
   });
   it("no family items → others unchanged", () => {
     expect(spaceAcrossColumns(others(4), [], 2)).toEqual(others(4));
+  });
+});
+
+import { familyKey, onePerFamily } from "../samplerLayout";
+
+describe("tile families (R8 matters concept-H4)", () => {
+  test("the three matters group tiles read as one family", () => {
+    expect(familyKey("mattersNarrative")).toBe("matters");
+    expect(familyKey("mattersMaterial")).toBe("matters");
+    expect(familyKey("mattersConcept")).toBe("matters");
+    expect(familyKey("commentary2")).toBe("commentary");
+    expect(familyKey("artB")).toBe("art");
+    expect(familyKey("matterProfile")).toBe("matterProfile");
+  });
+
+  test("onePerFamily keeps the first matters group tile of a batch and drops the rest", () => {
+    const keys = ["art", "mattersConcept", "text", "mattersNarrative", "mattersMaterial", "matterProfile"];
+    expect(onePerFamily(keys.map((key) => ({ key })), ["matters"]).map((t) => t.key))
+      .toEqual(["art", "mattersConcept", "text", "matterProfile"]);
   });
 });
