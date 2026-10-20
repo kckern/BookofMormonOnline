@@ -66,34 +66,41 @@ export default function MatterProfileTile({ payload, group = "concept", matterIn
             {labelOr("menu_matters", "Matters")} · {labelOr("profile", "Profile")}
           </Link>
         </h3>
-        <div className="placeProfileHead">
-          {/* Mouse/touch shortcut only — the CTA below is the one tab stop. */}
-          <Link to={href} className={`placeProfileImgLink${heroFailed ? " isNoImage" : ""}`} tabIndex={-1}>
-            {heroFailed ? null : (
-              <TileImage
-                path={`matters/${matter.slug}`}
-                alt=""
-                sizes="(max-width: 900px) 100vw, 420px"
-                onError={(e) => {
-                  e.target.style.visibility = "hidden";
-                  setFailedSlug(matter.slug);
-                }}
-              />
-            )}
-            {name ? (
-              <span className="peopleFaceName placesNameOverlay mattersNameOverlay">
-                <span className="mattersNameText">{name}</span>
-              </span>
+        {/* the Place profile's body: hero | text column. On a wide single
+            column it splits side by side (Sampler.css @container); the text
+            column ends in one CTA row, Read more left and Open right. */}
+        <div className="placeProfileBody">
+          <div className="placeProfileHead">
+            {/* Mouse/touch shortcut only — the CTA below is the one tab stop. */}
+            <Link to={href} className={`placeProfileImgLink${heroFailed ? " isNoImage" : ""}`} tabIndex={-1}>
+              {heroFailed ? null : (
+                <TileImage
+                  path={`matters/${matter.slug}`}
+                  alt=""
+                  sizes="(max-width: 480px) 92vw, (max-width: 900px) 42vw, 380px"
+                  onError={(e) => {
+                    e.target.style.visibility = "hidden";
+                    setFailedSlug(matter.slug);
+                  }}
+                />
+              )}
+              {name ? (
+                <span className="peopleFaceName placesNameOverlay mattersNameOverlay">
+                  <span className="mattersNameText">{name}</span>
+                </span>
+              ) : null}
+            </Link>
+          </div>
+          <div className="placeProfileText">
+            {matter.subtitle ? <p className="matterProfileSub">{matter.subtitle}</p> : null}
+            {desc ? (
+              <ExpandableText className="placeProfileDesc" lines={5} fade persistKey={`matterProfile:${matter.slug}`}>
+                {Parser(stripParens(getDetectedScripturesHtml(desc)), proseOpts)}
+              </ExpandableText>
             ) : null}
-          </Link>
+            <TileDeepLink to={href} verb="open" name={name || matter.slug} />
+          </div>
         </div>
-        {matter.subtitle ? <p className="matterProfileSub">{matter.subtitle}</p> : null}
-        {desc ? (
-          <ExpandableText className="placeProfileDesc" lines={5} fade persistKey={`matterProfile:${matter.slug}`}>
-            {Parser(stripParens(getDetectedScripturesHtml(desc)), proseOpts)}
-          </ExpandableText>
-        ) : null}
-        <TileDeepLink to={href} verb="open" name={name || matter.slug} />
       </div>
     </RevealProvider>
   );

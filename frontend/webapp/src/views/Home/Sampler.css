@@ -3426,6 +3426,58 @@ html[data-theme="dark"] .mattersViewAll { background: #2c2c2c; }
   color: #4a4a4a;
 }
 html[data-theme="dark"] .matterProfileSub { border-color: #3a3a3a; color: #cfcfcf; }
+/* The Place profile's body (blind audit r6 matterProfile-A5/A2): one CTA row —
+   Read more ⇄ Show less left, "Open <matter>" flush right — under the deck and
+   the prose. ExpandableText's wrapper dissolves into the grid. */
+.matterProfileTile .placeProfileText {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "sub sub"
+    "desc desc"
+    "more open";
+  align-items: start;
+}
+.matterProfileTile .placeProfileText > .matterProfileSub { grid-area: sub; }
+.matterProfileTile .placeProfileDesc { display: contents; }
+.matterProfileTile .placeProfileDesc > div { grid-area: desc; min-width: 0; font-size: 0.8rem; line-height: 1.45; }
+.matterProfileTile .placeProfileDesc > .readMorePill { grid-area: more; justify-self: start; align-self: start; margin: 0.55rem 0 0; }
+.matterProfileTile .placeProfileText > .tileMoreLink {
+  grid-area: open;
+  justify-self: end;
+  align-self: start;
+  margin: 0.55rem 0 0 0.5rem;
+  max-width: 100%;
+  white-space: normal;
+}
+/* wide single column (tablet): the square illustration as a 4:3 picture at
+   ~5/11 of the width beside the deck + prose — not a 3:1 strip upscaled from
+   the 640w variant with the top and bottom of the composition cut away (A2) */
+.matterProfileTile { container-type: inline-size; }
+@container (min-width: 560px) {
+  .matterProfileTile .placeProfileBody {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    gap: 0 1rem;
+    align-items: start;
+  }
+  .matterProfileTile .placeProfileHead { margin-bottom: 0; }
+  .matterProfileTile .placeProfileImgLink > img.tileImage { max-height: none; aspect-ratio: 4 / 3; }
+  /* the deck heads the text column: flush with the hero's top, left-set */
+  .matterProfileTile .placeProfileText > .matterProfileSub { margin: 0 0 0.5rem; padding-inline: 0; text-align: left; }
+  /* collapsed, deck + prose + CTA row fill the hero's height: the hero is
+     (100cqi − 1rem)·15/44 tall; the one-line deck takes ~2.7rem and the CTA
+     row ~2.6rem. ExpandableText snaps the bound down to a whole line. */
+  .matterProfileTile .placeProfileDesc > .clampLines.clampFade {
+    --mp-hero-h: calc((100cqi - 1rem) * 15 / 44);
+    max-height: max(calc(var(--clamp-lines, 5) * 1lh), round(down, calc(var(--mp-hero-h) - 5.3rem), 1lh));
+  }
+  @media (pointer: coarse) {
+    .matterProfileTile .placeProfileDesc > .clampLines.clampFade {
+      max-height: calc(max(calc(var(--clamp-lines, 5) * 1lh), round(down, calc(var(--mp-hero-h) - 2.7rem - 0.55rem - 44px), 1lh)) + 14px);
+    }
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .mattersCardLink .placesImgWrap > img.tileImage,

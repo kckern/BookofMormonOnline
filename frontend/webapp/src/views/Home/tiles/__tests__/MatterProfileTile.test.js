@@ -137,3 +137,57 @@ describe("MatterProfileTile — parity with Place Profile (blind audit matters-1
     expect(screen.getByRole("link", { name: "Open Concept R" })).toBeInTheDocument();
   });
 });
+
+// blind audit r6 matterProfile-A5/A2: the matter profile shares the Place
+// profile's body — hero | text column, with Read more left and Open right on
+// one CTA row, and the hero beside the prose on a wide single column.
+describe("MatterProfileTile — layout parity with the place profile (r6 A2/A5)", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const css = fs.readFileSync(path.resolve(__dirname, "../../Sampler.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  // every rule body whose selector list contains `selector` exactly
+  const bodiesFor = (src, selector) => {
+    const out = [];
+    const re = /([^{}]+)\{([^{}]*)\}/g;
+    let m;
+    while ((m = re.exec(src))) {
+      const sels = m[1].split(",").map((s) => s.trim());
+      if (sels.includes(selector)) out.push(m[2]);
+    }
+    return out;
+  };
+
+  test("hero sits in .placeProfileBody beside a .placeProfileText column holding deck, prose and the Open CTA", () => {
+    const { container } = renderIn(<MatterProfileTile payload={{ mattersConcept: mk(18) }} group="concept" />);
+    const body = container.querySelector(".matterProfileTile > .placeProfileBody");
+    expect(body).not.toBeNull();
+    expect(body.querySelector(":scope > .placeProfileHead")).not.toBeNull();
+    const text = body.querySelector(":scope > .placeProfileText");
+    expect(text.querySelector(":scope > .matterProfileSub")).not.toBeNull();
+    expect(text.querySelector(":scope > .placeProfileDesc")).not.toBeNull();
+    expect(text.querySelector(":scope > .tileMoreLink, :scope > a")).not.toBeNull();
+  });
+
+  test("CSS: one CTA row — Read more in 'more' (left), Open in 'open' (right), deck above the prose", () => {
+    const grid = bodiesFor(css, ".matterProfileTile .placeProfileText").find((b) => /grid-template-areas/.test(b));
+    expect(grid).toMatch(/display:\s*grid/);
+    expect(grid).toMatch(/"sub sub"/);
+    expect(grid).toMatch(/"more open"/);
+    expect(bodiesFor(css, ".matterProfileTile .placeProfileDesc").some((b) => /display:\s*contents/.test(b))).toBe(true);
+    expect(bodiesFor(css, ".matterProfileTile .placeProfileDesc > .readMorePill").join()).toMatch(/grid-area:\s*more/);
+    const open = bodiesFor(css, ".matterProfileTile .placeProfileText > .tileMoreLink").join();
+    expect(open).toMatch(/grid-area:\s*open/);
+    expect(open).toMatch(/justify-self:\s*end/);
+  });
+
+  test("CSS: on a wide single column the hero is a 4:3 picture beside the prose, not a 3:1 strip", () => {
+    const block = css
+      .split("@container (min-width: 560px)")
+      .slice(1)
+      .map((b) => b.slice(0, b.indexOf("\n}\n")))
+      .join("\n");
+    expect(bodiesFor(block, ".matterProfileTile .placeProfileBody").join()).toMatch(/grid-template-columns/);
+    expect(bodiesFor(block, ".matterProfileTile .placeProfileImgLink > img.tileImage").join()).toMatch(/aspect-ratio:\s*4\s*\/\s*3/);
+    expect(bodiesFor(css, ".matterProfileTile").some((b) => /container-type:\s*inline-size/.test(b))).toBe(true);
+  });
+});
