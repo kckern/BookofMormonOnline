@@ -357,3 +357,36 @@ html[data-theme="dark"] .popupDrawer .historyDrawerFootClose { background: var(-
 html[data-theme="dark"] .popupDrawer .historyDrawerHead { border-color: var(--border); }
 html[data-theme="dark"] .popupDrawer .historyDrawerMeta,
 html[data-theme="dark"] .popupDrawer .historyDrawerClose { color: var(--text-secondary); }
+
+/* commentary sheet: a pinned head with the desktop modal's × (R6 commentary-D3) */
+.popupDrawer .commentaryDrawerHead {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 0 0 auto;
+    padding: 0 0.25rem 0 1.5rem;
+    border-bottom: 1px solid #ddd;
+    background: inherit;
+}
+.popupDrawer .commentaryDrawerEyebrow {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #666;
+}
+.popupDrawer .commentaryDrawerClose {
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    background: none;
+    font-size: 1.8rem;
+    line-height: 1;
+    color: #333;
+}
+html[data-theme="dark"] .popupDrawer .commentaryDrawerHead { border-color: var(--border); }
+html[data-theme="dark"] .popupDrawer .commentaryDrawerEyebrow,
+html[data-theme="dark"] .popupDrawer .commentaryDrawerClose { color: var(--text-secondary); }

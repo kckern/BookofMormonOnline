@@ -87,8 +87,13 @@ function DrawerContent({ setLocalOpen }) {
     const appController = useAppController();
     const type = appController.states.popUp.type;
     const id = appController.states.popUp.activeId;
+    const close = () => {
+        setLocalOpen(false);
+        setTimeout(appController.functions.clearPopUp, 550);
+        setTimeout(appController.functions.closePopUp, 500);
+    };
     if (type === "commentary")
-        return <CommentaryDrawer />;
+        return <CommentaryDrawer onClose={close} />;
     if (type === "user/progress")
         return <ProgressDrawer setLocalOpen={setLocalOpen} />;
     if (type === "history")
@@ -387,7 +392,20 @@ function ProgressDrawer({ setLocalOpen }) {
     </div>
 }
 
-function CommentaryDrawer() {
+/**
+ * The sheet's own way out (R6 commentary-D3): the 85vw drawer left only a 59px
+ * backdrop sliver or browser Back. A pinned head row with the same × as the
+ * desktop commentary modal; the body scrolls under it.
+ */
+function CommentaryDrawerHead({ onClose }) {
+    if (!onClose) return null;
+    return <div className="commentaryDrawerHead">
+        <span className="commentaryDrawerEyebrow">{labelOr("commentary", "Commentary")}</span>
+        <button type="button" className="commentaryDrawerClose" aria-label={labelOr("close", "Close")} onClick={onClose}>×</button>
+    </div>;
+}
+
+export function CommentaryDrawer({ onClose }) {
     const appController = useAppController();
     const isMounted = useIsMounted();
     const timeouts = useTimeouts();
@@ -430,13 +448,13 @@ function CommentaryDrawer() {
     }, [appController.popUpData[appController.states.popUp.activeId]]);
 
     if (!commentaryData && failed)
-        return <div className="subject p-4">
+        return <><CommentaryDrawerHead onClose={onClose} /><div className="subject p-4">
             <p>{labelOr("commentary_unavailable", "This commentary couldn’t be loaded.")}</p>
             <button type="button" className="btn btn-outline-secondary btn-sm" onClick={appController.functions.closePopUp}>
                 {labelOr("close", "Close")}
             </button>
-        </div>
-    if (!commentaryData) return <><Spinner /></>
+        </div></>
+    if (!commentaryData) return <><CommentaryDrawerHead onClose={onClose} /><Spinner /></>
 
     let tabs = (appController.states.popUp.ids.length === 1) ? null :
         <div className="topTabs">
@@ -459,6 +477,7 @@ function CommentaryDrawer() {
     });
 	const html = getDetectedScripturesHtml(commentaryData.text);
     return <>
+        <CommentaryDrawerHead onClose={onClose} />
         <div className="subject p-4 overflow-auto">
             {tabs}
             <div className="source">
