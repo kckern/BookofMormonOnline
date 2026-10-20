@@ -3,7 +3,7 @@
 **Date:** 2026-10-15
 **Source audit:** `docs/audits/2026-10-15-home-discover-tile-audit.md` (rubric §1–4, results R1–R3)
 **Goal (KC):** every tile in `frontend/webapp/src/views/Home/tiles/` audited, improved,
-standardized to the rubric, production-ready, and validated by a blind Fable review,
+standardized to the rubric, production-ready, and validated by blind review,
 then deployed to prod.
 
 ## Decisions (2026-10-15)
@@ -86,8 +86,8 @@ Every tile conforms to one anatomy and one set of behaviors. Each item maps to r
   - Unit tests per changed module.
   - The two-layer compliance test is extended: verb vocabulary, `TileImage` usage, error boundary, and no `<a>` nesting `RefPill`.
   - The Playwright page-pass and verify scripts are re-run.
-- **Blind Fable review:**
-  - Agents on the Fable model, one per tile family, get only:
+- **Blind review** (Fable dropped 2026-10-20 at KC's direction — too costly; use the session model):
+  - Fresh agents (default model, no Fable), one per tile family, get only:
     - a rubric-only extract (§1–2 and §4 of the audit doc, no results)
     - the capture harness
     - the running dev app

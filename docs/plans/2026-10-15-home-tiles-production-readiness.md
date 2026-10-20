@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Bring every Home/Discover tile up to the audit rubric and the tile standard, pass a blind Fable review (no P0/P1, gestalt ≥ 3), and deploy to prod.
+**Goal:** Bring every Home/Discover tile up to the audit rubric and the tile standard, pass a blind review (no P0/P1, gestalt ≥ 3), and deploy to prod.
 
 **Architecture:**
 - Shared primitives come first, so every tile adopts one implementation:
@@ -487,9 +487,9 @@ Family assignments, and the specific must-fix P0/P1s from R2.5 and R2.2:
   - one Back from every destination class lands on `/home` at the same `y`
 - [ ] Run the whole suite: `npx vitest run`.
 
-### Task 14: Blind Fable review loop
+### Task 14: Blind review loop (no Fable — dropped 2026-10-20 by KC)
 
-- [ ] Run a Workflow with 8 agents (`model: "fable"`), one per family. Each gets **only**:
+- [ ] Run a Workflow with 8 agents (default model; never `model: "fable"`), one per family. Each gets **only**:
   - `scripts/home-audit/rubric-blind.md`
   - `scripts/home-audit/tileharness.mjs` + README
   - the tile source paths for its family
