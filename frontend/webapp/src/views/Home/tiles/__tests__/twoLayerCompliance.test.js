@@ -35,6 +35,7 @@ const EXEMPT = new Set([
   "samplerSession.js",
   "samplerLayout.js",
   "scrollAnchor.js",
+  "mapStoryGestures.js",
   "archiveFeed.js", // batch arrangement helper, not a tile
   "planPreviewCache.js",
   "registry.js",

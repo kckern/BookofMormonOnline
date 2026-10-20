@@ -17,6 +17,7 @@ import { framedLegIndices, legVisibility, legsOf, stopsOf } from "./mapStoryPath
 import { buildStoryOverlay, livePosition, storyStepForStop, travelerPosition } from "./mapStoryLayout";
 import TileImage from "./_ds/TileImage";
 import labelOr from "./_ds/labelOr";
+import { storyMapGestures, isCoarsePointer } from "./mapStoryGestures";
 import { displayPersonName, supDigits } from "./textUtils";
 
 // Same FARMS "internal" model as the full map. These coordinates belong to
@@ -184,6 +185,17 @@ export default function MapStoryTileInner({
   const mapMovedRef = useRef(false);
   const [overlay, setOverlay] = useState({ markers: [], clusters: [], labels: [] });
   const [mapMoved, setMapMoved] = useState(false);
+  // touch: one finger scrolls the page, two pan the map (mapStoryGestures)
+  const gestures = useMemo(() => storyMapGestures(isCoarsePointer()), []);
+  const [twoFingerHint, setTwoFingerHint] = useState(false);
+  const hintTimerRef = useRef(null);
+  useEffect(() => () => clearTimeout(hintTimerRef.current), []);
+  const onMapTouchStart = (e) => {
+    if (!gestures.hint || e.touches?.length !== 1) return;
+    setTwoFingerHint(true);
+    clearTimeout(hintTimerRef.current);
+    hintTimerRef.current = setTimeout(() => setTwoFingerHint(false), 1600);
+  };
 
   const legs = useMemo(() => legsOf(moves), [moves]);
   const stops = useMemo(() => stopsOf(moves), [moves]);
@@ -466,8 +478,13 @@ export default function MapStoryTileInner({
         showFullExtent: true,
       }),
       controls: [],
-      interactions: Interaction.defaults({ mouseWheelZoom: false }),
+      interactions: Interaction.defaults({ mouseWheelZoom: false, dragPan: gestures.defaultDragPan }).extend(
+        gestures.panCondition ? [new Interaction.DragPan({ condition: gestures.panCondition })] : [],
+      ),
     });
+    // OpenLayers sets touch-action:none on its viewport; on touch screens let the
+    // browser keep vertical one-finger scrolling (blind R11 mapstory-F1)
+    map.getViewport().style.touchAction = gestures.touchAction;
     mapRef.current = map;
     didMountRef.current = false;
 
@@ -685,7 +702,12 @@ export default function MapStoryTileInner({
   };
 
   return (
-    <div className="mapStoryMap" data-testid="map-story-map">
+    <div className="mapStoryMap" data-testid="map-story-map" onTouchStart={onMapTouchStart}>
+      {twoFingerHint ? (
+        <div className="mapStoryTwoFingerHint" role="status">
+          {labelOr("mapstory_two_fingers", "Use two fingers to move the map")}
+        </div>
+      ) : null}
       <div
         ref={mapElementRef}
         className="mapTileCanvas"

@@ -2846,6 +2846,26 @@ html[data-theme="dark"] .mapStoryTile .mapTileFrame {
   background: #85cbf7;
 }
 .mapStoryMap { position: absolute; inset: 0; }
+/* touch: the cooperative-gesture hint over the map (one finger scrolls the page) */
+.mapStoryTwoFingerHint {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(20, 20, 20, 0.55);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: center;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .mapStoryTwoFingerHint { animation: mapStoryHintIn 0.15s ease-out; }
+}
+@keyframes mapStoryHintIn { from { opacity: 0; } to { opacity: 1; } }
 .mapStoryMap .mapTileCanvas { z-index: 0; outline: none; }
 .mapStoryMap .mapTileCanvas:focus-visible {
   box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.95), inset 0 0 0 5px #c9a24b;
