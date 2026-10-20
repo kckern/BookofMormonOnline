@@ -30,7 +30,7 @@ export const eligiblePairs = index.filter(([, kjv]) => kjv < ISAIAH[0] || kjv > 
 // curated highlights), so a wider walk costs bytes, not round trips. The
 // curated `versehighlights` rows cover ~all pairs and ~69% carry a 4+ word
 // phrase (~87% at 3+), so six spread candidates leave a dud rate near zero.
-export const CANDIDATES = 6;
+export const CANDIDATES = 10;
 const STRONG = 4; // words in a phrase worth showing outright
 const PARTIAL = 3; // best-of fallback when no candidate reaches STRONG
 
@@ -153,16 +153,56 @@ export const scorePair = (bomText, kjvText, hl) => {
   // 1-2 word curated rows ("shall be", "Therefore") are stop phrases: marking
   // them beside the real shared clause reads as noise, so they are dropped from
   // both the marks and the score (audit H1).
-  const hits = (text, phrases) => phrases.map((p) => findPhrase(text, p)).filter((h) => h && h.words >= PARTIAL);
+  const hits = (text, phrases) =>
+    phrases
+      .map((p) => findPhrase(text, p))
+      .filter(Boolean)
+      .map((h) => ({ ...h, words: contentWords(text.slice(h.range[0], h.range[1])) }))
+      .filter((h) => h.words >= PARTIAL);
   const bomHits = hits(bomText, bomPh);
   const kjvHits = hits(kjvText, kjvPh);
   if (bomHits.length && kjvHits.length) {
     const score = Math.min(Math.max(...bomHits.map((h) => h.words)), Math.max(...kjvHits.map((h) => h.words)));
     return { score, bomRanges: bomHits.map((h) => h.range), kjvRanges: kjvHits.map((h) => h.range) };
   }
-  const runs = sharedRuns(bomText, kjvText, PARTIAL);
+  const runs = sharedRuns(bomText, kjvText, PARTIAL)
+    .map((r) => ({ ...r, words: contentWords(bomText.slice(r.a[0], r.a[1])) }))
+    .filter((r) => r.words >= PARTIAL);
   if (!runs.length) return { score: 0, bomRanges: [], kjvRanges: [] };
   return { score: Math.max(...runs.map((r) => r.words)), bomRanges: runs.map((r) => r.a), kjvRanges: runs.map((r) => r.b) };
+};
+
+// Stock scriptural formulae shared by hundreds of unrelated pairs: as the whole
+// shared phrase they are a dud (3 Nephi 4:32 / Genesis 14:20 marking "Blessed
+// be the", Alma 8:29 / Exodus 8:1 "thus saith the Lord" — audit R4 H1). Their
+// words never count toward a phrase's score.
+const STOCK_PHRASES = [
+  "and it came to pass",
+  "it came to pass",
+  "thus saith the lord",
+  "saith the lord",
+  "blessed be the",
+  "blessed be the lord",
+  "the lord thy god",
+  "the lord your god",
+  "the lord god",
+  "the children of israel",
+  "the house of israel",
+  "in that day",
+  "and he said unto",
+  "and they said unto",
+  "and the lord said unto",
+  "the word of the lord",
+  "the name of the lord",
+  "for behold",
+  "and behold",
+].sort((a, b) => b.length - a.length);
+const STOCK_RE = new RegExp(`(?:^| )(?:${STOCK_PHRASES.join("|")})(?= |$)`, "g");
+
+/** Words in `text` outside any stock formula. */
+export const contentWords = (text) => {
+  const norm = ` ${(String(text || "").match(WORD) || []).map((w) => w.toLowerCase().replace(/’/g, "'")).join(" ")} `;
+  return norm.replace(STOCK_RE, " ").split(" ").filter(Boolean).length;
 };
 
 const covered = (text, ranges) =>
@@ -173,17 +213,17 @@ export const isBlockQuote = (c) =>
   covered(c.bomText, c.bomRanges) >= BLOCK_QUOTE_COVER && covered(c.kjvText, c.kjvRanges) >= BLOCK_QUOTE_COVER;
 
 /**
- * Pick the pair to show. Strong (4+ word) echoes before 3-word partials, real
- * echoes before block quotes; within a tier, the pair that fills the reserved
- * box best without overflowing it (no dead space, no growth on arrival). When
- * nothing fits, the smallest pair is the least growth.
+ * Pick the pair to show. Strong (4+ word) echoes before 3-word partials; a
+ * whole-verse block quote never shows (null: two identical, fully marked
+ * sentences are a dud, audit R4 H1). Within a tier, the pair that fills the
+ * reserved box best without overflowing it (no dead space, no growth on
+ * arrival). When nothing fits, the smallest pair is the least growth.
  */
 export const choosePair = (scored, { budgetPx = textBudget(false), widthPx = DEFAULT_MEASURE.desktop } = {}) => {
   const est = (c) => estimatePairTextPx(c.bomText.length, c.kjvText.length, widthPx);
   const tiers = [
     (c) => c.score >= STRONG && !isBlockQuote(c),
     (c) => c.score >= PARTIAL && !isBlockQuote(c),
-    (c) => c.score >= PARTIAL,
   ];
   for (const inTier of tiers) {
     const pool = scored.filter(inTier);

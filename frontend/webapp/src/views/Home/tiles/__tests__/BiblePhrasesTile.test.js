@@ -97,6 +97,27 @@ describe("scorePair", () => {
   });
 });
 
+describe("scorePair stock phrases (audit R4 H1)", () => {
+  test("'Blessed be the' and 'thus saith the Lord' are not a shared phrase", () => {
+    const a = scorePair("And Melchizedek said, Blessed be the most high God", "And blessed be the most mighty", {
+      bom_highlight: ["Blessed be the"], bible_highlight: ["blessed be the"],
+    });
+    expect(a.score).toBe(0);
+    const b = scorePair("Go, and thus saith the Lord unto Pharaoh", "Go unto Pharaoh, and say unto him, Thus saith the Lord", null);
+    expect(b.score).toBe(0);
+  });
+
+  test("a real phrase beside a stock one keeps only the real one", () => {
+    const r = scorePair(
+      "thus saith the Lord, I will make thy seed as the dust of the earth",
+      "Thus saith the Lord: and I will make thy seed as the dust of the earth",
+      null,
+    );
+    expect(r.score).toBeGreaterThanOrEqual(8);
+    expect(r.bomRanges.every(([s, e]) => !/thus saith/i.test("thus saith the Lord, I will make thy seed as the dust of the earth".slice(s, e)))).toBe(true);
+  });
+});
+
 describe("pairing helpers", () => {
   test("candidatePairs: a spread of distinct pairs per seed, different across seeds", () => {
     const a = candidatePairs(3);
@@ -143,8 +164,10 @@ describe("choosePair — fit the box, skip block-quote duds", () => {
     expect(choosePair([dud, cand(3, 100, 100)], fit).bomVid).toBe(3);
   });
 
-  test("a block quote still beats an empty tile when it is all there is", () => {
-    expect(choosePair([cand(1, 200, 200, 30, 1)], fit).bomVid).toBe(1);
+  // R4 H1: a fully marked Beatitude (3 Nephi 12:3 = Matthew 5:3) is a dud,
+  // not a taste of the analysis: no tile beats two identical sentences.
+  test("block quotes alone never render (null, the tile collapses)", () => {
+    expect(choosePair([cand(1, 200, 200, 30, 1)], fit)).toBeNull();
   });
 
   test("with nothing that fits, the smallest strong pair is the least growth", () => {
@@ -217,12 +240,12 @@ describe("BiblePhrasesTile", () => {
   test("falls back to the next pair when the first shares no phrase", async () => {
     const cands = candidatePairs(3);
     const [b1, k1] = cands[1];
-    VERSE_TEXT[b1] = "and behold the Lord God spake unto them saying";
-    VERSE_TEXT[k1] = "then the Lord God spake unto Moses saying";
-    respond((i) => (i === 1 ? { bom_highlight: ["the Lord God spake unto"], bible_highlight: ["the lord god spake unto"] } : null));
+    VERSE_TEXT[b1] = "and behold he went before them in a pillar of fire by night";
+    VERSE_TEXT[k1] = "and the Lord went in a pillar of fire by night";
+    respond((i) => (i === 1 ? { bom_highlight: ["a pillar of fire by night"], bible_highlight: ["a pillar of fire by night"] } : null));
     renderTile();
-    await screen.findAllByText("the Lord God spake unto", { selector: "mark" });
-    expect(screen.getAllByText("the Lord God spake unto", { selector: "mark" })).toHaveLength(2);
+    await screen.findAllByText("a pillar of fire by night", { selector: "mark" });
+    expect(screen.getAllByText("a pillar of fire by night", { selector: "mark" })).toHaveLength(2);
     expect(screen.getByRole("button", { name: generateReference([b1], "en") })).toBeTruthy();
   });
 
