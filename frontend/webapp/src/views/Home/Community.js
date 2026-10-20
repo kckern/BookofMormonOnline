@@ -134,6 +134,16 @@ function Community({ unlistedBeta = false }) {
 // frame toward a stable "just fits" band. Groups flex first (they have a
 // 'see more'); the leaderboard is trimmed last and refills first, so its rows
 // don't blink out on resize.
+// The community index (no group open) and phone (stacked, page-scrolling) show
+// EVERY group: trimming there left a guest one row and a void (blind R9
+// community-D5). The fit only compacts the wide, group-open layout.
+const NARROW_QUERY = "(max-width: 900px)";
+const isNarrow = () => typeof window !== "undefined" && !!window.matchMedia?.(NARROW_QUERY).matches;
+export const shouldFitGroups = ({ isFiltered, activeGroup, narrow }) => !isFiltered && !!activeGroup && !narrow;
+/** Desktop index: open the first group's feed rather than a blank pane. */
+export const defaultGroupFor = ({ activeGroup, narrow, groups }) =>
+  !activeGroup && !narrow && groups?.length ? groups[0]?.url || null : null;
+
 const FIT_MAX = { leaders: 10, groups: 12, finishers: 12 };
 const FIT_MIN = { leaders: 3, groups: 1, finishers: 4 };
 // Stable band: shrink when the panel overflows by >GROW_SLACK-ish; grow only
@@ -230,11 +240,18 @@ function GroupBrowser({ activeGroup, setActiveGroup }) {
     ?.map((i) => i?.grouping)
     .filter((v, i, a) => a.indexOf(v) === i).length;
 
-  const caps = useFitCounts(cardRef, !isFiltered);
+  const narrow = isNarrow();
+  const fit = shouldFitGroups({ isFiltered, activeGroup, narrow });
+  const caps = useFitCounts(cardRef, fit);
+  useEffect(() => {
+    const g = defaultGroupFor({ activeGroup, narrow, groups: groupListData });
+    if (g) setActiveGroup(g);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupListData]);
   // "See more" (filtered) mode: show EVERY fetched group and let the panel scroll
   // (.leftPanelScroll is overflow-y:auto). The height-fit cap only compacts the
   // default view; applying it in filtered mode is what made "see more" do nothing.
-  const shownGroups = isFiltered ? groupListData : groupListData.slice(0, caps.groups);
+  const shownGroups = fit ? groupListData.slice(0, caps.groups) : groupListData;
 
   return (
     <Card className="Community" innerRef={cardRef}>
