@@ -1,0 +1,52 @@
+-- Home tiles: label rows for keys the code used but the labels table lacked (English),
+-- and Korean rows for tile-visible labels that had no Korean (blind sweep 2026-10-20: the
+-- Korean host showed PEOPLE / PLACES / "Read more" / "Start reading" in English).
+-- Idempotent (NOT EXISTS / INSERT IGNORE); one transaction. Not applied yet: needs the DB reachable.
+START TRANSACTION;
+INSERT INTO bom_label (guid, label_id, label_text, type) SELECT 'hm816ec2d0', 'art_eyebrow', 'Art', 'home' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM bom_label WHERE label_id = 'art_eyebrow');
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '삽화', 'kcsql' FROM bom_label WHERE label_id = 'art_eyebrow';
+INSERT INTO bom_label (guid, label_id, label_text, type) SELECT 'hm6700ee99', 'art_image_unavailable', 'Image unavailable', 'home' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM bom_label WHERE label_id = 'art_image_unavailable');
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '이미지를 불러올 수 없습니다', 'kcsql' FROM bom_label WHERE label_id = 'art_image_unavailable';
+INSERT INTO bom_label (guid, label_id, label_text, type) SELECT 'hm21d34eba', 'artwork', 'Artwork', 'home' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM bom_label WHERE label_id = 'artwork');
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '삽화', 'kcsql' FROM bom_label WHERE label_id = 'artwork';
+INSERT INTO bom_label (guid, label_id, label_text, type) SELECT 'hm529db524', 'community_in_group', 'in $1', 'home' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM bom_label WHERE label_id = 'community_in_group');
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '$1에서', 'kcsql' FROM bom_label WHERE label_id = 'community_in_group';
+INSERT INTO bom_label (guid, label_id, label_text, type) SELECT 'hm9e303ee8', 'community_more_groups', '+$1 more groups', 'home' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM bom_label WHERE label_id = 'community_more_groups');
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '그룹 $1개 더', 'kcsql' FROM bom_label WHERE label_id = 'community_more_groups';
+INSERT INTO bom_label (guid, label_id, label_text, type) SELECT 'hmd6f026ce', 'mapstory_credit', 'Map: FARMS internal model', 'home' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM bom_label WHERE label_id = 'mapstory_credit');
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '지도: FARMS 내부 모델', 'kcsql' FROM bom_label WHERE label_id = 'mapstory_credit';
+INSERT INTO bom_label (guid, label_id, label_text, type) SELECT 'hmd7a2930e', 'mapstory_two_fingers', 'Use two fingers to move the map', 'home' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM bom_label WHERE label_id = 'mapstory_two_fingers');
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '두 손가락으로 지도를 움직이세요', 'kcsql' FROM bom_label WHERE label_id = 'mapstory_two_fingers';
+INSERT INTO bom_label (guid, label_id, label_text, type) SELECT 'hmd5d8b433', 'n_pages', '$1 pages', 'home' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM bom_label WHERE label_id = 'n_pages');
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '$1쪽', 'kcsql' FROM bom_label WHERE label_id = 'n_pages';
+INSERT INTO bom_label (guid, label_id, label_text, type) SELECT 'hm976a268e', 'one_page', '1 page', 'home' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM bom_label WHERE label_id = 'one_page');
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '1쪽', 'kcsql' FROM bom_label WHERE label_id = 'one_page';
+INSERT INTO bom_label (guid, label_id, label_text, type) SELECT 'hmff976afd', 'one_verse', 'One verse', 'home' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM bom_label WHERE label_id = 'one_verse');
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '한 구절', 'kcsql' FROM bom_label WHERE label_id = 'one_verse';
+INSERT INTO bom_label (guid, label_id, label_text, type) SELECT 'hmd02a2482', 'one_verse_editions', 'One verse, $1 editions', 'home' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM bom_label WHERE label_id = 'one_verse_editions');
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '한 구절, $1개 판본', 'kcsql' FROM bom_label WHERE label_id = 'one_verse_editions';
+INSERT INTO bom_label (guid, label_id, label_text, type) SELECT 'hmd3f9d0fe', 'reading_now', 'Reading now', 'home' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM bom_label WHERE label_id = 'reading_now');
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '읽는 중', 'kcsql' FROM bom_label WHERE label_id = 'reading_now';
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '성경 언어', 'kcsql' FROM bom_label WHERE label_id = 'analysis_bible';
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '교차대구법', 'kcsql' FROM bom_label WHERE label_id = 'chiasmus';
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '목차', 'kcsql' FROM bom_label WHERE label_id = 'contents';
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '지도', 'kcsql' FROM bom_label WHERE label_id = 'map';
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '커뮤니티', 'kcsql' FROM bom_label WHERE label_id = 'menu_community';
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '주제', 'kcsql' FROM bom_label WHERE label_id = 'menu_matters';
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '줄거리', 'kcsql' FROM bom_label WHERE label_id = 'narration';
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '인물', 'kcsql' FROM bom_label WHERE label_id = 'people';
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '장소', 'kcsql' FROM bom_label WHERE label_id = 'places';
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '더 보기', 'kcsql' FROM bom_label WHERE label_id = 'read_more';
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '읽기 진도', 'kcsql' FROM bom_label WHERE label_id = 'reading_progress';
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '다른 것 보기', 'kcsql' FROM bom_label WHERE label_id = 'resample';
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '계획 관리', 'kcsql' FROM bom_label WHERE label_id = 'rp_manage_plan';
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '다시 시도', 'kcsql' FROM bom_label WHERE label_id = 'rp_retry';
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '읽기 계획을 불러올 수 없습니다.', 'kcsql' FROM bom_label WHERE label_id = 'rp_error_loading';
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '계획 완료!', 'kcsql' FROM bom_label WHERE label_id = 'rp_plan_complete';
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '경전', 'kcsql' FROM bom_label WHERE label_id = 'scripture';
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '읽기 시작', 'kcsql' FROM bom_label WHERE label_id = 'start_reading';
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '모두 보기', 'kcsql' FROM bom_label WHERE label_id = 'view_all';
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '문맥에서 보기', 'kcsql' FROM bom_label WHERE label_id = 'view_in_context';
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '증인', 'kcsql' FROM bom_label WHERE label_id = 'witnesses';
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '첫 스터디 그룹 시작하기', 'kcsql' FROM bom_label WHERE label_id = 'start_group';
+COMMIT;

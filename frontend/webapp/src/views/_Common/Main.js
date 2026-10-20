@@ -9,6 +9,7 @@ import Sidebar from "./Sidebar";
 import routes from "src/models/Routes";
 import links from "./sideBarLinks";
 import { determineLanguage, label, makeLabelDictionary } from "src/models/Utils";
+import { applyDocumentLang } from "src/models/documentLang";
 import PopUp from "./PopUp";
 import BoMOnlineAPI,{GraphQLApiUrl} from "src/models/BoMOnlineAPI";
 // STYLE
@@ -71,6 +72,7 @@ function Main(props) {
   // This is the main App Controller
   const [apiFailure, setApiFailed] = useState(false);
   const [lang] = useState(determineLanguage())
+  useEffect(() => { applyDocumentLang(document, lang); }, [lang]);
   const [appController, appDispatch] = useReducer(
     appControllerReducer,
     (() => appInit())()
