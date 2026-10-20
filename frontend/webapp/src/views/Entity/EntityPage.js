@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { label } from "src/models/Utils";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { resolveSlug } from "src/models/slugVariants";
@@ -46,6 +46,7 @@ export default function EntityPage({ type }) {
   const cfg = TYPES[type];
   const params = useParams();
   const navigate = useNavigate();
+  const { key: locationKey } = useLocation();
   const appController = useAppController();
   const requested = params[cfg.param];
   const { data, status } = useEntityData(type, requested);
@@ -68,16 +69,24 @@ export default function EntityPage({ type }) {
   // The top one is a breadcrumb above the title, so the way back is above the
   // fold on every viewport; the bottom one stays for readers who reach the end.
   const indexName = text(cfg.indexLabel, cfg.indexText);
+  // Arrived from inside the app (a Home tile, a map pin, another entity): the way
+  // back is history, not the index — a link to /places dropped readers out of
+  // Discover (prod 2026-10-20). A direct load has no history, so it gets the index.
+  const inApp = !!locationKey && locationKey !== "default";
+  const backControl = (glyph) =>
+    inApp ? (
+      <button type="button" className="entity-page-crumb-back" onClick={() => navigate(-1)}>
+        {glyph} {text("back", "Back")}
+      </button>
+    ) : (
+      <Link to={cfg.base}>{glyph} {indexName}</Link>
+    );
   const topBack = (
     <nav className="entity-page-crumb" aria-label="Breadcrumb">
-      <Link to={cfg.base}>‹ {indexName}</Link>
+      {backControl("‹")}
     </nav>
   );
-  const backLink = (
-    <p className="entity-page-back">
-      <Link to={cfg.base}>❮ {indexName}</Link>
-    </p>
-  );
+  const backLink = <p className="entity-page-back">{backControl("❮")}</p>;
 
   // A plain spinner, not the popup's loader: that one renders popup chrome
   // (#popUp card with a close x), which has no place on a page. Importing it
