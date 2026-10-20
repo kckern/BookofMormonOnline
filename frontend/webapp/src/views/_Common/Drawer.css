@@ -390,3 +390,16 @@ html[data-theme="dark"] .popupDrawer .historyDrawerClose { color: var(--text-sec
 html[data-theme="dark"] .popupDrawer .commentaryDrawerHead { border-color: var(--border); }
 html[data-theme="dark"] .popupDrawer .commentaryDrawerEyebrow,
 html[data-theme="dark"] .popupDrawer .commentaryDrawerClose { color: var(--text-secondary); }
+
+.popupDrawer .drawerEntityBar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 4px 8px; border-bottom: 1px solid rgba(0,0,0,.08); flex: 0 0 auto;
+}
+.popupDrawer .drawerEntityFull,
+.popupDrawer .drawerEntityClose {
+  background: none; border: 0; color: #222; min-height: 44px; min-width: 44px;
+  font: inherit; font-size: 1.3rem; cursor: pointer;
+}
+.popupDrawer .drawerEntityClose { font-size: 2.4rem; line-height: 1; }
+.popupDrawer .drawerEntityFull:focus-visible,
+.popupDrawer .drawerEntityClose:focus-visible { outline: 2px solid #c9a24b; outline-offset: 2px; }

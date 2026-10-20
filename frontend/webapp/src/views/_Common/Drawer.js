@@ -25,6 +25,9 @@ import { findAncestor } from "../../models/Utils";
 import { useAppController } from "src/contexts/AppControllerContext";
 import XrelSection from "./XrelSection";
 import HistoryDrawer from "./HistoryDrawer";
+import MatterBody from "./entity/MatterBody";
+import useEntityData from "./entity/useEntityData";
+import { useMaximize } from "./entity/MaximizeButton";
 import labelOr from "src/views/Home/tiles/_ds/labelOr";
 import { parse } from "node-html-parser";
 import { lookupReference } from "scripture-guide";
@@ -92,6 +95,32 @@ export function MobileDrawer() {
     )
 }
 
+// People / places / matters open as a drawer on phones: the way out (close) and
+// the way up (full page) belong at the top, where the thumb and the eye already are.
+function DrawerEntityBar({ onClose }) {
+    const maximize = useMaximize();
+    return (
+        <div className="drawerEntityBar">
+            <button type="button" className="drawerEntityFull" onClick={maximize}>
+                ⤢ {labelOr("view_full_page", "Full page")}
+            </button>
+            <button type="button" className="drawerEntityClose" aria-label={labelOr("close", "Close")} onClick={onClose}>×</button>
+        </div>
+    );
+}
+
+function MatterDrawer() {
+    const id = useAppController().states.popUp.activeId;
+    const { data, status } = useEntityData("matters", id);
+    if (status === "loading") return <Spinner />;
+    if (!data) return <div className="subject p-4">{labelOr("not_found", "Not found")}</div>;
+    return (
+        <div className="subject overflow-auto p-4">
+            <MatterBody data={data} headingLevel={3} />
+        </div>
+    );
+}
+
 function DrawerContent({ setLocalOpen }) {
     const appController = useAppController();
     const type = appController.states.popUp.type;
@@ -117,9 +146,11 @@ function DrawerContent({ setLocalOpen }) {
             />
         );
     if (type === "places")
-        return <Place key={id} setLocalOpen={setLocalOpen} />;
+        return <><DrawerEntityBar onClose={close} /><Place key={id} setLocalOpen={setLocalOpen} /></>;
     if (type === "people")
-        return <Person key={id} setLocalOpen={setLocalOpen} />;
+        return <><DrawerEntityBar onClose={close} /><Person key={id} setLocalOpen={setLocalOpen} /></>;
+    if (type === "matters")
+        return <><DrawerEntityBar onClose={close} /><MatterDrawer key={id} /></>;
     if (type === "object")
         return <ObjectDrawer key={id} />;
     if (type === "group")

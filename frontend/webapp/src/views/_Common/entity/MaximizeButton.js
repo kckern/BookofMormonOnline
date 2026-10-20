@@ -24,6 +24,17 @@ function text(key, fallback) {
   return value;
 }
 
+/** The maximize action, for controls that are not the modal's <li> (the phone drawer). */
+export function useMaximize() {
+  const navigate = useNavigate();
+  const appController = useAppController();
+  return () => {
+    const target = window.location.pathname + window.location.search;
+    appController.functions.closePopUp({ keepSlug: true });
+    navigate(target, { replace: true });
+  };
+}
+
 export default function MaximizeButton({ type }) {
   const navigate = useNavigate();
   const appController = useAppController();

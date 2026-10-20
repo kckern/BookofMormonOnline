@@ -13,6 +13,7 @@ import { read as readCache, write as writeCache, isFresh as cacheIsFresh } from 
 import { readSession, writeSession, clearSession, readAnchor, writeAnchor } from "./tiles/samplerSession";
 import { findAnchor, findLink, pinAnchor, trackAnchor } from "./tiles/scrollAnchor";
 import { singleColumnOrder, canGrowReserves, placeBatchTiles, spaceAcrossColumns, familyKey, onePerFamily } from "./tiles/samplerLayout";
+import { openEntityPopupOnClick } from "./tiles/_ds/entityPopup";
 import TileBoundary from "./tiles/_ds/TileBoundary";
 import BoundedTile from "./tiles/_ds/BoundedTile";
 import { TileIdentity } from "./tiles/_ds/tileIdentity";
@@ -150,6 +151,7 @@ export const assemblePayload = (r) => ({ ...assembleSampler(r), community: assem
 
 export default function Sampler() {
   const appController = useAppController();
+  const onEntityClick = (e) => { openEntityPopupOnClick(e, appController); };
   const token = appController.states.user.token;
   // Cache read is synchronous, so a warm entry paints on the FIRST render — no
   // skeleton flash. cachedRef survives re-renders and records freshness.
@@ -759,7 +761,7 @@ export default function Sampler() {
     const order = singleColumnOrder(others.map((t) => t.key)).map(byKey).filter(Boolean);
     const batchNodes = extraBatches.flatMap((b, bi) => b.tiles.map((def, ti) => renderBatchTile(b.payload, def, `${bi}-${ti}`)));
     return (
-      <div className="sampler container">
+      <div className="sampler container" onClickCapture={onEntityClick}>
         <div className="samplerSingle">
           {order.map((t) => renderTile(t))}
           {batchNodes}
@@ -774,7 +776,7 @@ export default function Sampler() {
   }
 
   return (
-    <div className="sampler container">
+    <div className="sampler container" onClickCapture={onEntityClick}>
       <div className="samplerColumns">
         <div className="samplerLeftRail" ref={railRef}>
           {leftTiles.map((t) => renderTile(t))}
