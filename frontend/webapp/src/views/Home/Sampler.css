@@ -1110,10 +1110,12 @@ html[data-theme="dark"] .valuePropSecondary:hover { border-color: #ddd; color: #
    #3a3a3a (6:1). Week 1 / the current week carries the gold accent. */
 /* even columns that fill the tile width (no ragged right-hand gap) */
 .segmentList.guestSegmentList { display: grid; grid-template-columns: repeat(auto-fill, minmax(1.9rem, 1fr)); gap: 4px; }
-.guestSegmentList .segmentListItem { width: auto; cursor: default; font-size: 0.62rem; font-weight: 600; }
+/* a status strip, not buttons: flat squared cells, light numerals, no pointer
+   (blind readingplan-C1 — the bold gray pills read as tappable chips) */
+.guestSegmentList .segmentListItem { width: auto; cursor: default; font-size: 0.6rem; font-weight: 500; border-radius: 3px; }
 .guestSegmentList .segmentListItem:hover { filter: none; }
 .guestSegmentList .segmentListItem.notStarted,
-.guestSegmentList .segmentListItem.future.notStarted { background-color: #e9e9e9; color: #555; }
+.guestSegmentList .segmentListItem.future.notStarted { background-color: #f2f2f2; color: #6b6b6b; }
 .guestSegmentList .segmentListItem.current { outline: 2px solid #c9a24b; outline-offset: 0; }
 .guestSegmentList .segmentListItem.current.notStarted { background-color: rgba(201, 162, 75, 0.22); color: #3d3214; }
 html[data-theme="dark"] .guestSegmentList .segmentListItem.notStarted,

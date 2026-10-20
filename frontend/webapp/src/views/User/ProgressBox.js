@@ -24,6 +24,7 @@ import loading from "./svg/loading.svg";
 import { label } from "src/models/Utils";
 import { history } from "src/models/routeHistory";
 import { useAppController } from "src/contexts/AppControllerContext";
+import { hasProgressFigures } from "./userPageHeadline";
 
 const makeBlankSections = (counts, id) => {
   if (!counts) return {};
@@ -92,11 +93,18 @@ export default function ProgressBox() {
     <Card className="ProgressBox">
       <CardHeader>
         <h5>
-          {label("study_progress_for_x", [name ? name : label("guest")])}:<br />
-          <span>
-            {completed !== 0 && <>{numericLoad(completed)}% {label("completed")}</>}
-            {completed !== 0 && started !== 0 && " • "}
-            {started !== 0 && <>{numericLoad(started)}% {label("started")}</>}          </span>
+          {label("study_progress_for_x", [name ? name : label("guest")])}
+          {/* a guest has no figures: no "% Completed • % Started" with blanks */}
+          {hasProgressFigures(completed, started) ? (
+            <>
+              :<br />
+              <span>
+                {completed !== 0 && <>{numericLoad(completed)}% {label("completed")}</>}
+                {completed !== 0 && started !== 0 && " • "}
+                {started !== 0 && <>{numericLoad(started)}% {label("started")}</>}
+              </span>
+            </>
+          ) : null}
         </h5>
         <ProgressBar complete={completed} started={started} />
       </CardHeader>

@@ -18,6 +18,7 @@ import "./User.css";
 
 import "react-calendar-heatmap/dist/styles.css";
 import ProgressBox from "./ProgressBox.js";
+import { userPageTitleKey } from "./userPageHeadline";
 import { StudyHistory } from "./History";
 import { HistoryList } from "./HistoryList";
 import { Profile } from "./Profile";
@@ -29,13 +30,15 @@ import { Spinner } from "../_Common/Loader";
 import { useAppController } from "src/contexts/AppControllerContext";
 export default function User() {
   const appController = useAppController();
-  let name = appController.states.user.social?.nickname;
+  const social = appController.states.user.social;
+  let name = social?.nickname;
   useEffect(() => {
+    const key = userPageTitleKey(social);
     document.title =
-      label("study_progress_for_x", [name ? name : label("guest")]) +
+      (key === "sign_in" ? label("sign_in") : label(key, [name ? name : label("guest")])) +
       " | " +
       label("home_title");
-  }, []);
+  }, [social]);
   const match = { params: useLegacyParams(), url: useLocation().pathname };
   const [viewPrefs, setViewPrefs] = useState(
     match.params.value === "preferences",
