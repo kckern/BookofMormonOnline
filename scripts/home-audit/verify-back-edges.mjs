@@ -14,7 +14,7 @@ const h = await open(VP, "backedges");
 const p = h.page;
 if (process.env.DEBUG) { await h.ctx.addInitScript(() => { window.__DBG = 1; }); p.on("console", (m) => m.text().startsWith("dbg") && console.log("   ", m.text())); }
 await h.home();
-for (let i = 0; i < +(process.env.PRESCROLL || 5); i++) { await p.mouse.wheel(0, 1500); await p.waitForTimeout(700); }
+for (let i = 0; i < +(process.env.PRESCROLL || (VP === "phone" ? 12 : 5)); i++) { await p.mouse.wheel(0, 1500); await p.waitForTimeout(700); }
 await p.waitForTimeout(1500);
 
 // pick candidate links: internal, visible, inside an identified tile, below the first screen
