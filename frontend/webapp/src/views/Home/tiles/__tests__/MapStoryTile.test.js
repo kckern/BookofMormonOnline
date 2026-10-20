@@ -639,3 +639,73 @@ describe("traveller names (R6 mapstory-A7)", () => {
     expect(displayPersonName("Lehi")).toBe("Lehi");
   });
 });
+
+describe("blind story audit 2026-10-20", () => {
+  const css = fs.readFileSync(path.resolve(__dirname, "../../Sampler.css"), "utf8");
+  const rule = (sel) => {
+    const i = css.indexOf(`${sel} {`);
+    return i < 0 ? "" : css.slice(i, css.indexOf("}", i));
+  };
+
+  test("B2: a long beat dwells long enough to be read (scaled by words, capped)", () => {
+    const words = (n) => Array.from({ length: n }, (_, i) => `word${i}`).join(" ");
+    const short = playbackTiming({ description: "Eight years in the wilderness", ref: "1 Nephi 17:4" });
+    const long = playbackTiming({ description: words(32), ref: "Mormon 1:6" });
+    const huge = playbackTiming({ description: words(400) });
+    expect(short.dwellMs).toBe(3200);
+    expect(long.dwellMs).toBeGreaterThanOrEqual(7000);
+    expect(huge.dwellMs).toBeLessThanOrEqual(9000);
+  });
+
+  test("B2: the map chunk is requested when the tile mounts, not when it scrolls in", () => {
+    const src = fs.readFileSync(path.resolve(__dirname, "../MapStoryTile.js"), "utf8");
+    expect(src).toMatch(/loadInner\s*=\s*\(\)\s*=>\s*\(innerChunk \|\|= import\("\.\/MapStoryTileInner"\)/);
+    expect(src).toMatch(/React\.lazy\(loadInner\)/);
+    expect(src).toMatch(/useEffect\(\(\)\s*=>\s*\{\s*loadInner\(\)/);
+  });
+
+  test("C5: the story title hover outranks the blanket tile-link reset", () => {
+    expect(rule(".samplerTileInner .mapStoryTitle:hover")).toMatch(/text-decoration:\s*underline/);
+  });
+
+  test("C1: the eyebrow's touch hit area never reaches down over the title", () => {
+    const m = css.match(/\.mapStoryTile \.tileHeading a::after \{([^}]*)\}/);
+    expect(m).toBeTruthy();
+    const bottom = Number((m[1].match(/bottom:\s*(-?[\d.]+)px/) || [])[1]);
+    const margin = (css.match(/@media \(pointer: coarse\)[\s\S]*?\.mapStoryTile \.tileHeading \{ margin-bottom:\s*([\d.]+)px/) || [])[1];
+    expect(-bottom).toBeLessThanOrEqual(Number(margin));
+  });
+
+  test("F2: '<n> places' clusters reach a 44px touch target", () => {
+    const m = css.match(/\.mapStoryCluster::after \{[^}]*inset:\s*-([\d.]+)px 0/);
+    expect(32 + 2 * Number(m[1])).toBeGreaterThanOrEqual(48); // 44 measured 38-43 live (sub-pixel + pill border)
+  });
+
+  test("A1: the traveller line is the beat card's foot, so a short beat's slack reads as card body", () => {
+    expect(rule(".mapStoryStage .mapStoryTravelerText")).toMatch(/margin-top:\s*auto/);
+  });
+
+  test("H6: the tile credits the map artwork", () => {
+    const { container } = renderTile();
+    expect(container.querySelector(".mapStoryCredit").textContent).toMatch(/FARMS/);
+  });
+});
+
+describe("blind story audit 2026-10-20 A1: the complete card has a foot", () => {
+  test("lists the whole journey's travellers once each", () => {
+    const story = {
+      ...data,
+      moves: [
+        { ...data.moves[0], people: [{ slug: "lehi", name: "Lehi" }, { slug: "sariah", name: "Sariah" }] },
+        { ...data.moves[1], people: [{ slug: "lehi", name: "Lehi" }, { slug: "nephi1", name: "Nephi1" }] },
+      ],
+    };
+    const { container } = renderTile(story);
+    act(() => { fireEvent.click(screen.getByLabelText("Next move")); });
+    act(() => { fireEvent.click(screen.getByLabelText("Next move")); });
+    act(() => { fireEvent.click(screen.getByLabelText("Next move")); });
+    const live = container.querySelector(".mapStoryBeatLive .mapStoryComplete");
+    expect(live).toBeTruthy();
+    expect(live.querySelector(".mapStoryTravelerText").textContent).toMatch(/Lehi, Sariah, Nephi¹$/);
+  });
+});

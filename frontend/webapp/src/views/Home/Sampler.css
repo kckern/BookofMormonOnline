@@ -2821,7 +2821,10 @@ html[data-theme="dark"] .notesTile .notesCover { border-color: #444; }
   -webkit-line-clamp: 2;
   text-wrap: balance;
 }
-.mapStoryTitle:hover { color: #000; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: #c9a24b; }
+/* (0,2,1) like .textTileTitle: the blanket ".samplerTileInner a:hover
+   { text-decoration: none }" outranked the plain rule (blind story audit C5). */
+.mapStoryTitle:hover,
+.samplerTileInner .mapStoryTitle:hover { color: #000; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: #c9a24b; }
 .mapStoryCounts {
   flex: 0 0 auto;
   color: var(--tile-meta);
@@ -3218,14 +3221,18 @@ html[data-theme="dark"] .mapStoryTile .mapTileFrame {
   /* F2: 28px on-map place labels get a 44px hit; the eyebrow too. */
   .mapStoryPlaceLabel::after { content: ""; position: absolute; inset: -8px 0; }
   /* F2: 32px "N places" clusters were the one on-map target left at ~28px. */
-  .mapStoryCluster::after { content: ""; position: absolute; inset: -6px 0; }
-  .mapStoryTile .tileHeading { margin-bottom: 0.45rem; }
+  .mapStoryCluster::after { content: ""; position: absolute; inset: -8px 0; }
+  /* C1 (blind story audit 2026-10-20): the eyebrow's 44px hit grew 19px DOWN
+     over the title and stole its top half. It now grows up into the tile's
+     padding and down only through its own margin, which is made tall enough
+     (12px line + 14 above + 18 below = 44). */
+  .mapStoryTile .tileHeading { margin-bottom: 18px; }
   .mapStoryTile .tileHeading a { position: relative; z-index: 2; }
   .mapStoryTile .tileHeading a::after {
     content: "";
     position: absolute;
     top: -14px;
-    bottom: -19px;
+    bottom: -18px;
     left: -0.4rem;
     right: -0.4rem;
   }
@@ -3241,6 +3248,18 @@ html[data-theme="dark"] .mapStoryTile .mapTileFrame {
 /* R6 beauty: a quiet editorial aside, not a dashed uppercase badge. */
 .mapStoryDetached { color: var(--tile-meta); font-size: 0.68rem; font-style: italic; }
 .mapStoryTravelerText { margin: 0.4rem 0 0; color: #555; font-size: 0.7rem; line-height: 1.25; }
+/* A1 (blind story audit 2026-10-20): the stage is the tallest beat, so a short
+   beat had 60-170px of blank under its last line. The traveller line is now the
+   card's foot (hairline above), so the slack sits inside the card body, the way
+   a caption card reads, instead of trailing under the text. */
+/* Sizers carry the same rules, so the reserve still equals the tallest live beat. */
+.mapStoryStage .mapStoryTravelerText {
+  margin-top: auto;
+  padding-top: 0.45rem;
+  border-top: 1px solid #ececec;
+}
+.mapStoryStage .mapStoryBeatBody > :has(+ .mapStoryTravelerText) { margin-bottom: 0.45rem; }
+html[data-theme="dark"] .mapStoryStage .mapStoryTravelerText { border-top-color: #3a3a3a; }
 .mapStoryTravelerText > span { margin-right: 0.25rem; color: #888; font-size: 0.52rem; }
 .mapStoryTravelerText strong { color: #333; }
 .mapStoryCompleteHeading { color: #222; font-size: 0.9rem; font-weight: 800; }
@@ -3262,6 +3281,10 @@ html[data-theme="dark"] .mapStoryTile .mapTileFrame {
   white-space: nowrap;
 }
 .mapStoryFooter .mapTileCta { flex: 0 0 auto; margin-top: 0; }
+/* Route over the artwork credit (H6), both in the meta voice. */
+.mapStoryFooter > .mapStoryFooterMeta { display: flex; flex-direction: column; gap: 0.1rem; }
+.mapStoryFooterMeta > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mapStoryFooterMeta .mapStoryCredit { font-size: 0.6rem; font-weight: 500; opacity: 0.85; }
 .mapStoryTextEquivalent {
   position: absolute !important;
   width: 1px !important;

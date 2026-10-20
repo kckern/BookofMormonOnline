@@ -105,6 +105,6 @@ describe("map story (blind R8 P2s)", () => {
   });
 
   test("F2: cluster buttons get a 44px touch hit", () => {
-    expect(sampler).toMatch(/\.mapStoryCluster::after\s*\{[^}]*inset:\s*-6px 0/);
+    expect(sampler).toMatch(/\.mapStoryCluster::after\s*\{[^}]*inset:\s*-(6|8)px 0/); // -8 since blind 2026-10-20 F2 (measured 38-43 at -6)
   });
 });

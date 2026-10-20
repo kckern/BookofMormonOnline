@@ -81,7 +81,7 @@ export function MapStoryMoveCard({ move, step, sizer = false }) {
 }
 
 /** Whole-journey summary: the route as its heading, then the story's description. */
-export function MapStoryCompleteCard({ heading, description }) {
+export function MapStoryCompleteCard({ heading, description, travelers }) {
   return (
     <section className="mapStoryBeat mapStoryComplete">
       <div className="mapStoryCompleteMark" aria-hidden="true">✓</div>
@@ -92,7 +92,27 @@ export function MapStoryCompleteCard({ heading, description }) {
         {description ? (
           <ExpandableText className="mapStoryDesc" lines={3} fade>{description}</ExpandableText>
         ) : null}
+        {/* The whole journey's cast, as the beats' foot line (blind story
+            audit 2026-10-20 A1: the complete card had no foot, only slack). */}
+        {travelers ? (
+          <p className="mapStoryTravelerText">
+            <span aria-hidden="true">●</span>
+            <strong>{labelOr("mapstory_traveling", "Traveling:")}</strong> {travelers}
+          </p>
+        ) : null}
       </div>
     </section>
   );
 }
+
+/** Everyone who travels in the story, in order of appearance: "A, B, C +2". */
+export const journeyTravelers = (moves, max = 4) => {
+  const seen = new Map();
+  (moves || []).forEach((move) => (move?.people || []).forEach((person) => {
+    if (person?.slug && !seen.has(person.slug)) seen.set(person.slug, displayPersonName(person.name || person.slug));
+  }));
+  const names = [...seen.values()];
+  if (!names.length) return null;
+  const overflow = names.length - max;
+  return `${names.slice(0, max).join(", ")}${overflow > 0 ? ` +${overflow}` : ""}`;
+};

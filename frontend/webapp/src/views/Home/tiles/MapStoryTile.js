@@ -1,12 +1,22 @@
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { legsOf, stopsOf } from "./mapStoryPath";
-import { MapStoryCompleteCard, MapStoryMoveCard } from "./MapStoryCard";
+import { MapStoryCompleteCard, MapStoryMoveCard, journeyTravelers } from "./MapStoryCard";
 import TileDeepLink from "./_ds/TileDeepLink";
 import labelOr from "./_ds/labelOr";
 import { displayPersonName, supDigits } from "./textUtils";
 
-const MapStoryTileInner = React.lazy(() => import("./MapStoryTileInner"));
+// The map chunk (OpenLayers) is requested as soon as the tile mounts, so the
+// map is usually ready by the time the tile scrolls in instead of showing the
+// static fallback for seconds (blind story audit 2026-10-20 B2).
+let innerChunk = null;
+// One shared request (the prefetch and React.lazy reuse it); a failed load is
+// forgotten so a later mount can retry.
+const loadInner = () => (innerChunk ||= import("./MapStoryTileInner").catch((error) => {
+  innerChunk = null;
+  throw error;
+}));
+const MapStoryTileInner = React.lazy(loadInner);
 
 // Each move gets a fixed, readable window regardless of story length. Beats with
 // something to read (a description or a scripture ref) hold longer. The old
@@ -16,9 +26,19 @@ export const TRAVEL_MS = 1400;
 export const DWELL_MS = 2000;
 export const DWELL_MS_RICH = 3200;
 
+// A beat with prose holds ~240ms a word (a comfortable reading pace) so a 30-
+// to 40-word description is not swapped out mid-sentence; capped because the
+// card clamps to three lines and Read more pauses playback anyway (blind story
+// audit 2026-10-20 B2).
+export const DWELL_MS_PER_WORD = 240;
+export const DWELL_MS_MAX = 8000;
+
 export const playbackTiming = (move) => {
   const hasReading = Boolean(move?.description || move?.ref);
-  const dwellMs = hasReading ? DWELL_MS_RICH : DWELL_MS;
+  const words = String(move?.description || "").split(/\s+/).filter(Boolean).length;
+  const dwellMs = hasReading
+    ? Math.min(DWELL_MS_MAX, Math.max(DWELL_MS_RICH, words * DWELL_MS_PER_WORD))
+    : DWELL_MS;
   return { travelMs: TRAVEL_MS, dwellMs, stepMs: TRAVEL_MS + dwellMs };
 };
 
@@ -136,6 +156,10 @@ export default function MapStoryTile({ data }) {
   const summaryId = `map-story-summary-${String(data?.slug || "journey").replace(/[^a-z0-9_-]/gi, "-")}`;
 
   useEffect(() => {
+    loadInner().catch(() => {}); // prefetch; the boundary handles a real failure
+  }, []);
+
+  useEffect(() => {
     const media = typeof window !== "undefined" && typeof window.matchMedia === "function"
       ? window.matchMedia("(prefers-reduced-motion: reduce)")
       : null;
@@ -237,6 +261,7 @@ export default function MapStoryTile({ data }) {
     .filter(Boolean)
     .join(", ");
   const route = routeText(origin, destination);
+  const cast = journeyTravelers(moves);
   const summary = [
     labelOr("mapstory_summary", "$1. A journey of $2 moves across $3 places: $4.", [title, moves.length, stops.length, route]),
     showComplete
@@ -378,13 +403,14 @@ export default function MapStoryTile({ data }) {
           </div>
         ))}
         <div className="mapStoryBeatSizer" aria-hidden="true" inert>
-          <MapStoryCompleteCard heading={route} description={data.description} />
+          <MapStoryCompleteCard heading={route} description={data.description} travelers={cast} />
         </div>
         <div className="mapStoryBeatLive">
           {showComplete ? (
             <MapStoryCompleteCard
               heading={route}
               description={data.description}
+              travelers={cast}
             />
           ) : (
             <MapStoryMoveCard
@@ -398,7 +424,11 @@ export default function MapStoryTile({ data }) {
 
       <div className="mapStoryFooter">
         {/* The complete card already names the route; don't say it twice. */}
-        <span>{showComplete ? null : route}</span>
+        <span className="mapStoryFooterMeta">
+          {showComplete ? null : <span className="mapStoryFooterRoute">{route}</span>}
+          {/* H6: the artwork is the FARMS model the full map uses. */}
+          <span className="mapStoryCredit">{labelOr("mapstory_credit", "Map: FARMS internal model")}</span>
+        </span>
         <TileDeepLink to={storyHref} always verb="explore" className="mapTileCta" />
       </div>
     </div>
