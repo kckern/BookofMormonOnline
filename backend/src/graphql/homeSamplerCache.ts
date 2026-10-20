@@ -25,8 +25,9 @@
  * v7 = faxVerse editions carry imageFile, the viewer's scan number (archive r4 D4).
  * v8 = faxVerse offers only scanned editions (pages > 0) (archive r5 B2).
  * v9 = faxVerse editions carry cropAspect (archive r5 B1).
+ * v10 = faxVerse offers only editions whose crop validates (archive r7 A2).
  */
-export const SAMPLER_KEY_PREFIX = 'homesampler:v9:';
+export const SAMPLER_KEY_PREFIX = 'homesampler:v10:';
 
 /** Front-door window key ({ bucket }) or explicit-seed key ({ seed }). */
 export const samplerCacheKey = (lang: string, at: { bucket: number } | { seed: number }): string =>

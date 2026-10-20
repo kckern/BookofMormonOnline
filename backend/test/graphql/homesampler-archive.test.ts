@@ -60,3 +60,36 @@ describe('homesampler archive docs', () => {
     expect(new Set(slugs.filter(Boolean)).size).toBeGreaterThanOrEqual(4);
   }, 180000);
 });
+
+describe('homesampler faxVerse crops (blind R7 faxVerse-A2)', () => {
+  it('offers only editions whose crop of the verse validates', async () => {
+    const { verseCropOk } = await import('../../src/media/fax/showcase.js');
+    for (const seed of SEEDS.slice(0, 3)) {
+      const res = await yoga.fetch('http://localhost/graphql', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', accept: 'application/json' },
+        body: JSON.stringify({
+          query: 'query A($seed: Int) { homesampler(seed: $seed) { faxVerse { version verseId editions { version } } } }',
+          variables: { seed },
+        }),
+      });
+      const fv = ((await res.json()) as { data?: { homesampler?: { faxVerse?: { version: string; verseId: number; editions: { version: string }[] } } } }).data?.homesampler?.faxVerse;
+      expect(fv).toBeTruthy();
+      expect(fv!.editions.length).toBeGreaterThan(0);
+      expect(fv!.version).toBe(fv!.editions[0]!.version);
+      for (const ed of fv!.editions) expect(await verseCropOk(ed.version, fv!.verseId)).toBe(true);
+    }
+  }, 180000);
+});
+
+describe('homesampler josephSmith: no hookless fragments (blind R7 josephSmith-H1)', () => {
+  it('never features an editorially excluded one-line fragment', async () => {
+    const { sampleJosephSmith, JOSEPH_SMITH_NOT_TILE_WORTHY } = await import('../../src/graphql/resolvers/homesampler.js');
+    const { buildContext } = await import('../../src/graphql/context.js');
+    const ctx = await buildContext(db, 'en');
+    expect(JOSEPH_SMITH_NOT_TILE_WORTHY).toContain('1838-07-elders-journal-jesus-book-of-mormon');
+    const slugs = await Promise.all(Array.from({ length: 40 }, (_, i) => sampleJosephSmith(ctx, base + i * 104729).then((r) => r?.slug)));
+    expect(slugs.every(Boolean)).toBe(true);
+    for (const s of slugs) expect(JOSEPH_SMITH_NOT_TILE_WORTHY).not.toContain(s);
+  }, 180000);
+});

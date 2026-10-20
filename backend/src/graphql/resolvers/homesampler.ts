@@ -19,6 +19,8 @@ import { canonicalSelector } from '../../media/fax/canonical.js';
 import { imageScanMeta, verseIdsToBoxes } from '../../media/fax/resolve.js';
 import { clampPages, cropAspect, toFragments } from '../../media/fax/geometry.js';
 import { MAX_PAGES } from '../../media/fax/constants.js';
+import { pickShowcaseEditions } from '../../media/fax/validate.js';
+import { verseCropOk } from '../../media/fax/showcase.js';
 import { getHomeSamplerCache } from '../homeSamplerCacheStore.js';
 import { currentBucket, samplerCacheKey, seedForBucket } from '../homeSamplerCache.js';
 import { dropVariantNotes } from './noteFilters.js';
@@ -260,7 +262,19 @@ const sampleWitnesses = async (ctx: AppContext, seed: number) => {
 // One facsimile page anchored to the verse it depicts — the inverse framing of
 // the fax tile ("the page for THIS verse", not "this edition"). Seeded over the
 // whole verse index across visible editions.
+const FAX_VERSE_TRIES = 3;
 const sampleFaxVerse = async (ctx: AppContext, seed: number) => {
+  // A verse none of whose editions' crops validate (blind R7 faxVerse-A2) is
+  // skipped for the next seeded verse, a bounded number of times.
+  for (let attempt = 0; attempt < FAX_VERSE_TRIES; attempt++) {
+    const out = await sampleFaxVerseOnce(ctx, attempt ? seed * 31 + attempt : seed);
+    if (out !== undefined) return out;
+  }
+  return null;
+};
+
+/** One seeded verse; undefined when no edition's crop of it validates. */
+const sampleFaxVerseOnce = async (ctx: AppContext, seed: number) => {
   const rows = await ctx.db
     .selectFrom('bom_xtras_fax_index as i')
     .innerJoin('bom_xtras_fax as f', 'f.slug', 'i.version')
@@ -290,11 +304,18 @@ const sampleFaxVerse = async (ctx: AppContext, seed: number) => {
     .orderBy(sql`MD5(CONCAT(${sql.ref('i.version')}, ':', ${seed}))`)
     .execute();
 
-  // Sampled edition first, then up to 3 seeded others (max 4).
-  const ordered = [
-    ...edRows.filter((e) => String(e.version) === String(r.version)),
-    ...edRows.filter((e) => String(e.version) !== String(r.version)),
-  ].slice(0, 4);
+  // Sampled edition first, then seeded others; keep the first 4 whose crop
+  // frames whole words of the verse (media/fax/validate: no cut words, no
+  // blank or degenerate box — blind R7 faxVerse-A2).
+  const ordered = await pickShowcaseEditions(
+    [
+      ...edRows.filter((e) => String(e.version) === String(r.version)),
+      ...edRows.filter((e) => String(e.version) !== String(r.version)),
+    ],
+    (e) => verseCropOk(String(e.version), verseId),
+    4,
+  );
+  if (!ordered.length) return undefined;
   // imageFile: the scan number the viewer routes and labels by ("Page N");
   // the index page is offset from it per edition (1981/2013: −9).
   const offsets = await Promise.all(ordered.map((e) => imageScanMeta(String(e.version)).then((m) => m.offset)));
@@ -314,11 +335,14 @@ const sampleFaxVerse = async (ctx: AppContext, seed: number) => {
     cropAspect: aspects[i],
   }));
 
+  // the lead edition is the first that validated (the sampled one may not have)
+  const lead = editions[0]!;
+  const sameAsSampled = lead.version === String(r.version);
   return {
-    version: String(r.version),
-    title: r.title ?? null,
-    format: r.format || 'jpg',
-    page: Number(r.page),
+    version: lead.version,
+    title: lead.title,
+    format: (sameAsSampled && r.format) || 'jpg',
+    page: lead.page,
     verseId,
     ref: generateReference([verseId]),
     selector: canonicalSelector([verseId]),
@@ -664,7 +688,7 @@ const sampleSectionNext = async (ctx: AppContext, seed: number) => {
 // The quote fields are parsed from metadata onto the row so the
 // HistoricalDocument resolvers see them.
 const sampleArchiveDoc =
-  (archive: string, requireThumb: boolean) =>
+  (archive: string, requireThumb: boolean, exclude: readonly string[] = []) =>
   async (ctx: AppContext, seed: number) => {
     let qb = ctx.db
       .selectFrom('bom_xtras_history')
@@ -673,6 +697,7 @@ const sampleArchiveDoc =
       .where(sql<boolean>`teaser IS NOT NULL AND CHAR_LENGTH(teaser) > 30`)
       .where(sql<boolean>`JSON_EXTRACT(metadata,'$.money_quote') IS NOT NULL`);
     if (requireThumb) qb = qb.where('aspect', 'is not', null);
+    if (exclude.length) qb = qb.where('slug', 'not in', [...exclude]);
     // Seed on slug, not id: the joseph-smith-statements (and witnesses /
     // lost-116-pages) rows have id NULL, so MD5(CONCAT(NULL, …)) was NULL for
     // every row and every seed returned the same document. slug is non-null
@@ -699,7 +724,18 @@ const sampleArchiveDoc =
 // so requireThumb is false for both.
 const sampleHistory = sampleArchiveDoc('reception', true);
 const sampleTranslation = sampleArchiveDoc('translation', false);
-const sampleJosephSmith = sampleArchiveDoc('joseph-smith-statements', false);
+// Editorial: statements whose money quote is a hookless one-line fragment —
+// it reads as nothing on its own and leaves a near-empty card (blind R7
+// josephSmith-H1: "Jesus says, as recorded in the book of Mormon."). Not a
+// length rule: "I translated, by the gift and power of God." is 43 chars and
+// the archive's best line.
+export const JOSEPH_SMITH_NOT_TILE_WORTHY = [
+  '1838-07-elders-journal-jesus-book-of-mormon',
+  '1842-06-15-times-seasons-follow-book-of-mormon-directions',
+  '1836-03-30-joseph-smith-nephites-sacrament',
+  '1841-12-19-wilford-woodruff-joseph-smith-read-book-of-mormon',
+] as const;
+export const sampleJosephSmith = sampleArchiveDoc('joseph-smith-statements', false, JOSEPH_SMITH_NOT_TILE_WORTHY);
 
 // One full text block (scripture + narration + page/section context — the
 // feed's TextInFeed shape). Substantive content only.
