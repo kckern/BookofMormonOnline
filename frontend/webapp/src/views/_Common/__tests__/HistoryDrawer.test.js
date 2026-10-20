@@ -38,7 +38,7 @@ describe("HistoryDrawer", () => {
     expect(meta).toMatch(/John Whitmer/);
     expect(meta).not.toMatch(/^\s*•/);
     expect(container.querySelector("img[src*='null']")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: /close/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /close/i })[0]);
     expect(onClose).toHaveBeenCalled();
   });
 });

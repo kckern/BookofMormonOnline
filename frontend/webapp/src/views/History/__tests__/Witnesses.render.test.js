@@ -428,10 +428,13 @@ describe("witness hero", () => {
     await screen.findByText("Born");
     expect(document.title).toMatch(/^David Whitmer \|/);
   });
-  it("shows a placeholder when the biography is empty", async () => {
+  // blind audit R5 witness-D5: "Biography coming soon." read as a half-built
+  // page above the fold; with no bio the hero says what the page holds.
+  it("with no biography, the hero says what the page holds (no 'coming soon' stub)", async () => {
     renderWitness("/history/witnesses/david-whitmer");
     await screen.findByText("Born");
-    expect(screen.getByText(/Biography coming soon/)).toBeInTheDocument();
+    expect(screen.queryByText(/coming soon/i)).toBeNull();
+    expect(screen.getByText(/David Whitmer.s statements about the Book of Mormon/)).toBeInTheDocument();
   });
 });
 

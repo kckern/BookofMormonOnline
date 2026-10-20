@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import HistoryBody, { historyMeta, historyDocTitle } from "./entity/HistoryBody";
 import { label } from "src/models/Utils";
+import labelOr from "src/views/Home/tiles/_ds/labelOr";
 
 /**
  * Phone drawer for a history-archive document — the same field-adaptive body as
@@ -35,6 +36,13 @@ export default function HistoryDrawer({ slug, onClose }) {
         </button>
       </div>
       <div className="historyDrawerBody">{doc ? <HistoryBody data={doc} /> : null}</div>
+      {/* a Close in thumb reach at the foot of the sheet; the × sits at the
+          very top of the screen (blind audit R5 XC-F3) */}
+      <div className="historyDrawerFoot">
+        <button type="button" className="historyDrawerFootClose" onClick={onClose}>
+          {labelOr("close", "Close")}
+        </button>
+      </div>
     </div>
   );
 }

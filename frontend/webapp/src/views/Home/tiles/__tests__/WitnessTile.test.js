@@ -138,3 +138,13 @@ describe("witness styling (Sampler.css)", () => {
     expect(css).toMatch(/\.witnessSpeaker\s*{[^}]*font-size:\s*0\.72rem/);
   });
 });
+
+// blind audit R5 witness-A7: the 18-word source clamp cut an _italic_ span
+// before its closing mark, so the reader saw a literal "_One Hundredth…".
+test("a source clamped inside an italic span renders the span in italics, no stray mark", () => {
+  const src = "James H. Moyle, in _One Hundredth Annual Conference of The Church of Jesus Christ of Latter-day Saints, April 1930_ (Salt Lake City: Deseret News, 1930), 47.";
+  const { container } = setup([{ ...data[0], source: src }]);
+  const el = container.querySelector(".witnessSource");
+  expect(el.textContent).not.toMatch(/[_*]/);
+  expect(el.querySelector("em")).toHaveTextContent(/^One Hundredth Annual/);
+});

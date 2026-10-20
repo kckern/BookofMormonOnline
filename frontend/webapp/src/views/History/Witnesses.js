@@ -238,7 +238,8 @@ const SingleWitness = ({ witness, sourceSlug }) => {
                             <div className='witness-bio'>
                                 {witness.bio
                                     ? witness.bio
-                                    : <span className='witness-bio-placeholder'>Biography coming soon.</span>}
+                                    // no bio yet: say what the page holds, not a "coming soon" stub (blind audit R5 witness-D5)
+                                    : <span className='witness-bio-placeholder'>{witness.name}’s statements about the Book of Mormon, by date.</span>}
                             </div>
                         </div>
                     </div>

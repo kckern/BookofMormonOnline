@@ -1526,6 +1526,9 @@ html[data-theme="dark"] .historyTileTeaser { color: #c4c4c4; }
 html[data-theme="dark"] .historyTileQuote { background: rgba(214, 168, 96, 0.12); }
 /* the money quote is de-emphasised (grey); the mini-quote excerpts within it
    are near-black. No <mark> background — override the browser default yellow. */
+/* the pill is UI chrome, not quotation: the house UI face like every other
+   tile's Read more (blind audit R5 history-A3) */
+.historyTileQuote .readMorePill { font-family: "Roboto Condensed", "Roboto", sans-serif; font-style: normal; }
 .historyTileQuote .miniHighlight { background: none; color: #000; }
 html[data-theme="dark"] .historyTileQuote .miniHighlight { color: #fff; }
 .historyTileQuoteBy {
@@ -1894,7 +1897,8 @@ html[data-theme="dark"] .placesTilePlaces .placesTileCard:not(.viewAllCard):has(
 /* flex-grow is set inline per page (natural aspect ratio) so both pages render
    at equal height with proportional widths — see FaxTile.js. The row's
    max-width (inline) caps the rendered page height; it centers when capped. */
-.faxTilePages { margin-inline: auto; width: 100%; }
+/* capped rows sit left, under the left-aligned title (blind audit R5 fax-A1) */
+.faxTilePages { margin-inline: 0; width: 100%; }
 .faxTilePage { flex-basis: 0; flex-shrink: 1; flex-grow: 1; min-width: 0; display: flex; flex-direction: column; }
 /* the page link: image + folio overlay (the ref rail is a sibling button above) */
 .faxTilePageLink { position: relative; display: block; text-decoration: none; border-radius: 0.35rem; }
@@ -3201,6 +3205,7 @@ html[data-theme="dark"] .mapStoryScrubber::-moz-range-track { background: #4a4a4
 }
 
 /* Multi-edition cropped-verse facsimile tile */
+.faxVerseTile { container-type: inline-size; container-name: faxVerseCard; }
 .faxVerseTile .faxVerseEditions {
   display: flex;
   flex-direction: column;
@@ -3254,6 +3259,11 @@ html[data-theme="dark"] .faxVerseTile .faxEditionRailTitle { color: #e8e8e8; }
 }
 .faxVerseTile .faxEditionRow:hover .faxEditionCrop { border-color: rgba(201, 162, 75, 0.7); }
 html[data-theme="dark"] .faxVerseTile .faxEditionCrop { border-color: #444; background: #2c2c2c; }
+/* wide (tablet) cards: crops two-up (after the base rules, which it overrides) so the card is filled and each folio sits
+   over its own crop (blind audit R5 faxVerse-A1) */
+@container faxVerseCard (min-width: 600px) {
+  .faxVerseTile .faxVerseEditions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: none; column-gap: 1rem; row-gap: 0.7rem; }
+}
 
 /* --- Matters tiles ------------------------------------------------------- */
 /* Grid tiles reuse the Places footprint; the layout is JS-binned masonry, so
@@ -3446,6 +3456,7 @@ html[data-theme="dark"] .tile img.tileImage { filter: brightness(.85); }
 /* facsimile scans are near-white paper: dimmer still, so the covers and verse
    crops aren't the brightest thing on a dark page (blind audit fax-L3 / faxVerse-L3) */
 html[data-theme="dark"] .faxTileEdition img.tileImage,
+html[data-theme="dark"] .faxTilePage img.tileImage,
 html[data-theme="dark"] .faxVerseTile img.faxEditionCrop { filter: brightness(.7) contrast(1.05); }
 /* the embedded Read excerpt sits on the tile ground, not a lighter slab */
 html[data-theme="dark"] .faxVerseTile .read-content,

@@ -30,6 +30,41 @@ export function historyDocTitle(doc) {
   return doc.source ? `${title} (${doc.source})` : title;
 }
 
+/**
+ * The modal's heading. Witness records title themselves "Witness — Reporter",
+ * which reads "Martin Harris — Martin Harris" for a first-hand statement: say
+ * the name once, with its source when that adds something (blind audit R5
+ * witness-D5).
+ */
+export function historyHeading(doc) {
+  const title = String(doc?.document || "").trim();
+  const m = /^(.+?)\s+[—–-]\s+(.+)$/.exec(title);
+  if (!m || m[1].trim() !== m[2].trim()) return title;
+  const name = m[1].trim();
+  const source = String(doc.source || "").trim();
+  return source && source !== name ? `${name} — ${source}` : name;
+}
+
+/**
+ * Light Markdown emphasis (*x* / _x_) in a transcript, outside HTML tags only
+ * (an href's underscores stay as they are). A plain-text interview whose turns
+ * are marked "*Speaker:* …" gets one paragraph per turn; it rendered as one run
+ * of raw asterisks (blind audit R5 witness-D5).
+ */
+const EMPH_RE = /(?<![\w*])([*_])(?=\S)([^*_\n]+?)(?<=\S)\1(?![\w*])/g;
+export function transcriptHtml(text) {
+  let src = String(text || "");
+  const isHtml = /<[a-z][^>]*>/i.test(src);
+  if (!isHtml) {
+    const turns = src.split(/(?=\*[^*\n]{1,60}:\*)/).map((t) => t.trim()).filter(Boolean);
+    if (turns.length > 1) src = turns.map((t) => `<p>${t}</p>`).join("");
+  }
+  return src
+    .split(/(<[^>]+>)/)
+    .map((part) => (part.startsWith("<") ? part : part.replace(EMPH_RE, "<em>$2</em>")))
+    .join("");
+}
+
 export default function HistoryBody({ data }) {
   const doc = data;
   if (!doc) return null;
@@ -74,7 +109,7 @@ export default function HistoryBody({ data }) {
   return (
       <div id="my-tab-content" className="tab-content">
         <div className="tab-pane active" id="home" role="tabpanel">
-          {doc.document ? <h3>{doc.document}</h3> : null}
+          {doc.document ? <h3>{historyHeading(doc)}</h3> : null}
 
           {hasQuote ? (
             <blockquote className="historyPopupQuote">
@@ -99,7 +134,7 @@ export default function HistoryBody({ data }) {
           ) : null}
 
           {transcript.trim() && !transcriptDupesQuote ? (
-            <div className="transcript">{Parser(transcript)}</div>
+            <div className="transcript">{Parser(transcriptHtml(transcript))}</div>
           ) : null}
 
           {doc.id && pageCount > 0 ? (

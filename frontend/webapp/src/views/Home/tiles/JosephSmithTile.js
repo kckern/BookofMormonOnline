@@ -32,7 +32,13 @@ export default function JosephSmithTile({ data }) {
   const source =
     [data.year, data.document].filter(Boolean).join(" · ") ||
     (data.citation ? clampWords(flatten(data.citation), 18) : null);
-  const reporter = hasQuote && data.quote_speaker && !data.quote_is_witness_voice ? data.quote_speaker : null;
+  // Who the record says spoke: a third-party reporter, or a record whose author
+  // is not Joseph Smith alone ("Joseph Smith or editorial staff", "Lucy Mack
+  // Smith" recalling him) — named above the quote so a hedged or second-hand
+  // line is never presented as his own words (blind audit R5 josephSmith-H6).
+  const author = (data.author || "").trim();
+  const hedged = author && !/^joseph smith( jr\.?)?$/i.test(author) ? author : null;
+  const reporter = hasQuote ? (data.quote_speaker && !data.quote_is_witness_voice ? data.quote_speaker : hedged) : null;
   // the statement opened over the Joseph Smith page (portrait, name, the other
   // statements) — the same mechanism as the witness tile (blind audit josephSmith-C4)
   const to = data.slug ? `${INDEX}/${data.slug}` : INDEX;

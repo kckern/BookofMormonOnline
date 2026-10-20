@@ -319,7 +319,7 @@
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 0.75rem 1rem 30vh;
+    padding: 0.75rem 1rem 2rem;
     font-size: 1rem;
     line-height: 1.5;
     overflow-wrap: anywhere;
@@ -332,6 +332,28 @@
     line-height: 1.25;
     margin: 0 0 0.6rem;
 }
+/* thumb-reach Close at the foot (blind audit R5 XC-F3): neutral house chrome */
+.popupDrawer .historyDrawerFoot {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: center;
+    padding: 0.5rem 1rem calc(0.5rem + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid #ddd;
+    background: inherit;
+}
+.popupDrawer .historyDrawerFootClose {
+    min-height: 44px;
+    min-width: 9rem;
+    padding: 0.5rem 1.4rem;
+    font-size: 0.95rem;
+    border: 1px solid #ccc;
+    border-radius: 22px;
+    background: #fff;
+    color: #222;
+    font-weight: 700;
+}
+html[data-theme="dark"] .popupDrawer .historyDrawerFoot { border-color: var(--border); }
+html[data-theme="dark"] .popupDrawer .historyDrawerFootClose { background: var(--surface-2, #2a2a2a); border-color: var(--border, #555); color: var(--text-primary, #eee); }
 html[data-theme="dark"] .popupDrawer .historyDrawerHead { border-color: var(--border); }
 html[data-theme="dark"] .popupDrawer .historyDrawerMeta,
 html[data-theme="dark"] .popupDrawer .historyDrawerClose { color: var(--text-secondary); }

@@ -61,6 +61,22 @@ export const inlineMarkdown = (text) => {
 };
 
 /**
+ * Clamp a Markdown source line to `n` words without breaking its emphasis: a
+ * cut inside an _italic_ span closes the span before the ellipsis, so the
+ * reader never sees a literal "_" (blind audit R5 witness-A7).
+ */
+export const clampMarkdownWords = (text, n) => {
+  const cut = clampWords(text, n);
+  if (cut === text) return cut;
+  const m = /^(.*?)(\s*…)?$/s.exec(cut);
+  let body = m[1];
+  const tail = m[2] || "";
+  const open = /(?<![\w*])([_*])(?=\S)[^_*]*$/.exec(body);
+  if (open) body = body.replace(/\s+$/, "") + open[1];
+  return body + tail;
+};
+
+/**
  * A single featured Book of Mormon witness — Harris, the Cowderys, the Whitmers,
  * Hyrum & Samuel Smith — from the 'witnesses' history archive. Large portrait,
  * name, their statement (money quote), and source. A third-party account names
@@ -75,7 +91,7 @@ export default function WitnessTile({ data }) {
   if (!w) return null;
   const quote = flatten(w.moneyQuote);
   // flatten() strips HTML but keeps Markdown marks; clamp on words, then render.
-  const source = w.source ? clampWords(flatten(w.source), 18) : null;
+  const source = w.source ? clampMarkdownWords(flatten(w.source), 18) : null;
   const page = w.witnessSlug ? `/history/witnesses/${w.witnessSlug}` : "/history/witnesses";
   const to = w.witnessSlug && w.slug ? `${page}/${w.slug}` : page;
   const reporter = !w.isWitnessVoice && w.speaker ? w.speaker : null;

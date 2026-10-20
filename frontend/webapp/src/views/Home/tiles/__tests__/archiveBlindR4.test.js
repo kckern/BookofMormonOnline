@@ -9,7 +9,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { render, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import FaxVerseTile from "../FaxVerseTile";
+import FaxVerseTile, { __resetFailedCrops } from "../FaxVerseTile";
+
+beforeEach(() => __resetFailedCrops());
 import ArchiveDocTile, { displayAuthor } from "../ArchiveDocTile";
 import JosephSmithTile from "../JosephSmithTile";
 import WitnessTile from "../WitnessTile";
