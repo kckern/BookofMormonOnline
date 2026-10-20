@@ -3504,3 +3504,13 @@ html[data-theme="dark"] .imageArtScripture .scriptureAnchorMark { background: rg
      up into the eyebrow's */
   .biblePhrasesPassage:first-child .scripture_link::after { inset: -4px -4px -26px; }
 }
+/* R4 F2 (touch): the chiasm speaker row began inside the eyebrow's 44px hit
+   (eyebrow 37px, speaker 34px). The heading now clears that hit itself, and the
+   speaker's hit is square-cornered (a 2rem radius cut the hit at the face edge). */
+@media (pointer: coarse) {
+  .chiasmusTile > .tileHeading { min-height: calc(44px - 10px); margin-bottom: 0; }
+  .chiasmusTileSpeaker { border-radius: 6px; }
+  /* art-F2: the excerpt box clips, which cut the section chip's upward hit to
+     35px; the chip sits below a 14px band so its 44px hit stays inside. */
+  .imageArtScripture { padding-top: 14px; }
+}

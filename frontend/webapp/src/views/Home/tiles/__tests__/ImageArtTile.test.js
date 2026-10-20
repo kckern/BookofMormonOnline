@@ -110,10 +110,14 @@ describe("ImageArtTile", () => {
 
   // art-G3: the link's name is the title, not "Title© Artist" (the badge is
   // visual credit; the alt is empty because the title names the link).
-  test("the artwork link is named by the title alone; the © badge is hidden from AT", () => {
+  // R4 H6: …but the credit is not hidden from AT: it is the link's description.
+  test("the artwork link is named by the title; the © credit is its description", () => {
     const { container } = renderTile();
-    expect(screen.getByRole("link", { name: "Zarahemla is Rebuilt" })).toBeTruthy();
-    expect(container.querySelector(".imageArtArtistBadge").getAttribute("aria-hidden")).toBe("true");
+    const link = screen.getByRole("link", { name: "Zarahemla is Rebuilt" });
+    const badge = container.querySelector(".imageArtArtistBadge");
+    expect(badge.getAttribute("aria-hidden")).toBeNull();
+    expect(link.getAttribute("aria-describedby")).toBe(badge.id);
+    expect(badge.textContent).toMatch(/Jane Painter/);
   });
 
   // R3 B2/B1/E1: the 18rem placeholder collapsed to the real excerpt (99-564px)
