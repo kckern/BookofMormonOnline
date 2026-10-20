@@ -2097,6 +2097,9 @@ html[data-theme="dark"] .readMorePill:hover { background: rgba(201, 162, 75, 0.2
   display: block;
   max-height: calc(var(--clamp-lines, 6) * 1lh);
 }
+/* hiding nothing, it clips nothing: a ref chip on the last line overhangs the
+   line box by its padding and lost its bottom border to the clip (R6 notes) */
+.clampLines.clampFade:not(.isClipped) { overflow: visible; }
 .clampLines.clampFade.isClipped {
   -webkit-mask:
     linear-gradient(#000, #000) top / 100% calc(100% - 1lh) no-repeat,
@@ -2640,13 +2643,19 @@ html[data-theme="dark"] .notesTile .notesBody { color: #d0d0d0; }
   top: 0;
   z-index: 1;
   background: #fff;
-  box-shadow: 0 0.35rem 0.5rem 0.15rem #fff;
+  /* notes-H3: revealMark puts a whole line flush under this row, so the row
+     is the clean top edge (opaque, a little air below the chip) — no glow
+     fading the first line's tops */
+  padding-bottom: 0.3rem;
 }
 /* room to lift a last-line anchor clear of the bottom fade (the box height is
    fixed, so this pads the scroll range, not the layout) */
 .notesTile .notesExcerpt.isScrolled > :last-child { padding-bottom: 2.25rem; }
 .notesTile .notesExcerpt.isScrolled .left-gutter { position: sticky; top: 2rem; align-self: flex-start; }
-html[data-theme="dark"] .notesTile .notesExcerpt.isScrolled .read-section-header { background: #222; box-shadow: 0 0.35rem 0.5rem 0.15rem #222; }
+html[data-theme="dark"] .notesTile .notesExcerpt.isScrolled .read-section-header { background: #222; }
+/* notes-A1: fitted to its passage (NotesTile fitExcerpt) — every line shows,
+   so no bottom fade */
+.notesTile .read-content.notesExcerpt.isFit { -webkit-mask-image: none; mask-image: none; }
 /* touch: the section-ref chip sits ~3px under the excerpt box's top edge and
    the box clips (overflow hidden), so the default hit (15px above and below)
    lost its top half — 35px measured (blind audit r4 notes F2). Extend the hit

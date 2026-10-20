@@ -64,3 +64,11 @@ test("no sampler clamp is a scroll container: overflow ends on clip, never hidde
     .map(({ f, sel }) => `${f}: ${sel}`);
   expect(bad).toEqual([]);
 });
+
+// R6 notes: a ref chip on the LAST line of an untruncated fade clamp lost its
+// bottom border to the clip (the chip's padding overhangs the line box). A fade
+// clamp that hides nothing doesn't clip at all.
+test("an untruncated fade clamp does not clip (a last-line chip keeps its border)", () => {
+  const r = all.find(({ sel }) => sel === ".clampLines.clampFade:not(.isClipped)");
+  expect(r && decls(r.body, "overflow").pop()).toBe("visible");
+});

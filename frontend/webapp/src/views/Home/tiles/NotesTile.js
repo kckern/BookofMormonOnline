@@ -37,6 +37,20 @@ const verseCount = (ref) => {
 // scrollTop moves no layout (no CLS). FADE_PX tracks the CSS fade (2.25rem).
 const FADE_PX = 40;
 const GAP_PX = 10;
+
+/** Line-box tops (px from `top`) of every verse paragraph in the window. */
+const verseLineTops = (box, top) => {
+  const out = [];
+  for (const p of box.querySelectorAll(".read-scripture")) {
+    const r = p.getBoundingClientRect();
+    const lh = parseFloat(getComputedStyle(p).lineHeight);
+    if (!(lh > 0) || !(r.height > 0)) continue;
+    const n = Math.max(1, Math.round(r.height / lh));
+    for (let k = 0; k < n; k++) out.push(r.top - top + k * lh);
+  }
+  return out.sort((a, b) => a - b);
+};
+
 export const revealMark = (box) => {
   if (!box) return;
   box.scrollTop = 0;
@@ -44,12 +58,85 @@ export const revealMark = (box) => {
   const mark = box.querySelector(".scriptureAnchorMark");
   if (!mark) return;
   const below = () => mark.getBoundingClientRect().bottom - box.getBoundingClientRect().top;
-  if (below() <= box.getBoundingClientRect().height - FADE_PX) return;
+  const height = box.getBoundingClientRect().height;
+  // a box fitted to its passage (fitExcerpt) shows every line, unfaded
+  if (box.classList.contains("isFit") && below() <= height + 1) return;
+  if (below() <= height - FADE_PX) return;
   box.classList.add("isScrolled"); // reflows: the section title goes
   const b = box.getBoundingClientRect();
-  const m = mark.getBoundingClientRect();
+  const markTop = mark.getBoundingClientRect().top - b.top;
   const pinned = box.querySelector(".read-section-header")?.getBoundingClientRect().height || 0;
-  box.scrollTop = Math.max(0, m.top - b.top - pinned - GAP_PX);
+  // notes-H3: the first row under the pinned header is always a WHOLE line —
+  // the mark's own line, or (when the scroll range runs out first) the lowest
+  // line the range can reach. The line above sits entirely behind the opaque
+  // pinned row, so no half-glyphs peek out under it.
+  const max = Math.max(0, (box.scrollHeight || 0) - (box.clientHeight || 0));
+  const fits = verseLineTops(box, b.top).filter((t) => t <= markTop + 1 && t - pinned >= 0 && t - pinned <= max + 0.5);
+  if (fits.length) {
+    box.scrollTop = Math.round(fits[fits.length - 1] - pinned);
+    return;
+  }
+  box.scrollTop = Math.max(0, markTop - pinned - GAP_PX);
+};
+
+// notes-A1 (R6): the reserve is sized from the verse COUNT before the passage
+// lands, so a short verse (or a wide tablet card) left 70-240px of dead space
+// above the bubble. Once the passage is in, the box shrinks to its content —
+// but only while the box's bottom edge is off-screen (nothing the reader can
+// see moves; above the viewport, scroll anchoring holds the view). In view, it
+// waits for the reader to scroll it out. A scrolled window keeps the reserve.
+const FIT_PAD = 4;
+const FIT_MIN = 12; // ignore slack smaller than this
+export const fitExcerpt = (box, reserve) => {
+  if (!box || !(reserve > 0)) return undefined;
+  const contentH = () => {
+    const b = box.getBoundingClientRect();
+    let max = 0;
+    for (const el of box.querySelectorAll(".read-block")) {
+      const r = el.getBoundingClientRect();
+      if (r.height > 0) max = Math.max(max, r.bottom - b.top + (box.scrollTop || 0));
+    }
+    return max;
+  };
+  const target = () => {
+    if (box.classList.contains("isScrolled")) return reserve;
+    const c = contentH();
+    if (!c) return null; // passage not in yet
+    const h = Math.ceil(c + FIT_PAD);
+    return h < reserve - FIT_MIN ? h : reserve;
+  };
+  const current = () => (box.classList.contains("isFit") ? parseFloat(box.style.height) || reserve : reserve);
+  const unseen = () => {
+    const r = box.getBoundingClientRect();
+    return r.bottom > window.innerHeight || r.bottom <= 0;
+  };
+  const apply = (h) => {
+    if (h >= reserve) {
+      box.style.height = "";
+      box.classList.remove("isFit");
+    } else {
+      box.style.height = `${h}px`;
+      box.classList.add("isFit");
+    }
+  };
+  const attempt = () => {
+    const t = target();
+    if (t == null || Math.abs(t - current()) < 2) return true;
+    if (!unseen()) {
+      // content outgrew a fitted box in view (a late re-wrap): fade the edge
+      // until it can grow back unseen
+      if (t > current()) box.classList.remove("isFit");
+      return false;
+    }
+    apply(t);
+    return true;
+  };
+  if (attempt()) return undefined;
+  const onScroll = () => {
+    if (attempt()) window.removeEventListener("scroll", onScroll);
+  };
+  window.addEventListener("scroll", onScroll, { passive: true });
+  return () => window.removeEventListener("scroll", onScroll);
 };
 
 // notes-H1: textual-variant notes are written in critical-apparatus shorthand
@@ -91,9 +178,16 @@ function NotesTileInner({ data }) {
     // re-run after layout settles: the Read webfont swapping in re-wraps the
     // verse and moves the mark (seen live: a reveal computed pre-swap)
     let raf = 0;
+    let reserve = 0;
+    let stopFit;
     const run = () => {
       cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => revealMark(box));
+      raf = requestAnimationFrame(() => {
+        if (!box.style.height) reserve = box.getBoundingClientRect().height || reserve;
+        revealMark(box);
+        stopFit?.();
+        stopFit = fitExcerpt(box, reserve);
+      });
     };
     const mo = new MutationObserver(run);
     mo.observe(box, { childList: true, subtree: true });
@@ -101,6 +195,7 @@ function NotesTileInner({ data }) {
     run();
     return () => {
       cancelAnimationFrame(raf);
+      stopFit?.();
       mo.disconnect();
       document.fonts?.removeEventListener?.("loadingdone", run);
     };
