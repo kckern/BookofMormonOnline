@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sanitizeBoxes, dedupeBoxes, clusterColumns, toFragments, clampPages } from '../../src/media/fax/geometry.js';
+import { sanitizeBoxes, dedupeBoxes, clusterColumns, toFragments, clampPages, cropAspect } from '../../src/media/fax/geometry.js';
 import type { FaxBox } from '../../src/media/fax/types.js';
 
 const raw = (o: Partial<FaxBox>): FaxBox => ({
@@ -107,5 +107,23 @@ describe('clampPages', () => {
   it('does not flag when within budget', () => {
     const frags = [1, 2].map((p) => ({ page: p, pageWidth: 800, x: 0, y: 0, w: 10, h: 10, boxes: [] }));
     expect(clampPages(frags, 5).clamped).toBe(false);
+  });
+});
+
+// blind audit R5 faxVerse-B1: the Home tile reserves each crop row at its
+// final aspect before the image arrives. The crop render scales each fragment
+// to the requested width and stacks them, so the stitched aspect is
+// 1 / Σ(h/w) over the fragments.
+describe('cropAspect', () => {
+  const frag = (w: number, h: number) => ({ page: 1, pageWidth: 800, pageScale: 700, x: 0, y: 0, w, h, boxes: [] });
+  it('one fragment: its own w/h', () => {
+    expect(cropAspect([frag(300, 100)])).toBeCloseTo(3);
+  });
+  it('stacked fragments scaled to a common width: 1 / sum(h/w)', () => {
+    expect(cropAspect([frag(300, 100), frag(150, 50)])).toBeCloseTo(1.5);
+  });
+  it('null for no usable geometry', () => {
+    expect(cropAspect([])).toBeNull();
+    expect(cropAspect([frag(0, 10)])).toBeNull();
   });
 });

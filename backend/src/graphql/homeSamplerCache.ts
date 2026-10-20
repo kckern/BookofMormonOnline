@@ -23,8 +23,10 @@
  * (sigla/ATV) rows (scripture R3 notes-H1). v6 = commentaries require a host
  * text block, so their /commentary/:id deeplink resolves (scripture r4 C4).
  * v7 = faxVerse editions carry imageFile, the viewer's scan number (archive r4 D4).
+ * v8 = faxVerse offers only scanned editions (pages > 0) (archive r5 B2).
+ * v9 = faxVerse editions carry cropAspect (archive r5 B1).
  */
-export const SAMPLER_KEY_PREFIX = 'homesampler:v7:';
+export const SAMPLER_KEY_PREFIX = 'homesampler:v9:';
 
 /** Front-door window key ({ bucket }) or explicit-seed key ({ seed }). */
 export const samplerCacheKey = (lang: string, at: { bucket: number } | { seed: number }): string =>

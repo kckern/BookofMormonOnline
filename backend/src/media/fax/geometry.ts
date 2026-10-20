@@ -110,3 +110,16 @@ export function clampPages(frags: Fragment[], maxPages: number): { fragments: Fr
   const allowed = new Set(pages.slice(0, maxPages));
   return { fragments: frags.filter((f) => allowed.has(f.page)), clamped: true };
 }
+
+/**
+ * The aspect (w/h) of a crop-mode render of these fragments: each fragment is
+ * scaled to the requested width and they are stacked, so w/h = 1 / Σ(h/w).
+ * Lets a client reserve the row before the image arrives. Null when there is
+ * no usable geometry. (A fragment narrower than the requested width is not
+ * upscaled, so a mixed-width stack renders a little shorter than this.)
+ */
+export function cropAspect(frags: Fragment[]): number | null {
+  const usable = frags.filter((f) => f.w > 0 && f.h > 0);
+  if (!usable.length) return null;
+  return 1 / usable.reduce((s, f) => s + f.h / f.w, 0);
+}

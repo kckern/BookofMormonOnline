@@ -16,7 +16,9 @@ import { findUserByToken } from '../../data/loaders/userauth.js';
 import { md5 } from '../../auth/identity.js';
 import { deSlugGroupName, parseVerseIdFromNote, resolveEntityNames } from '../../data/loaders/matters.js';
 import { canonicalSelector } from '../../media/fax/canonical.js';
-import { imageScanMeta } from '../../media/fax/resolve.js';
+import { imageScanMeta, verseIdsToBoxes } from '../../media/fax/resolve.js';
+import { clampPages, cropAspect, toFragments } from '../../media/fax/geometry.js';
+import { MAX_PAGES } from '../../media/fax/constants.js';
 import { getHomeSamplerCache } from '../homeSamplerCacheStore.js';
 import { currentBucket, samplerCacheKey, seedForBucket } from '../homeSamplerCache.js';
 import { dropVariantNotes } from './noteFilters.js';
@@ -264,6 +266,9 @@ const sampleFaxVerse = async (ctx: AppContext, seed: number) => {
     .innerJoin('bom_xtras_fax as f', 'f.slug', 'i.version')
     .select(['i.version as version', 'i.page as page', 'i.verse_id as verseId', 'f.title as title', 'f.format as format'])
     .where('f.hide', '=', 0)
+    // scanned editions only: typeset-only ones (earliest, poetic, rebom) carry
+    // box geometry but pages=null and 502 every crop render (blind R5 faxVerse-B2)
+    .where(sql<boolean>`f.pages > 0`)
     .where('i.verse_id', 'is not', null)
     .orderBy(sql`MD5(CONCAT(${sql.ref('i.version')}, ':', ${sql.ref('i.page')}, ':', ${seed}))`)
     .limit(1)
@@ -280,6 +285,7 @@ const sampleFaxVerse = async (ctx: AppContext, seed: number) => {
     .select((eb) => eb.fn.min('i.page').as('page'))
     .where('i.verse_id', '=', String(verseId))
     .where('f.hide', '=', 0)
+    .where(sql<boolean>`f.pages > 0`)
     .groupBy(['i.version', 'f.title'])
     .orderBy(sql`MD5(CONCAT(${sql.ref('i.version')}, ':', ${seed}))`)
     .execute();
@@ -292,11 +298,20 @@ const sampleFaxVerse = async (ctx: AppContext, seed: number) => {
   // imageFile: the scan number the viewer routes and labels by ("Page N");
   // the index page is offset from it per edition (1981/2013: −9).
   const offsets = await Promise.all(ordered.map((e) => imageScanMeta(String(e.version)).then((m) => m.offset)));
+  // cropAspect: the crop render's w/h from the same box geometry it renders,
+  // so the tile reserves each row at its final size before the image arrives
+  // (blind audit R5 faxVerse-B1)
+  const aspects = await Promise.all(ordered.map(async (e) => {
+    const boxes = await verseIdsToBoxes(String(e.version), [verseId]);
+    const a = cropAspect(clampPages(toFragments(boxes), MAX_PAGES).fragments);
+    return a == null ? null : Math.round(a * 1000) / 1000;
+  }));
   const editions = ordered.map((e, i) => ({
     version: String(e.version),
     title: e.title ?? null,
     page: Number(e.page),
     imageFile: Number(e.page) + (offsets[i] || 0),
+    cropAspect: aspects[i],
   }));
 
   return {

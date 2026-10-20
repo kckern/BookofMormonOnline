@@ -234,3 +234,23 @@ describe("scroll place across open/close (audit xc-popup-E3)", () => {
     expect(y).toBe(982);
   });
 });
+
+// blind audit R5 faxVerse-H2: a tile's section chip ("Jacob 6") opened the
+// popup at v.1 with the tile's verse below the card's fold. An open carrying
+// `focus` scrolls the popup body to that verse and marks it.
+test("an open with a focus verse scrolls the body to it and marks it", async () => {
+  const { lookup } = await import("scripture-guide");
+  const id = lookup("Helaman 1:3").verse_ids[0];
+  setup();
+  const rect = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function () {
+    const top = this.classList?.contains(`verse_${id}`) ? 500 : this.classList?.contains("samplerScriptureBody") ? 100 : 0;
+    return { top, bottom: top + 20, left: 0, right: 100, width: 100, height: 20, x: 0, y: top };
+  });
+  act(() => window.dispatchEvent(new CustomEvent("samplerScripture", { detail: { ref: "Helaman 1", focus: id } })));
+  const dialog = await screen.findByRole("dialog");
+  await waitFor(() => expect(dialog.querySelector(`.verse_${id}`)).not.toBeNull());
+  const body = dialog.querySelector(".samplerScriptureBody");
+  await waitFor(() => expect(body.scrollTop).toBe(400 - 12));
+  expect(dialog.querySelector(`.verse_${id}`).classList.contains("samplerScriptureFocus")).toBe(true);
+  rect.mockRestore();
+});

@@ -14,6 +14,7 @@ import { createYoga } from 'graphql-yoga';
 import { getDb, closeDb } from '../../src/data/db.js';
 import { buildSchema } from '../../src/graphql/schema.js';
 import { buildContext } from '../../src/graphql/context.js';
+import { sql } from 'kysely';
 
 const db = getDb();
 let yoga: ReturnType<typeof createYoga>;
@@ -216,6 +217,32 @@ describe('faxVerse editions', () => {
     expect(fv.editions[0]!.version).toBe(fv.version);          // sampled edition first
     expect(fv.selector).toMatch(/^([a-z0-9.-]+|ids\/[0-9-]+)$/); // canonical render selector
     for (const e of fv.editions) expect(e.page).toBeGreaterThan(0);
+  });
+
+  // blind audit R5 faxVerse-B2: typeset-only editions (earliest, poetic, rebom:
+  // box geometry but no page scans, pages=null) 502 on every crop render, so
+  // the tile reserved a row and dropped it in view. Only scanned editions.
+  it('only offers editions that hold page scans (pages > 0)', async () => {
+    type FV = { faxVerse: { editions: { version: string }[] } | null };
+    const scanned = new Set(
+      (await db.selectFrom('bom_xtras_fax').select('slug').where(sql<boolean>`pages > 0`).execute())
+        .map((r) => String(r.slug)),
+    );
+    for (let seed = 1; seed <= 8; seed++) {
+      const d = await exec<FV>('faxVerse { editions { version } }', seed);
+      for (const e of d.faxVerse?.editions ?? []) expect(scanned.has(e.version), `${seed}:${e.version}`).toBe(true);
+    }
+  }, 120_000);
+
+  // blind audit R5 faxVerse-B1: each edition carries its crop's aspect (from
+  // the box geometry) so the tile reserves the final row before the image loads
+  it('each edition carries a positive cropAspect', async () => {
+    type FV = { faxVerse: { editions: { version: string; cropAspect: number | null }[] } | null };
+    const d = await exec<FV>('faxVerse { editions { version cropAspect } }', 7);
+    for (const e of d.faxVerse!.editions) {
+      expect(e.cropAspect, e.version).toBeGreaterThan(0.5);
+      expect(e.cropAspect, e.version).toBeLessThan(40);
+    }
   });
 
   // blind audit fax-D4: the viewer routes and labels by the scan image-file

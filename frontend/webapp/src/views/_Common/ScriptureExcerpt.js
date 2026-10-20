@@ -265,6 +265,19 @@ export const focusSegments = (segments, anchor, max, lead = 1) => {
   });
 };
 
+// Resolved excerpts this page session, by canonical ref. Scripture text does not
+// change under the reader, and a tile remounted on Back re-fetched it from
+// scratch: it painted a one-line "…" for a beat and then grew ~100px under the
+// scroll anchor (blind audit R5 faxVerse-B1). Bounded so a long session stays
+// small.
+const excerptCache = new Map();
+const EXCERPT_CACHE_MAX = 200;
+const rememberExcerpt = (ref, results) => {
+  excerptCache.delete(ref);
+  excerptCache.set(ref, results);
+  if (excerptCache.size > EXCERPT_CACHE_MAX) excerptCache.delete(excerptCache.keys().next().value);
+};
+
 export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = false, refAsPopup = false, highlight = null, onBoMSections = null, focusVerses = 0, focusLead = 1 }) {
   const anchor = cleanPhrase(highlight);
   const ref = refText ? canonical(refText) : null;
@@ -273,11 +286,17 @@ export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = fals
   // ordered mix (not flattening to sections-OR-passages) is what lets a
   // reference like "Acts 10:3-4; 3 Ne. 27:1; Psalm 35:13" render every segment
   // instead of dropping the Bible ones the moment any BoM section appears.
-  const [segments, setSegments] = useState(null);
+  const [segments, setSegments] = useState(() => (ref && excerptCache.get(ref)) || null);
 
   useEffect(() => {
     if (!ref) return undefined;
     let cancelled = false;
+    const cached = excerptCache.get(ref);
+    if (cached) {
+      setSegments(cached);
+      if (onBoMSections) onBoMSections(cached.some((s) => s.sections?.length > 0));
+      return undefined;
+    }
     setSegments(null);
     // A compound reference ("Omni 1:24; Mormon 1:13-14") spans multiple
     // chapters/books — split it into segments and render each. Each segment is
@@ -329,6 +348,9 @@ export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = fals
           .catch(() => ({ passages: [] })),
       ),
     ).then((results) => {
+      // only a clean result is kept: a failed chapter fetch resolves to null
+      // and must be retried on the next mount, not remembered as "not found"
+      if (results.every((r) => r.sections?.length || r.passages?.length)) rememberExcerpt(ref, results);
       if (cancelled) return;
       setSegments(results);
       // Report whether any segment resolved to actual Book of Mormon content
@@ -341,6 +363,7 @@ export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = fals
   }, [ref]);
 
   if (!ref) return null;
+  const focusId = [...targetVerseIds(ref)][0] || null;
   if (!segments) return <div className="samplerScriptureLoading isLoading" aria-busy="true">…</div>;
   const hasAny = segments.some((s) => (s.sections?.length || s.passages?.length));
   if (!hasAny) return <div className="samplerScriptureLoading">{labelOr("scripture_not_found", "This passage could not be found.")}</div>;
@@ -362,7 +385,10 @@ export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = fals
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  window.dispatchEvent(new CustomEvent("samplerScripture", { detail: canonical(s.ref) }));
+                  // focused on the excerpt's own verse: the chip names the
+                  // whole section, and the popup opened it at v.1 with the
+                  // tile's verse below the fold (blind audit R5 faxVerse-H2)
+                  window.dispatchEvent(new CustomEvent("samplerScripture", { detail: focusId && focusId !== [...targetVerseIds(canonical(s.ref))][0] ? { ref: canonical(s.ref), focus: focusId } : canonical(s.ref) }));
                 }}
               >
                 {enDash(s.ref)}
@@ -378,7 +404,11 @@ export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = fals
           </p>
         ) : null}
       </div>
-      {s.blocks.map((b, i) => (
+      {s.blocks.map((b, i) => {
+        // a verse split across speaker blocks ("25 But thus saith the Lord," /
+        // "even the captives…") is numbered once, in its first block (R5 A7)
+        const earlier = new Set(s.blocks.slice(0, i).flatMap((pb) => pb.lines.filter((l) => !isFrontMatter(l)).map((l) => l.verse_id)));
+        return (
         <div key={i} className="read-block">
           <div className="left-gutter">
             <GutterAvatar slug={b.person_slug} />
@@ -391,7 +421,7 @@ export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = fals
                 const prev = b.lines[li - 1];
                 const front = isFrontMatter(l);
                 // number a verse once: on its first non-front-matter line
-                const numbered = !front && !b.lines.slice(0, li).some((p) => p.verse_id === l.verse_id && !isFrontMatter(p));
+                const numbered = !front && !earlier.has(l.verse_id) && !b.lines.slice(0, li).some((p) => p.verse_id === l.verse_id && !isFrontMatter(p));
                 const gap = prev && l.verse_id - prev.verse_id > 1;
                 return (
                   <span key={`${l.verse_id}-${li}`} className={`verse_${l.verse_id}${/§/.test(l.format || "") ? " heading" : front ? " italic" : ""}`}>
@@ -404,7 +434,8 @@ export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = fals
             </p>
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 

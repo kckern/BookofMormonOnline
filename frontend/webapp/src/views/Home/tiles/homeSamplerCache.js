@@ -18,7 +18,7 @@
 
 // Version in the key invalidates old-shaped payloads on schema changes, the same
 // pattern as the chiasmus/page guards in models/Cache.js. Bump on shape change.
-const KEY = "bom:homeSampler:v2"; // v2: matters groups carry 18 (MatterProfile)
+const KEY = "bom:homeSampler:v3"; // v2: matters groups carry 18 (MatterProfile); v3: faxVerse scanned editions + cropAspect
 export const TTL_MS = 6 * 3600 * 1000; // 6h — matches the server window
 // Real payload measures ~90-98KB; skip anything wildly larger rather than risk a
 // quota error or a pathological blob.

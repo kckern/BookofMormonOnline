@@ -3,7 +3,9 @@ import "@testing-library/jest-dom";
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import FaxVerseTile from "../FaxVerseTile";
+import FaxVerseTile, { __resetFailedCrops } from "../FaxVerseTile";
+
+beforeEach(() => __resetFailedCrops());
 
 vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
@@ -126,4 +128,32 @@ describe("FaxVerseTile reserves crop boxes it has already measured", () => {
 test("faxVerse-H2: the eyebrow names this tile apart from the Fax tile", () => {
   const { container } = renderTile(data);
   expect(container.querySelector(".tileHeading").textContent).toMatch(/·\s*One verse/);
+});
+
+// Blind audit R5 faxVerse-B1: a cold or remounted tile held each crop at a
+// fixed 3rem and re-rendered rows that had already failed, so the tile came
+// back ~120px short and then grew/shrank in view.
+describe("FaxVerseTile R5: rows reserve their final box; failures stay gone", () => {
+  test("a cold crop reserves its box from the payload's cropAspect", () => {
+    const d = { selector: "alma-1.1", ref: "Alma 1:1", editions: [{ version: "1879", title: "1879 Liverpool", page: 9, cropAspect: 5.2 }] };
+    const r = render(<MemoryRouter><FaxVerseTile data={d} /></MemoryRouter>);
+    const img = r.container.querySelector("img.faxEditionCrop");
+    expect(img.style.height).toBe("");
+    expect(img.style.aspectRatio).toBe("5.2");
+    expect(img.style.getPropertyValue("--crop-w")).toBe("min(100%, 800px, calc(6.5rem * 5.2))");
+  });
+
+  test("an edition whose crop failed stays dropped when the tile remounts (Back)", () => {
+    const d = { selector: "alma-2.2", ref: "Alma 2:2", editions: [
+      { version: "1830", title: "1830 Palmyra", page: 1 },
+      { version: "1837", title: "1837 Kirtland", page: 2 },
+    ] };
+    const r = render(<MemoryRouter><FaxVerseTile data={d} /></MemoryRouter>);
+    fireEvent.error(r.container.querySelector("img.faxEditionCrop"));
+    expect(r.container.querySelectorAll("img.faxEditionCrop")).toHaveLength(1);
+    r.unmount();
+    const again = render(<MemoryRouter><FaxVerseTile data={d} /></MemoryRouter>);
+    expect(again.container.querySelectorAll("img.faxEditionCrop")).toHaveLength(1);
+    expect(again.container.querySelector(".faxEditionRailTitle")).toHaveTextContent("1837 Kirtland");
+  });
 });

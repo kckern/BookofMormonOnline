@@ -57,6 +57,10 @@ export const restorePlace = (place) => {
 export default function ScripturePopup() {
   const [ref, setRef] = useState(null);
   const [anchorX, setAnchorX] = useState(0);
+  // A verse id inside `ref` to open at (a tile's section chip names the whole
+  // section; the reader wants the tile's verse — blind audit R5 faxVerse-H2).
+  const [focus, setFocus] = useState(null);
+  const bodyRef = useRef(null);
   // Whether the current ref resolved to actual Book of Mormon content. The
   // "Read" CTA links into the Read experience, which only serves BoM — so it
   // stays hidden for Bible-only refs (and while loading). ScriptureExcerpt
@@ -84,6 +88,7 @@ export default function ScripturePopup() {
       if (!placeRef.current) placeRef.current = capturePlace(opener === document.body ? null : opener);
       setRef(nextRef || null);
       setAnchorX(nextAnchor);
+      setFocus((typeof d === "object" && d && d.focus) || null);
       // Hide the Read CTA until the new ref's fetch confirms BoM content.
       setHasBoM(false);
     };
@@ -120,6 +125,25 @@ export default function ScripturePopup() {
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
   }, [ref]);
+
+  // Open at the focus verse: once it renders, scroll the card's own body (never
+  // scrollIntoView, which would also move the locked page behind) so the verse
+  // sits just under the head, and mark it.
+  useEffect(() => {
+    const body = bodyRef.current;
+    if (!ref || !focus || !body) return undefined;
+    const land = () => {
+      const el = body.querySelector(`.verse_${focus}`);
+      if (!el) return false;
+      el.classList.add("samplerScriptureFocus");
+      body.scrollTop += Math.round(el.getBoundingClientRect().top - body.getBoundingClientRect().top) - 12;
+      return true;
+    };
+    if (land()) return undefined;
+    const mo = new MutationObserver(() => { if (land()) mo.disconnect(); });
+    mo.observe(body, { childList: true, subtree: true });
+    return () => mo.disconnect();
+  }, [ref, focus]);
 
   // Freeze the main site behind the shaded overlay while the modal is open by
   // locking the ROOT scroller only (html overflow:hidden; scrollbar-gutter:stable
@@ -162,7 +186,7 @@ export default function ScripturePopup() {
         <button type="button" ref={closeRef} aria-label="Close" onClick={close}>×</button>
       </div>
       {/* .read-content scope makes the Read.scss styles apply */}
-      <div className="samplerScriptureBody read-content scriptureExcerptCompact">
+      <div className="samplerScriptureBody read-content scriptureExcerptCompact" ref={bodyRef}>
         <ScriptureExcerpt refText={ref} onNavigate={() => setRef(null)} onBoMSections={setHasBoM} />
       </div>
       {to && hasBoM ? (

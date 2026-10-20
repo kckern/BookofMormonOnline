@@ -45,6 +45,21 @@ describe("pinAnchor", () => {
     expect(nodes[1].getBoundingClientRect().top).toBe(200);
   });
 
+  // blind audit R5 XC-E1: an anchor whose tile sat at or above the viewport
+  // top (offset ≤ 0) must pin like any other, including while a tile above
+  // re-grows ~120px a beat after the restore (faxVerse remount).
+  test.each([-1, 0, -278])("pins a tile saved at offset %i while a tile above re-grows", (offset) => {
+    const nodes = [node("tile-faxVerse", 0, 517, "faxVerse"), node("tile-history", 900, 600, "history")];
+    let now = 0;
+    pinAnchor(() => nodes, { index: 1, cls: "tile-history", id: "history", offset }, { win, now: () => now, timeoutMs: 3500 });
+    run();
+    expect(nodes[1].getBoundingClientRect().top).toBe(offset);
+    node.offset += 120; // the faxVerse above grows back to 637px
+    now = 1500;
+    run();
+    expect(nodes[1].getBoundingClientRect().top).toBe(offset);
+  });
+
   test("stops as soon as the reader scrolls", () => {
     const nodes = [node("tile-c", 600, 500)];
     pinAnchor(() => nodes, { index: 0, cls: "tile-c", offset: 200 }, { win, now: () => 0 });

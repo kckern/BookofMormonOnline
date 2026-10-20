@@ -14,20 +14,28 @@ const CROP_MAX_H = "6.5rem";
 const CROP_TYPICAL_H = "3rem";
 
 /**
- * The box a crop will occupy, from its natural size learned earlier this
- * session: its intrinsic width, capped by the column and by the max-height at
- * its aspect. Lets a tile remounted on Back reserve its final height before
- * the crops arrive (blind audit faxVerse-B1 / XC2). Unknown → no reservation.
+ * The box a crop will occupy: its intrinsic width, capped by the column and by
+ * the max-height at its aspect. The aspect comes from the size learned earlier
+ * this session or, cold, from the payload's cropAspect (the render's own box
+ * geometry), so a tile reserves its final rows before the crops arrive and a
+ * remount on Back neither shrinks nor grows (blind audit R5 faxVerse-B1).
+ * Neither known → hold the row at a typical crop height.
  */
-const cropBox = (path) => {
+const cropBox = (path, aspect) => {
   const s = knownSize(path);
-  // unknown yet: hold the row at a typical crop height (a 3-4 line verse at
-  // column width, ~3rem) so a cold load moves little; the load re-renders
-  if (!s) return { height: CROP_TYPICAL_H };
-  const r = s.w / s.h;
+  const r = s ? s.w / s.h : aspect > 0 ? aspect : null;
+  if (!r) return { height: CROP_TYPICAL_H };
+  const a = +r.toFixed(4);
   // via a custom property: the stylesheet's width is var(--crop-w, auto)
-  return { aspectRatio: String(+r.toFixed(4)), "--crop-w": `min(100%, ${s.w}px, calc(${CROP_MAX_H} * ${+r.toFixed(4)}))` };
+  return { aspectRatio: String(a), "--crop-w": `min(100%, ${s ? s.w : CROP_WIDTH}px, calc(${CROP_MAX_H} * ${a}))` };
 };
+
+// Crops that failed this session (render 502/404), by URL: a tile remounted on
+// Back leaves those rows out from the first paint instead of showing them and
+// dropping them again in view (blind audit R5 faxVerse-B1).
+const failedCrops = new Set();
+/** Test-only: forget this session's failed crops. */
+export const __resetFailedCrops = () => failedCrops.clear();
 
 // The app's existing fax-viewer ref-slug convention, e.g. "Mosiah 2:17" -> "mosiah.2.17".
 const refSlug = (ref) => (ref || "").replace(/[ :]+/g, ".").toLowerCase();
@@ -46,9 +54,9 @@ const refSlug = (ref) => (ref || "").replace(/[ :]+/g, ".").toLowerCase();
 export default function FaxVerseTile({ data }) {
   // bumped as crops load, so cropBox swaps the placeholder for the real box
   const [, setLoaded] = React.useState(0);
-  // editions whose crop failed (render 502 etc.): their rows drop out and the
+  // bumped when a crop fails (render 502 etc.): its row drops out and the
   // eyebrow counts only what rendered (blind audit faxVerse-B4)
-  const [failed, setFailed] = React.useState(() => new Set());
+  const [, setFailed] = React.useState(0);
   if (!data || !data.selector) return null;
 
   // Prefer the editions list; fall back to a single row from legacy fields.
@@ -60,15 +68,16 @@ export default function FaxVerseTile({ data }) {
       : []
   ).filter((ed) => ed?.version);
   if (!editions.length) return null;
-  const shown = editions.filter((ed) => !failed.has(ed.version));
-
   const selector = data.selector;
   const slug = refSlug(data.ref);
   const viewerPath = (ed) => (slug ? `/fax/${ed.version}/${slug}` : `/fax/${ed.version}/${ed.imageFile ?? ed.page}`);
   const cropUrl = (ed, w) => `${renderBaseUrl}/fax/render/${ed.version}/crop/w${w}/${selector}.jpg`;
+  const shown = editions.filter((ed) => !failedCrops.has(cropUrl(ed, CROP_WIDTH)));
 
-  const hideRow = (version) => () =>
-    setFailed((f) => (f.has(version) ? f : new Set(f).add(version)));
+  const hideRow = (ed) => () => {
+    failedCrops.add(cropUrl(ed, CROP_WIDTH));
+    setFailed((n) => n + 1);
+  };
 
   return (
     <div className="samplerTileInner faxVerseTile">
@@ -107,10 +116,10 @@ export default function FaxVerseTile({ data }) {
                   path={cropUrl(ed, CROP_WIDTH)}
                   srcSet={`${cropUrl(ed, CROP_WIDTH)} 1x, ${cropUrl(ed, CROP_WIDTH * 2)} 2x`}
                   remember
-                  style={cropBox(cropUrl(ed, CROP_WIDTH))}
+                  style={cropBox(cropUrl(ed, CROP_WIDTH), ed.cropAspect)}
                   onLoad={() => setLoaded((n) => n + 1)}
                   alt={data.ref || ""}
-                  onError={hideRow(ed.version)}
+                  onError={hideRow(ed)}
                 />
               </span>
             </Link>

@@ -56,6 +56,14 @@ html[data-theme="dark"] .samplerScriptureHead button:hover { color: #fff; }
      real content size once it lands — avoids the open-tiny-then-jump rug-pull. */
   transition: min-height 0.25s ease;
 }
+/* the verse the opener was about (a tile's section chip): a light gold wash */
+.samplerScriptureBody .samplerScriptureFocus {
+  background: rgba(201, 162, 75, 0.16);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  border-radius: 2px;
+}
+html[data-theme="dark"] .samplerScriptureBody .samplerScriptureFocus { background: rgba(201, 162, 75, 0.22); }
 .samplerScriptureBody:empty {
   min-height: 40vh;
 }

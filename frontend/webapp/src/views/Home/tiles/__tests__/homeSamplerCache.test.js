@@ -35,7 +35,7 @@ describe("homeSamplerCache", () => {
   });
 
   test("read returns null on corrupt JSON", () => {
-    localStorage.setItem("bom:homeSampler:v2", "{not json");
+    localStorage.setItem("bom:homeSampler:v3", "{not json");
     expect(read()).toBeNull();
   });
 

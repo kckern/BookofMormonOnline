@@ -115,6 +115,8 @@ type FaxEdition {
   page: Int!
   "Scan image-file number: what the viewer routes /fax/<version>/<n> and labels \"Page n\" by."
   imageFile: Int
+  "Width/height of this edition's crop render for the verse (from box geometry), so a client can reserve the row before the image loads."
+  cropAspect: Float
 }
 
 type FaxVersePage {
