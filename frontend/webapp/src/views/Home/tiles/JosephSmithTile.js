@@ -53,6 +53,7 @@ export default function JosephSmithTile({ data }) {
             <span className="witnessHero">
               <TileImage
                 path={PORTRAIT}
+                sizes="56px"
                 alt=""
                 onError={(e) => { e.target.style.display = "none"; e.target.parentNode.classList.add("mono"); }}
               />

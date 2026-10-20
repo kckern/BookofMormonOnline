@@ -107,6 +107,7 @@ export default function WitnessTile({ data }) {
               {w.witnessSlug ? (
                 <TileImage
                   path={`history/witnesses/people/${w.witnessSlug}.jpg`}
+                  sizes="56px"
                   alt=""
                   onError={(e) => { e.target.style.display = "none"; e.target.parentNode.classList.add("mono"); }}
                 />

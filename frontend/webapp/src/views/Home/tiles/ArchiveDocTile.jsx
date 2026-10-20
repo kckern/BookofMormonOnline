@@ -113,6 +113,7 @@ export default function ArchiveDocTile({ data, heading, headingTo, to, images = 
         <TileImage
           key={i}
           className="historyTileThumb"
+          sizes="120px"
           aspect={!multi && aspect ? `1 / ${aspect}` : undefined}
           path={src}
           alt=""

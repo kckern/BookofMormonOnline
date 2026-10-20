@@ -92,6 +92,7 @@ export default function FaxTile({ data, payload }) {
                 <Link to={`${to}/${scanOf(p)}`} className="faxTilePageLink">
                   <TileImage
                     path={thumbPath(data.slug, p, format)}
+                    sizes="140px"
                     aspect={String(aspectOf(p))}
                     uncapped /* the row is height-bounded (PAGE_MAX_H_REM) */
                     remember
@@ -117,6 +118,7 @@ export default function FaxTile({ data, payload }) {
             <Link key={e.slug} to={`/fax/${e.slug}`} className="faxTileEdition" title={e.title}>
               <TileImage
                 path={`fax/covers/${e.slug}`}
+                sizes="120px"
                 alt=""
                 onError={(ev) => (ev.target.style.visibility = "hidden")}
               />
