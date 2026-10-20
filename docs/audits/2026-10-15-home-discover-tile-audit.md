@@ -1805,3 +1805,26 @@ Fixes after round 5: **rail** `f51a170a`, `3a3f95ab`, `4bc19c0e`; **scripture** 
 | analysis | tile-art | **FAIL** | 3 | 3 | 4 | P1 art-A1/F1-aspect: The artwork frame has no aspect cap, so a tall portrait source (186×600) becomes a 1526px-tall tile at desktop, 1469px on phone and 2837px on the 820px tablet — one tile spanning two to three viewports, breaking the colu |
 | story | mapstory | **FAIL** | 3 | 3 | 3 | P1 mapstory-E1: Browser Back from the story title link can land hundreds of px away from where the reader left when the page was scrolled by keyboard focus / the tile top sat just above the fold |
 | story | community | pass | 3 | 3 | 4 |  |
+
+### Cycle 3 (2026-10-20): systemic hardening, rounds 7–9
+
+A systemic fixer read all 69 P0/P1 findings from rounds 1–6 and fixed each recurring class once in the shared layer: clamps are `overflow: clip` with a shared Tab guard (`02f2cd39`, `31e73d4b`); every reveal persists per tile identity across Back (`b9e04c09`); fade clamps snap to whole lines (`1c7234de`); tile images are portrait-capped at 3:4 (`46e5414f`); deeplink targets land between the fixed bars (`a2fd8ae0`); the Back pin holds the clicked link (`975d98d2`). Per-family fixers followed.
+
+| Round | Pass | Fail |
+|---|---|---|
+| 7 | 17 | 8 |
+| 8 | 22 | 3 |
+| 9 | 20 | 5 |
+
+Round 9 failures fixed directly (each with a regression test and a live check): guest phone `/home/user` crashed the app — P0, null progress row (`7f43a4e8`); the Tab guard demoted chips of unclipped notes (`cfb2b4cb`); the phone fax viewer opened on the unlabeled roman-0 slot (`6cd61ef8`); the community index showed one group and a blank pane (`df628e2a`). Back edge cases: 24/24 within 1px (desktop/phone, first batch and deep feed).
+
+### Cycle 4 (2026-10-20): rounds 10–11
+
+| Round | Result |
+|---|---|
+| 10 | 25 of 26 tiles pass; only mapstory failed (P1 E1: chained Backs through different links landed 538–807px off) |
+| 11 | interrupted at session end after 4 of 8 families; all passed except mapstory (P1 F1: a one-finger phone swipe on the map panned the map instead of scrolling) |
+
+Fixed after rounds 10–11: map-story labels/dwell/touch targets (`b6eef433`, `a0a8955f`); cooperative touch gestures — one finger scrolls the page, two pan the map (`6e152e4c`, verified with raw touch events); the Back anchor keys the clicked link by href + label (`9148aa82`, `verify-back-chain-mapstory.mjs` 10/10 within 1px).
+
+Round 13 (fresh full 8-family round) did not run: every reviewer stopped on exhausted Fable usage credits. A clean blind round on the current `dev` is still outstanding.
