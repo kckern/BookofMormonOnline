@@ -157,14 +157,14 @@ async function listPrefix(prefix) {
 }
 
 /** One original key -> its missing widths (archive families). */
-async function processKey({ key, missing }) {
+async function processKey({ key, served, missing }) {
   const res = await fetch(`${MEDIA}/${key}`);
   if (!res.ok) { stats.missing++; return; }
   const src = Buffer.from(await res.arrayBuffer());
   stats.sources++;
   stats.srcBytes += src.length;
   for (const w of missing) {
-    const vk = variantKey(w, key);
+    const vk = variantKey(w, served);
     // never upscale; keep alpha for PNG-like sources
     const body = await sharp(src).rotate().resize({ width: w, withoutEnlargement: true }).webp({ quality: QUALITY, alphaQuality: 80 }).toBuffer();
     stats.outBytes[w] = (stats.outBytes[w] || 0) + body.length;

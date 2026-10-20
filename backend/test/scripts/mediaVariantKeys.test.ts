@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 // @ts-expect-error plain .mjs script module
-import { FAMILIES, variantKey, plan } from '../../scripts/lib/mediaVariantKeys.mjs';
+import { FAMILIES, variantKey, servedPath, plan } from '../../scripts/lib/mediaVariantKeys.mjs';
 
 describe('variantKey', () => {
   it('keeps the original key (incl. extension) so keys never collide', () => {
@@ -29,5 +29,22 @@ describe('plan', () => {
   it('does not plan a 640 variant for fax thumbnails (originals are ~261px wide)', () => {
     const p = plan(['fax/thumb/1830/010.jpg'], new Set())[0];
     expect(p.widths).toEqual([256]);
+  });
+
+  // Review Focus 2: S3 holds art/1000.jpg but tiles (and the media host) use art/1000 —
+  // the variant is keyed by the path the TILE requests, or the frontend never finds it.
+  it('keys variants by the tile-facing path: extension stripped where tiles omit it', () => {
+    expect(servedPath('art/1000.jpg')).toBe('art/1000');
+    expect(servedPath('history/thumbs/0155.jpg')).toBe('history/thumbs/0155');
+    expect(servedPath('fax/covers/1830.jpg')).toBe('fax/covers/1830');
+    expect(servedPath('source/cover/012.jpg')).toBe('source/cover/012');
+    // these tile paths keep their extension
+    expect(servedPath('fax/thumb/1830/010.jpg')).toBe('fax/thumb/1830/010.jpg');
+    expect(servedPath('history/fax/0101.001.jpg')).toBe('history/fax/0101.001.jpg');
+  });
+  it('plans against the served-path variant key (so existing variants are recognised)', () => {
+    const have = new Set([variantKey(256, 'art/1000'), variantKey(640, 'art/1000')]);
+    expect(plan(['art/1000.jpg'], have)).toEqual([]);
+    expect(plan(['art/1000.jpg'], new Set())[0].served).toBe('art/1000');
   });
 });
