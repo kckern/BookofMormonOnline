@@ -113,6 +113,7 @@ export default function FaxVerseTile({ data }) {
               <span className="faxEditionCropWrap">
                 <TileImage
                   className="faxEditionCrop"
+                  uncapped /* bounded by CROP_MAX_H (cropBox) */
                   path={cropUrl(ed, CROP_WIDTH)}
                   srcSet={`${cropUrl(ed, CROP_WIDTH)} 1x, ${cropUrl(ed, CROP_WIDTH * 2)} 2x`}
                   remember

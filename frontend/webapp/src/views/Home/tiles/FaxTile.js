@@ -86,6 +86,7 @@ export default function FaxTile({ data, payload }) {
                   <TileImage
                     path={thumbPath(data.slug, p, format)}
                     aspect={String(aspectOf(p))}
+                    uncapped /* the row is height-bounded (PAGE_MAX_H_REM) */
                     remember
                     alt={labelOr("x_page_n", "$1, page $2", [title, scanOf(p)])}
                     onLoad={(e) => {

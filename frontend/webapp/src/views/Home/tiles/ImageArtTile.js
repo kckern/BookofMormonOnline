@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import ScriptureExcerpt, { readPath } from "src/views/_Common/ScriptureExcerpt";
 import TileDeepLink from "./_ds/TileDeepLink";
 import TileImage from "./_ds/TileImage";
+import { capAspect } from "./_ds/mediaAspect";
 import labelOr from "./_ds/labelOr";
 
 /**
@@ -31,7 +32,9 @@ export default function ImageArtTile({ payload, artIndex = 0 }) {
   if (!pool.length) return null;
   const art = pool[artIndex % pool.length];
   if (!art?.id || failedId === art.id) return null;
-  const ratio = art.width && art.height ? art.height / art.width : 0.66;
+  // height/width of the frame, portrait-capped (tiles/_ds/mediaAspect): a tall
+  // strip is cropped to 3:4 on the tile; /art shows the whole piece (R6 A1/F1)
+  const ratio = 1 / capAspect(art.width && art.height ? art.width / art.height : 1 / 0.66);
   const to = art.ref ? readPath(art.ref) : null;
   return (
     <div className="samplerTileInner imageArtTile">
@@ -49,6 +52,7 @@ export default function ImageArtTile({ payload, artIndex = 0 }) {
           {/* art has no resized variants on the media host: original only */}
           <TileImage
             path={`art/${art.id}`}
+            uncapped /* the frame above is capped; the img covers it */
             widths={[]}
             alt={art.title ? "" : labelOr("artwork", "Artwork")}
             width={art.width || undefined}

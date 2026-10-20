@@ -2295,7 +2295,7 @@ html[data-theme="dark"] .faxTileEdition { color: #9a9a9a; }
 /* title bar + image: one link to /art/:id */
 .imageArtLink { display: block; color: inherit; text-decoration: none; }
 .imageArtFrame { position: relative; display: block; width: 100%; overflow: hidden; background: #e8e6e1; }
-.imageArtFrame img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.35s ease, filter 0.2s ease; }
+.imageArtFrame img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 25%; display: block; transition: transform 0.35s ease, filter 0.2s ease; }
 .imageArtLink:hover .imageArtFrame img { transform: scale(1.025); }
 html[data-theme="dark"] .imageArtFrame { background: #2c2c2c; }
 /* header: the shared eyebrow, then the title in the heading tier — left-aligned
