@@ -601,6 +601,16 @@ describe("MapStoryTile — blind story audit (2026-10-16)", () => {
     expect(rule(".mapStoryTile .mapStoryRef")).toMatch(/z-index:\s*1/);
   });
 
+  // R6 A1: the stage reserve is the tallest beat's own content, not a fixed
+  // 10.5rem floor; the traveller line follows the description, and the leg
+  // row keeps the arrow beside the names at any width.
+  test("R6 A1: no fixed beat floor, traveller under the prose, leg row hugs its names", () => {
+    expect(rule(".mapStoryBeat")).not.toMatch(/min-height/);
+    expect(rule(".mapStoryTravelerText")).not.toMatch(/margin:\s*auto/);
+    expect(rule(".mapStoryLeg")).toMatch(/max-content/);
+    expect(rule(".mapStoryLeg")).toMatch(/justify-content:\s*start/);
+  });
+
   // A5: one inner radius, no extra frame chrome.
   test("A5: frame and beat card share one radius and the frame drops its inset highlight", () => {
     const radius = (sel) => (rule(sel).match(/border-radius:\s*([\d.]+rem)/) || [])[1];
