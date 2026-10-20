@@ -113,7 +113,7 @@ export default function ImageArtTile({ payload, artIndex = 0 }) {
               key={retried === art.id ? "retry" : "first"}
               path={`art/${art.id}`}
               uncapped /* the frame is a fixed height; the img is fitted inside it */
-              widths={[]}
+              sizes="(max-width: 900px) 92vw, 360px"
               alt={art.title ? "" : labelOr("artwork", "Artwork")}
               width={art.width || undefined}
               height={art.height || undefined}

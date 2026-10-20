@@ -96,7 +96,7 @@ describe("TileImage", () => {
   test("variants enabled but no variant family for the path: plain src, onError fires once", () => {
     process.env[KEY] = "1";
     const onError = vi.fn();
-    const { container } = render(<TileImage path="fax/covers/1830" alt="" onError={onError} />);
+    const { container } = render(<TileImage path="fax/pages/1830/010.jpg" alt="" onError={onError} />);
     const img = container.querySelector("img");
     expect(img.hasAttribute("srcset")).toBe(false);
     fireEvent.error(img);

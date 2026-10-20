@@ -67,15 +67,15 @@ describe("NarrationTile", () => {
 
   test("art thumbs are named links (not empty-alt link-only images)", () => {
     const prev = process.env.REACT_APP_MEDIA_VARIANTS;
-    process.env.REACT_APP_MEDIA_VARIANTS = "1"; // variants on: art must still skip them
+    process.env.REACT_APP_MEDIA_VARIANTS = "1"; // variants on: art thumbs take them
     const { container } = renderTile({ data, next });
     if (prev === undefined) delete process.env.REACT_APP_MEDIA_VARIANTS;
     else process.env.REACT_APP_MEDIA_VARIANTS = prev;
     const imgs = [...container.querySelectorAll(".narrationArtLink img")];
     expect(imgs).toHaveLength(2);
     imgs.forEach((img) => expect(img.getAttribute("alt")).toMatch(/Zarahemla/));
-    // art has no media variants: plain src, no srcset
-    imgs.forEach((img) => expect(img.getAttribute("srcset")).toBeNull());
+    // art has variants: srcset points at the 256px one (plain src stays the original)
+    imgs.forEach((img) => expect(img.getAttribute("srcset")).toMatch(/\/variants\/256\/art\//));
   });
 
   test("status dots appear only when some beat has progress", () => {

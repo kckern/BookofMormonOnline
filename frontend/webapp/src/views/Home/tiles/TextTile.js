@@ -63,7 +63,7 @@ function TextTileInner({ data }) {
       {narration ? (
         <div className="textTileNarration">
           {art ? (
-            <TileImage path={`art/${art}`} widths={[]} className="textTileArt" alt="" width={44} height={44} />
+            <TileImage path={`art/${art}`} sizes="44px" className="textTileArt" alt="" width={44} height={44} />
           ) : null}
           <div className="textTileNarrationText">{narration}</div>
         </div>

@@ -243,7 +243,7 @@ function CommentaryTileInner({ data }) {
             <Link to={to} tabIndex={-1} aria-hidden="true" className="commentaryTileCoverLink">
               <TileImage
                 path={coverPath}
-                widths={[]}
+                sizes="64px"
                 className="commentaryTileCover"
                 alt={pub.source_title || ""}
                 onError={(e) => (e.currentTarget.closest(".commentaryTileCoverLink").style.display = "none")}

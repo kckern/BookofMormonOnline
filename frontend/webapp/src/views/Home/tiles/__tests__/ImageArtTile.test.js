@@ -162,13 +162,18 @@ describe("ImageArtTile", () => {
     expect(css).toMatch(/\.imageArtTitleBar \{[^}]*-webkit-line-clamp:\s*2/);
   });
 
-  // J1: art has no uploaded variants — never request a srcset that 404s.
-  test("uses TileImage with no variant srcset even when variants are on", () => {
+  // J1: art now has uploaded variants (variants/<w>/art/<id>.webp): srcset on, with a
+  // one-shot fallback to the original if a variant is missing.
+  test("art takes variant srcset when variants are on, and falls back to the original on error", () => {
     process.env[KEY] = "1";
     const { container } = renderTile();
     const img = container.querySelector("img");
     expect(img.classList.contains("tileImage")).toBe(true);
+    expect(img.getAttribute("srcset")).toMatch(/\/variants\/256\/art\/[^ ]+\.webp 256w/);
+    const original = img.getAttribute("src");
+    fireEvent.error(img);
     expect(img.hasAttribute("srcset")).toBe(false);
+    expect(img.getAttribute("src")).toBe(original);
   });
 
   // R6 art-A1/F1 (tablet): the 3:4 cap alone still made a full-width 820px

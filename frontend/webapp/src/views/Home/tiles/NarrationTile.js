@@ -110,7 +110,7 @@ export default function NarrationTile({ data, next, seed = 0 }) {
             <Link key={id} to={`/art/${id}`} className="narrationArtLink">
               <TileImage
                 path={`art/${id}`}
-                widths={[]}
+                sizes="96px"
                 alt={artAlt(i)}
                 onError={(e) => {
                   const link = e.target.closest(".narrationArtLink");

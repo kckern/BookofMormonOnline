@@ -238,7 +238,7 @@ function NotesTileInner({ data }) {
           {coverPath ? (
             <TileImage
               path={coverPath}
-              widths={[]}
+              sizes="44px"
               className="notesCover"
               alt={pub.source_title || ""}
               width={44}

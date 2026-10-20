@@ -29,3 +29,30 @@ describe("variantsEnabled (build-time substitution)", () => {
     expect(run(undefined)).toBe(false);
   });
 });
+
+import { hasVariants, variantUrl, variantWidthsFor } from "../mediaVariants";
+
+// Mirrors backend/scripts/lib/mediaVariantKeys.mjs FAMILIES (people/places/matters
+// came from the slug path; the rest from the archive enumeration).
+describe("variant families mirror the generator", () => {
+  test.each([
+    "people/nephi1", "places/zarahemla", "matters/swords",
+    "art/1039", "history/thumbs/0120", "history/fax/0120.001.jpg",
+    "fax/thumb/1830/010.jpg", "fax/covers/1830", "source/cover/012",
+  ])("%s has variants", (p) => expect(hasVariants(p)).toBe(true));
+
+  test.each(["fax/pages/1830/010.jpg", "home/lehites-1", "profiles/grp_x.jpg", "map/z/1/2", "https://x/y.jpg", "history/other/1"])(
+    "%s does not", (p) => expect(hasVariants(p)).toBe(false));
+
+  test("variant URLs keep the original extension and append .webp", () => {
+    expect(variantUrl("fax/thumb/1830/010.jpg", 256)).toMatch(/\/variants\/256\/fax\/thumb\/1830\/010\.jpg\.webp$/);
+    expect(variantUrl("art/1039", 640)).toMatch(/\/variants\/640\/art\/1039\.webp$/);
+  });
+
+  test("fax thumbs and source covers only have the 256px variant; the rest 256 and 640", () => {
+    expect(variantWidthsFor("fax/thumb/1830/010.jpg")).toEqual([256]);
+    expect(variantWidthsFor("source/cover/012")).toEqual([256]);
+    expect(variantWidthsFor("art/1039")).toEqual([256, 640]);
+    expect(variantWidthsFor("people/nephi1")).toEqual([256, 640]);
+  });
+});

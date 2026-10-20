@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { MAX_PORTRAIT, PORTRAIT_FOCUS, isCapped, parseAspect } from "./mediaAspect";
 import { assetUrl } from "src/models/BoMOnlineAPI";
-import { VARIANT_WIDTHS, hasVariants, isAbsoluteSrc, variantUrl, variantsEnabled } from "./mediaVariants";
+import { hasVariants, isAbsoluteSrc, variantUrl, variantWidthsFor, variantsEnabled } from "./mediaVariants";
 
 /**
  * The one image element for Home tiles. `path` is relative to assetUrl
@@ -24,7 +24,7 @@ export const knownSize = (path) => naturalSizes.get(path) || null;
 export default function TileImage({
   path,
   alt = "",
-  widths = VARIANT_WIDTHS,
+  widths,
   sizes,
   eager = false,
   className = "",
@@ -41,8 +41,9 @@ export default function TileImage({
   const [natural, setNatural] = useState(null);
   if (!path) return null;
   const absolute = isAbsoluteSrc(path);
-  const useVariants = !variantFailed && !absolute && widths.length > 0 && hasVariants(path) && variantsEnabled();
-  const srcSet = useVariants ? widths.map((w) => `${variantUrl(path, w)} ${w}w`).join(", ") : undefined;
+  const ws = widths ?? variantWidthsFor(path); // [] = this call site opts out of variants
+  const useVariants = !variantFailed && !absolute && ws.length > 0 && hasVariants(path) && variantsEnabled();
+  const srcSet = useVariants ? ws.map((w) => `${variantUrl(path, w)} ${w}w`).join(", ") : undefined;
   const handleError = (e) => {
     if (useVariants) {
       setVariantFailed(true);

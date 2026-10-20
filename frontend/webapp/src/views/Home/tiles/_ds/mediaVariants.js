@@ -15,11 +15,18 @@ export const VARIANT_WIDTHS = [256, 640];
 
 export const variantUrl = (path, width) => `${assetUrl}/variants/${width}/${path}.webp`;
 
-// Only these media families were generated (Task 11). Archive media (fax/,
-// history/, art/…) and absolute URLs have no variants: offering a srcset for
-// them would make every image 404 once before falling back.
-const VARIANT_FAMILIES = /^(people|places|matters)\//;
+// Only these media families were generated: people/places/matters (by slug) and
+// art, history thumbs + pages, fax thumbs + covers, source covers (by key listing;
+// backend/scripts/lib/mediaVariantKeys.mjs — keep the prefixes identical).
+// Anything else (fax/pages, home banners, absolute URLs…) has no variants:
+// offering a srcset for it would 404 once per image before falling back.
+const VARIANT_FAMILIES = /^(people|places|matters|art|history\/(thumbs|fax)|fax\/(thumb|covers)|source\/cover)\//;
 export const hasVariants = (path) => VARIANT_FAMILIES.test(path || "");
+
+// Families generated at 256px only (their originals are small: a 640 would duplicate it).
+const SMALL_ONLY = /^(fax\/thumb|source\/cover)\//;
+/** The variant widths that exist for `path`. */
+export const variantWidthsFor = (path) => (SMALL_ONLY.test(path || "") ? [256] : VARIANT_WIDTHS);
 
 /** An absolute (http/https or root-relative) src is used verbatim, not under assetUrl. */
 export const isAbsoluteSrc = (path) => /^(https?:)?\/\//.test(path || "") || /^\//.test(path || "");
