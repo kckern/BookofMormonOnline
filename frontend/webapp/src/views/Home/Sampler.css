@@ -1615,7 +1615,17 @@ html[data-theme="dark"] .historyTileQuote { color: #9a9a9a; }
 .textTileTitle:hover { color: #000; text-decoration: underline; text-decoration-color: rgba(201, 162, 75, 0.7); }
 html[data-theme="dark"] .textTileTitle { color: #f0f0f0; }
 html[data-theme="dark"] .textTileTitle:hover { color: #fff; }
+/* the blanket ".samplerTileInner a:hover { text-decoration: none }" (0,2,1)
+   outranked the title hovers above, leaving a dead hover (audit xc-C5) */
+.samplerTileInner .textTileTitle:hover,
+.samplerTileInner .commentaryTileTitle:hover {
+  text-decoration: underline;
+  text-decoration-color: rgba(201, 162, 75, 0.7);
+  text-underline-offset: 0.15em;
+}
 .textTilePassage {
+  /* a readable measure on wide (tablet / full-width) cards (audit text-A3) */
+  max-width: 40rem;
   font-family: "Scripture", Georgia, "Times New Roman", serif;
   font-size: 1rem;
   line-height: 1.35;

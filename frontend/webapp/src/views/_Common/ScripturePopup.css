@@ -25,6 +25,9 @@
   overflow: hidden;
 }
 html[data-theme="dark"] .samplerScriptureCard { background: #262626; color: #e4e4e4; }
+/* Read.scss paints .read-section a lighter grey card; inside the dark dialog it
+   read as a slab behind the passage (audit xc-popup-L3). */
+html[data-theme="dark"] .samplerScriptureBody .read-section { background: transparent; }
 .samplerScriptureHead {
   display: flex;
   justify-content: space-between;
