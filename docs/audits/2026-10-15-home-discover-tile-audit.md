@@ -1898,3 +1898,6 @@ This dev machine cannot reach the database host over TCP (`ETIMEDOUT`; prod is f
 - 2 keys listed under the archive prefixes had no original on the CDN, and `art/sh.sh` is a stray non-image object; neither affects tiles.
 - New media added later has no variant until `build-media-variants.mjs --families … --upload` is re-run (idempotent); until then the tile falls back to the original.
 - `rp_*` reading-plan wizard strings and `home_tab_explore` still lack Korean rows (not tile-visible).
+
+### R7 post-deploy (prod `1206135f`, CI run 39494841636 success)
+`prod-smoke.mjs` 15/15; **`/people/moroni1` for a crawler: 500 → 200**; desktop deep-scroll images **8.3 MB → 2.75–2.8 MB** (3 runs, 0 originals, 0 broken, 0 4xx), phone 4.4 MB → 1.6 MB. (A reading ~1 min after the swap showed 7.6 MB while the edge still served the old bundle.) Open: the second soak reading ~24 h after the deploy; the Korean label SQL (needs KC + a reachable DB); `<html lang>` fix is deployed but the CRA shell still ships `lang="en"` in the static HTML (it is corrected on boot).
