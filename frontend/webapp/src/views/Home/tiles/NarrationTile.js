@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext } from "react";
 import { Link } from "react-router-dom";
 import { label } from "src/models/Utils";
 import green from "src/views/User/svg/green.svg";
@@ -13,6 +13,7 @@ import TileImage from "./_ds/TileImage";
 import labelOr from "./_ds/labelOr";
 import TileCTA from "./_ds/TileCTA";
 import { TileBoundContext } from "./_ds/Reveal";
+import { usePersistedOpen } from "./_ds/tileIdentity";
 
 const statusDot = { completed: green, started: yellow };
 
@@ -75,7 +76,7 @@ export default function NarrationTile({ data, next, seed = 0 }) {
   const items = narrationItems(data);
   if (!items.length) return null;
   const art = sectionArt(data, seed);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = usePersistedOpen("narration-beats"); // survives Back (E2)
   const liftBound = useContext(TileBoundContext);
   const overBudget = items.length > BEAT_BUDGET;
   const shown = overBudget && !open ? items.slice(0, BEAT_BUDGET) : items;

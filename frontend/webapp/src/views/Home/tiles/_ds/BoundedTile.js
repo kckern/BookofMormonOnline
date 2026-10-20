@@ -2,6 +2,7 @@ import React, { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { TileBoundContext } from "./Reveal";
 import TileCTA from "./TileCTA";
 import { onLayoutChange } from "./clampGuard";
+import { usePersistedOpen } from "./tileIdentity";
 
 /**
  * A tile wrapper with a visible height bound (phone single column). Instead of
@@ -27,16 +28,18 @@ const HEADER_CLEAR = 64;
 
 export default function BoundedTile({ className = "", tileId, children }) {
   const ref = useRef(null);
-  const [revealed, setRevealed] = useState(false);
+  // remembered per tile identity for the Home session: Back remounts the tile
+  // with its bound still lifted (systemic E2), not collapsed under the anchor
+  const [revealed, setRevealed] = usePersistedOpen("bound");
   const [overflowing, setOverflowing] = useState(false);
-  const reveal = useCallback(() => setRevealed(true), []);
+  const reveal = useCallback(() => setRevealed(true), [setRevealed]);
   const collapsing = useRef(false);
   const toggle = useCallback(() => {
     setRevealed((r) => {
       collapsing.current = r;
       return !r;
     });
-  }, []);
+  }, [setRevealed]);
 
   useLayoutEffect(() => {
     if (revealed || !collapsing.current) return;

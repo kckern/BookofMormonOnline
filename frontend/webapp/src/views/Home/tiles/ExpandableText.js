@@ -3,6 +3,7 @@ import { useReveal } from "./_ds/Reveal";
 import TileCTA from "./_ds/TileCTA";
 import { readExpanded, writeExpanded } from "./samplerSession";
 import { useClampGuard } from "./_ds/clampGuard";
+import { hashText, useRevealKey } from "./_ds/tileIdentity";
 
 /**
  * Width-aware clamp: collapsed state is a CSS line-clamp (so the cut point
@@ -27,7 +28,8 @@ import { useClampGuard } from "./_ds/clampGuard";
  *
  * `persistKey`: remember the expanded state for this Home session, so a Back
  * remounts the box expanded (same height, Layer-2 still revealed) instead of
- * collapsing it under the scroll anchor.
+ * collapsing it under the scroll anchor. Optional inside the sampler: without
+ * it the tile identity (tiles/_ds/tileIdentity) + the text key the state.
  */
 /**
  * Does the collapsed box hide content? Measured off the CONTENT's own boxes (a
@@ -91,10 +93,21 @@ export default function ExpandableText({ children, lines = 6, className, fade = 
   const ref = useRef(null);
   const { reveal, registerGate } = useReveal();
   const gateId = useRef(Symbol("expandable")).current;
+  // With no explicit persistKey, the reveal is remembered under the tile's
+  // identity (Sampler's TileIdentity) + this box's own text, so every reveal on
+  // Home survives a Back without the tile passing a key (systemic E2).
+  const tileSlot = useRevealKey(`x:${className || ""}`);
+  const keyRef = useRef(persistKey);
   // A restored expansion re-fires the gate + reveal pre-paint, so the Layer-2
   // link (and any enclosing bound) come back open with it.
   useLayoutEffect(() => {
-    if (!open) return;
+    if (!persistKey && tileSlot && ref.current) keyRef.current = `${tileSlot}:${hashText(ref.current.textContent)}`;
+    const restored = open || (!persistKey && readExpanded(keyRef.current));
+    if (!restored) return;
+    if (!open) {
+      setOpen(true);
+      setTruncated(true);
+    }
     registerGate(true, gateId);
     reveal();
     // mount only
@@ -124,7 +137,7 @@ export default function ExpandableText({ children, lines = 6, className, fade = 
     e.preventDefault();
     e.stopPropagation();
     if (!open) reveal();
-    writeExpanded(persistKey, !open);
+    writeExpanded(keyRef.current, !open);
     setOpen(!open);
   };
   return (

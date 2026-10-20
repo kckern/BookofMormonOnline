@@ -13,6 +13,7 @@ import { findAnchor, pinAnchor, trackAnchor } from "./tiles/scrollAnchor";
 import { singleColumnOrder, canGrowReserves, placeBatchTiles, spaceAcrossColumns } from "./tiles/samplerLayout";
 import TileBoundary from "./tiles/_ds/TileBoundary";
 import BoundedTile from "./tiles/_ds/BoundedTile";
+import { TileIdentity } from "./tiles/_ds/tileIdentity";
 import { skeletonHeight } from "./tiles/_ds/skeletonHeights";
 import labelOr from "./tiles/_ds/labelOr";
 import { isMessengerEnabled } from "src/models/featureFlags";
@@ -172,12 +173,17 @@ export default function Sampler() {
   // fixtures in the single column, a plain div everywhere else. A plain
   // function (not a component defined in render) so React never remounts it.
   // data-tile-id is the tile's identity for the Back anchor (tiles/scrollAnchor).
-  const tileShell = (span, className, child, id) =>
-    single && BOUNDED_SPANS.has(span) ? (
-      <BoundedTile className={className} tileId={id}>{child}</BoundedTile>
-    ) : (
-      <div className={className} data-tile-id={id}>{child}</div>
-    );
+  // TileIdentity ("<seed>|<id>") keys every reveal inside the tile for the
+  // session, so a Back remounts each one as the reader left it (systemic E2).
+  const tileShell = (span, className, child, id) => (
+    <TileIdentity value={`${seed}|${id}`}>
+      {single && BOUNDED_SPANS.has(span) ? (
+        <BoundedTile className={className} tileId={id}>{child}</BoundedTile>
+      ) : (
+        <div className={className} data-tile-id={id}>{child}</div>
+      )}
+    </TileIdentity>
+  );
   const [variableTiles, setVariableTiles] = useState(() => {
     const saved = sessionRef.current?.order;
     return saved ? fromKeys(saved, VARIABLE_DEFAULT()) : shuffle(VARIABLE_DEFAULT());
@@ -337,9 +343,11 @@ export default function Sampler() {
       <TileBoundary key={`reserve-${key}`} tileKey={key}>
         {/* def.span: a reserve copy of a family tile shares its family CSS
             (e.g. the tile-art / tile-chiasmus :empty collapse). */}
-        <div className={`tile tile-${key}${def.span ? ` ${def.span}` : ""}`} data-tile-id={`reserve:${key}`}>
-          <Tile {...props} />
-        </div>
+        <TileIdentity value={`${seed}|reserve:${key}`}>
+          <div className={`tile tile-${key}${def.span ? ` ${def.span}` : ""}`} data-tile-id={`reserve:${key}`}>
+            <Tile {...props} />
+          </div>
+        </TileIdentity>
       </TileBoundary>
     );
   };

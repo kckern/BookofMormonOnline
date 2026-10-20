@@ -1,3 +1,4 @@
+import "@testing-library/jest-dom";
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -162,4 +163,25 @@ describe("assemblePayload community derivation", () => {
     const out = assemblePayload({ homesampler: [{ seed: 1 }], homegroups: [], leaderboard: [] });
     expect(out.community).toBeNull();
   });
+});
+
+// Systemic E2: the shell gives every tile an identity, so any reveal inside
+// (here the contents description) comes back expanded after a Back.
+test("a reveal inside a sampler tile survives unmount → remount (Back)", async () => {
+  const { fireEvent, cleanup } = await import("@testing-library/react");
+  Object.defineProperty(HTMLElement.prototype, "scrollHeight", { configurable: true, get() { return this.classList?.contains("clampLines") ? 500 : 0; } });
+  try {
+    BoMOnlineAPI.mockResolvedValue(payloadFixture);
+    const first = renderSampler();
+    await waitFor(() => expect(first.container.querySelector(".tile-contents .clampLines")).not.toBeNull());
+    const btn = first.container.querySelector(".tile-contents button[aria-expanded]");
+    fireEvent.click(btn);
+    expect(btn).toHaveAttribute("aria-expanded", "true");
+    cleanup();
+    const again = renderSampler();
+    await waitFor(() => expect(again.container.querySelector(".tile-contents button[aria-expanded]")).not.toBeNull());
+    expect(again.container.querySelector(".tile-contents button[aria-expanded]")).toHaveAttribute("aria-expanded", "true");
+  } finally {
+    delete HTMLElement.prototype.scrollHeight;
+  }
 });
