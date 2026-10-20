@@ -26,6 +26,15 @@ import { useAppController } from "src/contexts/AppControllerContext";
 import XrelSection from "./XrelSection";
 import HistoryDrawer from "./HistoryDrawer";
 import labelOr from "src/views/Home/tiles/_ds/labelOr";
+import { parse } from "node-html-parser";
+import { lookupReference } from "scripture-guide";
+import { determineLanguage } from "src/models/Utils";
+import { ATVHeader } from "./ATV";
+import { extractApparatusUnits } from "./ATV/parseATV";
+import { governingRefs } from "./ATV/governingRef";
+import { lastScriptureRef } from "./ATV/lastScriptureRef";
+import { ATVApparatus } from "./ATV/ATVApparatus";
+import "./Commentary.css";
 
 
 export function MobileDrawer() {
@@ -475,12 +484,35 @@ export function CommentaryDrawer({ onClose }) {
 	const parserOptions = getHtmlScriptureLinkParserOptions((reference) => {
         setActiveScriptureReference(reference);
     });
-	const html = getDetectedScripturesHtml(commentaryData.text);
+	// Textual-variants (ATV) commentaries: the same pipeline as the desktop popup
+	// (Commentary.js) — the <div class="source"> apparatus header renders through
+	// ATVHeader and prose-body units through ATVApparatus, so raw sigla never leak
+	// (blind r8 commentary-D5).
+	const rawText = commentaryData.text || "";
+	const atvHTML = parse(rawText).querySelector(".source")?.outerHTML.trim() || "";
+	const { html: tokenized, units: atvUnits, contexts: atvContexts } =
+		extractApparatusUnits(atvHTML ? rawText.replace(atvHTML, "").trim() : rawText);
+	const atvRefs = atvUnits.length
+		? governingRefs(atvContexts, (ctx) => lastScriptureRef(ctx, determineLanguage()))
+		: [];
+	const html = getDetectedScripturesHtml(tokenized);
+	const bodyOptions = {
+		...parserOptions,
+		replace: (node) => {
+			if (node && node.name === "atv-unit") {
+				const i = Number(node.attribs && node.attribs["data-atv-i"]);
+				const ref = atvRefs[i];
+				const verseId = ref ? (lookupReference(ref)?.verse_ids?.[0] ?? null) : null;
+				return <ATVApparatus readings={atvUnits[i]} variant="inline" verseId={verseId} reference={ref || commentaryData.reference} />;
+			}
+			return parserOptions.replace ? parserOptions.replace(node) : undefined;
+		},
+	};
     return <>
         <CommentaryDrawerHead onClose={onClose} />
         <div className="subject p-4 overflow-auto">
             {tabs}
-            <div className="source">
+            <div className="commentaryDrawerSource">
                 <img
                     src={
                         assetUrl +
@@ -504,7 +536,10 @@ export function CommentaryDrawer({ onClose }) {
 
             <div className="container">
                 <div className="row align-items-start">
-                    <div id="bodytext">{Parser(html, parserOptions)}</div>
+                    <div id="bodytext">
+                        <ATVHeader atvHTML={atvHTML} reference={commentaryData.reference} />
+                        {Parser(html, bodyOptions)}
+                    </div>
                 </div>
                 <div className="row align-items-start">
                     {!showLegal ? <div className="setLegal" onClick={() => setLegal(true)} >⚖️ {label("legal_notice")}</div> : null}

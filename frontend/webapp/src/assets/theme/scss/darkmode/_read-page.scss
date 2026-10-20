@@ -50,8 +50,8 @@ html[data-theme="dark"] {
   .scripturePanelSingle .scriptureTextHeader .btn { background-color: var(--control); color: var(--text-primary); }
 
   /* Commentary.css */
-  .atv { background-color: var(--surface-3); color: var(--text-muted); }
-  .atv-string { background-color: var(--surface-2); color: var(--text-primary); }
+  .atv { background: none; color: var(--text-secondary); }
+  .atv-string { background-color: rgba(201, 162, 75, 0.22); color: var(--text-primary); }
   .atv-apparatus.atv-inline .atv-string { background-color: var(--surface-2); color: var(--text-primary); }
   .commentary_hide_button.show_button { background-color: rgba(255, 255, 255, 0.15); }
 

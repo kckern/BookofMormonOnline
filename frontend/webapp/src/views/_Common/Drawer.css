@@ -30,14 +30,14 @@
     line-height: 1em;
 }
 
-.popupDrawer .source
+.popupDrawer .commentaryDrawerSource
 {
     width: 100%;
     display: flex;
     margin-bottom: 1em;
 }
 
-.popupDrawer .source > img{
+.popupDrawer .commentaryDrawerSource > img{
     width: 35%;
     object-fit: cover;
     margin-right: 1ex;
@@ -45,15 +45,15 @@
     flex-shrink: 0;
     align-self: flex-start;
 }
-.popupDrawer .source > div{
+.popupDrawer .commentaryDrawerSource > div{
     display: flex;
     align-items: center;
     flex-grow: 1;
 }
-.popupDrawer .source > div > div{
+.popupDrawer .commentaryDrawerSource > div > div{
     font-size: .8rem;
 }
-.popupDrawer .source h5{
+.popupDrawer .commentaryDrawerSource h5{
     font-weight: bold;
     font-size: 1rem;
 }

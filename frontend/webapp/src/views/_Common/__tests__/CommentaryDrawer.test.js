@@ -32,3 +32,44 @@ describe("CommentaryDrawer", () => {
     expect(onClose).toHaveBeenCalled();
   });
 });
+
+// Blind r8 commentary-D5: on phone, "See in context" for a textual-variants
+// (ATV) commentary opened this drawer with the apparatus as raw sigla
+// ("having [NULLthat1|thatABCDEFGHIJKLMNOPQRS prayed > …") in a broken
+// four-column layout (the drawer's own `.source` header flex rule hit the
+// apparatus' `.source`). It renders through ATVHeader like the tile and popup.
+describe("CommentaryDrawer with a textual-variants commentary", () => {
+  const ATV = {
+    ...DATA,
+    id: "1253516301",
+    reference: "Alma 2:28",
+    title: "Alma 2:28 Textual Variants",
+    text:
+      "<div class='source'>\n  <em>having prayed mightily to him</em> " +
+      "[NULL &gt; <em>that</em> 1|<em>that</em> ABCDEFGHIJKLMNOPQRST] he would deliver them\n</div>" +
+      "<div class='analysis'><p>Elsewhere there are " +
+      "[<em>that</em> 01A| BCDEFGHIJKLMNOPQRST] examples, as in 1 Nephi 2:11.</p></div>",
+  };
+  beforeEach(() => {
+    mockController.states.popUp.ids = [ATV.id];
+    mockController.states.popUp.activeId = ATV.id;
+    mockController.popUpData = { [ATV.id]: ATV };
+  });
+
+  test("the apparatus renders as pills, never raw sigla", () => {
+    const { container } = render(<CommentaryDrawer onClose={() => {}} />);
+    expect(container.querySelector(".atv .source")).not.toBeNull();
+    expect(container.querySelectorAll(".atv-string").length).toBeGreaterThan(0);
+    expect(container.querySelector(".atv-apparatus.atv-inline")).not.toBeNull();
+    const body = container.querySelector("#bodytext").textContent;
+    expect(body).not.toMatch(/NULL|\||\[/);
+    // the scripture citation in the analysis is still a link
+    expect(container.querySelector("#bodytext .scripture_link")).not.toBeNull();
+  });
+
+  test("the drawer's publication header is not the apparatus' .source", () => {
+    const { container } = render(<CommentaryDrawer onClose={() => {}} />);
+    expect(container.querySelector(".commentaryDrawerSource")).not.toBeNull();
+    expect(container.querySelector(".atv .commentaryDrawerSource")).toBeNull();
+  });
+});
