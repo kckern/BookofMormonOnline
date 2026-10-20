@@ -30,6 +30,9 @@ describe("useClampGuard (G2: hidden controls leave the Tab order)", () => {
   beforeEach(() => {
     edge = 100;
     gbcr = HTMLElement.prototype.getBoundingClientRect;
+    // the clamp box overflows (content taller than the clamp), as in a real clamp
+    Object.defineProperty(HTMLElement.prototype, "scrollHeight", { configurable: true, get() { return this.dataset && this.dataset.box ? 500 : 0; } });
+    Object.defineProperty(HTMLElement.prototype, "clientHeight", { configurable: true, get() { return this.dataset && this.dataset.box ? 100 : 0; } });
     HTMLElement.prototype.getBoundingClientRect = function () {
       if (this.dataset.box) return rect(0, edge);
       const y = Number(this.dataset.y || 0);
@@ -176,5 +179,38 @@ describe("CommentaryTile excerpt clamp (G2)", () => {
     [...container.querySelectorAll(".commentaryTileExcerpt button, .commentaryTileExcerpt a")].forEach((p) =>
       expect(p).not.toHaveAttribute("data-clamp-hidden"),
     );
+  });
+});
+
+import { hideClippedFocusables } from "../clampGuard";
+
+// Blind R7/R9 notes-G2: a chip on the last line of an UNCLIPPED box (its border
+// overhangs the snapped line box by a pixel or two) was pulled from the Tab order.
+describe("hideClippedFocusables only demotes controls a clip actually hides", () => {
+  const box = (scroll, client, edge, chips) => {
+    const el = document.createElement("div");
+    Object.defineProperty(el, "scrollHeight", { value: scroll });
+    Object.defineProperty(el, "clientHeight", { value: client });
+    el.getBoundingClientRect = () => rect(0, edge);
+    chips.forEach(([top, bottom]) => {
+      const b = document.createElement("button");
+      b.getBoundingClientRect = () => rect(top, bottom);
+      el.appendChild(b);
+    });
+    return el;
+  };
+
+  test("box not clipped (content fits): every chip stays tabbable, even one overhanging the edge", () => {
+    const el = box(76, 76, 74, [[56, 76]]);
+    hideClippedFocusables(el);
+    expect(el.querySelector("button").hasAttribute("tabindex")).toBe(false);
+  });
+
+  test("box clipped: a chip whose midpoint is above the edge stays; one below it leaves the Tab order", () => {
+    const el = box(200, 74, 74, [[56, 76], [90, 110]]);
+    hideClippedFocusables(el);
+    const [a, b] = el.querySelectorAll("button");
+    expect(a.hasAttribute("tabindex")).toBe(false);
+    expect(b.getAttribute("tabindex")).toBe("-1");
   });
 });

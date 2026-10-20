@@ -34,10 +34,17 @@ export function restoreFocusables(box) {
 export function hideClippedFocusables(box) {
   if (!box) return;
   restoreFocusables(box);
+  // Nothing is hidden unless the box actually clips its content: a chip whose
+  // border overhangs the last line box of an unclipped box is fully visible
+  // and must stay reachable (blind R9 notes-G2).
+  if (!(box.scrollHeight > box.clientHeight + 2)) return;
   const edge = box.getBoundingClientRect().bottom;
   box.querySelectorAll(FOCUSABLE).forEach((n) => {
     if (n.getAttribute("tabindex") === "-1") return;
-    if (n.getBoundingClientRect().bottom > edge + 1) {
+    const r = n.getBoundingClientRect();
+    // hidden when it is really cut: a chip's border overhanging the last line
+    // box by a few px is still visible (tolerance: 3px or a quarter of its height)
+    if (r.bottom > edge + Math.max(3, (r.bottom - r.top) / 4)) {
       n.setAttribute(HIDDEN, n.getAttribute("tabindex") ?? "");
       n.setAttribute("tabindex", "-1");
     }

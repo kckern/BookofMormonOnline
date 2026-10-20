@@ -90,6 +90,9 @@ describe("collapsed clamp keeps hidden controls out of the Tab order", () => {
   let gbcr;
   beforeEach(() => {
     gbcr = HTMLElement.prototype.getBoundingClientRect;
+    // the clamp box overflows (content taller than the clamp), as in a real clamp
+    Object.defineProperty(HTMLElement.prototype, "scrollHeight", { configurable: true, get() { return this.classList && this.classList.contains("clampLines") ? 500 : 0; } });
+    Object.defineProperty(HTMLElement.prototype, "clientHeight", { configurable: true, get() { return this.classList && this.classList.contains("clampLines") ? 100 : 0; } });
     HTMLElement.prototype.getBoundingClientRect = function () {
       if (this.classList.contains("clampLines")) return rect(0, 100);
       const y = Number(this.dataset.y || 0);
