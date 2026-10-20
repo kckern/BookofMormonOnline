@@ -5,7 +5,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { generateReference } from "scripture-guide";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
-import BiblePhrasesTile, { markShared, candidatePairs, pairPath, scorePair, choosePair, isBlockQuote, pickMemo } from "../BiblePhrasesTile";
+import BiblePhrasesTile, { markShared, candidatePairs, pairPath, scorePair, choosePair, isBlockQuote, pickMemo, textBudget } from "../BiblePhrasesTile";
 import { skeletonHeight } from "../_ds/skeletonHeights";
 
 vi.mock("src/models/BoMOnlineAPI", () => ({
@@ -225,7 +225,7 @@ describe("BiblePhrasesTile", () => {
 
   test("the loading skeleton uses the phone height in the single column", () => {
     const orig = window.matchMedia;
-    window.matchMedia = (q) => ({ matches: q.includes("900px"), media: q, addEventListener() {}, removeEventListener() {} });
+    window.matchMedia = (q) => ({ matches: q === "(max-width: 900px)" /* phone: not the 601px+ tablet tier */, media: q, addEventListener() {}, removeEventListener() {} });
     try {
       BoMOnlineAPI.mockImplementation(() => new Promise(() => {}));
       const { container } = renderTile();
@@ -332,4 +332,11 @@ describe("BiblePhrasesTile", () => {
     expect(css).toMatch(/\.biblePhrasesTile > \.tileHeading \{ margin-bottom: 1\.3rem; \}/);
     expect(css).toMatch(/\.biblePhrasesPassage:first-child \.scripture_link::after \{ inset: -4px -4px -26px; \}/);
   });
+});
+
+// R7 biblephrases-F1: on a tablet-width single column the pair is side by
+// side, so it budgets from the tablet box (not the stacked phone one).
+test("textBudget: the tablet tier budgets less text than the stacked phone box", () => {
+  expect(textBudget(true, true)).toBeLessThan(textBudget(true));
+  expect(textBudget(true, true)).toBeGreaterThan(40);
 });

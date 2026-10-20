@@ -70,7 +70,18 @@ const PHONE = {
   "tile-community": "446px", // 2026-10-16 editorial redesign
 };
 
-/** CSS length for the skeleton of `spanClass`; `single` = phone single-column layout. */
-export function skeletonHeight(spanClass, single) {
-  return (single && PHONE[spanClass]) || DESKTOP[spanClass] || FALLBACK;
+// Single column on a WIDE screen (tablet portrait, 601–900px: useWideSingle):
+// only spans whose layout changes with the tile's width. R7 biblephrases-F1:
+// the pair sits side by side in a 773px tile (stacked on phone): 131px of
+// head/CTA + up to 4 text rows (BiblePhrasesTile textBudget).
+const TABLET = {
+  "tile-biblephrases": "250px",
+};
+
+/**
+ * CSS length for the skeleton of `spanClass`; `single` = the single-column
+ * layout (phone, tablet), `wide` = that single column on a tablet-width screen.
+ */
+export function skeletonHeight(spanClass, single, wide = false) {
+  return (single && wide && TABLET[spanClass]) || (single && PHONE[spanClass]) || DESKTOP[spanClass] || FALLBACK;
 }

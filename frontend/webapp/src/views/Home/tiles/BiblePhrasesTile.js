@@ -11,7 +11,7 @@ import RefPill from "./RefPill";
 import TileDeepLink from "./_ds/TileDeepLink";
 import labelOr from "./_ds/labelOr";
 import { skeletonHeight } from "./_ds/skeletonHeights";
-import useSingleColumn from "./_ds/useSingleColumn";
+import useSingleColumn, { useWideSingle } from "./_ds/useSingleColumn";
 import { createPickMemo } from "./_ds/pickMemo";
 import { estimatePairTextPx } from "./_ds/textFit";
 
@@ -44,11 +44,16 @@ const FIT_SLACK = 22; // one text row: the estimate is within a row of the measu
 const coarse = () =>
   typeof window !== "undefined" && typeof window.matchMedia === "function" && !!window.matchMedia("(pointer: coarse)")?.matches;
 const DEFAULT_MEASURE = { desktop: 334, single: 314 }; // passage width when unmeasured (jsdom)
-export const textBudget = (single) =>
-  parseInt(skeletonHeight("tile-biblephrases", single), 10) -
-  HEAD_PX[single ? "single" : "desktop"] -
-  (coarse() ? TOUCH_CLEARANCE_PX : 0) -
-  FIT_SLACK;
+// tablet-width single column (R7 F1): pills side by side, one row of head —
+// measured 131px (eyebrow + touch clearance + pill above; CTA row below)
+const HEAD_WIDE_PX = 135;
+export const textBudget = (single, wide = false) =>
+  single && wide
+    ? parseInt(skeletonHeight("tile-biblephrases", true, true), 10) - HEAD_WIDE_PX - FIT_SLACK
+    : parseInt(skeletonHeight("tile-biblephrases", single), 10) -
+      HEAD_PX[single ? "single" : "desktop"] -
+      (coarse() ? TOUCH_CLEARANCE_PX : 0) -
+      FIT_SLACK;
 // a shared run covering this much of BOTH verses is a whole-verse block quote
 // (3 Nephi 24:4 = Malachi 3:4): two identical, fully marked sentences (H1)
 const BLOCK_QUOTE_COVER = 0.8;
@@ -280,6 +285,9 @@ const memoKey = (seed, lang) => `${seed}|${lang}`;
  */
 export default function BiblePhrasesTile({ seed }) {
   const single = useSingleColumn();
+  // R7 biblephrases-F1: a tablet-width tile sets the pair side by side — its
+  // own (shorter) box, not the stacked phone one
+  const wide = useWideSingle();
   const lang = determineLanguage();
   const [state, setState] = useState(() => pickMemo.get(memoKey(seed, lang)) || { status: "loading", pair: null });
   const measureRef = useRef(null);
@@ -321,7 +329,7 @@ export default function BiblePhrasesTile({ seed }) {
           })
           .filter(Boolean);
         const widthPx = measureRef.current?.getBoundingClientRect?.().width || DEFAULT_MEASURE[single ? "single" : "desktop"];
-        const pick = choosePair(scored, { budgetPx: textBudget(single), widthPx });
+        const pick = choosePair(scored, { budgetPx: textBudget(single, wide), widthPx });
         settle(pick ? { status: "ready", pair: pick } : { status: "empty", pair: null });
       })
       .catch(() => {
@@ -339,7 +347,7 @@ export default function BiblePhrasesTile({ seed }) {
       <div
         className="samplerTileInner biblePhrasesTile isLoading"
         aria-busy="true"
-        style={{ minHeight: `calc(${skeletonHeight("tile-biblephrases", single)} - 2px)` }}
+        style={{ minHeight: `calc(${skeletonHeight("tile-biblephrases", single, wide)} - 2px)` }}
       >
         <h3 className="tileHeading">{heading()}</h3>
         <div className="tileInnerSkeleton" aria-hidden="true" ref={measureRef} />
@@ -354,7 +362,7 @@ export default function BiblePhrasesTile({ seed }) {
   return (
     <div
       className="samplerTileInner biblePhrasesTile"
-      style={{ minHeight: `calc(${skeletonHeight("tile-biblephrases", single)} - 2px)` }}
+      style={{ minHeight: `calc(${skeletonHeight("tile-biblephrases", single, wide)} - 2px)` }}
     >
       <h3 className="tileHeading">
         <Link to="/analysis/bible">{heading()}</Link>

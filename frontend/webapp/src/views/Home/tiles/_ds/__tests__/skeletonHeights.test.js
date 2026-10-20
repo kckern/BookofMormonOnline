@@ -30,3 +30,18 @@ describe("skeletonHeights — places family", () => {
     expect(skeletonHeight(span, single)).toBe(h);
   });
 });
+
+// R7 biblephrases-F1: a full-width tablet tile (601–900px viewport) lays the
+// pair side by side, so the phone's stacked 414px box left ~210px empty. The
+// tablet tier overrides only the spans whose footprint differs there.
+describe("skeletonHeights — tablet tier", () => {
+  test("biblephrases gets its own tablet box, smaller than the stacked phone box", () => {
+    const tablet = parseInt(skeletonHeight("tile-biblephrases", true, true), 10);
+    expect(tablet).toBeLessThan(parseInt(skeletonHeight("tile-biblephrases", true), 10));
+    expect(tablet).toBeGreaterThan(200);
+  });
+  test("spans without a tablet entry keep the phone value; desktop ignores the flag", () => {
+    expect(skeletonHeight("tile-art", true, true)).toBe(skeletonHeight("tile-art", true));
+    expect(skeletonHeight("tile-biblephrases", false, true)).toBe(skeletonHeight("tile-biblephrases", false));
+  });
+});

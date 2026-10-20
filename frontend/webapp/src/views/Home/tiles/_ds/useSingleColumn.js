@@ -21,3 +21,19 @@ export default function useSingleColumn() {
   }, []);
   return single;
 }
+
+/** Single column on a tablet-width screen (skeletonHeights TABLET tier). */
+export const WIDE_SINGLE_QUERY = "(min-width: 601px) and (max-width: 900px)";
+const wideMql = () =>
+  typeof window !== "undefined" && window.matchMedia ? window.matchMedia(WIDE_SINGLE_QUERY) : null;
+export function useWideSingle() {
+  const [wide, setWide] = useState(() => !!wideMql()?.matches);
+  useEffect(() => {
+    const m = wideMql();
+    if (!m) return undefined;
+    const on = () => setWide(m.matches);
+    m.addEventListener?.("change", on);
+    return () => m.removeEventListener?.("change", on);
+  }, []);
+  return wide;
+}

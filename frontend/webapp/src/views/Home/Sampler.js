@@ -17,6 +17,7 @@ import TileBoundary from "./tiles/_ds/TileBoundary";
 import BoundedTile from "./tiles/_ds/BoundedTile";
 import { TileIdentity } from "./tiles/_ds/tileIdentity";
 import { skeletonHeight } from "./tiles/_ds/skeletonHeights";
+import { useWideSingle } from "./tiles/_ds/useSingleColumn";
 import labelOr from "./tiles/_ds/labelOr";
 import { isMessengerEnabled } from "src/models/featureFlags";
 import "./Sampler.css";
@@ -171,6 +172,7 @@ export default function Sampler() {
   // revealed batches, so the route scroll-restore has the old page to land on.
   const sessionRef = useRef(readSession(cachedRef.current?.payload?.seed));
   const single = useSingleColumn();
+  const wide = useWideSingle(); // tablet-width single column (skeletonHeights TABLET tier)
   // The tile's outer card: bounded (visible fade + toggle) for the long
   // fixtures in the single column, a plain div everywhere else. A plain
   // function (not a component defined in render) so React never remounts it.
@@ -548,7 +550,7 @@ export default function Sampler() {
 
   // Skeletons reserve each span's measured footprint (tiles/_ds/skeletonHeights).
   const skeleton = (key, span) => (
-    <div key={key} className={`tile skeleton ${span}`} style={{ minHeight: skeletonHeight(span, single) }} />
+    <div key={key} className={`tile skeleton ${span}`} style={{ minHeight: skeletonHeight(span, single, wide) }} />
   );
 
   // Each tile renders inside its own error boundary: a throw drops that tile
