@@ -1869,3 +1869,32 @@ Fable was dropped from the process (cost). One blind round, 8 fresh Sonnet revie
 **Known, accepted (P2):** infinite-feed scroll CLS measures 0.014–0.13 under a deliberately aggressive scroll (14 screens / 600ms) because commentary tiles settle 277 → 240px and faxVerse ~30px after mount; 0.059 in the standard page pass (the web-vitals "good" bar is 0.1). Other open P2/P3s are listed in the review rounds above. Not covered: tablet / dark / Korean / logged-in sweeps in the final round; the route-backed entity modal (deferred by decision).
 
 **Process note:** the Fable-based blind review (13 rounds) was dropped after cost; the final gate was one lean Sonnet round (24/24 tiles pass) plus the live verification scripts.
+
+## R7. Follow-ups — 2026-10-20 (soak, archive image variants, state sweeps)
+
+Plan: `docs/plans/2026-10-20-home-tiles-followups.md` (executed inline, no subagents).
+
+### Soak of the 2026-10-20 deploy (first reading, ~19 h of NPM telemetry)
+161k requests; **51 returned 500 (0.03%)**. Pre-deploy bursts on `/` (SSR) are older. One cluster at 18:31–18:40 UTC (crawler SSR: `/art/2515`, commentaries, `/people/moroni1`) coincides with a **DB connection refused** blip (`ECONNREFUSED …:3306`). `/people/moroni1` kept returning 500 for crawlers hours later, with cache-busting making no difference: GraphQL errors arrive as HTTP 200, so Next's data cache stored the failed response for the 1 h revalidate window. **Fixed** in `frontend/next/lib/graphql.ts`: an errors-bearing response is re-asked once with `cache: 'no-store'` before throwing (4 new tests; 99 Next unit tests pass). Takes effect on the next deploy. A second reading ~24 h after the deploy is still to be appended.
+
+### Archive image variants
+Enumerated with S3 `ListObjectsV2` (not the API): art 2,625 · history thumbs 582 · history pages 3,367 (5.1 GB of originals) · fax thumbs 35,159 · fax covers 59 · source covers 67 · witness portraits 21 = **41.9k originals → 48.5k WebP variants** (≈1.4 GB; fax thumbs and source covers 256 px only — their originals are ~261 px wide). Variant keys follow the path the tile requests (S3 holds `art/1000.jpg`, tiles request `art/1000`) — a mismatch caught in the dry run before upload. Spot check: 18/18 random keys `200 image/webp`. Live (new frontend against the prod API, desktop deep scroll): **8.3 MB → 2.2 MB; phone 4.4 MB → 2.0 MB**, 0 broken, 0 4xx. Archive tile images now pass `sizes` (a static test guards it). Page pass: warm CLS 0.000, scroll CLS 0.000–0.018 (one 0.477 outlier during Vite warm-up did not reproduce in 3 reruns); Back edge cases 6/6 desktop + 6/6 phone.
+
+### State sweeps (tablet 820, desktop dark, phone dark; `scripts/home-audit/sweep-states.mjs`)
+No horizontal overflow, no broken images, no tile over 1.5 viewports, **0 low-contrast text nodes in dark mode (731 sampled)**, a visible focus style on every tabbed control, 0 page errors, CLS ≤ 0.018. Screenshots read: dark and tablet layouts are coherent (neutral surfaces, gold accent, no glare).
+
+### Korean (host-mapped Chromium `kr.bomtest.test` → Vite; `/graphql/ko`)
+Hangul wraps cleanly, no overflow or clipping. Found and fixed: `<html lang>` was `en` on every language host (now `htmlLangFor`, BCP-47-mapped). Remaining English on the Korean host is (a) **22 tile labels with no Korean row** (PEOPLE, PLACES, CONTENTS, "Read more", "Start reading", "See in context", "View all"…) and 12 keys used only through code fallbacks, and (b) English-only source data (history documents, names, matter glosses). The label fix is prepared as `scripts/sql/2026-10-20-home-labels-ko.sql` (idempotent) and **not applied**: it needs KC's go and a reachable DB. `hardcodedStrings.test.js` (47 checks) confirms no tile hardcodes English.
+
+### Logged-in branches
+Component tests for `ReadingProgressTile` (signed-in header/tooltip, three response shapes) pass; the other branches were already covered.
+
+### Environment finding
+This dev machine cannot reach the database host over TCP (`ETIMEDOUT`; prod is fine; Chromium also logged `ERR_NETWORK_CHANGED` earlier) — likely the public IP no longer matches the DB firewall's allowed admin IP. Not touched (AWS security groups are out of scope). Live checks used a second Vite serving the new frontend against the prod API.
+
+### Self-review of the follow-up diff — deferred minors
+- `gql()`'s uncached retry would, under static generation (e.g. the pinned-`lang` sitemap), surface a dynamic-server error instead of the GraphQL error on an already failing request.
+- `with-prod-secrets.sh ssh` leaves the 0600 key file in `$XDG_RUNTIME_DIR` after the command (`exec` prevents cleanup).
+- 2 keys listed under the archive prefixes had no original on the CDN, and `art/sh.sh` is a stray non-image object; neither affects tiles.
+- New media added later has no variant until `build-media-variants.mjs --families … --upload` is re-run (idempotent); until then the tile falls back to the original.
+- `rp_*` reading-plan wizard strings and `home_tab_explore` still lack Korean rows (not tile-visible).
