@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { act, cleanup as cleanupAll, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { displayPersonName } from "../textUtils";
 import MapStoryTile, {
   homeStoryTitle,
   playbackTiming,
@@ -611,5 +612,20 @@ describe("MapStoryTile — blind story audit (2026-10-16)", () => {
   test("A1: place labels stack above the traveler party", () => {
     const z = (sel) => Number((rule(sel).match(/z-index:\s*(\d+)/) || [])[1]);
     expect(z(".mapStoryMapOverlay")).toBeGreaterThan(z(".mapStoryTravelerParty"));
+  });
+});
+
+describe("traveller names (R6 mapstory-A7)", () => {
+  test("a surname-first catalogue name reads in display order, never as two names", () => {
+    const story = { ...data, moves: data.moves.map((m) => ({ ...m, people: [{ slug: "anti-nephi-lehies", name: "Anti–Nephi–Lehies" }, { slug: "ammon-children", name: "Ammon, Children of" }] })) };
+    const { container } = renderTile(story);
+    expect(container.textContent).not.toMatch(/Ammon, Children of/);
+    expect(container.textContent).toMatch(/Anti–Nephi–Lehies, Children of Ammon/);
+  });
+  test("displayPersonName inverts only the trailing 'X of' sort form", () => {
+    expect(displayPersonName("Ammon, Children of")).toBe("Children of Ammon");
+    expect(displayPersonName("Zoram, People of")).toBe("People of Zoram");
+    expect(displayPersonName("Alma2")).toBe("Alma²");
+    expect(displayPersonName("Lehi")).toBe("Lehi");
   });
 });

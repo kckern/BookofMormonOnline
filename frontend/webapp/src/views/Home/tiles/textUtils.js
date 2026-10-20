@@ -17,6 +17,14 @@ export const supDigits = (str) =>
     .replace(/[₁-₄]/g, (d) => SUBS[d]);
 
 /**
+ * A person's display name. The catalogue stores group names in sort form
+ * ("Ammon, Children of"); joined into a list that reads as two names, so the
+ * trailing "<Noun> of" moves to the front ("Children of Ammon").
+ */
+export const displayPersonName = (name) =>
+  supDigits((name || "").replace(/^(.+?),\s*((?:[A-Z][\w'’-]*\s+)*of)\s*$/, "$2 $1").trim());
+
+/**
  * Flatten app markup for plain-text contexts: {Name|slug} / [Name|slug] links
  * → display names, HTML stripped, digits superscripted, paren spacing tight.
  */

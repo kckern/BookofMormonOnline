@@ -4,7 +4,7 @@ import { legsOf, stopsOf } from "./mapStoryPath";
 import { MapStoryCompleteCard, MapStoryMoveCard } from "./MapStoryCard";
 import TileDeepLink from "./_ds/TileDeepLink";
 import labelOr from "./_ds/labelOr";
-import { supDigits } from "./textUtils";
+import { displayPersonName, supDigits } from "./textUtils";
 
 const MapStoryTileInner = React.lazy(() => import("./MapStoryTileInner"));
 
@@ -32,7 +32,7 @@ export const playbackTiming = (move) => {
 export const homeStoryTitle = (title) => supDigits(String(title || "").trim());
 
 /** Display name for a traveler: disambiguation digits as superscripts (Alma2 → Alma²). */
-export const personName = (person) => supDigits(person?.name || person?.slug || "");
+export const personName = (person) => displayPersonName(person?.name || person?.slug || "");
 
 /** "A → B", or "Round trip from A" when the journey ends where it began. */
 export const routeText = (origin, destination) =>

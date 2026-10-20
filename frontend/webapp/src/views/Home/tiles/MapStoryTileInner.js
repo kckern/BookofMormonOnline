@@ -17,7 +17,7 @@ import { framedLegIndices, legVisibility, legsOf, stopsOf } from "./mapStoryPath
 import { buildStoryOverlay, livePosition, storyStepForStop, travelerPosition } from "./mapStoryLayout";
 import TileImage from "./_ds/TileImage";
 import labelOr from "./_ds/labelOr";
-import { supDigits } from "./textUtils";
+import { displayPersonName, supDigits } from "./textUtils";
 
 // Same FARMS "internal" model as the full map. These coordinates belong to
 // the model artwork; they are not claims about real-world geography.
@@ -85,7 +85,7 @@ const activeStyle = (detached) => [
   }),
 ];
 
-const participantName = (person) => supDigits(person?.name || person?.slug || "");
+const participantName = (person) => displayPersonName(person?.name || person?.slug || "");
 
 const travelerLabel = (move) => {
   const people = (move?.people || []).filter((person) => person?.slug);

@@ -3,7 +3,7 @@ import RefPill from "./RefPill";
 import TileImage from "./_ds/TileImage";
 import ExpandableText from "./ExpandableText";
 import labelOr from "./_ds/labelOr";
-import { supDigits } from "./textUtils";
+import { displayPersonName, supDigits } from "./textUtils";
 
 const placeLabel = (name, slug) => name || slug || "";
 
@@ -27,7 +27,7 @@ const PlaceThumb = ({ slug, sizer }) =>
 const travelerText = (move) => {
   const people = (move?.people || []).filter((person) => person?.slug);
   if (!people.length) return move?.travelers ? supDigits(move.travelers) : null;
-  const names = people.slice(0, 3).map((person) => supDigits(person.name || person.slug));
+  const names = people.slice(0, 3).map((person) => displayPersonName(person.name || person.slug));
   const overflow = people.length - names.length;
   return `${names.join(", ")}${overflow > 0 ? ` +${overflow}` : ""}`;
 };
