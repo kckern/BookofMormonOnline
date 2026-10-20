@@ -9,7 +9,7 @@ import { arrangeArchives, featuredArchiveKeys } from "./tiles/archiveFeed";
 import { featuredPlaceSlugs, rankPlaces, withoutSeenPlaces } from "./tiles/PlacesTile";
 import { read as readCache, write as writeCache, isFresh as cacheIsFresh } from "./tiles/homeSamplerCache";
 import { readSession, writeSession, clearSession, readAnchor, writeAnchor } from "./tiles/samplerSession";
-import { findAnchor, pinAnchor, trackAnchor } from "./tiles/scrollAnchor";
+import { findAnchor, findLink, pinAnchor, trackAnchor } from "./tiles/scrollAnchor";
 import { singleColumnOrder, canGrowReserves, placeBatchTiles, spaceAcrossColumns } from "./tiles/samplerLayout";
 import TileBoundary from "./tiles/_ds/TileBoundary";
 import BoundedTile from "./tiles/_ds/BoundedTile";
@@ -504,7 +504,15 @@ export default function Sampler() {
         // the anchor at its settled offset
         if (window.location.pathname !== homePath) return;
         const el = findAnchor(tileNodes(), anchor);
-        if (el) writeAnchor(seedAtBack, { ...anchor, offset: Math.round(el.getBoundingClientRect().top) });
+        if (!el) return;
+        // re-capture tile AND link at their settled offsets, so the next
+        // (chained) Back holds the same place
+        const a = findLink(el, anchor.link);
+        writeAnchor(seedAtBack, {
+          ...anchor,
+          offset: Math.round(el.getBoundingClientRect().top),
+          ...(a ? { link: { ...anchor.link, offset: Math.round(a.getBoundingClientRect().top) } } : {}),
+        });
       },
     });
     // once per mount: only the arrival is a Back

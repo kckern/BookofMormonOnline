@@ -38,7 +38,36 @@ export function captureAnchor(nodes, viewportHeight) {
 export function captureTile(nodes, target) {
   const tile = target?.closest?.(".tile");
   const i = tile ? nodes.indexOf(tile) : -1;
-  return i < 0 ? null : anchorOf(nodes, i);
+  if (i < 0) return null;
+  const link = linkOf(tile, target);
+  return link ? { ...anchorOf(nodes, i), link } : anchorOf(nodes, i);
+}
+
+/**
+ * The clicked link inside its tile, as { href, n (nth link with that href),
+ * offset (viewport top) }. The pin holds THIS, not the tile top: the reader's
+ * place is the link they opened, and a tile whose own layout above it differs
+ * after the remount (a late row, an image reserve) or whose top sat far above
+ * the fold left the link hundreds of px away when the tile top was pinned.
+ */
+function linkOf(tile, target) {
+  const a = target?.closest?.("a[href]");
+  if (!a || !tile.contains?.(a)) return null;
+  const href = a.getAttribute("href");
+  const n = [...tile.querySelectorAll("a[href]")].filter((x) => x.getAttribute("href") === href).indexOf(a);
+  return { href, n: Math.max(0, n), offset: Math.round(a.getBoundingClientRect().top) };
+}
+
+/** The anchored link inside `tile`, or null (falls back to the tile top). */
+export function findLink(tile, link) {
+  if (!tile || !link?.href || !tile.querySelectorAll) return null;
+  return [...tile.querySelectorAll("a[href]")].filter((x) => x.getAttribute("href") === link.href)[link.n || 0] || null;
+}
+
+/** [element to hold, offset to hold it at] for an anchor's tile. */
+export function pinTarget(tile, anchor) {
+  const a = findLink(tile, anchor.link);
+  return a ? [a, anchor.link.offset] : [tile, anchor.offset];
 }
 
 const INPUTS = ["wheel", "touchstart", "keydown", "mousedown"];
@@ -83,9 +112,10 @@ export function pinAnchor(getNodes, anchor, { win = window, now = () => Date.now
   const tick = () => {
     if (stopped) return;
     if (now() > deadline) return stop();
-    const el = findAnchor(getNodes(), anchor);
-    if (el) {
-      const delta = Math.round(el.getBoundingClientRect().top - anchor.offset);
+    const tile = findAnchor(getNodes(), anchor);
+    if (tile) {
+      const [el, offset] = pinTarget(tile, anchor);
+      const delta = Math.round(el.getBoundingClientRect().top - offset);
       if (Math.abs(delta) > 1) win.scrollBy({ top: delta, left: 0, behavior: "instant" });
     }
     raf = win.requestAnimationFrame(tick);

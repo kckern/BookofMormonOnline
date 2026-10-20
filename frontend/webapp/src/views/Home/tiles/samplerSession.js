@@ -86,7 +86,8 @@ export function readAnchor(seed) {
   try {
     const a = JSON.parse(store()?.getItem(ANCHOR_KEY) || "null");
     if (!a || !seed || a.seed !== seed || !Number.isInteger(a.index)) return null;
-    return { index: a.index, cls: a.cls, ...(typeof a.id === "string" ? { id: a.id } : {}), offset: a.offset };
+    const link = a.link && typeof a.link.href === "string" && Number.isFinite(a.link.offset) ? { href: a.link.href, n: a.link.n | 0, offset: a.link.offset } : null;
+    return { index: a.index, cls: a.cls, ...(typeof a.id === "string" ? { id: a.id } : {}), offset: a.offset, ...(link ? { link } : {}) };
   } catch {
     return null;
   }

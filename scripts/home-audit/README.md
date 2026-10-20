@@ -15,6 +15,7 @@ Playwright scripts used for the Home/Discover tile audit
 | `tileharness.mjs` | Library. Exports `open(vp, group, opts)` → `{ page, home(), tile(cls), shot(name, locator), scrollUntil(cls), resample(), cls(), errors, close() }`. `vp` is `desktop` (1440), `phone` (390) or `tablet` (820). |
 | `pagepass.mjs` | Page-level pass. Covers cold/warm CLS timeline, infinite scroll, Back, tab round-trip, resample, and forced batch failure. Writes `pagepass.json` and screenshots to `OUT`. |
 | `verify-back.mjs` | One Back from a tile link restores Home with the same tiles and scroll. `VP=phone`, plus `SEL` (CSS selector of links to pick from). |
+| `verify-back-edges.mjs` | Back edge cases from tiles deep in the feed: keyboard Enter, tile top above the fold, three chained cycles, link → in-destination link → Back ×2. Prints Δ of the clicked link (`TOL`, default 40px). `VP`, `DEEP=1` (infinite-batch tiles only), `PRESCROLL`, `DEBUG=1`. |
 | `verify-feedend.mjs` | Blocks infinite batches. Expects the end-of-feed terminus, then checks that Retry loads. |
 | `rubric-blind.md` | The rubric alone (scoring, criteria, protocol), with no results. This is the only audit document a blind reviewer gets. |
 
