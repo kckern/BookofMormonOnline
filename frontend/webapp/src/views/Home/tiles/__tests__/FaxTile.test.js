@@ -31,6 +31,14 @@ const payload = {
 const setup = (d = data, p = payload) => render(<MemoryRouter><FaxTile data={d} payload={p} /></MemoryRouter>);
 
 describe("FaxTile", () => {
+  test("pages are never drawn taller than half the 400px thumb (2x screens stay crisp; blind R7 fax-A2)", () => {
+    const { container } = setup();
+    const row = container.querySelector(".faxTilePages");
+    // row max-width = sum of page aspects (2 x 0.64 before load) x the 12.5rem
+    // height cap + the gap (was 20rem: calc(26rem))
+    expect(row.style.maxWidth).toBe("calc(16.4rem)");
+  });
+
   test("no data / no slug: collapses", () => {
     expect(setup(null).container.firstChild).toBeNull();
     expect(setup({ title: "x" }).container.firstChild).toBeNull();

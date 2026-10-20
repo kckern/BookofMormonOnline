@@ -101,14 +101,22 @@ export default function FaxVerseTile({ data }) {
       <div className="faxVerseEditions">
         {shown.map((ed) => {
           const name = shortEdition(ed.title) || ed.version;
+          const folio = ed.imageFile ?? ed.page;
+          // the scan number — what the viewer labels "Page N" (fax-D4)
+          const folioText = folio != null ? labelOr("page_n", "p. $1", [folio]) : null;
           return (
-            <Link key={ed.version} to={viewerPath(ed)} className="faxEditionRow" title={ed.title || undefined}>
+            <Link
+              key={ed.version}
+              to={viewerPath(ed)}
+              className="faxEditionRow"
+              title={ed.title || undefined}
+              // the rail's two spans are flex siblings with no text between
+              // them: name the row explicitly (blind R7 faxVerse-G3)
+              aria-label={folioText ? `${name}, ${folioText}` : name}
+            >
               <span className="faxEditionRail">
                 <span className="faxEditionRailTitle">{name}</span>
-                {(ed.imageFile ?? ed.page) != null ? (
-                  // the scan number — what the viewer labels "Page N" (fax-D4)
-                  <span className="faxEditionRailPage">{labelOr("page_n", "p. $1", [ed.imageFile ?? ed.page])}</span>
-                ) : null}
+                {folioText ? <span className="faxEditionRailPage">{folioText}</span> : null}
               </span>
               <span className="faxEditionCropWrap">
                 <TileImage

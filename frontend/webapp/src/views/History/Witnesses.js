@@ -4,6 +4,7 @@ import { useParams, Link } from 'react-router-dom';
 import './Witnesses.css';
 import HistorySourceCard from "./HistorySourceCard";
 import { label } from '../../models/Utils';
+import labelOr from "src/views/Home/tiles/_ds/labelOr";
 import BoMOnlineAPI, { assetUrl } from 'src/models/BoMOnlineAPI';
 import moment from 'moment';
 import Masonry from 'react-masonry-css';
@@ -416,6 +417,17 @@ const WitnessGroup = ({ groupKey, heading, subtitle, children }) => (
 const Witnesses = () => {
 
     const { witness, source } = useParams();
+    // the English labels row is a placeholder ("Title Witnesses"); other
+    // languages carry a real translation (blind R7 witness-D5)
+    const indexTitle = ((t) => (/^title witnesses$/i.test(String(t).trim()) ? "The Witnesses" : t))(
+        labelOr("title_witnesses", "The Witnesses"));
+    // the index's own tab title (a single witness sets its own below)
+    // site name in the deps: Main.js resets the title to it once the labels
+    // load, so the index re-asserts its own after that render
+    const siteName = label('home_title');
+    useEffect(() => {
+        if (!witness) document.title = `${indexTitle} | ${siteName}`;
+    }, [witness, indexTitle, siteName]);
     if (witness) {
         const dataKeys = Object.keys(data);
         const witnessData = dataKeys.map(key => data[key].find(w => w.slug === witness)).find(w => w);
@@ -429,7 +441,9 @@ const Witnesses = () => {
         <div className="container " style={{ display: 'block' }}>
             <div id="page" className='witnesses' >
                 <HistoryBreadcrumb sectionKey="witnesses" />
-                <h3 className="title lg-4 text-center">{label("title_witnesses")}</h3>
+                {/* the page's one h1 (h3-sized): label() echoed the missing
+                    key as "Title Witnesses" (blind R7 witness-D5) */}
+                <h1 className="title lg-4 text-center h3">{indexTitle}</h1>
                 <WitnessGroup
                     groupKey='three-witnesses'
                     heading='Three Witnesses'

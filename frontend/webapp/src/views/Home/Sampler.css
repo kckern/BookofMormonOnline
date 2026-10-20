@@ -1486,6 +1486,19 @@ html[data-theme="dark"] a.narrationBeatLink:hover { color: #fff; }
   align-self: flex-start;
 }
 .historyTileRail.multi { align-self: stretch; }
+/* a single thumbnail floats top-right inside the text column: title and meta
+   sit beside it, the quote, bullets and citation wrap under it (blind R7
+   history-A1 — as a full-height flex sibling it left a blank strip below a
+   160px thumb and squeezed the text to ~206px) */
+.historyTileMain.hasFloat { display: flow-root; }
+.historyTileRail.single {
+  float: right;
+  width: 6.5rem;
+  margin: 0.2rem 0 0.5rem 0.8rem;
+}
+@media (max-width: 480px) {
+  .historyTileRail.single { width: 5.5rem; }
+}
 .historyTileRail.multi .historyTileThumb {
   flex: 1 1 0;
   height: 0;
@@ -2270,6 +2283,28 @@ html[data-theme="dark"] .chiasmusTile .miniChiasm mark { background: rgba(201, 1
   border-top: 1px solid #ececec;
 }
 html[data-theme="dark"] .faxTileEditions { border-top-color: #3a3a3a; }
+/* A wide (tablet) card: the pages are capped at 200px tall so the 400px
+   thumbs stay crisp on 2x screens (blind R7 fax-A2), which left most of the
+   row empty — the other editions sit beside them instead, 2-up, behind a
+   hairline rule. */
+.tile-fax { container-type: inline-size; container-name: faxCard; }
+@container faxCard (min-width: 600px) {
+  .faxTileBody {
+    display: grid;
+    grid-template-columns: minmax(0, var(--fax-pages-w, 16.4rem)) minmax(0, 1fr);
+    column-gap: 1rem;
+    align-items: start;
+  }
+  .faxTileBody .faxTileEditions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+    padding-left: 1rem;
+    border-left: 1px solid #ececec;
+  }
+  html[data-theme="dark"] .faxTileBody .faxTileEditions { border-left-color: #3a3a3a; }
+}
 .faxTileEdition { min-width: 0; text-decoration: none; color: #666; }
 .faxTileEdition img {
   width: 100%;

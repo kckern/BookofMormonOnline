@@ -22,9 +22,9 @@ const DESKTOP = {
   "tile-people": "810px",
   "tile-text": "360px",
   "tile-commentary": "280px",
-  "tile-history": "520px",
-  "tile-fax": "630px",
-  "tile-faxVerse": "600px",
+  "tile-history": "400px", // R7 2026-10-20 history-A1: floated thumb, 4 seeds 342–427
+  "tile-fax": "568px", // R7 fax-A2: pages capped at 200px tall, 4 loads 347–568
+  "tile-faxVerse": "510px", // R7 faxVerse-B1: validated crops, 4 seeds 452–548
   "tile-places": "371px", // re-measured 2026-10-16 (places-B1: 3 seeds 371–373)
   "tile-mattersNarrative": "407px",
   "tile-mattersMaterial": "407px",
@@ -50,9 +50,9 @@ const PHONE = {
   "tile-people": "865px", // 2026-10-16 people-B1: 3×3 faces + bio + CTA row, 4 loads 851–884
   "tile-text": "385px",
   "tile-commentary": "305px",
-  "tile-history": "450px",
-  "tile-fax": "650px",
-  "tile-faxVerse": "640px",
+  "tile-history": "460px", // R7 history-A1: 4 seeds 394–482
+  "tile-fax": "611px", // R7 fax-A2: 4 loads all 611
+  "tile-faxVerse": "640px", // R7: 4 seeds 553–732
   "tile-places": "677px", // re-measured 2026-10-16 (places-B1: 665–689 with the touch chip padding)
   // R7 (2026-10-20): the eyebrow heading holds its own 44px touch hit (+14px);
   // phone seeds Narrative 733–746, Material 720–733, Concept 746, Profile 432–434

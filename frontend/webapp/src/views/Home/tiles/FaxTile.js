@@ -7,11 +7,13 @@ import TileDeepLink from "./_ds/TileDeepLink";
 import RefPill from "./RefPill";
 import { shortEdition } from "./faxLabels";
 
-// Rendered page height cap. Two pages side by side at natural aspect get very
-// tall on a wide (tablet) tile and upscale the 400px thumbnails; capping the
-// row width at (sum of aspects × this height) keeps both crisp and the tile a
-// sampler card, not a poster.
-const PAGE_MAX_H_REM = 20;
+// Rendered page height cap. The thumbnails are 400px tall with no 2x variant,
+// so on a 2x screen anything above 200 CSS px is upscaled and the page text
+// goes soft beside the crisp covers (blind R7 fax-A2: 252px desktop, 320px
+// tablet). Capping the row width at (sum of aspects × this height) keeps both
+// pages at ≤ 200px tall and the tile a sampler card, not a poster.
+const THUMB_PX = 400;
+const PAGE_MAX_H_REM = THUMB_PX / 2 / 16; // 12.5rem
 const PAGES_GAP_REM = 0.4;
 // Box reserved for a page whose thumbnail hasn't loaded yet (a typical octavo
 // leaf, w/h). Once a page has loaded this session its real aspect is reused,
@@ -55,9 +57,13 @@ export default function FaxTile({ data, payload }) {
   const pageCount = Number(data.pages) || 0;
   const aspectOf = (p) => aspects[p.page] || DEFAULT_PAGE_ASPECT;
   const aspectSum = pages.reduce((s, p) => s + aspectOf(p), 0);
-  const rowStyle = pages.length
-    ? { maxWidth: `calc(${aspectSum.toFixed(4)} * ${PAGE_MAX_H_REM}rem + ${(pages.length - 1) * PAGES_GAP_REM}rem)` }
-    : undefined;
+  const pagesW = pages.length
+    ? `calc(${aspectSum.toFixed(4)} * ${PAGE_MAX_H_REM}rem + ${(pages.length - 1) * PAGES_GAP_REM}rem)`
+    : null;
+  const rowStyle = pagesW ? { maxWidth: pagesW } : undefined;
+  // a wide card sets the editions beside the pages (Sampler.css @container
+  // faxCard) instead of leaving the row's right side empty
+  const bodyStyle = pagesW ? { "--fax-pages-w": pagesW } : undefined;
   return (
     <div className="samplerTileInner faxTile">
       <h3 className="tileHeading">
@@ -70,6 +76,7 @@ export default function FaxTile({ data, payload }) {
           {pageCount ? <span className="faxTileMeta"> · {labelOr("x_pages", "$1 pages", [pageCount])}</span> : null}
         </div>
       </Link>
+      <div className="faxTileBody" style={bodyStyle}>
       {pages.length ? (
         <div className="faxTilePages" style={rowStyle}>
           {pages.map((p) => {
@@ -118,6 +125,7 @@ export default function FaxTile({ data, payload }) {
           ))}
         </div>
       ) : null}
+      </div>
       <TileDeepLink to={to} always verb="open" name={shortEdition(title)} />
     </div>
   );

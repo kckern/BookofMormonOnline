@@ -43,6 +43,12 @@ const renderTile = (d) =>
   );
 
 describe("FaxVerseTile", () => {
+  test("each edition row is named title, then folio — not run together (blind R7 faxVerse-G3)", () => {
+    renderTile(data);
+    const link = screen.getByRole("link", { name: /^1837 Kirtland(?: Edition)?, p\. 120$/ });
+    expect(link.getAttribute("href")).toBe("/fax/1837/mosiah.2.17");
+  });
+
   test("renders one cropped image per edition with render URL + per-edition deep link", () => {
     const { container } = renderTile(data);
     const crops = [...container.querySelectorAll("img.faxEditionCrop")];
