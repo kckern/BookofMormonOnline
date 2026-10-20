@@ -9,7 +9,7 @@ import { arrangeArchives, featuredArchiveKeys } from "./tiles/archiveFeed";
 import { featuredPlaceSlugs, rankPlaces, withoutSeenPlaces } from "./tiles/PlacesTile";
 import { read as readCache, write as writeCache, isFresh as cacheIsFresh } from "./tiles/homeSamplerCache";
 import { readSession, writeSession, clearSession, readAnchor, writeAnchor } from "./tiles/samplerSession";
-import { pinAnchor, trackAnchor } from "./tiles/scrollAnchor";
+import { findAnchor, pinAnchor, trackAnchor } from "./tiles/scrollAnchor";
 import { singleColumnOrder, canGrowReserves, placeBatchTiles, spaceAcrossColumns } from "./tiles/samplerLayout";
 import TileBoundary from "./tiles/_ds/TileBoundary";
 import BoundedTile from "./tiles/_ds/BoundedTile";
@@ -171,11 +171,12 @@ export default function Sampler() {
   // The tile's outer card: bounded (visible fade + toggle) for the long
   // fixtures in the single column, a plain div everywhere else. A plain
   // function (not a component defined in render) so React never remounts it.
-  const tileShell = (span, className, child) =>
+  // data-tile-id is the tile's identity for the Back anchor (tiles/scrollAnchor).
+  const tileShell = (span, className, child, id) =>
     single && BOUNDED_SPANS.has(span) ? (
-      <BoundedTile className={className}>{child}</BoundedTile>
+      <BoundedTile className={className} tileId={id}>{child}</BoundedTile>
     ) : (
-      <div className={className}>{child}</div>
+      <div className={className} data-tile-id={id}>{child}</div>
     );
   const [variableTiles, setVariableTiles] = useState(() => {
     const saved = sessionRef.current?.order;
@@ -336,7 +337,7 @@ export default function Sampler() {
       <TileBoundary key={`reserve-${key}`} tileKey={key}>
         {/* def.span: a reserve copy of a family tile shares its family CSS
             (e.g. the tile-art / tile-chiasmus :empty collapse). */}
-        <div className={`tile tile-${key}${def.span ? ` ${def.span}` : ""}`}>
+        <div className={`tile tile-${key}${def.span ? ` ${def.span}` : ""}`} data-tile-id={`reserve:${key}`}>
           <Tile {...props} />
         </div>
       </TileBoundary>
@@ -442,6 +443,7 @@ export default function Sampler() {
           def.span,
           `tile infiniteTile ${def.span}`,
           <Tile data={data} next={bp[`${def.key}Next`]} seed={bp.seed} payload={bp} {...(def.props || {})} />,
+          `b${idx.split("-")[0]}:${def.key}:${idx.split("-")[1]}`,
         )}
       </TileBoundary>
     );
@@ -471,15 +473,32 @@ export default function Sampler() {
   // settle. scrollY alone landed on the wrong content.
   const navigationType = useNavigationType();
   const tileNodes = () => [...document.querySelectorAll(".sampler .tile")];
+  // While the Back pin holds the page, its own scrolls (and the shell's scrollY
+  // restore) must not overwrite the saved anchor with a mid-settle position;
+  // once it lets go, the settled view is captured once (audit R4 analysis E1).
+  const pinningRef = useRef(false);
   useEffect(() => {
     if (!seed) return undefined;
-    return trackAnchor(tileNodes, (anchor) => writeAnchor(seed, anchor));
+    return trackAnchor(tileNodes, (anchor) => writeAnchor(seed, anchor), { paused: () => pinningRef.current });
   }, [seed]);
   useEffect(() => {
     if (navigationType !== "POP" || !sessionRef.current) return undefined;
-    const anchor = readAnchor(sessionRef.current.seed);
+    const seedAtBack = sessionRef.current.seed;
+    const anchor = readAnchor(seedAtBack);
     if (!anchor) return undefined;
-    return pinAnchor(tileNodes, anchor, { timeoutMs: 3500 });
+    const homePath = window.location.pathname;
+    pinningRef.current = true;
+    return pinAnchor(tileNodes, anchor, {
+      timeoutMs: 3500,
+      onStop: () => {
+        pinningRef.current = false;
+        // still on Home (not unmounting into a link): keep the pinned tile as
+        // the anchor at its settled offset
+        if (window.location.pathname !== homePath) return;
+        const el = findAnchor(tileNodes(), anchor);
+        if (el) writeAnchor(seedAtBack, { ...anchor, offset: Math.round(el.getBoundingClientRect().top) });
+      },
+    });
     // once per mount: only the arrival is a Back
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -521,6 +540,7 @@ export default function Sampler() {
           spanOverride || span,
           `tile ${spanOverride || span}`,
           <Tile data={payload[key]} next={payload[`${key}Next`]} seed={payload.seed} payload={payload} />,
+          key,
         )}
       </TileBoundary>
     );

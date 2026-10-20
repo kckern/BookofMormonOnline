@@ -86,7 +86,7 @@ export function readAnchor(seed) {
   try {
     const a = JSON.parse(store()?.getItem(ANCHOR_KEY) || "null");
     if (!a || !seed || a.seed !== seed || !Number.isInteger(a.index)) return null;
-    return { index: a.index, cls: a.cls, offset: a.offset };
+    return { index: a.index, cls: a.cls, ...(typeof a.id === "string" ? { id: a.id } : {}), offset: a.offset };
   } catch {
     return null;
   }

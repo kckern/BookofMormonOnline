@@ -24,7 +24,7 @@ import TileCTA from "./TileCTA";
 // the fixed mobile heading-bar (Header.css .heading-bar.mobile) + breathing room
 const HEADER_CLEAR = 64;
 
-export default function BoundedTile({ className = "", children }) {
+export default function BoundedTile({ className = "", tileId, children }) {
   const ref = useRef(null);
   const [revealed, setRevealed] = useState(false);
   const [overflowing, setOverflowing] = useState(false);
@@ -78,7 +78,7 @@ export default function BoundedTile({ className = "", children }) {
     .filter(Boolean)
     .join(" ");
   return (
-    <div ref={ref} className={cls} onFocus={onFocus}>
+    <div ref={ref} className={cls} onFocus={onFocus} data-tile-id={tileId}>
       <TileBoundContext.Provider value={reveal}>{children}</TileBoundContext.Provider>
       {overflowing || revealed ? (
         <div className="boundedTileMore">

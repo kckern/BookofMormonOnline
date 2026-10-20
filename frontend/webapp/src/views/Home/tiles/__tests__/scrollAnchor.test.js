@@ -1,7 +1,8 @@
-import { captureAnchor, pinAnchor, trackAnchor } from "../scrollAnchor";
+import { captureAnchor, captureTile, findAnchor, pinAnchor, trackAnchor } from "../scrollAnchor";
 
-const node = (cls, top, height) => ({
+const node = (cls, top, height, id) => ({
   classList: ["tile", cls],
+  dataset: id ? { tileId: id } : {},
   getBoundingClientRect: () => ({ top: node.offset + top, bottom: node.offset + top + height }),
 });
 node.offset = 0;
@@ -142,5 +143,95 @@ describe("trackAnchor", () => {
     const stop = trackAnchor(() => [], () => {}, { win });
     stop();
     expect(win.listeners.scroll).toBeUndefined();
+  });
+});
+
+// Audit R4 analysis E1: chained link→Back cycles drifted hundreds of px (and
+// once 6,496px onto a batch copy of the same family). The anchor was "same span
+// class near the saved index", so an index shift (batch rail tiles, a reserve
+// that resolved differently) matched a different tile of the family, and the
+// scroll capture picked the first tile in DOM order (a tall rail tile), not the
+// one the reader opened.
+describe("tile-identity anchors (audit analysis E1)", () => {
+  test("captureAnchor records the tile id", () => {
+    node.offset = 0;
+    const nodes = [node("tile-a", -500, 400, "a"), node("tile-chiasmus", 200, 500, "b0:chiasmus:3")];
+    expect(captureAnchor(nodes, 900)).toEqual({ index: 1, cls: "tile-chiasmus", id: "b0:chiasmus:3", offset: 200 });
+  });
+
+  test("findAnchor matches by id anywhere, never a same-class neighbour", () => {
+    node.offset = 0;
+    const twin = node("tile-chiasmus", 0, 300, "chiasmus");
+    const mine = node("tile-chiasmus", 900, 300, "b1:chiasmus:2");
+    const nodes = [twin, ...Array.from({ length: 40 }, (_, i) => node("tile-x", 0, 10, `x${i}`)), mine];
+    expect(findAnchor(nodes, { index: 0, cls: "tile-chiasmus", id: "b1:chiasmus:2", offset: 100 })).toBe(mine);
+    expect(findAnchor([twin], { index: 0, cls: "tile-chiasmus", id: "b1:chiasmus:2", offset: 100 })).toBeNull();
+  });
+
+  test("captureTile anchors the tile holding a clicked element", () => {
+    node.offset = 0;
+    const t = node("tile-art", 240, 600, "art");
+    const nodes = [node("tile-fax", -100, 2000, "fax"), t];
+    const target = { closest: () => t };
+    expect(captureTile(nodes, target)).toEqual({ index: 1, cls: "tile-art", id: "art", offset: 240 });
+    expect(captureTile(nodes, { closest: () => null })).toBeNull();
+  });
+
+  const makeWin = () => {
+    const w = {
+      location: { pathname: "/home" },
+      innerHeight: 900,
+      frames: [],
+      listeners: {},
+      requestAnimationFrame: (cb) => w.frames.push(cb),
+      cancelAnimationFrame: () => {},
+      addEventListener: (t, f) => { w.listeners[t] = f; },
+      removeEventListener: (t) => { delete w.listeners[t]; },
+    };
+    w.fire = (t, e) => { w.listeners[t]?.(e); w.frames.splice(0).forEach((f) => f()); };
+    return w;
+  };
+
+  test("a click on a tile link records that tile, not the first visible one", () => {
+    node.offset = 0;
+    const win = makeWin();
+    const saved = [];
+    const rail = node("tile-fax", -100, 2000, "fax");
+    const art = node("tile-art", 240, 600, "art");
+    trackAnchor(() => [rail, art], (a) => saved.push(a), { win });
+    win.fire("click", { target: { closest: () => art } });
+    expect(saved.at(-1)).toMatchObject({ id: "art", offset: 240 });
+  });
+
+  test("captures pause while paused() (the Back pin's own scrolls)", () => {
+    node.offset = 0;
+    const win = makeWin();
+    const saved = [];
+    let pinning = true;
+    trackAnchor(() => [node("tile-b", 200, 500, "b")], (a) => saved.push(a), { win, paused: () => pinning });
+    win.fire("scroll");
+    expect(saved).toEqual([]);
+    pinning = false;
+    win.fire("scroll");
+    expect(saved).toHaveLength(1);
+  });
+
+  test("pinAnchor reports when it stops", () => {
+    const frames = [];
+    const win = {
+      requestAnimationFrame: (cb) => frames.push(cb),
+      cancelAnimationFrame: () => {},
+      scrollBy: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    };
+    let now = 0;
+    const onStop = vi.fn();
+    pinAnchor(() => [], { index: 0, cls: "tile-c", id: "c", offset: 0 }, { win, now: () => now, timeoutMs: 100, onStop });
+    frames.shift()();
+    expect(onStop).not.toHaveBeenCalled();
+    now = 200;
+    frames.shift()();
+    expect(onStop).toHaveBeenCalledTimes(1);
   });
 });
