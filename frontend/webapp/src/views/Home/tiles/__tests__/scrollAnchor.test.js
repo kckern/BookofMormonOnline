@@ -1,4 +1,4 @@
-import { captureAnchor, captureTile, findAnchor, pinAnchor, trackAnchor } from "../scrollAnchor";
+import { captureAnchor, captureTile, findAnchor, findLink, pinAnchor, trackAnchor } from "../scrollAnchor";
 
 const node = (cls, top, height, id) => ({
   classList: ["tile", cls],
@@ -248,5 +248,39 @@ describe("tile-identity anchors (audit analysis E1)", () => {
     now = 200;
     frames.shift()();
     expect(onStop).toHaveBeenCalledTimes(1);
+  });
+});
+
+// Blind R10 mapstory-E1: the title and "Explore full journey" share one href,
+// so "nth link with this href" pointed at the other one when only one of them
+// was mounted after the remount; chained Backs landed 538-807px off.
+describe("link anchors key on href + text", () => {
+  const link = (href, text, top) => ({
+    getAttribute: (k) => (k === "href" ? href : null),
+    textContent: text,
+    getBoundingClientRect: () => ({ top, bottom: top + 20 }),
+    closest: function (sel) { return sel === "a[href]" ? this : null; },
+  });
+  const tileWith = (links) => ({ querySelectorAll: () => links, contains: () => true, closest: () => null });
+
+  test("findLink picks the link with the same text even when the nth slot moved", () => {
+    const title = link("/map/internal/story/almas-ministry", "Alma's Ministry Circuit", 100);
+    const explore = link("/map/internal/story/almas-ministry", "Explore full journey", 400);
+    // saved while both were mounted: explore was n=1
+    const saved = { href: "/map/internal/story/almas-ministry", n: 1, text: "Explore full journey", offset: 400 };
+    // after Back only the CTA has mounted yet: href-nth would find nothing / the wrong one
+    expect(findLink(tileWith([explore]), saved)).toBe(explore);
+    expect(findLink(tileWith([title, explore]), saved)).toBe(explore);
+  });
+
+  test("captureTile records the clicked link's text", () => {
+    node.offset = 0;
+    const explore = link("/map/internal/story/x", "Explore full journey", 400);
+    const title = link("/map/internal/story/x", "Title", 100);
+    const t = node("tile-mapstory", 0, 800, "mapstory");
+    t.querySelectorAll = () => [title, explore];
+    t.contains = () => true;
+    const target = { closest: (sel) => (sel === ".tile" ? t : explore) };
+    expect(captureTile([t], target).link).toEqual({ href: "/map/internal/story/x", n: 1, text: "Explore full journey", offset: 400 });
   });
 });

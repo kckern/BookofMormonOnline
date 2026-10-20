@@ -50,18 +50,30 @@ export function captureTile(nodes, target) {
  * after the remount (a late row, an image reserve) or whose top sat far above
  * the fold left the link hundreds of px away when the tile top was pinned.
  */
+// A link's visible label (aria-label wins), whitespace-collapsed. Two links in a
+// tile often share an href (a title and its "Explore" CTA); the label tells
+// them apart where "nth with this href" breaks if one of them mounts late
+// (blind R10 mapstory-E1: chained Backs landed 538-807px off).
+const linkText = (a) =>
+  String(a.getAttribute?.("aria-label") || a.textContent || "").replace(/\s+/g, " ").trim().slice(0, 80);
+
 function linkOf(tile, target) {
   const a = target?.closest?.("a[href]");
   if (!a || !tile.contains?.(a)) return null;
   const href = a.getAttribute("href");
   const n = [...tile.querySelectorAll("a[href]")].filter((x) => x.getAttribute("href") === href).indexOf(a);
-  return { href, n: Math.max(0, n), offset: Math.round(a.getBoundingClientRect().top) };
+  return { href, n: Math.max(0, n), text: linkText(a), offset: Math.round(a.getBoundingClientRect().top) };
 }
 
 /** The anchored link inside `tile`, or null (falls back to the tile top). */
 export function findLink(tile, link) {
   if (!tile || !link?.href || !tile.querySelectorAll) return null;
-  return [...tile.querySelectorAll("a[href]")].filter((x) => x.getAttribute("href") === link.href)[link.n || 0] || null;
+  const same = [...tile.querySelectorAll("a[href]")].filter((x) => x.getAttribute("href") === link.href);
+  if (link.text) {
+    const byText = same.filter((x) => linkText(x) === link.text);
+    if (byText.length) return byText[0];
+  }
+  return same[link.n || 0] || null;
 }
 
 /** [element to hold, offset to hold it at] for an anchor's tile. */
