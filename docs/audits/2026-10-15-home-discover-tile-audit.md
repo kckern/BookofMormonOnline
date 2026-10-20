@@ -1828,3 +1828,36 @@ Round 9 failures fixed directly (each with a regression test and a live check): 
 Fixed after rounds 10–11: map-story labels/dwell/touch targets (`b6eef433`, `a0a8955f`); cooperative touch gestures — one finger scrolls the page, two pan the map (`6e152e4c`, verified with raw touch events); the Back anchor keys the clicked link by href + label (`9148aa82`, `verify-back-chain-mapstory.mjs` 10/10 within 1px).
 
 Round 13 (fresh full 8-family round) did not run: every reviewer stopped on exhausted Fable usage credits. A clean blind round on the current `dev` is still outstanding.
+
+### Final round (2026-10-20): lean Sonnet review, no Fable
+
+Fable was dropped from the process (cost). One blind round, 8 fresh Sonnet reviewers (one per family; desktop + phone only, 2 seeds/tile, rubric-only, no fixers; ~0.7M tokens). Pass bar unchanged: no P0/P1, Craft/Beauty/Belonging ≥ 3.
+
+| Family | Tile | Verdict | C | B | L | P2 | P3 |
+|---|---|---|---|---|---|---|---|
+| rail | readingplan | pass | 4 | 3 | 4 |  | 3 |
+| rail | narration | pass | 3 | 3 | 4 | 3 | 3 |
+| rail | contents | pass | 4 | 4 | 4 | 1 | 2 |
+| people | people | pass | 4 | 4 | 4 | 2 | 2 |
+| people | personProfile | pass | 4 | 4 | 4 | 1 | 1 |
+| places | places | pass | 4 | 4 | 4 | 2 | 2 |
+| places | placeProfile | pass | 4 | 4 | 4 | 2 | 2 |
+| matters | mattersNarrative | pass | 4 | 4 | 4 | 1 | 5 |
+| matters | mattersMaterial | pass | 4 | 4 | 4 |  | 2 |
+| matters | mattersConcept | pass | 4 | 5 | 4 |  | 2 |
+| matters | matterProfile | pass | 5 | 4 | 5 |  | 2 |
+| scripture | text | pass | 4 | 4 | 4 | 2 | 3 |
+| scripture | commentary | pass | 3 | 3 | 4 | 1 | 3 |
+| scripture | notes | pass | 4 | 4 | 5 |  | 4 |
+| archive | fax | pass | 4 | 4 | 4 |  | 1 |
+| archive | faxVerse | pass | 3 | 3 | 4 | 2 |  |
+| archive | history | pass | 3 | 3 | 4 | 2 | 2 |
+| archive | josephSmith | pass | 4 | 4 | 4 |  | 2 |
+| archive | witness | pass | 3 | 4 | 4 | 1 | 1 |
+| analysis | biblephrases | pass | 4 | 3 | 4 | 1 |  |
+| analysis | chiasmus | pass | 3 | 4 | 4 | 3 | 1 |
+| analysis | art | pass | 4 | 4 | 4 |  | 3 |
+| story | tile-mapstory | pass | 4 | 5 | 4 | 2 | 5 |
+| story | tile-community | pass | 3 | 3 | 3 |  | 1 |
+
+**Result: 24/24 observed tiles pass, 0 P0/P1.** Not run (budget): tablet, dark mode, Korean, logged-in, infinite-batch rug-pull timing. Remaining P2/P3s are recorded in the review output (polish: back controls on some destination pages, phone tap heights, spacing); none block shipping.
