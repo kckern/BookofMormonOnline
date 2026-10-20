@@ -8,6 +8,7 @@ import { tileRegistry, reservePool, batchTiles } from "./tiles/registry";
 import { arrangeArchives, featuredArchiveKeys } from "./tiles/archiveFeed";
 import { featuredPlaceSlugs, rankPlaces, withoutSeenPlaces } from "./tiles/PlacesTile";
 import { featuredMatterSlugs, withoutSeenMatters } from "./tiles/MattersGroupTile";
+import { featuredArtIds, withoutSeenArt } from "./tiles/ImageArtTile";
 import { read as readCache, write as writeCache, isFresh as cacheIsFresh } from "./tiles/homeSamplerCache";
 import { readSession, writeSession, clearSession, readAnchor, writeAnchor } from "./tiles/samplerSession";
 import { findAnchor, findLink, pinAnchor, trackAnchor } from "./tiles/scrollAnchor";
@@ -391,8 +392,12 @@ export default function Sampler() {
         // …nor a matter card / the matter profile (R7 concept-H4)
         const seenMatters = new Set();
         shownPayloadsRef.current.forEach((sp) => featuredMatterSlugs(sp).forEach((x) => seenMatters.add(x)));
+        // …nor an artwork (R7 art-H4: after a resample the first batch's art
+        // pool repeated the grid's, so two pieces showed twice)
+        const seenArt = new Set();
+        shownPayloadsRef.current.forEach((sp) => featuredArtIds(sp).forEach((x) => seenArt.add(x)));
         reserveRef.current = {
-          payload: arrangeArchives(withoutSeenMatters(withoutSeenPlaces(assembleSampler(r), seen), seenMatters), archives),
+          payload: withoutSeenArt(arrangeArchives(withoutSeenMatters(withoutSeenPlaces(assembleSampler(r), seen), seenMatters), archives), seenArt),
           tiles: shuffle(batchTiles),
         };
         // the latest closure: this one may predate a Retry that cleared feedEnd

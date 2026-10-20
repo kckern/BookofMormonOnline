@@ -125,18 +125,34 @@ const chaptersOf = (seg, wanted) => {
  * when the chapter runs out. Unresolved (empty) or already-long refs, and refs
  * not found in `order`, come back as the same Set.
  */
-export const fillWanted = (order, wanted, min) => {
+export const fillWanted = (order, wanted, min, sectionOf = null) => {
   if (!min || !wanted.size || wanted.size >= min) return wanted;
   const idx = order.map((id, i) => (wanted.has(id) ? i : -1)).filter((i) => i >= 0);
   if (!idx.length) return wanted;
   const out = new Set(wanted);
-  for (let i = idx[idx.length - 1] + 1; i < order.length && out.size < min; i++) out.add(order[i]);
-  for (let i = idx[0] - 1; i >= 0 && out.size < min; i--) out.add(order[i]);
+  const grow = (same) => {
+    const ok = (i) => same === undefined || sectionOf.get(order[i]) === same;
+    for (let i = idx[idx.length - 1] + 1; i < order.length && out.size < min && ok(i); i++) out.add(order[i]);
+    for (let i = idx[0] - 1; i >= 0 && out.size < min && ok(i); i--) out.add(order[i]);
+  };
+  // R7 art-H3/G2: first inside the anchor's own section (forward, then back),
+  // so the excerpt is one passage under one header; across sections only when
+  // that section is too short to fill the box.
+  if (sectionOf) grow(sectionOf.get(order[idx[idx.length - 1]]));
+  grow(undefined);
   return out;
 };
 const verseOrder = (chapters) => {
   const out = [];
   for (const ch of chapters) for (const s of ch?.sections || []) for (const b of s.blocks || []) for (const l of b.lines || []) if (!out.includes(l.verse_id)) out.push(l.verse_id);
+  return out;
+};
+// verse id -> a section key ("chapterIndex:sectionIndex") for fillWanted
+const verseSections = (chapters) => {
+  const out = new Map();
+  chapters.forEach((ch, ci) => (ch?.sections || []).forEach((s, si) => {
+    for (const b of s.blocks || []) for (const l of b.lines || []) if (!out.has(l.verse_id)) out.set(l.verse_id, `${ci}:${si}`);
+  }));
   return out;
 };
 
@@ -361,7 +377,7 @@ export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = fals
           .then((r) => r?.read?.[ch] || (r?.read && Object.values(r.read)[0]) || null)
           .catch(() => null)))
           .then((chs) => {
-            const keep = units.length === 1 ? fillWanted(verseOrder(chs), wanted, fillVerses) : wanted;
+            const keep = units.length === 1 ? fillWanted(verseOrder(chs), wanted, fillVerses, verseSections(chs)) : wanted;
             const kept = chs.flatMap((chapter) => keepSections(chapter, keep));
             if (kept.length) return { sections: kept };
             // Bible / cross-ref segment → plain passages

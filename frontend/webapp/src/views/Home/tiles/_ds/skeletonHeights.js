@@ -31,7 +31,7 @@ const DESKTOP = {
   "tile-mattersConcept": "407px", // re-measured 2026-10-16 (matters-06),
   "tile-biblephrases": "352px", // R3 B2: a FIXED box — the tile picks the candidate pair that best fills it (textFit) and holds it
   "tile-chiasmus": "440px", // R3 B2: a FIXED box — the tile picks only chiasms estimated to fit (textFit) and holds it
-  "tile-art": "585px", // R6 art-B1: 3:4 portrait cap + fixed excerpt box; 2026-10-20 desktop 558–837, median 583
+  "tile-art": "604px", // R7 art-B1: ONE frame height (17rem) + fixed excerpt box; 2026-10-20 desktop 604 (one-line title) / 623 (two)
   "tile-notes": "360px", // R3 notes-A1/B2: fixed excerpt box (<=3 verses), 2026-10-16 desktop 338-410
   "tile-mapstory": "662px",
   "tile-personProfile": "330px",
@@ -62,7 +62,7 @@ const PHONE = {
   "tile-matterProfile": "434px",
   "tile-biblephrases": "414px", // R3 B2: fixed box (pair stacks on phone; 9 text rows + one row of slack)
   "tile-chiasmus": "440px", // R3 B2: fixed box, fit-filtered (76 of 118 fit at 334px, 55 at 314px)
-  "tile-art": "575px", // R6 art-B1: capped frame, 2026-10-20 phone 564–824, median 575
+  "tile-art": "623px", // R7 art-B1: fixed frame, 2026-10-20 phone + tablet all 623 (one-line titles)
   "tile-notes": "390px", // R3 notes-A1/B2: fixed excerpt box, 2026-10-16 phone 356-482
   "tile-mapstory": "655px",
   "tile-placeProfile": "377px", // re-measured 2026-10-16 (placeProfile-B1)

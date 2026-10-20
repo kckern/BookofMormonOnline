@@ -2141,8 +2141,8 @@ html[data-theme="dark"] .readMorePill:hover { background: rgba(201, 162, 75, 0.2
    BIBLE PHRASES — intertext pair with shared wording highlighted
    ================================================================ */
 /* The three self-fetching / image tiles of the analysis family collapse to
-   nothing (no 2px bordered shell) when they render null: a dud pick, a failed
-   fetch or a failed image. Never the page / "loading more" skeleton, which is
+   nothing (no 2px bordered shell) when they render null: a dud pick or a
+   failed fetch (a failed art image keeps its caption — R7 art-B4). Never the page / "loading more" skeleton, which is
    an empty div too and must hold its footprint (audit XC1). */
 .tile:not(.skeleton).tile-biblephrases:empty,
 .tile:not(.skeleton).tile-chiasmus:empty,
@@ -2347,22 +2347,38 @@ html[data-theme="dark"] .faxTileEdition { color: #9a9a9a; }
 .imageArtTile { padding: 0; overflow: hidden; }
 /* title bar + image: one link to /art/:id */
 .imageArtLink { display: block; color: inherit; text-decoration: none; }
-/* R6 A1/F1: 3:4 portrait cap (mediaAspect) AND a height bound, so a full-width
-   tablet tile (771px wide → 1028px at 3:4) never outruns the viewport */
-.imageArtFrame { position: relative; display: block; width: 100%; max-height: 30rem; overflow: clip; background: #e8e6e1; }
+/* R7 art-B1 (P1): ONE frame height for every piece (was each piece's own
+   aspect, 422–831px tiles against one skeleton). The image is fitted inside it
+   (ImageArtTile artFit): `cover` for a mild crop, else `contain` on the mat —
+   a portrait or a strip is shown whole, never blown up to the frame width. */
+.imageArtTile { --art-frame-h: 17rem; }
+.imageArtFrame { position: relative; display: block; width: 100%; height: var(--art-frame-h); overflow: clip; background: #e8e6e1; }
 .imageArtFrame img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 25%; display: block; transition: transform 0.35s ease, filter 0.2s ease; }
+.imageArtFrame[data-fit="contain"] img { object-position: 50% 50%; }
+.imageArtLink:hover .imageArtFrame[data-fit="contain"] img { transform: none; }
+/* a piece that failed twice: the mat alone, the caption below stays (R7 art-B4) */
+.imageArtFrame.isFailed { background: #efeee9; }
+html[data-theme="dark"] .imageArtFrame.isFailed { background: #262626; }
+.imageArtUnavailable { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: #8a8a8a; }
 .imageArtLink:hover .imageArtFrame img { transform: scale(1.025); }
 html[data-theme="dark"] .imageArtFrame { background: #2c2c2c; }
 /* header: the shared eyebrow, then the title in the heading tier — left-aligned
    on the tile ground like every sibling (audit A3; was a centred grey bar) */
 .imageArtEyebrow { padding: 0.75rem 0.85rem 0; margin-bottom: 0.2rem; }
 .imageArtTitleBar {
-  display: block;
-  padding: 0 0.85rem 0.6rem;
+  padding: 0 0.85rem;
   font-size: 0.95rem;
   font-weight: 800;
   line-height: 1.25;
   color: #2a2a2a;
+  /* two lines at most: the footprint stays within one line of the skeleton */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow: clip;
+  margin-bottom: 0.6rem;
 }
 .imageArtLink:hover .imageArtTitleBar { text-decoration: underline; text-decoration-color: #c9a24b; text-underline-offset: 3px; }
 html[data-theme="dark"] .imageArtTitleBar { color: #f0f0f0; }
@@ -2407,6 +2423,11 @@ html[data-theme="dark"] .imageArtTitleBar { color: #f0f0f0; }
 /* a passage that failed to load: no empty box (the artwork stands alone) */
 .imageArtScripture.read-content:has(> .samplerScriptureLoading:not(.isLoading)) { height: auto; -webkit-mask-image: none; mask-image: none; }
 .imageArtScripture .read-block { flex-direction: row; }
+/* R7 art-A3: the excerpt reads in the sibling analysis tiles' tier
+   (biblephrases / chiasmus 0.95rem), not Read's denser 16px/1.12 page type,
+   and the speaker label under a face is legible (was 8px). */
+.imageArtScripture.scriptureExcerptCompact .read-scripture { font-size: 0.95rem; line-height: 1.45; }
+.imageArtScripture.read-content .read-section .read-block .left-gutter div.read-voice { font-size: 0.625rem; line-height: 1.15; }
 /* the art title is the tile's title: the excerpt keeps its ref chip but not a
    second, larger section heading (upside-down hierarchy) */
 .imageArtScripture .read-section-header h4 { display: none; }

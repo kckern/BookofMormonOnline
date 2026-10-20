@@ -34,6 +34,17 @@ describe("fillWanted (R6 art-A1-excerpt-box)", () => {
   test("at the chapter end it reaches back instead", () => {
     expect([...fillWanted(order, new Set([8]), 3)].sort()).toEqual([6, 7, 8]);
   });
+  // R7 art-H3/G2: the window stays inside the ref's own section (a second
+  // section header in the clipped box was an unrelated passage and a chip that
+  // could sit below the clip line, still in the Tab order).
+  test("with sections known, it fills inside the anchor's section first (back, not across)", () => {
+    const section = new Map([[1, 0], [2, 0], [3, 0], [4, 0], [5, 1], [6, 1], [7, 1], [8, 1]]);
+    expect([...fillWanted(order, new Set([3]), 4, section)].sort()).toEqual([1, 2, 3, 4]);
+  });
+  test("a section shorter than min still fills (crossing only as a last resort)", () => {
+    const section = new Map([[1, 0], [2, 0], [3, 1], [4, 1], [5, 1], [6, 1], [7, 1], [8, 1]]);
+    expect([...fillWanted(order, new Set([2]), 4, section)].sort()).toEqual([1, 2, 3, 4]);
+  });
   test("a ref already long enough, or unresolved, is untouched", () => {
     const w = new Set([1, 2, 3]);
     expect(fillWanted(order, w, 3)).toBe(w);

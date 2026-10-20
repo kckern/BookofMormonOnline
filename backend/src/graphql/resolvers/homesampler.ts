@@ -24,6 +24,7 @@ import { verseCropOk } from '../../media/fax/showcase.js';
 import { getHomeSamplerCache } from '../homeSamplerCacheStore.js';
 import { currentBucket, samplerCacheKey, seedForBucket } from '../homeSamplerCache.js';
 import { dropVariantNotes } from './noteFilters.js';
+import { anchorArtRef, artCandidateIds } from './artRef.js';
 
 // 24 people = 1 featured + 11 face cards + 12 view-all mosaic thumbs (3×4);
 // 17 places = 5 cards + a full 3×4 mosaic.
@@ -154,22 +155,12 @@ const sampleFaxMore = async (ctx: AppContext, seed: number) => {
     .map((r) => ({ slug: r.slug, title: r.title, pages: Number(r.pages) || null }));
 };
 
-// The image's bom_text.heading is sometimes a scripture ref ("1 Nephi 13:40–41")
-// and sometimes a descriptive title ("The Messiah to come to the Promised Land").
-// Emit a STANDARD scripture reference: prefer the heading when it parses (keeps
-// the verse range), else fall back to the passage's first verse. `min_verse_id`
-// is the only verse column bom_text carries.
-const standardArtRef = (heading: string | null, minVerseId: number | null): string | null => {
-  if (heading) {
-    const ids = lookupReference(heading)?.verse_ids || [];
-    // guard against a bare book name ("Alma") exploding into the whole book
-    if (ids.length && ids.length <= 20) return generateReference(ids);
-  }
-  return minVerseId ? generateReference([Number(minVerseId)]) : null;
-};
-
 // Standalone artwork for image tiles — landscape-ish pieces read best in a
 // tile, so prefer wider-than-tall; carry title/artist for the caption.
+// R7 art-A2/H1: only pieces big enough for the tile frame (>= ART_MIN_WIDTH px
+// wide; a 186px strip was upscaled 4–8x) and between 1:2 and 3:1 (a 700x175
+// banner read as a 90px stripe) — 2249 of 2598 qualify.
+export const ART_MIN_WIDTH = 500;
 const sampleArt = async (ctx: AppContext, seed: number) => {
   // JOIN the piece's location to bom_text so we can show the scripture it
   // illustrates (heading) and deep-link into that passage.
@@ -186,17 +177,30 @@ const sampleArt = async (ctx: AppContext, seed: number) => {
       'bom_text.min_verse_id as minVerseId',
     ])
     .where('bom_xtras_image.file', 'is not', null)
-    .where(sql<boolean>`bom_xtras_image.width > 0 AND bom_xtras_image.height > 0`)
+    .where(sql<boolean>`bom_xtras_image.width >= ${ART_MIN_WIDTH} AND bom_xtras_image.height > 0`)
+    .where(sql<boolean>`bom_xtras_image.width / bom_xtras_image.height BETWEEN 0.5 AND 3`)
     .orderBy(seededOrder('bom_xtras_image.id', seed))
     .limit(8)
     .execute();
+  // R7 art-H3: anchor each ref on the verse its (quoted) title comes from
+  const minOf = (r: { minVerseId: unknown }) => (r.minVerseId != null ? Number(r.minVerseId) : null);
+  const wanted = [...new Set(rows.flatMap((r) => artCandidateIds(r.ref ?? null, minOf(r))))];
+  const textById = new Map<number, string>();
+  if (wanted.length) {
+    const verses = await ctx.db
+      .selectFrom('lds_scriptures_verses')
+      .select(['verse_id', 'verse_scripture'])
+      .where('verse_id', 'in', wanted)
+      .execute();
+    for (const v of verses) textById.set(Number(v.verse_id), String(v.verse_scripture || ''));
+  }
   return rows.map((r) => ({
     id: Number(r.id),
     title: r.title || null,
     artist: r.artist || null,
     width: Number(r.width) || null,
     height: Number(r.height) || null,
-    ref: standardArtRef(r.ref ?? null, r.minVerseId != null ? Number(r.minVerseId) : null),
+    ref: anchorArtRef({ title: r.title ?? null, heading: r.ref ?? null, minVerseId: minOf(r), textById }),
   }));
 };
 

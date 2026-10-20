@@ -54,14 +54,17 @@ test("a landscape image is untouched", () => {
   expect(ratioOf(container.querySelector("img").style.aspectRatio)).toBeCloseTo(16 / 9);
 });
 
-test("the art tile frame of a tall strip is capped", () => {
+// R7 art-B1/A2: the art frame is one fixed height for every piece (no per-piece
+// aspect); a tall strip is shown whole inside it, never cropped or upscaled.
+test("the art tile frame of a tall strip is fixed and shows the strip whole", () => {
   const { container } = render(
     <MemoryRouter>
       <ImageArtTile payload={{ art: [{ id: 9, title: "Strip", width: 186, height: 600, ref: "Alma 1:1" }] }} />
     </MemoryRouter>,
   );
   const frame = container.querySelector(".imageArtFrame");
-  expect(ratioOf(frame.style.aspectRatio)).toBeGreaterThanOrEqual(MAX_PORTRAIT - 1e-6);
+  expect(frame.style.aspectRatio).toBe("");
+  expect(frame.getAttribute("data-fit")).toBe("contain");
 });
 
 // Static: inline aspect ratios in tile code go through capAspect (or TileImage,

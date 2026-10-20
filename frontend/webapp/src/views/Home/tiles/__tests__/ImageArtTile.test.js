@@ -1,9 +1,9 @@
 import React from "react";
 import fs from "node:fs";
 import path from "node:path";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import ImageArtTile from "../ImageArtTile";
+import ImageArtTile, { artFit, featuredArtIds, withoutSeenArt } from "../ImageArtTile";
 
 vi.mock("src/models/BoMOnlineAPI", () => ({
   __esModule: true,
@@ -88,11 +88,78 @@ describe("ImageArtTile", () => {
     expect(screen.getByRole("link", { name: "See in context" }).getAttribute("href")).toBe("/read/alma-17/7");
   });
 
-  // M2: a failed image left a blank beige frame with a © badge.
-  test("a failed image collapses the whole tile", () => {
-    const { container } = renderTile();
-    fireEvent.error(container.querySelector("img"));
-    expect(container.firstChild).toBeNull();
+  // R7 art-B4: a failed (even transiently failed) image dropped the whole tile
+  // — scripture and CTA too — for the session. It retries once, then keeps the
+  // caption under a neutral plate (no © credit for an absent picture).
+  test("a failed image retries once, then keeps the caption under a plate", () => {
+    vi.useFakeTimers();
+    try {
+      const { container } = renderTile();
+      fireEvent.error(container.querySelector("img"));
+      act(() => { vi.advanceTimersByTime(3000); });
+      const retry = container.querySelector("img");
+      expect(retry).not.toBeNull();
+      fireEvent.error(retry);
+      act(() => { vi.advanceTimersByTime(3000); });
+      expect(container.querySelector("img")).toBeNull();
+      expect(container.querySelector(".imageArtFrame.isFailed")).not.toBeNull();
+      expect(container.querySelector(".imageArtArtistBadge")).toBeNull();
+      expect(screen.getByRole("link", { name: "See in context" })).toBeTruthy();
+      expect(screen.getByRole("link", { name: "Zarahemla is Rebuilt" })).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  // R7 art-B1 (P1): the frame took each piece's own aspect (422–831px tiles
+  // against one skeleton). Now every art tile has ONE frame height; the piece
+  // is fitted inside it, so the footprint is known before the payload lands.
+  test("every piece gets the same frame (no per-piece aspect ratio)", () => {
+    const a = renderTile([{ ...ART, id: 1, width: 600, height: 1200 }]).container.querySelector(".imageArtFrame");
+    const b = renderTile([{ ...ART, id: 2, width: 1400, height: 500 }]).container.querySelector(".imageArtFrame");
+    expect(a.getAttribute("style") || "").not.toMatch(/aspect-ratio/);
+    expect(b.getAttribute("style") || "").not.toMatch(/aspect-ratio/);
+    const css = fs.readFileSync(path.resolve(__dirname, "../../Sampler.css"), "utf8");
+    const frame = css.match(/\.imageArtFrame \{[^}]*\}/)[0];
+    expect(frame).toMatch(/height:\s*var\(--art-frame-h\)/);
+    expect(css).toMatch(/--art-frame-h:\s*[\d.]+rem/);
+  });
+
+  // R7 art-A2: cover only when the crop is mild; a portrait or a strip is shown
+  // whole on the mat (the dove of "…in the Form of a Dove" was cropped away).
+  test("artFit: mild crops cover, portraits and strips are shown whole", () => {
+    expect(artFit(1.5, 4 / 3)).toBe("cover");
+    expect(artFit(4 / 3, 4 / 3)).toBe("cover");
+    expect(artFit(0.7, 4 / 3)).toBe("contain");
+    expect(artFit(3, 4 / 3)).toBe("contain");
+    expect(artFit(1.5, 2.8)).toBe("contain"); // a full-width tablet frame
+    expect(artFit(null, 4 / 3)).toBe("cover");
+  });
+
+  test("a portrait piece renders contained", () => {
+    const { container } = renderTile([{ ...ART, width: 600, height: 1000 }]);
+    expect(container.querySelector(".imageArtFrame").getAttribute("data-fit")).toBe("contain");
+    expect(container.querySelector("img").style.objectFit).toBe("contain");
+  });
+
+  // R7 art-H4: a batch must not repeat the artworks already on the page.
+  test("featuredArtIds / withoutSeenArt drop pieces already shown", () => {
+    const grid = { art: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }] };
+    const seen = new Set(featuredArtIds(grid));
+    expect([...seen]).toEqual([1, 2, 3]);
+    const batch = { art: [{ id: 2 }, { id: 9 }, { id: 1 }, { id: 8 }], x: 1 };
+    expect(withoutSeenArt(batch, seen)).toEqual({ art: [{ id: 9 }, { id: 8 }], x: 1 });
+    expect(withoutSeenArt(null, seen)).toBeNull();
+  });
+
+  // R7 art-A3: the excerpt sits in the sibling analysis tiles' type tier, and
+  // the speaker label under a face is legible (was 8px).
+  test("Sampler.css: excerpt type matches the siblings; speaker label >= 10px; title clamps", () => {
+    const css = fs.readFileSync(path.resolve(__dirname, "../../Sampler.css"), "utf8");
+    expect(css).toMatch(/\.imageArtScripture\.scriptureExcerptCompact \.read-scripture\s*\{[^}]*font-size:\s*0\.95rem/);
+    // as specific as Read.scss's 0.5rem rule (.read-content … div.read-voice) or it loses
+    expect(css).toMatch(/\.imageArtScripture\.read-content \.read-section \.read-block \.left-gutter div\.read-voice\s*\{[^}]*font-size:\s*0\.6(2|5)/);
+    expect(css).toMatch(/\.imageArtTitleBar \{[^}]*-webkit-line-clamp:\s*2/);
   });
 
   // J1: art has no uploaded variants — never request a srcset that 404s.
@@ -106,12 +173,6 @@ describe("ImageArtTile", () => {
 
   // R6 art-A1/F1 (tablet): the 3:4 cap alone still made a full-width 820px
   // tablet tile 1379px tall; the frame also stops at a height bound.
-  test("Sampler.css: the artwork frame has a max-height as well as the aspect cap", () => {
-    const css = fs.readFileSync(path.resolve(__dirname, "../../Sampler.css"), "utf8");
-    const frame = css.match(/\.imageArtFrame \{[^}]*\}/)[0];
-    expect(frame).toMatch(/max-height:\s*[\d.]+rem/);
-  });
-
   test("Sampler.css: no doubled title in the excerpt, reserved excerpt height, transparent dark inset", () => {
     const css = fs.readFileSync(path.resolve(__dirname, "../../Sampler.css"), "utf8");
     expect(css).toMatch(/\.imageArtScripture \.read-section-header h4\s*\{[^}]*display:\s*none/);
