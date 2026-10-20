@@ -89,7 +89,12 @@ export const clampWords = (text, words, { phrase = false } = {}) => {
   if (parts.length <= words) return text || "";
   let cut = parts.slice(0, words).join(" ");
   const lastEnd = Math.max(lastSentenceEnd(cut), cut.lastIndexOf("; "));
-  if (lastEnd > cut.length * 0.5) return cut.slice(0, lastEnd + 1).trim();
+  if (lastEnd > cut.length * 0.5) {
+    // a full stop ends the gloss; a semicolon only pauses it, so the cut must
+    // read as a cut ('…in Zarahemla;' looked like a broken sentence, R7 concept-H3)
+    if (cut[lastEnd] === ";") return cut.slice(0, lastEnd).trim() + "…";
+    return cut.slice(0, lastEnd + 1).trim();
+  }
   cut = cut.replace(/\s*\([^)]*$/, "").replace(/[,;:—-]$/, "").trim();
   let kept = cut.split(" ");
   const popDangling = () => {
@@ -119,5 +124,10 @@ export const clampWords = (text, words, { phrase = false } = {}) => {
   return kept.join(" ").replace(/[\s,;:—–\-“"‘(]+$/, "") + "…";
 };
 
-/** Display hygiene for data strings: typographic apostrophes, trimmed. */
-export const tidy = (s) => (s || "").replace(/(\w)'(\w)/g, "$1’$2").trim();
+/** Display hygiene for data strings: typographic apostrophes, a spaced hyphen
+ *  as an en dash ("procedure - confession"), trimmed. */
+export const tidy = (s) =>
+  (s || "")
+    .replace(/(\w)'(\w)/g, "$1’$2")
+    .replace(/(\S) - (\S)/g, "$1 – $2")
+    .trim();

@@ -7,6 +7,7 @@ import Masonry from "react-masonry-css";
 import { tileRegistry, reservePool, batchTiles } from "./tiles/registry";
 import { arrangeArchives, featuredArchiveKeys } from "./tiles/archiveFeed";
 import { featuredPlaceSlugs, rankPlaces, withoutSeenPlaces } from "./tiles/PlacesTile";
+import { featuredMatterSlugs, withoutSeenMatters } from "./tiles/MattersGroupTile";
 import { read as readCache, write as writeCache, isFresh as cacheIsFresh } from "./tiles/homeSamplerCache";
 import { readSession, writeSession, clearSession, readAnchor, writeAnchor } from "./tiles/samplerSession";
 import { findAnchor, findLink, pinAnchor, trackAnchor } from "./tiles/scrollAnchor";
@@ -387,8 +388,11 @@ export default function Sampler() {
         shownPayloadsRef.current.forEach((sp) => featuredPlaceSlugs(sp).forEach((x) => seen.add(x)));
         // …and the witness / Joseph Smith tiles don't repeat a statement either
         const archives = featuredArchiveKeys(shownPayloadsRef.current);
+        // …nor a matter card / the matter profile (R7 concept-H4)
+        const seenMatters = new Set();
+        shownPayloadsRef.current.forEach((sp) => featuredMatterSlugs(sp).forEach((x) => seenMatters.add(x)));
         reserveRef.current = {
-          payload: arrangeArchives(withoutSeenPlaces(assembleSampler(r), seen), archives),
+          payload: arrangeArchives(withoutSeenMatters(withoutSeenPlaces(assembleSampler(r), seen), seenMatters), archives),
           tiles: shuffle(batchTiles),
         };
         // the latest closure: this one may predate a Retry that cleared feedEnd

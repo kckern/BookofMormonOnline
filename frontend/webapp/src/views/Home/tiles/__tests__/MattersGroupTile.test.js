@@ -138,8 +138,9 @@ describe("MattersGroupTile — word-safe glosses + editorial junk (blind audit m
     const row = container.querySelector(".placesTileIndexRow");
     expect(row.classList.contains("fitWords")).toBe(true);
     expect(row.style.getPropertyValue("--fit-lines")).toBe("3");
-    // jsdom has no layout, so the fit pass keeps the whole text (no budget cut)
-    expect(row).toHaveTextContent(long);
+    // jsdom has no layout, so the fit pass keeps the whole text (no budget cut);
+    // the apostrophe is typographic (R7 XC2 tidy)
+    expect(row).toHaveTextContent(long.replace("'", "’"));
   });
   test("a trailing editor's note like '(paraphrastic)' never reaches the card", () => {
     const { container } = renderIn(

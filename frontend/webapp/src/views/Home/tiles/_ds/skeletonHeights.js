@@ -36,7 +36,7 @@ const DESKTOP = {
   "tile-mapstory": "662px",
   "tile-personProfile": "330px",
   "tile-placeProfile": "370px", // re-measured 2026-10-16 (CTA row)
-  "tile-matterProfile": "420px",
+  "tile-matterProfile": "440px", // R7 B1: 3:2 hero + plain deck; 2026-10-20 431 (one-line deck) – 451 (two)
   "tile-witness": "225px", // archive pass 2026-10-15: reporter meta line + reveal
   "tile-josephSmith": "190px",
 };
@@ -54,10 +54,12 @@ const PHONE = {
   "tile-fax": "650px",
   "tile-faxVerse": "640px",
   "tile-places": "677px", // re-measured 2026-10-16 (places-B1: 665–689 with the touch chip padding)
-  "tile-mattersNarrative": "706px",
-  "tile-mattersMaterial": "706px",
-  "tile-mattersConcept": "732px", // 2026-10-16: concept names wrap more
-  "tile-matterProfile": "410px",
+  // R7 (2026-10-20): the eyebrow heading holds its own 44px touch hit (+14px);
+  // phone seeds Narrative 733–746, Material 720–733, Concept 746, Profile 432–434
+  "tile-mattersNarrative": "740px",
+  "tile-mattersMaterial": "730px",
+  "tile-mattersConcept": "746px",
+  "tile-matterProfile": "434px",
   "tile-biblephrases": "414px", // R3 B2: fixed box (pair stacks on phone; 9 text rows + one row of slack)
   "tile-chiasmus": "440px", // R3 B2: fixed box, fit-filtered (76 of 118 fit at 334px, 55 at 314px)
   "tile-art": "575px", // R6 art-B1: capped frame, 2026-10-20 phone 564–824, median 575

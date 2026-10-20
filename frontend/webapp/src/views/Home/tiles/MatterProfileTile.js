@@ -1,16 +1,15 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import Parser from "html-react-parser";
-import { replaceNumbers } from "src/models/Utils";
 import { getDetectedScripturesHtml } from "src/views/_Common/ViewUtils";
-import { flatten } from "./textUtils";
+import { flatten, tidy } from "./textUtils";
 import ExpandableText from "./ExpandableText";
 import RefPill from "./RefPill";
 import { RevealProvider } from "./_ds/Reveal";
 import TileDeepLink from "./_ds/TileDeepLink";
 import TileImage from "./_ds/TileImage";
 import labelOr from "./_ds/labelOr";
-import { GROUP_SHOWN } from "./MattersGroupTile";
+import { GROUP_SHOWN, matterName } from "./MattersGroupTile";
 
 // Which sampler array each group draws from.
 const GROUP_KEY = {
@@ -45,7 +44,7 @@ const proseOpts = {
 /**
  * A single-matter deep profile — hero image, name, subtitle deck, and the
  * description with scripture refs as RefPills, behind a reversible Read more;
- * Layer 2 is "Open <name>". Reserve/batch tile drawn from a matter the group
+ * "Open <name>" sits beside it at rest. Reserve/batch tile drawn from a matter the group
  * tile didn't show. `group` selects the sampler array.
  */
 export default function MatterProfileTile({ payload, group = "concept", matterIndex = PROFILE_MATTER_INDEX }) {
@@ -55,7 +54,7 @@ export default function MatterProfileTile({ payload, group = "concept", matterIn
   const matter = list[matterIndex];
   if (!matter?.slug) return null;
   const heroFailed = failedSlug === matter.slug;
-  const name = matter.name ? replaceNumbers(matter.name) : "";
+  const name = matter.name ? matterName(matter.name) : "";
   const desc = flatten(matter.description || "");
   const href = `/matters/${matter.slug}`;
   return (
@@ -92,13 +91,15 @@ export default function MatterProfileTile({ payload, group = "concept", matterIn
             </Link>
           </div>
           <div className="placeProfileText">
-            {matter.subtitle ? <p className="matterProfileSub">{matter.subtitle}</p> : null}
+            {matter.subtitle ? <p className="matterProfileSub">{tidy(matter.subtitle)}</p> : null}
             {desc ? (
               <ExpandableText className="placeProfileDesc" lines={5} fade persistKey={`matterProfile:${matter.slug}`}>
                 {Parser(stripParens(getDetectedScripturesHtml(desc)), proseOpts)}
               </ExpandableText>
             ) : null}
-            <TileDeepLink to={href} verb="open" name={name || matter.slug} />
+            {/* at rest, as the Person profile: Read more | Open <matter> — the
+                hero is tabindex -1, so this is the keyboard's way in (R7 C1) */}
+            <TileDeepLink always to={href} verb="open" name={name || matter.slug} />
           </div>
         </div>
       </div>

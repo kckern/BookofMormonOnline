@@ -7,11 +7,11 @@ describe("skeletonHeights — matters family", () => {
     ["tile-mattersNarrative", false, "407px"],
     ["tile-mattersMaterial", false, "407px"],
     ["tile-mattersConcept", false, "407px"],
-    ["tile-mattersNarrative", true, "706px"],
-    ["tile-mattersMaterial", true, "706px"],
-    ["tile-mattersConcept", true, "732px"],
-    ["tile-matterProfile", false, "420px"],
-    ["tile-matterProfile", true, "410px"],
+    ["tile-mattersNarrative", true, "740px"],
+    ["tile-mattersMaterial", true, "730px"],
+    ["tile-mattersConcept", true, "746px"],
+    ["tile-matterProfile", false, "440px"],
+    ["tile-matterProfile", true, "434px"],
   ])("%s (phone=%s) reserves %s", (span, single, h) => {
     expect(skeletonHeight(span, single)).toBe(h);
   });

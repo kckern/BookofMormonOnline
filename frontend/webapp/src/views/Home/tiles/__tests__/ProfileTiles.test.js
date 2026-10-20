@@ -31,7 +31,8 @@ test("PlaceProfileTile: deeplink hidden until the description is expanded", () =
   expect(deep().getAttribute("href")).toBe("/places/nephi");
 });
 
-test("MatterProfileTile: deeplink hidden until the description is expanded", () => {
+// R7 matterProfile-C1: as the Person profile, Open shows at rest beside Read more
+test("MatterProfileTile: deeplink shown at rest and after expanding", () => {
   const payload = {
     mattersConcept: [
       { slug: "oaths", name: "Oaths", subtitle: "Oaths in Nephite society",
@@ -40,7 +41,7 @@ test("MatterProfileTile: deeplink hidden until the description is expanded", () 
     ],
   };
   renderIn(<MatterProfileTile payload={payload} group="concept" matterIndex={0} />);
-  expect(deep()).toBeNull();
+  expect(deep().getAttribute("href")).toBe("/matters/oaths");
   fireEvent.click(readMore());
   expect(deep().getAttribute("href")).toBe("/matters/oaths");
 });
