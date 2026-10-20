@@ -15,19 +15,21 @@
  *      drawing later markers on top of earlier ones at identical pixels.
  */
 
+import { displayPlaceName } from "./textUtils";
+
 /** One entry per move, built from that move's own endpoints — never chained. */
 export const legsOf = (moves) =>
   moves.map((m, i) => ({
     seq: m.seq,
     from: {
       slug: m.start,
-      name: m.startName || m.start,
+      name: displayPlaceName(m.startName || m.start),
       lat: m.startLat,
       lng: m.startLng,
     },
     to: {
       slug: m.end,
-      name: m.endName || m.end,
+      name: displayPlaceName(m.endName || m.end),
       lat: m.endLat,
       lng: m.endLng,
     },
@@ -49,7 +51,7 @@ export const stopsOf = (moves) => {
     if (!s) {
       s = {
         slug,
-        name: name || slug,
+        name: displayPlaceName(name || slug),
         lat,
         lng,
         steps: [],

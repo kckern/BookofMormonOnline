@@ -2018,7 +2018,13 @@ html[data-theme="dark"] .historyTileBullets { color: #c4c4c4; }
   display: flex; flex-direction: column; gap: 0.55rem;
   margin: 0.1rem 0 0.85rem; padding: 0.15rem 0 0.15rem 0.85rem;
   border-left: 2px solid #c9a24b; color: inherit; text-decoration: none;
+  padding-right: 0.35rem; border-radius: 0 0.35rem 0.35rem 0;
+  transition: background 0.15s ease;
 }
+/* C1: the quote is the tile's primary link — same hover wash as the group
+   rows below it, so it reads as clickable, not as decoration. */
+.communityQuote:hover { background: rgba(0,0,0,0.03); }
+html[data-theme="dark"] .communityQuote:hover { background: rgba(255,255,255,0.05); }
 .communityQuote .communityMsgText {
   font-family: "Scripture", Georgia, serif; font-size: 1.05rem; line-height: 1.38; color: #333;
   overflow-wrap: anywhere;
@@ -3211,6 +3217,8 @@ html[data-theme="dark"] .mapStoryTile .mapTileFrame {
   .mapStoryTile .mapStoryRef::after { content: ""; position: absolute; inset: -14px -8px; }
   /* F2: 28px on-map place labels get a 44px hit; the eyebrow too. */
   .mapStoryPlaceLabel::after { content: ""; position: absolute; inset: -8px 0; }
+  /* F2: 32px "N places" clusters were the one on-map target left at ~28px. */
+  .mapStoryCluster::after { content: ""; position: absolute; inset: -6px 0; }
   .mapStoryTile .tileHeading { margin-bottom: 0.45rem; }
   .mapStoryTile .tileHeading a { position: relative; z-index: 2; }
   .mapStoryTile .tileHeading a::after {
@@ -3289,6 +3297,8 @@ html[data-theme="dark"] .mapStoryTravelerText strong { color: #e0e0e0; }
 html[data-theme="dark"] .mapStoryDetached { color: #a3a3a3; }
 html[data-theme="dark"] .mapStoryControlButton { color: #ddd; border-color: #4a4a4a; background: #2a2a2a; }
 html[data-theme="dark"] .mapStoryControlButton.isPrimary { color: #1f1f1f; border-color: #e0e0e0; background: #e0e0e0; }
+/* L3: the light hover (#000) outranked the dark primary and hid the glyph. */
+html[data-theme="dark"] .mapStoryControlButton.isPrimary:hover:not(:disabled) { color: #1f1f1f; border-color: #fff; background: #fff; }
 html[data-theme="dark"] .mapStoryScrubber::-webkit-slider-runnable-track { background: linear-gradient(to right, #bbb 0 var(--map-story-progress), #4a4a4a var(--map-story-progress) 100%); }
 html[data-theme="dark"] .mapStoryScrubber::-webkit-slider-thumb { background: #e0e0e0; border-color: #222; }
 html[data-theme="dark"] .mapStoryCompleteMark { color: #1f1f1f; background: #e0e0e0; }

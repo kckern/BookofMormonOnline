@@ -3,9 +3,9 @@ import RefPill from "./RefPill";
 import TileImage from "./_ds/TileImage";
 import ExpandableText from "./ExpandableText";
 import labelOr from "./_ds/labelOr";
-import { displayPersonName, supDigits } from "./textUtils";
+import { displayPersonName, displayPlaceName, supDigits } from "./textUtils";
 
-const placeLabel = (name, slug) => name || slug || "";
+const placeLabel = (name, slug) => displayPlaceName(name || slug || "");
 
 const hide = (event) => { event.currentTarget.style.display = "none"; };
 

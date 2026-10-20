@@ -1,9 +1,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { label, breakCache } from "src/models/Utils";
+import { label } from "src/models/Utils";
 import { clampWords } from "./textUtils";
 import TileDeepLink from "./_ds/TileDeepLink";
-import labelOr from "./_ds/labelOr";
+import labelOr, { inlineCase } from "./_ds/labelOr";
 
 // Two groups is the honest maximum beside a quote; the rest fold into the
 // visible "+N more groups" row.
@@ -11,15 +11,18 @@ const SHOWN_GROUPS = 2;
 
 /**
  * User avatars are external profile URLs (not media-CDN paths), so they can't
- * go through TileImage's variant srcset. Missing picture → a neutral disc,
- * never a broken <img>. width/height keep the box stable before load.
+ * go through TileImage's variant srcset. Missing OR failing picture → a neutral
+ * disc, never a broken <img> (an avatar-host outage used to retry into a
+ * broken-image icon via breakCache). width/height keep the box stable.
  */
-const Avatar = ({ src, className = "", title, size }) =>
-  src ? (
-    <img className={className} src={src} alt="" title={title} width={size} height={size} loading="lazy" decoding="async" onError={breakCache} />
+const Avatar = ({ src, className = "", title, size }) => {
+  const [failed, setFailed] = React.useState(false);
+  return src && !failed ? (
+    <img className={className} src={src} alt="" title={title} width={size} height={size} loading="lazy" decoding="async" onError={() => setFailed(true)} />
   ) : (
     <span className={`communityAvatarBlank ${className}`.trim()} title={title} aria-hidden="true" />
   );
+};
 
 const plain = (m) =>
   (m?.msg || "").replace(/<[^>]*>/gi, " ").replace(/\s+/g, " ").trim().replace(/^•$/, label("highlight_msg"));
@@ -104,7 +107,7 @@ export default function CommunityTile({ data }) {
           {shownGroups.map((g) => {
             const members = g.members || [];
             const one = members.length === 1;
-            const memberText = `${members.length} ${labelOr(one ? "member" : "members", one ? "member" : "members")}`;
+            const memberText = `${members.length} ${inlineCase(labelOr(one ? "member" : "members", one ? "member" : "members"))}`;
             return (
               <li key={g.url}>
                 <Link to={`/home/community/${g.url}`} className="communityGroupCard">

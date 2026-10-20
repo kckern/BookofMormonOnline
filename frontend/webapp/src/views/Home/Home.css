@@ -589,11 +589,65 @@ div.toolTipNickname
 }
 img.groupAvatar
 {
+    /* D5: unsized, the cover rendered at its intrinsic ~480px and blew the
+       message header into a half-empty gray band (author text one word per
+       line on phone). A small square beside the author, like the avatar. */
+    width: 3rem;
+    height: 3rem;
+    object-fit: cover;
     border-radius: 3px;
     margin-right: 0em;
     float: right;
     flex-shrink: 0;
 }
+
+.groupAvatarLink { flex-shrink: 0; }
+
+/* D3: return control above the community feed (message / group / index) —
+   the map story page's ⬅ idiom, neutral gray, gold focus ring. */
+.communityBackBar
+{
+    /* Sticky: a deep-linked message scrolls past the group banner to its card,
+       which would carry an in-flow control off the top. The strip is the
+       page ground (#eee) so cards slide UNDER it instead of colliding with a
+       floating pill. Desktop sticks to the top of the feed pane (which starts
+       below the 60px header); phone scrolls the window. */
+    position: sticky;
+    top: 0;
+    z-index: 100; /* above leaderboard rank badges (z 99); under the 5300 header */
+    display: flex;
+    margin: -.5rem 0 .5rem;
+    padding: .25rem 0;
+    background: #eee;
+}
+html[data-theme="dark"] .communityBackBar { background: #1a1a1a; }
+.rightPanelScroll [data-feed-id] { scroll-margin-top: 60px; }
+.communityBackBar--page { display: none; }
+@media only screen and (max-width: 900px) {
+    .communityBackBar--pane { display: none; }
+    /* margin-bottom offsets the stacked group browser's -2em pull-up. */
+    .communityBackBar--page { display: flex; top: 60px; box-sizing: border-box; width: 100vw; padding: .5rem 16px; margin: 0 0 2em; }
+    .rightPanelScroll [data-feed-id] { scroll-margin-top: 128px; }
+}
+.communityBack
+{
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    min-height: 44px;
+    padding: 0 .9rem 0 .6rem;
+    border: 1px solid #e2e2e2;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.96);
+    color: #333;
+    font-size: .95rem;
+    cursor: pointer;
+}
+.communityBackIcon { font-size: 1.25rem; line-height: 1; }
+.communityBack:hover { background: #f2f2f2; color: #000; }
+.communityBack:focus-visible { outline: 2px solid #c9a24b; outline-offset: 2px; }
+html[data-theme="dark"] .communityBack { color: #ddd; border-color: #3a3a3a; background: rgba(34, 34, 34, 0.96); }
+html[data-theme="dark"] .communityBack:hover { background: #2e2e2e; color: #fff; }
 
 .homeFeedHeader.group
 {
@@ -652,8 +706,22 @@ img.groupAvatar
 }
 .homeFeedHeader div.topLine .groupName.public
 {
-    background-color: #0d6efd99
+    /* house style: no blue — public is the neutral gray (private red / open
+       green keep their privacy semantics). */
+    background-color: #6b6b6b
 }
+/* One-line pill: wrapping an inline padded span split it into two
+   mismatched slabs on phone ("…Book of" / "Mormon"). */
+.homeFeedHeader div.topLine .groupName
+{
+    display: inline-block;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+.homeFeedHeader div.topLine { min-width: 0; }
 .homeFeedHeader div.topLine .groupName.private
 {
     background-color: #dc354599

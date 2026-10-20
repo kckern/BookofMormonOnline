@@ -17,6 +17,19 @@ export const supDigits = (str) =>
     .replace(/[₁-₄]/g, (d) => SUBS[d]);
 
 /**
+ * A place's display name. A few bom_places rows carry a mangled merged name
+ * ("City of and Land of2 Shem"); repair it for display ("City and Land of
+ * Shem²") and superscript a disambiguation digit wherever it sits.
+ */
+export const displayPlaceName = (name) =>
+  supDigits(
+    String(name || "")
+      .replace(/\b([A-Z][a-z]+) of and ([A-Z][a-z]+) of([1-4]?)\b/, "$1 and $2 of$3")
+      .replace(/^(.*?[A-Za-z])([1-4])\s+([A-Z][\w'’-]*)$/, "$1 $3$2")
+      .trim(),
+  );
+
+/**
  * A person's display name. The catalogue stores group names in sort form
  * ("Ammon, Children of"); joined into a list that reads as two names, so the
  * trailing "<Noun> of" moves to the front ("Children of Ammon").

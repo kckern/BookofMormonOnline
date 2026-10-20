@@ -25,3 +25,16 @@ export function sentenceCase(s) {
   if (!words.every((w) => !w || /^[A-Z][a-z]*$/.test(w))) return str;
   return words.map((w, i) => (i === 0 ? w : w.toLowerCase())).join(" ");
 }
+
+/**
+ * Lowercase for a table noun used MID-phrase ("11 Members · last month" →
+ * "11 members"). Same guard as sentenceCase: only plain-ASCII Title-Case words
+ * change; acronyms and other scripts pass through.
+ */
+export function inlineCase(s) {
+  const str = String(s ?? "");
+  if (!/^[A-Za-z][A-Za-z ]*$/.test(str)) return str;
+  const words = str.split(" ");
+  if (!words.every((w) => !w || /^[A-Z][a-z]*$/.test(w))) return str;
+  return str.toLowerCase();
+}

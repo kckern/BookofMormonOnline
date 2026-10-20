@@ -501,7 +501,7 @@ function HomeFeedItem({
             </div>
           </h5>
 
-          <Link to={communityHref(group.url)}>
+          <Link className="groupAvatarLink" to={communityHref(group.url)}>
             <img
               className="groupAvatar"
               src={group.picture}

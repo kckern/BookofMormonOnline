@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useLayoutEffect, useCallback } from "react";
 import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
+import CommunityBack from "./CommunityBack";
 import { useLegacyParams } from "src/models/routeParams";
 import moment from "moment";
 import ProgressBox from "../User/ProgressBox.js";
@@ -103,13 +104,18 @@ function Community({ unlistedBeta = false }) {
   }, [params]);
 
   useEffect(() => { document.title = label("community"); }, []);
+  const backProps = { channel: activeGroup, message: activeMessage, base: unlistedBeta ? "/home/feed" : "/home/community" };
 
   return false ? null : (
     <div className={`home container${unlistedBeta ? " home-feed" : ""}`}>
+      {/* Phone stacks the group browser above the feed, so its Back sits at
+          the very top of the view; desktop's sits atop the feed pane. */}
+      <CommunityBack placement="page" {...backProps} />
       <div className="leftPanelScroll noselect">
         <GroupBrowser activeGroup={activeGroup} setActiveGroup={setActiveGroup} />
       </div>
       <div className="rightPanelScroll">
+        <CommunityBack placement="pane" {...backProps} />
         <HomeFeed
           activeGroup={activeGroup}
           messageId={activeMessage}
@@ -509,6 +515,7 @@ function GroupCard({ groupData, activeGroup, setActiveGroup }) {
 export function GroupCallToAction({ groupData, joinlabel }) {
   const appController = useAppController();
   const messenger = useMessenger();
+  const navigate = useNavigate();
   const myId = appController.states.user.user;
   const list = appController.states.studyGroup.groupList.map((c) => c.url);
   const amMember = list.includes(groupData.url);
@@ -547,17 +554,25 @@ export function GroupCallToAction({ groupData, joinlabel }) {
     appController.states.studyGroup.groupList,
   ]);
 
+  // Signed out: a button that navigates, NOT a <Link> — GroupCard wraps this
+  // whole CTA in its own <Link>, and <a> inside <a> is invalid HTML (audit D5).
   if (!myId)
     return (
-      <Link to={"/home/user/signin"}>
-        <div
-          className={"groupCTA"}
-          data-tip={label("sign_in")}
-          data-for={"button-tip"}
+      <div
+        className={"groupCTA"}
+        data-tip={label("sign_in")}
+        data-for={"button-tip"}
+      >
+        <Button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            navigate("/home/user/signin");
+          }}
         >
-          <Button>{label("sign_in")}</Button>
-        </div>
-      </Link>
+          {label("sign_in")}
+        </Button>
+      </div>
     );
 
   // Signed-in outsiders may comment but may not join fixed-membership groups.
