@@ -417,3 +417,75 @@ describe("R6 mapstory-A2: off-frame stops", () => {
     expect(placed.find((s) => s.id === "b").leader).toBeTruthy();
   });
 });
+
+describe("blind story audit 2026-10-20 A2: labels clear their own marker and the party", () => {
+  const rectOf = (m) => ({ x: m.x - m.width / 2, y: m.y - m.height / 2, width: m.width, height: m.height });
+
+  test("a retained (hysteresis) slot over its own marker is re-solved", () => {
+    const item = { slug: "x", name: "Place X", x: 150, y: 120, priority: 0, firstStep: 0, required: true };
+    const own = { id: "marker:x", x: 137, y: 107, width: 26, height: 26 };
+    const [label] = layoutLabels({
+      items: [item],
+      obstacles: [own],
+      width: 320,
+      height: 240,
+      previous: { x: { x: 110, y: 106, width: 80, height: 28, anchorX: 150, anchorY: 120 } },
+    });
+    expect(rectanglesOverlap(label, own, 0)).toBe(false);
+  });
+
+  test("the overlay places the party first and keeps every label off it", () => {
+    const overlay = buildStoryOverlay({
+      stops: stopsOf(moves),
+      moves,
+      step: 1,
+      pixels,
+      width: 370,
+      height: 250,
+      traveler: { x: pixels.c[0], y: pixels.c[1], dx: pixels.c[0] - pixels.b[0], dy: pixels.c[1] - pixels.b[1], partyWidth: 61 },
+    });
+    expect(overlay.traveler).toBeTruthy();
+    const party = { x: overlay.traveler.x - 30.5, y: overlay.traveler.y - 19, width: 61, height: 38 };
+    overlay.labels.forEach((label) => expect(rectanglesOverlap(label, party, 0)).toBe(false));
+    // the party itself stays off the markers
+    overlay.markers.forEach((marker) => expect(rectanglesOverlap(rectOf(marker), party, 0)).toBe(false));
+  });
+
+  test("the complete frame forces only the origin/final labels; visited ones need a short leader", () => {
+    const overlay = buildStoryOverlay({
+      stops: stopsOf(moves),
+      moves,
+      step: moves.length - 1,
+      complete: true,
+      pixels,
+      width: 370,
+      height: 250,
+    });
+    expect(overlay.labels.map((l) => l.slug)).toEqual(expect.arrayContaining(["a", "e"]));
+    overlay.labels
+      .filter((l) => l.role === "visited")
+      .forEach((l) => {
+        const lead = l.leader ? Math.hypot(l.leader.x2 - l.leader.x1, l.leader.y2 - l.leader.y1) : 0;
+        expect(lead).toBeLessThanOrEqual(40);
+      });
+  });
+
+  test("a visited label that cannot sit near its place is dropped rather than flung far away", () => {
+    const items = [{ slug: "v", name: "Visited Place", x: 150, y: 120, priority: 2, firstStep: 0, required: false }];
+    // block everything within ~45px of the place
+    const obstacles = [{ id: "block", x: 60, y: 50, width: 190, height: 140 }];
+    expect(layoutLabels({ items, obstacles, width: 340, height: 292 })).toHaveLength(0);
+  });
+
+  test("a visited label does not keep a far retained slot (hysteresis honours the near rings)", () => {
+    const items = [{ slug: "v", name: "Visited", x: 100, y: 100, priority: 2, firstStep: 0, required: false }];
+    const [label] = layoutLabels({
+      items,
+      obstacles: [],
+      width: 340,
+      height: 292,
+      previous: { v: { x: 170, y: 160, width: 76, height: 28, anchorX: 100, anchorY: 100 } },
+    });
+    expect(label.x).not.toBe(170);
+  });
+});

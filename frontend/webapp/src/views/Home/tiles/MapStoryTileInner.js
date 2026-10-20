@@ -192,6 +192,9 @@ export default function MapStoryTileInner({
   const overflowPeople = Math.max(0, (currentMove?.people || []).filter((person) => person?.slug).length - 2);
 
   layoutStateRef.current = { moves, stops, step, complete };
+  const partyWidthFor = () => (selectedPeople.length
+    ? 36 + Math.max(0, selectedPeople.length - 1) * 25 + (overflowPeople > 0 ? 18 : 0)
+    : 36);
 
   updateLayoutRef.current = () => {
     const map = mapRef.current;
@@ -214,8 +217,20 @@ export default function MapStoryTileInner({
         anchorY: label.anchorY,
       };
     });
+    // The settled party sits at the current move's end (the start before a
+    // Play): the solver places it first so the labels go around it (A2).
+    const partyMove = state.complete ? state.moves[state.moves.length - 1] : state.moves[state.step];
+    let traveler = null;
+    if (partyMove) {
+      const from = map.getPixelFromCoordinate(project(partyMove.startLat, partyMove.startLng));
+      const to = map.getPixelFromCoordinate(project(partyMove.endLat, partyMove.endLng));
+      if ([from, to].every((point) => point?.every?.(Number.isFinite))) {
+        traveler = { x: to[0], y: to[1], dx: to[0] - from[0], dy: to[1] - from[1], partyWidth: partyWidthFor() };
+      }
+    }
     const nextOverlay = buildStoryOverlay({
       ...state,
+      traveler,
       pixels,
       previousLabels,
       width: target.clientWidth,
@@ -377,9 +392,7 @@ export default function MapStoryTileInner({
       width: target.clientWidth,
       height: target.clientHeight,
       obstacles: [...reservedObstacles, ...labelObstacles, ...clusterObstacles, ...markerObstacles],
-      partyWidth: selectedPeople.length
-        ? 36 + Math.max(0, selectedPeople.length - 1) * 25 + (overflowPeople > 0 ? 18 : 0)
-        : 36,
+      partyWidth: partyWidthFor(),
     });
     traveler.style.left = `${position.x}px`;
     traveler.style.top = `${position.y}px`;

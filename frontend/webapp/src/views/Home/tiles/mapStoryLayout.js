@@ -46,9 +46,14 @@ const labelDimensions = (name, viewportWidth) => {
   return { width, height: lines === 1 ? 28 : 42 };
 };
 
-const candidateRects = (item, viewportWidth) => {
+// A label that is not mandatory (a visited stop) only sits right beside its
+// place: on a far ring its leader crossed the route and the other leaders, and
+// the completed frame read as spaghetti (blind story audit 2026-10-20 A2).
+const NEAR_RINGS = [16, 30];
+const ALL_RINGS = [16, 30, 46, 64, 82];
+
+const candidateRects = (item, viewportWidth, rings = ALL_RINGS) => {
   const { width, height } = labelDimensions(item.name, viewportWidth);
-  const rings = [16, 30, 46, 64, 82];
   const candidates = [];
 
   rings.forEach((ring) => {
@@ -113,6 +118,13 @@ const glyphRect = (name, rect) => {
   const h = Math.min(rect.height, lines * 14);
   return { x: rect.x + (rect.width - w) / 2, y: rect.y + (rect.height - h) / 2, width: w, height: h };
 };
+
+// How far a label's words sit from its place (the leader it would draw).
+const NEAR_LEADER = 40;
+function leaderLength(item, rect) {
+  const end = leaderEnd(item, glyphRect(item.name, rect));
+  return Math.hypot(end.x - item.x, end.y - item.y);
+}
 
 const symbolCandidates = (symbol) => {
   const candidates = [{ x: symbol.x, y: symbol.y }];
@@ -193,7 +205,11 @@ export const layoutLabels = ({ items, obstacles, width, height, padding = 8, pre
   );
 
   ordered.forEach((item) => {
-    const ownId = `marker:${item.slug}`;
+    // A label's own marker is an obstacle like any other: exempting it let the
+    // hysteresis slot and the required fallback centre the name ON the active
+    // dot (blind story audit 2026-10-20 A2). Only the label's own previous box
+    // is exempt.
+    const ownId = `label:${item.slug}`;
 
     // Hysteresis: if this label's anchor barely moved and its previous slot still
     // fits, keep it. This prevents labels from flipping sides frame to frame.
@@ -203,13 +219,18 @@ export const layoutLabels = ({ items, obstacles, width, height, padding = 8, pre
     const priorRect = priorFresh
       ? { x: prior.x, y: prior.y, width: prior.width, height: prior.height }
       : null;
+    // A non-mandatory label keeps a retained slot only while it is still one
+    // of the near slots beside its place (else the leader grows step by step).
+    const near = (rect) => item.required || leaderLength(item, rect) <= NEAR_LEADER;
+    const priorNear = priorRect && near(priorRect);
 
     let rect =
-      priorRect && inside(priorRect, width, height, padding) && !overlapsAny(priorRect, occupied, ownId)
+      priorNear && inside(priorRect, width, height, padding) && !overlapsAny(priorRect, occupied, ownId)
         ? priorRect
-        : candidateRects(item, width).find(
+        : candidateRects(item, width, item.required ? ALL_RINGS : NEAR_RINGS).find(
             (candidate) =>
               inside(candidate, width, height, padding) &&
+              near(candidate) &&
               !overlapsAny(candidate, occupied, ownId),
           );
 
@@ -218,13 +239,16 @@ export const layoutLabels = ({ items, obstacles, width, height, padding = 8, pre
     // connect the displaced label back to its true map position.
     if (!rect && item.required) {
       const dimensions = labelDimensions(item.name, width);
-      const slot = nearestFreeSlot({ x: item.x, y: item.y, ...dimensions }, width, height, padding, occupied, ownId);
+      // Off its own marker if at all possible; on it only as the last resort
+      // (a mandatory name over its dot beats a missing name).
+      const slot = nearestFreeSlot({ x: item.x, y: item.y, ...dimensions }, width, height, padding, occupied, ownId)
+        || nearestFreeSlot({ x: item.x, y: item.y, ...dimensions }, width, height, padding, occupied, `marker:${item.slug}`);
       if (slot) rect = { x: slot.x, y: slot.y, ...dimensions };
     }
 
     if (!rect) return;
     const end = leaderEnd(item, glyphRect(item.name, rect));
-    const leaderLength = Math.hypot(end.x - item.x, end.y - item.y);
+    const lead = Math.hypot(end.x - item.x, end.y - item.y);
     const label = {
       ...item,
       ...rect,
@@ -233,7 +257,7 @@ export const layoutLabels = ({ items, obstacles, width, height, padding = 8, pre
       // the place's TRUE pixel at layout time (item.x/y may be a displaced marker)
       pointX: item.anchorX ?? item.x,
       pointY: item.anchorY ?? item.y,
-      leader: leaderLength > 12 ? { x1: item.x, y1: item.y, x2: end.x, y2: end.y } : null,
+      leader: lead > 12 ? { x1: item.x, y1: item.y, x2: end.x, y2: end.y } : null,
     };
     placed.push(label);
     occupied.push({ id: `label:${item.slug}`, ...rect });
@@ -323,6 +347,7 @@ export const buildStoryOverlay = ({
   clusterRadius = 46,
   reservedRects = [],
   previousLabels = {},
+  traveler = null,
 }) => {
   const positioned = stops
     .map((stop) => {
@@ -394,15 +419,31 @@ export const buildStoryOverlay = ({
       rectForCenter(`cluster:${cluster.id}`, cluster.x, cluster.y, 62, 34),
     ),
   ];
+  // The party is the protagonist: it is placed beside its marker first and the
+  // labels go around it. Placed after the labels, it either sat on a label or
+  // the labels were drawn across it (blind story audit 2026-10-20 A2).
+  let party = null;
+  if (traveler && [traveler.x, traveler.y].every(Number.isFinite)) {
+    const partyWidth = traveler.partyWidth || 62;
+    const partyHeight = traveler.partyHeight || 38;
+    party = travelerPosition({ ...traveler, partyWidth, partyHeight, width, height, obstacles });
+    obstacles.push(rectForCenter("traveler", party.x, party.y, partyWidth, partyHeight));
+  }
   const labels = layoutLabels({
-    items: namedMarkers,
+    // Only the active endpoints and the story's origin/final anchors must be
+    // labelled; on the completed frame every marker is forced but the visited
+    // names yield when they do not fit beside their place.
+    items: namedMarkers.map((marker) => ({
+      ...marker,
+      required: marker.role === "active" || marker.role === "anchor",
+    })),
     obstacles,
     width,
     height,
     previous: previousLabels,
   });
 
-  return { markers, clusters, labels };
+  return { markers, clusters, labels, traveler: party };
 };
 
 /** Select the least obstructed offset for the moving avatar party. */
