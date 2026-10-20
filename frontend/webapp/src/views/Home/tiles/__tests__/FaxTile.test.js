@@ -48,7 +48,7 @@ describe("FaxTile", () => {
     const pill = screen.getByRole("button", { name: "1 Nephi 3:1–7" });
     expect(pill.closest("a")).toBeNull();
     fireEvent.click(pill);
-    expect(openScripture).toHaveBeenCalledWith("1 Nephi 3:1-7");
+    expect(openScripture.mock.calls.map((c) => c[0])).toContain("1 Nephi 3:1-7");
     // each page has exactly one link, into the viewer at that SCAN: the viewer's
     // route segment is the image-file number (faxGeometry.buildLeafIndex), so
     // linking the index folio landed 9 leaves off for 1981 (blind audit fax-D4)

@@ -90,7 +90,7 @@ describe("Chiasm detail panel", () => {
     renderChiasm();
     await screen.findByText("Test Chiasm");
     fireEvent.click(screen.getByRole("button", { name: /read in context/i }));
-    expect(openScripture).toHaveBeenCalledWith("Alma 36:1-30");
+    expect(openScripture.mock.calls.map((c) => c[0])).toContain("Alma 36:1-30");
   });
 
   test("shows the error state when the fetch resolves empty", async () => {

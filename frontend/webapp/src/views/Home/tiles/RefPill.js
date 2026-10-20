@@ -33,8 +33,9 @@ export function resolveDetectedRef(text, contextRef) {
 }
 
 // Source prose sometimes writes chapter.verse ("Alma 5.51"); show it the way
-// every other ref on the page reads ("Alma 5:51") — audit notes-A7.
-const displayRef = (s) => enDash(s).replace(/(\d)\.(\d)/g, "$1:$2");
+// every other ref on the page reads ("Alma 5:51") — audit notes-A7. A spaced
+// range ("12:1 – 13:24") closes up like the popup title (audit text-A3).
+const displayRef = (s) => enDash(s).replace(/(\d)\.(\d)/g, "$1:$2").replace(/(\d)\s+–\s+(\d)/g, "$1–$2");
 
 /**
  * THE scripture-reference affordance for the whole sampler, rendered with the
@@ -52,7 +53,7 @@ export default function RefPill({ refText, openRef, className = "" }) {
   const open = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    openScripture(openRef || refText);
+    openScripture(openRef || refText, { opener: e.currentTarget });
   };
   return (
     <button type="button" className={`scripture_link ${className}`.trim()} onClick={open}>

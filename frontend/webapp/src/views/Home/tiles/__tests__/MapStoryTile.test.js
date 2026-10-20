@@ -179,7 +179,7 @@ describe("MapStoryTile", () => {
   test("opens the active move's scripture reference", () => {
     renderTile();
     fireEvent.click(screen.getByRole("button", { name: "1 Nephi 2:4" }));
-    expect(openScripture).toHaveBeenCalledWith("1 Nephi 2:4");
+    expect(openScripture.mock.calls.map((c) => c[0])).toContain("1 Nephi 2:4");
   });
 
   test("returns null with fewer than two coordinate-complete moves", () => {

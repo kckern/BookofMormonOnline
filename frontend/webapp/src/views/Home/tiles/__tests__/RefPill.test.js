@@ -26,7 +26,7 @@ test("click opens the scripture popup and does not bubble to a parent handler", 
     </div>
   );
   fireEvent.click(screen.getByRole("button", { name: "Alma 32:21" }));
-  expect(openScripture).toHaveBeenCalledWith("Alma 32:21");
+  expect(openScripture.mock.calls.map((c) => c[0])).toContain("Alma 32:21");
   expect(parentClick).not.toHaveBeenCalled();
 });
 
@@ -55,10 +55,22 @@ test("a relative verse ref resolves against the context ref", () => {
     <p>{Parser('see <a class="scripture_link">v. 25</a>', makeRefPillParserOptions({ contextRef: "Helaman 5:12-14" }))}</p>
   );
   fireEvent.click(screen.getByRole("button", { name: "v. 25" }));
-  expect(openScripture).toHaveBeenCalledWith("Helaman 5:25");
+  expect(openScripture.mock.calls.map((c) => c[0])).toContain("Helaman 5:25");
 });
 
 test("a dotted ref displays in colon form", () => {
   render(<p>{Parser('<a class="scripture_link">Alma 5.51</a>', refPillParserOptions)}</p>);
   expect(screen.getByRole("button", { name: "Alma 5:51" })).toBeInTheDocument();
+});
+
+test("the pill hands itself to the popup as the opener (scroll place, audit xc-popup-E3)", () => {
+  render(<RefPill refText="Alma 32:21" />);
+  const btn = screen.getByRole("button", { name: "Alma 32:21" });
+  fireEvent.click(btn);
+  expect(openScripture.mock.calls.at(-1)[1]).toEqual({ opener: btn });
+});
+
+test("a spaced cross-chapter range reads closed, like the popup title (audit text-A3)", () => {
+  render(<RefPill refText="3 Nephi 12:1 – 13:24" />);
+  expect(screen.getByRole("button").textContent).toBe("3 Nephi 12:1–13:24");
 });

@@ -184,3 +184,53 @@ test("popup title uses the same en-dash range as the pill that opened it (audit 
   const title = dialog.querySelector(".samplerScriptureHead b");
   expect(title.textContent).toBe("Helaman 1:1–4");
 });
+
+describe("scroll place across open/close (audit xc-popup-E3)", () => {
+  let y;
+  let scrollTo;
+  let scrollBy;
+  beforeEach(() => {
+    y = 942;
+    Object.defineProperty(window, "scrollY", { configurable: true, get: () => y });
+    scrollTo = vi.spyOn(window, "scrollTo").mockImplementation((_x, ny) => { y = ny; });
+    scrollBy = vi.spyOn(window, "scrollBy").mockImplementation(({ top }) => { y += top; });
+  });
+  afterEach(() => {
+    scrollTo.mockRestore();
+    scrollBy.mockRestore();
+    delete window.scrollY;
+  });
+
+  test("a jump between the click and the mount is undone: the place is taken at the click", async () => {
+    setup();
+    // the jump lands synchronously right after the open event, before effects
+    act(() => {
+      openScripture("Helaman 1:1-4");
+      y = 111;
+    });
+    await screen.findByRole("dialog");
+    expect(y).toBe(942);
+    fireEvent.keyDown(document.activeElement, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(y).toBe(942);
+  });
+
+  test("a layout jump while open is reverted, and close keeps the opener where it was on screen", async () => {
+    setup();
+    const opener = screen.getByText("opener");
+    let top = 300;
+    opener.getBoundingClientRect = () => ({ top, bottom: top + 20, left: 0, right: 0, width: 0, height: 20 });
+    act(() => openScripture("Helaman 1:1-4", { opener }));
+    await screen.findByRole("dialog");
+    act(() => {
+      y = 4882;
+      window.dispatchEvent(new Event("scroll"));
+    });
+    expect(y).toBe(942);
+    // content above the opener grew by 40px meanwhile: close keeps the opener at 300
+    top = 340;
+    fireEvent.keyDown(document.activeElement, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(y).toBe(982);
+  });
+});

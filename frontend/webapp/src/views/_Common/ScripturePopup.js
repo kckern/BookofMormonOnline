@@ -18,9 +18,31 @@ const enDash = (s) => (s || "").replace(/(\d)\s*-\s*(\d)/g, "$1–$2");
 export const openScripture = (ref, opts = {}) =>
   window.dispatchEvent(
     new CustomEvent("samplerScripture", {
-      detail: { ref: canonical(ref), anchorX: opts.anchorX || 0 },
+      detail: { ref: canonical(ref), anchorX: opts.anchorX || 0, opener: opts.opener || null },
     })
   );
+
+/** Where the reader was at the moment of the click: scrollY plus the opener's
+ * viewport offset (when known). Taken synchronously in the open event, BEFORE
+ * the modal mounts and the root overflow flips — capturing it in the mount
+ * effect recorded the post-jump position, so a jump on open was permanent
+ * (audit xc-popup-E3). */
+export const capturePlace = (opener) => {
+  const el = opener && typeof opener.getBoundingClientRect === "function" ? opener : null;
+  return { y: window.scrollY, el, top: el ? el.getBoundingClientRect().top : 0 };
+};
+
+/** Put the reader back: keep the opener where it was on screen when it is still
+ * mounted (layout above may have settled meanwhile), else the scrollY. */
+export const restorePlace = (place) => {
+  if (!place) return;
+  if (place.el && place.el.isConnected) {
+    const delta = Math.round(place.el.getBoundingClientRect().top - place.top);
+    if (Math.abs(delta) > 1) window.scrollBy({ top: delta, left: 0, behavior: "instant" });
+    return;
+  }
+  if (window.scrollY !== place.y) window.scrollTo(0, place.y);
+};
 
 /**
  * App-wide scripture reader popup. Renders the ScriptureExcerpt in the exact
@@ -45,6 +67,7 @@ export default function ScripturePopup() {
   const [tx, setTx] = useState(0);
   const titleId = useId();
   const close = useCallback(() => setRef(null), []);
+  const placeRef = useRef(null);
 
   // Focus in + Tab trap + focus restore. Esc is handled below (capture phase,
   // consumed so views behind don't react), so no onClose here.
@@ -56,6 +79,9 @@ export default function ScripturePopup() {
       const d = e.detail;
       const nextRef = typeof d === "string" ? d : d?.ref;
       const nextAnchor = typeof d === "object" && d ? d.anchorX || 0 : 0;
+      const opener = (typeof d === "object" && d && d.opener) || document.activeElement;
+      // only the first open of a stack records the place (popup → popup keeps it)
+      if (!placeRef.current) placeRef.current = capturePlace(opener === document.body ? null : opener);
       setRef(nextRef || null);
       setAnchorX(nextAnchor);
       // Hide the Read CTA until the new ref's fetch confirms BoM content.
@@ -106,13 +132,23 @@ export default function ScripturePopup() {
     if (!isOpen) return undefined;
     const html = document.documentElement;
     const prevOverflow = html.style.overflow;
-    const y = window.scrollY;
+    const place = placeRef.current || capturePlace(null);
     const path = window.location.pathname;
     html.style.overflow = "hidden";
+    // The reader cannot scroll the locked root, so any root scroll while open is
+    // a layout-driven jump (batches landing, the column balancer reflowing):
+    // undo it so the page behind the shade stays where the reader left it.
+    const onScroll = () => {
+      if (window.scrollY !== place.y) window.scrollTo(0, place.y);
+    };
+    if (window.scrollY !== place.y) window.scrollTo(0, place.y);
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
+      window.removeEventListener("scroll", onScroll);
       html.style.overflow = prevOverflow;
+      placeRef.current = null;
       // only when closed in place — the Read link navigates (its own scroll)
-      if (window.location.pathname === path && window.scrollY !== y) window.scrollTo(0, y);
+      if (window.location.pathname === path) restorePlace(place);
     };
   }, [isOpen]);
 

@@ -61,7 +61,7 @@ describe("CommentaryTile — tile standard", () => {
     expect(pill.tagName).toBe("BUTTON");
     expect(pill.closest("a")).toBeNull();
     fireEvent.click(pill);
-    expect(openScripture).toHaveBeenCalledWith("Alma 48:11-25");
+    expect(openScripture.mock.calls.map((c) => c[0])).toContain("Alma 48:11-25");
   });
 
   test("inline refs in the excerpt are focusable buttons, not href-less anchors", () => {

@@ -75,7 +75,7 @@ describe("TextTile", () => {
     const pill = screen.getByRole("button", { name: "Alma 10:1–11" });
     expect(pill.closest("a")).toBeNull();
     fireEvent.click(pill);
-    expect(openScripture).toHaveBeenCalledWith("Alma 10:1–11");
+    expect(openScripture.mock.calls.map((c) => c[0])).toContain("Alma 10:1–11");
   });
 
   test("bare-reference heading becomes the pill; the section title is the headline", () => {

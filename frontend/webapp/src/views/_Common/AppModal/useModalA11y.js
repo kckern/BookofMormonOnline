@@ -110,7 +110,7 @@ export default function useModalA11y(visible, {
       // Restore focus to the trigger that opened the dialog.
       const trigger = triggerRef.current;
       if (trigger && typeof trigger.focus === "function" && document.contains(trigger)) {
-        trigger.focus();
+        trigger.focus({ preventScroll: true }); // the popup restores the place itself
       }
     };
   }, [visible, selector, ariaLabel, dialogRef, initialFocusRef, lockScroll]);

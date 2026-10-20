@@ -71,7 +71,7 @@ describe("NotesTile — tile standard", () => {
     const pill = screen.getByRole("button", { name: "Alma 36:3" });
     expect(pill.tagName).toBe("BUTTON");
     fireEvent.click(pill);
-    expect(openScripture).toHaveBeenCalledWith("Alma 36:3");
+    expect(openScripture.mock.calls.map((c) => c[0])).toContain("Alma 36:3");
   });
 
   test("cover is a TileImage whose alt names the publication, not the author", () => {
