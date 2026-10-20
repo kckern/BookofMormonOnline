@@ -63,19 +63,28 @@ export async function gql<T>(
   // Override short-circuits BEFORE headers() so pinned callers (sitemap) stay static/ISR.
   const lang = options.lang ?? (await headers()).get('x-lang') ?? 'en'
   const url = `${GRAPHQL_URL}${lang === 'en' ? '' : '/' + lang}`
-  return withRetry(async () => {
+  const send = async (extra: RequestInit & { next?: { revalidate: number } }) => {
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query, variables }),
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      next:
-        options.revalidate === false
-          ? { revalidate: 0 }
-          : { revalidate: options.revalidate ?? 3600 },
+      ...extra,
     })
     if (!res.ok) throw new Error(`GraphQL fetch failed: ${res.status}`)
-    const json = await res.json()
+    return res.json() as Promise<{ data?: unknown; errors?: Array<{ message: string }> }>
+  }
+  const uncached = options.revalidate === false
+  const revalidate = options.revalidate === false ? 0 : options.revalidate ?? 3600
+  return withRetry(async () => {
+    let json = await send({ next: { revalidate } })
+    if (json.errors?.length && !uncached) {
+      // A GraphQL error comes back as HTTP 200, so Next has already stored this
+      // response for the whole revalidate window: one DB blip would 500 this page
+      // for an hour (prod 2026-10-20, /people/moroni1). Ask again, uncached
+      // (never combine no-store with `next.revalidate`) before giving up.
+      json = await send({ cache: 'no-store' })
+    }
     if (json.errors?.length) throw new Error(json.errors[0].message)
     return json.data as T
   })
