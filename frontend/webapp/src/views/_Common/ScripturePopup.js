@@ -54,6 +54,17 @@ export const restorePlace = (place) => {
  * in on open, is trapped while open and returns to the opener on close
  * (useModalA11y); page scroll is locked while open.
  */
+/**
+ * How far to scroll the popup body to open at a focus verse (R7 art-D5): the
+ * verse's speaker block top — so the face isn't cut off above the sheet with
+ * its voice label floating — unless that would push the verse below the upper
+ * half of the body, then the verse line itself. 12px of head room either way.
+ */
+export const focusLandingDelta = ({ verseTop, blockTop, bodyTop, bodyHeight }) => {
+  const useBlock = blockTop != null && blockTop <= verseTop && verseTop - blockTop < bodyHeight / 2;
+  return Math.round((useBlock ? blockTop : verseTop) - bodyTop) - 12;
+};
+
 export default function ScripturePopup() {
   const [ref, setRef] = useState(null);
   const [anchorX, setAnchorX] = useState(0);
@@ -136,7 +147,14 @@ export default function ScripturePopup() {
       const el = body.querySelector(`.verse_${focus}`);
       if (!el) return false;
       el.classList.add("samplerScriptureFocus");
-      body.scrollTop += Math.round(el.getBoundingClientRect().top - body.getBoundingClientRect().top) - 12;
+      const box = body.getBoundingClientRect();
+      const block = el.closest(".read-block");
+      body.scrollTop += focusLandingDelta({
+        verseTop: el.getBoundingClientRect().top,
+        blockTop: block ? block.getBoundingClientRect().top : null,
+        bodyTop: box.top,
+        bodyHeight: box.height,
+      });
       return true;
     };
     if (land()) return undefined;

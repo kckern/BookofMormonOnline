@@ -254,3 +254,19 @@ test("an open with a focus verse scrolls the body to it and marks it", async () 
   expect(dialog.querySelector(`.verse_${id}`).classList.contains("samplerScriptureFocus")).toBe(true);
   rect.mockRestore();
 });
+
+// R7 art-D5: landing on the focus verse LINE cut the speaker's face off above
+// the sheet and left a bare voice label floating; land on the verse's block
+// (face included) when that keeps the verse in the upper half of the body.
+import { focusLandingDelta } from "../ScripturePopup";
+describe("focusLandingDelta", () => {
+  test("lands on the block top (face included) when the verse is near it", () => {
+    expect(focusLandingDelta({ verseTop: 300, blockTop: 240, bodyTop: 100, bodyHeight: 600 })).toBe(240 - 100 - 12);
+  });
+  test("a verse deep in a long block lands on the verse line", () => {
+    expect(focusLandingDelta({ verseTop: 900, blockTop: 200, bodyTop: 100, bodyHeight: 600 })).toBe(900 - 100 - 12);
+  });
+  test("no block: the verse line", () => {
+    expect(focusLandingDelta({ verseTop: 300, blockTop: null, bodyTop: 100, bodyHeight: 600 })).toBe(188);
+  });
+});
