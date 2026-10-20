@@ -4,6 +4,7 @@ import TileCTA from "./_ds/TileCTA";
 import { readExpanded, writeExpanded } from "./samplerSession";
 import { useClampGuard } from "./_ds/clampGuard";
 import { hashText, useRevealKey } from "./_ds/tileIdentity";
+import { contentRects, snapToLines } from "./_ds/lineClamp";
 
 /**
  * Width-aware clamp: collapsed state is a CSS line-clamp (so the cut point
@@ -86,6 +87,23 @@ function markLineEnd(el) {
   }
 }
 
+/**
+ * Whole-line clamp (systemic A1): the CSS bound (N × 1lh, plus any touch hit
+ * padding, or a hero-matched height) is arithmetic — an inline ref chip taller
+ * than 1lh, or a padding the bound forgot, put the edge through a line. Snap
+ * the box DOWN to the bottom of the last line box that fits under the CSS
+ * bound, measured from the real line rects. No layout (jsdom) → CSS as is.
+ */
+function snapClampToLines(el) {
+  el.style.removeProperty("max-height");
+  const cssMax = parseFloat(getComputedStyle(el).maxHeight);
+  if (!(cssMax > 0)) return;
+  const rects = contentRects(el);
+  if (!rects.length) return;
+  const h = snapToLines(rects, el.getBoundingClientRect().top, cssMax);
+  if (h < cssMax - 0.5) el.style.maxHeight = `${h}px`;
+}
+
 export default function ExpandableText({ children, lines = 6, className, fade = false, persistKey }) {
   // restored open = it was truncated when the reader expanded it
   const [open, setOpen] = useState(() => readExpanded(persistKey));
@@ -125,6 +143,8 @@ export default function ExpandableText({ children, lines = 6, className, fade = 
     ref,
     !open,
     (el) => {
+      if (fade) snapClampToLines(el);
+      else el.style.removeProperty("max-height");
       const over = overflows(el);
       setTruncated(over);
       registerGate(over, gateId);
@@ -133,6 +153,10 @@ export default function ExpandableText({ children, lines = 6, className, fade = 
     },
     [children, lines, fade],
   );
+  // expanded: drop the snapped bound (React does not own that inline value)
+  useLayoutEffect(() => {
+    if (open) ref.current?.style.removeProperty("max-height");
+  }, [open]);
   const toggle = (e) => {
     e.preventDefault();
     e.stopPropagation();
