@@ -727,13 +727,19 @@ html[data-theme="dark"] .xref-chaptercell.ramp-6 {
   border-radius: 1ex;
 }
 
+/* Shared wording: the house gold wash, the same mark the Home "Biblical
+   language" tile draws, so the phrase keeps its colour across the click (Home
+   audit R4 D4; the chiasm glyph does the same). Green stays the legend's
+   "quote" category in the bars and ribbons. */
 .verseViewerTable .scriptureCell p span.highlight {
-  background-color: rgba(92, 185, 138, 0.3);
-  box-shadow: inset 0 -2px 0 var(--xref-quote);
+  background-color: rgba(201, 162, 75, 0.24);
+  border-radius: 0.2em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 
 html[data-theme="dark"] .verseViewerTable .scriptureCell p span.highlight {
-  background-color: rgba(87, 167, 95, 0.35);
+  background-color: rgba(201, 162, 75, 0.26);
 }
 
 /* ---- sample strip (text beside the bars) ---- */
@@ -819,9 +825,10 @@ html[data-theme="dark"] .verseViewerTable .scriptureCell p span.highlight {
 }
 
 .xref-sample-side p span.highlight {
-  background-color: rgba(92, 185, 138, 0.3);
-  box-shadow: inset 0 -2px 0 var(--xref-quote);
+  background-color: rgba(201, 162, 75, 0.24);
+  border-radius: 0.2em;
 }
+html[data-theme="dark"] .xref-sample-side p span.highlight { background-color: rgba(201, 162, 75, 0.26); }
 
 /* ---- responsive ---- */
 
@@ -864,4 +871,25 @@ html[data-theme="dark"] .verseViewerTable .scriptureCell p span.highlight {
     transition: none !important;
     animation: none !important;
   }
+}
+
+/* Reader way back (Home audit R4 D3): the art/person page "‹ Back", a black
+   link-styled button with the gold underline, above the breadcrumb. */
+.xref-back { margin: 0 0 0.35rem; font-size: 0.875rem; }
+.xref-back-btn {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0.25rem 0;
+  font: inherit;
+  color: #000;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: #c9a24b;
+  text-underline-offset: 3px;
+}
+.xref-back-btn:focus-visible { outline: 2px solid #c9a24b; outline-offset: 2px; }
+html[data-theme="dark"] .xref-back-btn { color: var(--text-primary, #eee); }
+@media (pointer: coarse) {
+  .xref-back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 0; }
 }

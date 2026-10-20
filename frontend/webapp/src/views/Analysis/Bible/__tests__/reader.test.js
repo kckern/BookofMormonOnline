@@ -221,3 +221,29 @@ describe("Reader", () => {
     expect(navigate).toHaveBeenCalledWith(readerTargetForBook("bom", "Jacob"));
   });
 });
+
+// Home audit R4 D3: arriving from the Home "Biblical language" tile, the reader
+// view had no way back above the fold (the art and chiasm destinations do).
+describe("Reader way back", () => {
+  beforeEach(() => BoMOnlineAPI.mockImplementation((input = {}) =>
+    Promise.resolve({ verses: Object.fromEntries((input.verses || []).map((v) => [v, { verse_id: v, text: "t", heading: "" }])), versehighlights: {} })));
+  const mount = (entries) =>
+    render(
+      <MemoryRouter initialEntries={entries} initialIndex={entries.length - 1}>
+        <Reader state={{ view: "reader", bomBook: "2 Nephi", bibleBook: "Isaiah" }} navigate={vi.fn()} />
+      </MemoryRouter>
+    );
+
+  test("with in-app history, a ‹ Back control sits above the breadcrumb", async () => {
+    mount(["/home", "/analysis/bible/bom/2-nephi~isaiah"]);
+    const back = await screen.findByRole("button", { name: /Back/ });
+    expect(back.textContent).toMatch(/^‹/);
+    expect(back.closest("header")).not.toBeNull();
+  });
+
+  test("on a direct load there is no Back (the breadcrumb is the way out)", async () => {
+    mount(["/analysis/bible/bom/2-nephi~isaiah"]);
+    await screen.findByText(/references to/);
+    expect(screen.queryByRole("button", { name: /Back/ })).toBeNull();
+  });
+});

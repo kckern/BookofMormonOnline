@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { generateReference } from "scripture-guide";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { verseIdToSlug } from "src/utils/scriptureUtils";
@@ -274,8 +274,20 @@ export default function Reader({ state, navigate }) {
 
 function ReaderHeader({ bomBook, bibleBook, bomChapter, bibleChapter, anchorCanon, navigate, backState, total, quoteTotal }) {
   const anchorBook = anchorCanon === "kjv" ? bibleBook : bomBook;
+  // A way back above the fold to where the reader came from (e.g. the Home
+  // "Biblical language" tile), as the art and person pages have (Home audit R4
+  // D3). On a direct load the breadcrumb is the way out.
+  const { key: locationKey } = useLocation();
+  const routerNavigate = useNavigate();
   return (
     <header className="xref-header">
+      {locationKey && locationKey !== "default" ? (
+        <nav className="xref-back" aria-label="Back">
+          <button type="button" className="xref-back-btn" onClick={() => routerNavigate(-1)}>
+            ‹ Back
+          </button>
+        </nav>
+      ) : null}
       <Breadcrumb
         root={{ icon: "⌂", label: "Overview", to: "/analysis/bible" }}
         style={{ "--bc-link": "var(--link)", "--bc-root": "var(--link)", "--bc-link-hover": "var(--link-hover)" }}
