@@ -80,10 +80,27 @@ const isBareRef = (s) => {
     return false;
   }
 };
-const firstSentence = (paras) => {
+/**
+ * Lift a hook headline off the first paragraph for a bare-reference title.
+ * A short first sentence (20-160 chars) becomes the headline and leaves the
+ * body. A longer opening is cut at a word near HEADLINE_CUT with "…" and the
+ * body picks up where it broke off ("…the rest") — never the same sentence
+ * twice (audit commentary-H3: the truncated headline failed a startsWith
+ * dedupe, so the whole sentence was printed again under it).
+ */
+const HEADLINE_CUT = 90;
+export const liftHeadline = (paras) => {
   const p = paras[0] || "";
-  const m = /^(.{20,160}?[.!?])(\s|$)/.exec(p);
-  return m ? m[1] : p.length > 140 ? `${p.slice(0, 140).replace(/\s+\S*$/, "")}…` : p;
+  if (!p) return { headline: "", rest: paras };
+  const m = /^(.{20,160}?[.!?][”"’]?)(\s|$)/.exec(p);
+  if (m) {
+    const after = p.slice(m[1].length).trim();
+    return { headline: m[1], rest: [after, ...paras.slice(1)].filter(Boolean) };
+  }
+  if (p.length <= HEADLINE_CUT + 20) return { headline: p, rest: paras.slice(1) };
+  const head = p.slice(0, HEADLINE_CUT).replace(/\s+\S*$/, "").replace(/[\s,;:–—-]+$/, "");
+  const after = p.slice(head.length).replace(/^[\s,;:]+/, "");
+  return { headline: `${head}…`, rest: [`…${after}`, ...paras.slice(1)] };
 };
 
 /**
@@ -167,13 +184,11 @@ function CommentaryTileInner({ data }) {
   const author = [pub.source_name, pub.source_title].filter(Boolean).join(", ");
   const to = `/commentary/${data.id}`;
   const bareTitle = !isAtv && isBareRef(data.title);
-  const headline = bareTitle ? firstSentence(paragraphs) || data.title : data.title;
+  const lifted = bareTitle ? liftHeadline(paragraphs) : null;
+  const headline = lifted?.headline || data.title;
   const refText = bareTitle ? data.title.replace(/[“”"]/g, "").trim() : data.reference;
-  // The lifted first sentence is the headline — don't repeat it as the body's opening.
-  const bodyParas =
-    bareTitle && headline && paragraphs[0]?.startsWith(headline)
-      ? [paragraphs[0].slice(headline.length).trim(), ...paragraphs.slice(1)].filter(Boolean)
-      : paragraphs;
+  // The lifted headline leaves the body — never the same sentence twice.
+  const bodyParas = lifted?.headline ? lifted.rest : paragraphs;
   const shown = expanded ? budgetParagraphs(bodyParas, EXPANDED_BUDGET) : bodyParas;
   const toggle = () => {
     if (!expanded) reveal();
