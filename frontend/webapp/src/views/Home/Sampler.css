@@ -1345,10 +1345,21 @@ html[data-theme="dark"] a.narrationNextTitle { color: #f0f0f0; }
 .narrationTile { min-height: 0; }
 .narrationTileList {
   flex: 1 1 auto;
+  /* one shared ref column (hanging indent): every beat's text starts on the
+     same line, wraps beside the pills and never returns under one, so a
+     pill's 44px touch hit covers only the pill (blind C1/A5). Rows are
+     subgrids of this; dividers and the reveal span the full width. */
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 0.45rem;
+  align-content: start;
 }
-/* Layer 1 for a long section: the shared reveal pill, left under the beats */
-.narrationMore { display: flex; margin: 0.15rem 0 0.1rem; }
-.narrationMore .readMorePill { margin: 0; }
+.narrationTileList.hasStatus { grid-template-columns: auto auto minmax(0, 1fr); }
+.narrationTileList > * { grid-column: 1 / -1; }
+/* Layer 1 for a long section: the shared reveal pill, centred under the beats
+   like every other tile's Read more (blind A5) */
+.narrationMore { display: flex; justify-content: center; margin: 0.15rem 0 0.1rem; }
+.narrationMore .readMorePill { margin: 0.25rem auto 0; }
 /* seeded strip of the section's art: equal cropped cells in one row (no
    floating thumbs / ragged wraps); a lone image keeps its own aspect */
 .narrationArtRow {
@@ -1373,14 +1384,17 @@ html[data-theme="dark"] a.narrationNextTitle { color: #f0f0f0; }
   transition: transform 0.15s ease;
 }
 html[data-theme="dark"] .narrationArtRow img { border-color: #444; background: #2a2a2a; }
-.narrationArtRow.single { display: flex; justify-content: center; }
+/* a lone artwork shows whole at its own aspect, centred: no 4:3 letterbox
+   band, no one-cell 9rem cap (blind A2: a portrait sat 144x108, left) */
+.narrationArtRow.single { display: flex; justify-content: center; max-width: none; }
 .narrationArtRow.single .narrationArtLink { width: auto; }
-.narrationArtRow.single img { height: auto; width: auto; max-height: 11rem; max-width: 100%; object-fit: contain; }
+.narrationArtRow.single img { aspect-ratio: auto; height: auto; width: auto; max-height: 11rem; max-width: 100%; object-fit: contain; background: none; }
 .narrationArtLink:hover img { transform: scale(1.03); }
 .narrationItem {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.45rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr); /* no-subgrid fallback */
+  grid-template-columns: subgrid;
+  align-items: first baseline;
   padding: 0.3rem 0.25rem 0.3rem 0.6rem;
   border-radius: 0.4rem;
   transition: background 0.15s ease;
@@ -1392,6 +1406,8 @@ html[data-theme="dark"] .narrationItem:has(.narrationBeatLink:hover) { backgroun
   height: 0.7rem;
   margin-top: 0.22rem;
   flex-shrink: 0;
+  grid-column: 1;
+  align-self: start;
 }
 html[data-theme="dark"] .narrationDot.isBlank { opacity: 0.3; }
 .narrationText {
@@ -1399,8 +1415,11 @@ html[data-theme="dark"] .narrationDot.isBlank { opacity: 0.3; }
   line-height: 1.45;
   color: #555;
   min-width: 0;
+  /* its pill and link sit in the row's subgrid columns (type still inherits) */
+  display: contents;
 }
-a.narrationBeatLink { color: #3a3a3a; text-decoration: none; }
+.narrationText .scripture_link { grid-column: -3 / -2; justify-self: start; }
+a.narrationBeatLink { grid-column: -2 / -1; color: #3a3a3a; text-decoration: none; min-width: 0; }
 a.narrationBeatLink:hover { color: #000; text-decoration: underline; text-decoration-color: rgba(201, 162, 75, 0.7); }
 html[data-theme="dark"] .narrationText { color: #c4c4c4; }
 html[data-theme="dark"] a.narrationBeatLink { color: #cfcfcf; }
@@ -1409,6 +1428,10 @@ html[data-theme="dark"] a.narrationBeatLink:hover { color: #fff; }
 @media (pointer: coarse) {
   /* beat rows tall enough to tap one without hitting its neighbour */
   .narrationItem { padding-block: 0.6rem; }
+  /* the beat link (a block flex item beside the pill) also owns its row's
+     padding, so a one-line beat is a full >=44px hit too */
+  a.narrationBeatLink { position: relative; }
+  a.narrationBeatLink::after { content: ""; position: absolute; inset: -0.6rem -0.25rem -0.6rem 0; }
   .narrationCrumbs a,
   a.narrationNextTitle { position: relative; }
   .narrationCrumbs a::after,
@@ -2225,8 +2248,7 @@ html[data-theme="dark"] .faxTileEdition img { border-color: #444; background: #2
 html[data-theme="dark"] .faxTileEdition { color: #9a9a9a; }
 
 
-/* narration beat: gap before the inline scripture ref chip */
-.narrationText .scripture_link { margin-right: 0.45rem; }
+/* narration beat: the gap before the ref chip is the .narrationTileList column-gap */
 
 /* commentary: main is a flex column so the read-more pill sits at the bottom */
 .commentaryTileMain { display: flex; flex-direction: column; }

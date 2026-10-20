@@ -85,6 +85,8 @@ describe("NarrationTile", () => {
     const withStatus = { ...data, rows: [beat("b1", "alma/43", null, "Read.", { status: "completed" }), ...data.rows.slice(1)] };
     const r2 = renderTile({ data: withStatus });
     expect(r2.container.querySelectorAll(".narrationDot")).toHaveLength(2);
+    // the dot column is declared on the list grid only when dots render
+    expect(r2.container.querySelector(".narrationTileList.hasStatus")).toBeTruthy();
   });
 });
 
@@ -109,5 +111,16 @@ describe("NarrationTile footprint (C4/H3)", () => {
     expect(container.querySelector('a.narrationNextTitle[href="/n"]')).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Read more" })).toBeNull();
   });
-});
 
+  test("the Next top-up never outnumbers the subject section (narration-H1)", () => {
+    const r2 = renderTile({ data: { slug: "s", title: "S", rows: many("a", 2) }, next: { slug: "n", title: "N", rows: many("n", 14) } });
+    expect(r2.container.querySelectorAll('a.narrationBeatLink[href^="/p/a"]')).toHaveLength(2);
+    expect(r2.container.querySelectorAll('a.narrationBeatLink[href^="/p/n"]')).toHaveLength(1);
+    r2.unmount();
+    const r3 = renderTile({ data: { slug: "s", title: "S", rows: many("a", 3) }, next: { slug: "n", title: "N", rows: many("n", 14) } });
+    expect(r3.container.querySelectorAll('a.narrationBeatLink[href^="/p/n"]')).toHaveLength(2);
+    r3.unmount();
+    const r1 = renderTile({ data: { slug: "s", title: "S", rows: many("a", 1) }, next: { slug: "n", title: "N", rows: many("n", 14) } });
+    expect(r1.container.querySelector(".narrationNext")).toBeNull();
+  });
+});

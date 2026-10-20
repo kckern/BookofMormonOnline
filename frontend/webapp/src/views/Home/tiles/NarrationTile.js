@@ -67,7 +67,7 @@ function NarrationList({ section, items, showStatus }) {
  * in-place Read more ⇄ Show less (Layer 1, the shared reveal pill); a short
  * one is topped up from the next section only to the budget — never the whole
  * next section (a 4-beat sample once dragged in 14 and became a minority of
- * its own tile).
+ * its own tile), and never to more beats than the section itself has.
  */
 export const BEAT_BUDGET = 6;
 
@@ -79,7 +79,10 @@ export default function NarrationTile({ data, next, seed = 0 }) {
   const liftBound = useContext(TileBoundContext);
   const overBudget = items.length > BEAT_BUDGET;
   const shown = overBudget && !open ? items.slice(0, BEAT_BUDGET) : items;
-  const nextItems = narrationItems(next).slice(0, Math.max(0, BEAT_BUDGET - items.length));
+  // The top-up stays a minority: a 2-beat section once showed 4 beats of the
+  // next one, so its title and See in context named the smaller half (blind H1).
+  const nextRoom = Math.max(0, Math.min(BEAT_BUDGET - items.length, items.length - 1));
+  const nextItems = narrationItems(next).slice(0, nextRoom);
   const showNext = nextItems.length > 0;
   const toggle = () => {
     if (!open) liftBound?.();
@@ -117,7 +120,7 @@ export default function NarrationTile({ data, next, seed = 0 }) {
           ))}
         </div>
       ) : null}
-      <div className="narrationTileList">
+      <div className={`narrationTileList${showStatus ? " hasStatus" : ""}`}>
         <NarrationList section={data} items={shown} showStatus={showStatus} />
         {overBudget ? (
           <div className="narrationMore">
