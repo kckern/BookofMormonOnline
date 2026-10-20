@@ -1707,3 +1707,101 @@ Fixes after round 2:
 | analysis | art | **FAIL** | 3 | 4 | 4 | P1 B2: The 18rem excerpt placeholder collapses to the real excerpt while the tile is on screen, pulling the next tile up by 64-171 px |
 | story | mapstory | pass | 3 | 3 | 3 |  |
 | story | community | **FAIL** | 4 | 4 | 4 | P1 D4: Tapping the pull quote lands on the channel page with the quoted message far below the fold and the message panel unscrolled, so the reader cannot tell they arrived at the message they chose |
+
+### Cycle 2 (2026-10-17 → 10-20)
+
+Started with fixers for the round-3 failures (analysis, scripture, places, story), then full 8-family rounds. Paused once on a usage limit (the interrupted archive fixer was committed as `f37d6f49` and completed on resume).
+
+Start fixes: **analysis** `bfd8772f`, `bc9835e8`; **scripture** `cf992ece`, `c5867cf4`; **places** `59335a2b`; **story** `23e01564`
+
+#### Round 4 — 19 pass / 6 fail
+
+| Family | Tile | Verdict | C | B | L | P0/P1 findings |
+|---|---|---|---|---|---|---|
+| rail | readingplan | pass | 4 | 3 | 4 |  |
+| rail | section | pass | 4 | 4 | 4 |  |
+| rail | contents | pass | 4 | 3 | 4 |  |
+| people | people | pass | 4 | 4 | 4 |  |
+| people | personProfile | pass | 4 | 3 | 4 |  |
+| places | places | pass | 4 | 3 | 4 |  |
+| places | placeProfile | **FAIL** | 4 | 4 | 4 | P1 E1: Phone: the first Back from the profile's "Open &lt;place>" link lands ~400px too low (the tile's hero and eyebrow are above the viewport, the reader is dropped mid-prose); reproduced 2/2, desktop clean 3/3 |
+| matters | mattersNarrative | pass | 4 | 4 | 4 |  |
+| matters | mattersMaterial | pass | 4 | 3 | 4 |  |
+| matters | mattersConcept | pass | 4 | 3 | 4 |  |
+| matters | matterProfile | pass | 3 | 3 | 3 |  |
+| scripture | text | pass | 4 | 4 | 5 |  |
+| scripture | commentary | **FAIL** | 2 | 3 | 3 | P1 H4: In 2 of 5 desktop seeds one of the three commentary slots rendered an exact duplicate of a sibling (same id, title, cover) while the third base commentary was missing; phone and tablet rendered three distinct ones from t<br>P1 C4: The Layer-2 deeplink can dead-end: /commentary/1569518101 ('What is the difference between transfiguration and translation?') renders a not-found card both on fresh load and via the tile's 'See in context' (1 of 4 ids te |
+| scripture | notes | pass | 3 | 4 | 4 |  |
+| scripture | refpill-popup | pass | 4 | 4 | 5 |  |
+| archive | fax | **FAIL** | 3 | 4 | 4 | P1 fax-D4: Page deeplink lands on a different folio than the one the tile shows: thumbnail + ref bar say Words of Mormon 1:17 (printed p.145), label says p. 154, and /fax/1981/154 opens Mosiah 3:22–4:4 |
+| archive | faxVerse | pass | 4 | 4 | 5 |  |
+| archive | history | pass | 4 | 4 | 4 |  |
+| archive | josephSmith | pass | 3 | 4 | 4 |  |
+| archive | witness | pass | 4 | 4 | 4 |  |
+| analysis | biblephrases | **FAIL** | 3 | 3 | 4 | P1 E1: Chained link→Back cycles from this tile do not restore scroll: second Back landed 757px above the tile, the next 752px below; a single Back after pre-scrolled batches landed 154px low with the tile's heading cut off (cro |
+| analysis | chiasmus | **FAIL** | 3 | 4 | 4 | P1 E1: Browser Back after a second link from this tile landed 6,496px away (tile had moved; a batch-copy chiasmus was pinned instead), a speaker-link Back drifted 200px, and a heading-link Back on phone drifted 385px; first-vis |
+| analysis | art | **FAIL** | 3 | 4 | 4 | P1 E1: Every chained Back from this tile landed 153px low (tile header scrolled off the top): CTA +153, art-title link +70, CTA +153 again; shared root cause with chiasmus/biblephrases |
+| story | mapstory | pass | 3 | 3 | 3 |  |
+| story | community | pass | 4 | 3 | 4 |  |
+
+Fixes after round 4: **places** `72796d9b`, `25e7bdd0`; **scripture** `e9328105`, `853d2909`, `1ca05844`, `452cc89c`, `cf5a710b`, `0bcd42d1`, `1cc71c44`; **archive** `f37d6f49`; **analysis** `6924c885`, `a58d6921`, `bec47564`, `032767b4`
+
+#### Round 5 — 20 pass / 4 fail
+
+| Family | Tile | Verdict | C | B | L | P0/P1 findings |
+|---|---|---|---|---|---|---|
+| rail | readingplan | pass | 4 | 3 | 4 |  |
+| rail | section | **FAIL** | 3 | 3 | 4 | P1 narration-C1: On touch viewports the ref pill's invisible 44px hit area (::after inset -15px -4px) covers the first ~50px of every wrapped beat link's second line, so tapping visible link text ('steadfast in the faith.' etc.) opens th |
+| rail | contents | pass | 4 | 4 | 4 |  |
+| people | people | pass | 4 | 4 | 4 |  |
+| people | personProfile | pass | 4 | 3 | 4 |  |
+| places | places | pass | 4 | 4 | 4 |  |
+| places | placeProfile | pass | 4 | 4 | 4 |  |
+| matters | mattersNarrative | pass | 4 | 4 | 4 |  |
+| matters | mattersMaterial | pass | 4 | 3 | 4 |  |
+| matters | mattersConcept | pass | 4 | 3 | 4 |  |
+| matters | matterProfile | pass | 3 | 3 | 3 |  |
+| scripture | text | **FAIL** | 4 | 4 | 5 | P1 xc-popup-E3-scrolljump: Opening the shared scripture popup from a tile intermittently throws the page to a different scroll position, and closing it leaves the reader there (lost place). Observed 2 of 8 fresh-page openings; 0 of 6 targeted re-p |
+| scripture | commentary | **FAIL** | 3 | 3 | 4 | P1 commentary-D5-curtain: 'See in context' lands on a blank dark-navy curtain for 8-17s while the URL bounces through the host page (/jesus/64 -> /jesus/74 -> /commentary/:id) before the commentary note finally opens; a 3.5s look shows an empty g |
+| scripture | notes | pass | 3 | 3 | 4 |  |
+| archive | fax | pass | 4 | 3 | 4 |  |
+| archive | faxVerse | **FAIL** | 3 | 4 | 4 | P1 XC-E1: Cross-cutting (faxVerse, history; drift also seen beside josephSmith): browser Back lands hundreds of px from where the reader left and never corrects — reproduced 5 times: faxVerse CTA→Read 678px off (desktop) and 388px |
+| archive | history | pass | 4 | 3 | 4 |  |
+| archive | josephSmith | pass | 4 | 4 | 4 |  |
+| archive | witness | pass | 3 | 4 | 4 |  |
+| analysis | biblephrases | pass | 4 | 3 | 4 |  |
+| analysis | chiasmus | pass | 4 | 4 | 4 |  |
+| analysis | art | pass | 3 | 4 | 5 |  |
+| story | mapstory | pass | 4 | 3 | 4 |  |
+| story | community | pass | 3 | 3 | 4 |  |
+
+Fixes after round 5: **rail** `f51a170a`, `3a3f95ab`, `4bc19c0e`; **scripture** `05277e66`, `bef49323`, `f70611fb`, `369376f9`; **archive** `977feba5`, `4c160a5b`
+
+#### Round 6 — 16 pass / 8 fail
+
+| Family | Tile | Verdict | C | B | L | P0/P1 findings |
+|---|---|---|---|---|---|---|
+| rail | readingplan | pass | 4 | 3 | 4 |  |
+| rail | section | pass | 4 | 4 | 4 |  |
+| rail | contents | pass | 3 | 4 | 4 |  |
+| people | people | **FAIL** | 4 | 4 | 4 | P1 people-E2: Expanded featured bio is lost on Back: the tile remounts collapsed and its CTAs jump, unlike every sibling profile tile which restores its expansion (cross-cutting with personProfile; one root cause in PersonFeature.js). |
+| people | personProfile | **FAIL** | 4 | 3 | 4 | P1 personProfile-E2: Same root cause as people-E2 (PersonFeature without persistKey), but worse here: a reader who expands a deep-feed profile, taps Open and comes Back finds the bio collapsed and the tapped CTA (and most of the tile) scroll |
+| places | places | pass | 3 | 4 | 4 |  |
+| places | placeProfile | pass | 4 | 4 | 4 |  |
+| matters | mattersNarrative | pass | 4 | 4 | 4 |  |
+| matters | mattersMaterial | pass | 4 | 3 | 4 |  |
+| matters | mattersConcept | pass | 3 | 3 | 4 |  |
+| matters | matterProfile | **FAIL** | 2 | 3 | 3 | P1 A1: On touch viewports (phone 390, tablet 820) the collapsed description clamp slices the fifth line through the middle and leaves a sliver of the next line's ref chip showing under the fade: the 14px touch padding is counte |
+| scripture | tile-text | pass | 4 | 4 | 5 |  |
+| scripture | tile-commentary | **FAIL** | 3 | 4 | 4 | P1 commentary-G2: Keyboard Tab into a clamped commentary scrolls the overflow:hidden excerpt (scrollTop up to 1083px) so the collapsed prose shows a sliced line under the title and loses its opening; the ref pills hidden under the clamp s<br>P1 commentary-E1: Seen once (dark sweep): after a commentary deeplink and Back, a later Back from the notes Read page landed on /commentary/1521304102 as a blank navy page with zero tiles and a 'Cannot read properties of null (reading slu |
+| scripture | tile-notes | **FAIL** | 3 | 4 | 5 | P1 notes-D4: On phone, See in context lands the Read page with the annotated verse under the fixed bottom nav: verse 50 top at y=766 in an 844px viewport whose bottom-nav starts at 780, so the reader sees the previous section and not |
+| archive | fax | pass | 3 | 4 | 4 |  |
+| archive | faxVerse | pass | 3 | 3 | 4 |  |
+| archive | history | pass | 3 | 3 | 4 |  |
+| archive | josephSmith | **FAIL** | 2 | 4 | 4 | P1 josephSmith-C3: The tile sometimes renders with NO Layer-2 link at all (no Read more, no See in context): the reveal gate is registered on a pre-paint measurement that overflowed (fallback font), never un-registered when the re-measure  |
+| archive | witness | pass | 3 | 4 | 4 |  |
+| analysis | tile-biblephrases | pass | 4 | 4 | 4 |  |
+| analysis | tile-chiasmus | pass | 4 | 4 | 4 |  |
+| analysis | tile-art | **FAIL** | 3 | 3 | 4 | P1 art-A1/F1-aspect: The artwork frame has no aspect cap, so a tall portrait source (186×600) becomes a 1526px-tall tile at desktop, 1469px on phone and 2837px on the 820px tablet — one tile spanning two to three viewports, breaking the colu |
+| story | mapstory | **FAIL** | 3 | 3 | 3 | P1 mapstory-E1: Browser Back from the story title link can land hundreds of px away from where the reader left when the page was scrolled by keyboard focus / the tile top sat just above the fold |
+| story | community | pass | 3 | 3 | 4 |  |
