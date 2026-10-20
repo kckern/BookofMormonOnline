@@ -1861,3 +1861,11 @@ Fable was dropped from the process (cost). One blind round, 8 fresh Sonnet revie
 | story | tile-community | pass | 3 | 3 | 3 |  | 1 |
 
 **Result: 24/24 observed tiles pass, 0 P0/P1.** Not run (budget): tablet, dark mode, Korean, logged-in, infinite-batch rug-pull timing. Remaining P2/P3s are recorded in the review output (polish: back controls on some destination pages, phone tap heights, spacing); none block shipping.
+
+## R6. Deploy — 2026-10-20
+
+`dev` fast-forwarded to `prod` at `a2ece831` (198 commits); CI run 39470831845 (build-push + blue-green deploy via the self-hosted runner) succeeded. Prod smoke (desktop + phone, 15 checks): Home renders; People at y=332 on phone (single column, was ≈4000); warm CLS 0.000; 92/38 media variants served with 0 errors; one Back from a tile link returns to `/home`; guest `/home/user` renders on phone (was a whole-app crash); `/matters/narrative` shows the index (was "Not found"); no page errors.
+
+**Known, accepted (P2):** infinite-feed scroll CLS measures 0.014–0.13 under a deliberately aggressive scroll (14 screens / 600ms) because commentary tiles settle 277 → 240px and faxVerse ~30px after mount; 0.059 in the standard page pass (the web-vitals "good" bar is 0.1). Other open P2/P3s are listed in the review rounds above. Not covered: tablet / dark / Korean / logged-in sweeps in the final round; the route-backed entity modal (deferred by decision).
+
+**Process note:** the Fable-based blind review (13 rounds) was dropped after cost; the final gate was one lean Sonnet round (24/24 tiles pass) plus the live verification scripts.
