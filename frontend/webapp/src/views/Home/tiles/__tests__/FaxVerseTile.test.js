@@ -163,3 +163,10 @@ describe("FaxVerseTile R5: rows reserve their final box; failures stay gone", ()
     expect(again.container.querySelector(".faxEditionRailTitle")).toHaveTextContent("1837 Kirtland");
   });
 });
+
+describe("FaxVerseTile excerpt box", () => {
+  test("the verse excerpt renders inside the fixed .faxVerseExcerpt box", () => {
+    const src = require("node:fs").readFileSync(require("node:path").resolve(__dirname, "../FaxVerseTile.js"), "utf8");
+    expect(src).toMatch(/read-content scriptureExcerptCompact faxVerseExcerpt/);
+  });
+});

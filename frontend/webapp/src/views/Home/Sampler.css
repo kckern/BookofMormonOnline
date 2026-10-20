@@ -3800,3 +3800,21 @@ html[data-theme="dark"] .imageArtScripture .scriptureAnchorMark { background: rg
      35px; the chip sits below a 14px band so its 44px hit stays inside. */
   .imageArtScripture { padding-top: 14px; }
 }
+
+/* faxVerse: the verse text loads after the tile mounts (placeholder ~53px, loaded
+   104-173px), which shoved everything below it down while scrolling. A fixed box
+   that clips with a fade keeps the tile's height known from first paint. */
+.faxVerseTile .faxVerseExcerpt {
+  position: relative;
+  height: 11rem;
+  overflow: clip;
+}
+.faxVerseTile .faxVerseExcerpt::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 1.6rem;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #fff);
+  pointer-events: none;
+}
+html[data-theme="dark"] .faxVerseTile .faxVerseExcerpt::after { background: linear-gradient(to bottom, rgba(34, 34, 34, 0), #222); }

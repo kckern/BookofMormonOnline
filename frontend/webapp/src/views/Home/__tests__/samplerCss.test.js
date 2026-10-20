@@ -98,3 +98,14 @@ describe("community eyebrow hit area", () => {
     expect(blocks.some((b) => /\.communityTile \.tileHeading a::after/.test(b))).toBe(true);
   });
 });
+
+// Final-gate regression: the faxVerse tile's verse excerpt started as a ~53px
+// placeholder and jumped to 104-173px when the text loaded (scroll CLS 0.11-0.15
+// from infinite batches). Like notes/art, it lives in a fixed box that clips.
+test("faxVerse verse excerpt has a fixed, clipped box (no shift when the text loads)", () => {
+  const rule = rules(css).find(([sel]) => /\.faxVerseTile\s+\.faxVerseExcerpt\b/.test(sel));
+  expect(rule).toBeTruthy();
+  const body = rule[1].replace(/\s+/g, " ");
+  expect(body).toMatch(/height:\s*[\d.]+rem/);
+  expect(body).toMatch(/overflow:\s*clip/);
+});
