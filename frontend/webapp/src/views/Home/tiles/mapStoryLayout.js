@@ -102,6 +102,18 @@ const leaderEnd = (anchor, rect) => ({
   y: clamp(anchor.y, rect.y, rect.y + rect.height),
 });
 
+/**
+ * The words inside a label box: the name is centered (flex + text-align), and
+ * the box is padded to a 76px minimum, so a leader ending at the box stopped
+ * 25-45px short of a short name (R6 A2). ~6px per bold condensed glyph.
+ */
+const glyphRect = (name, rect) => {
+  const lines = rect.height > 30 ? 2 : 1;
+  const w = Math.min(rect.width, Math.ceil(String(name).length / lines) * 6);
+  const h = Math.min(rect.height, lines * 14);
+  return { x: rect.x + (rect.width - w) / 2, y: rect.y + (rect.height - h) / 2, width: w, height: h };
+};
+
 const symbolCandidates = (symbol) => {
   const candidates = [{ x: symbol.x, y: symbol.y }];
   const base = Math.max(symbol.width, symbol.height) / 2 + 7;
@@ -155,7 +167,9 @@ export const layoutSymbols = ({ symbols, reservedRects = [], width, height, padd
       y,
       anchorX: symbol.x,
       anchorY: symbol.y,
-      leader: displacement > 7
+      // An off-frame stop sits on the frame edge on the side it lies; a tail
+      // to its true point would only run out of the frame (R6 A2).
+      leader: displacement > 7 && symbol.x >= 0 && symbol.x <= width && symbol.y >= 0 && symbol.y <= height
         ? { x1: symbol.x, y1: symbol.y, x2: x, y2: y }
         : null,
     });
@@ -209,7 +223,7 @@ export const layoutLabels = ({ items, obstacles, width, height, padding = 8, pre
     }
 
     if (!rect) return;
-    const end = leaderEnd(item, rect);
+    const end = leaderEnd(item, glyphRect(item.name, rect));
     const leaderLength = Math.hypot(end.x - item.x, end.y - item.y);
     const label = {
       ...item,

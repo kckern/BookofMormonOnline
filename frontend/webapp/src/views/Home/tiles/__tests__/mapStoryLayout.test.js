@@ -384,3 +384,36 @@ describe("traveler party respects reserved controls", () => {
     expect(rectanglesOverlap(box, reserved, 0)).toBe(false);
   });
 });
+
+describe("R6 mapstory-A2: leaders reach the words, not the padded label box", () => {
+  test("a short name's leader ends at the centered glyph run", () => {
+    // a far-displaced short label: obstacles force it away from its point
+    const items = [{ slug: "melek", name: "Melek", x: 40, y: 120, priority: 0, firstStep: 0, required: true }];
+    const obstacles = [{ id: "block", x: 0, y: 60, width: 150, height: 120 }];
+    const [label] = layoutLabels({ items, obstacles, width: 320, height: 240 });
+    expect(label.leader).toBeTruthy();
+    const cx = label.x + label.width / 2;
+    const cy = label.y + label.height / 2;
+    const glyphHalfW = ("Melek".length * 6) / 2;
+    // the leader end lies on (or within 3px of) the glyph run's box
+    expect(Math.abs(label.leader.x2 - cx)).toBeLessThanOrEqual(glyphHalfW + 3);
+    expect(Math.abs(label.leader.y2 - cy)).toBeLessThanOrEqual(label.height / 2);
+  });
+});
+
+describe("R6 mapstory-A2: off-frame stops", () => {
+  test("a stop pinned to the frame edge draws no dashed tail out of the frame", () => {
+    const symbols = [{ id: "melek", x: -79, y: 120, width: 20, height: 20, priority: 0, firstStep: 0, required: true }];
+    const [placed] = layoutSymbols({ symbols, width: 320, height: 240 });
+    expect(placed.x).toBeGreaterThan(0);
+    expect(placed.leader).toBeNull();
+  });
+  test("an on-frame displaced stop still gets its leader", () => {
+    const symbols = [
+      { id: "a", x: 100, y: 100, width: 20, height: 20, priority: 0, firstStep: 0, required: true },
+      { id: "b", x: 102, y: 100, width: 20, height: 20, priority: 1, firstStep: 1, required: true },
+    ];
+    const placed = layoutSymbols({ symbols, width: 320, height: 240 });
+    expect(placed.find((s) => s.id === "b").leader).toBeTruthy();
+  });
+});
