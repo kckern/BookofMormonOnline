@@ -16,6 +16,7 @@ import { bindRefPunctuation } from "./_ds/refProse";
 import { contentRects, snapToLines } from "./_ds/lineClamp";
 import { lastLineEnd } from "./ExpandableText";
 import { readExpanded, writeExpanded } from "./samplerSession";
+import { useClampGuard } from "./_ds/clampGuard";
 
 // Block-level boundaries become paragraph breaks; every other tag is dropped.
 const BLOCK_BREAK = /<\/?(p|div|li|ul|ol|br|blockquote|h[1-6]|tr|td|table)\b[^>]*>/gi;
@@ -124,7 +125,7 @@ function CommentaryTileInner({ data }) {
   const [truncated, setTruncated] = useState(expanded);
   useLayoutEffect(() => {
     if (!expanded) return;
-    registerGate();
+    registerGate(true, "commentary");
     reveal();
     // mount only
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -152,32 +153,36 @@ function CommentaryTileInner({ data }) {
   // MAX_LINES, snapped DOWN to a whole line box (never a sliced line), with the
   // last line's tail faded where its text ends. Truncation is measured off the
   // content's own boxes; jsdom (no layout) falls back to scrollHeight.
-  useLayoutEffect(() => {
-    if (expanded || isAtv) return;
-    const aside = asideRef.current;
-    const body = bodyRef.current;
-    if (!aside || !body) return;
-    const lh = parseFloat(getComputedStyle(body).lineHeight) || 18;
-    const beside = aside.offsetLeft > body.offsetLeft + 4;
-    const titleH = body.previousElementSibling ? body.previousElementSibling.offsetHeight + 6 : 0;
-    const asideTarget = Math.max(72, aside.offsetHeight - titleH - 30); // 30 ≈ read-more row
-    const target = Math.min(beside ? asideTarget : WIDE_LINES * lh, MAX_LINES * lh);
-    const rects = contentRects(body).filter((r) => r.height > 0);
-    const box = body.getBoundingClientRect();
-    const h = snapToLines(rects, box.top, target);
-    const over = rects.length
-      ? Math.max(...rects.map((r) => r.bottom)) - box.top > h + 2
-      : body.scrollHeight > h + 2;
-    setMaxH(h);
-    setTruncated(over);
-    setLineEnd(over && rects.length ? lastLineEnd(rects, { left: box.left, right: box.right, bottom: box.top + h }, lh) : null);
-  }, [paragraphs, expanded, isAtv]);
-
-  // Gate the deeplink only when a read-more will actually render (pre-paint).
-  useLayoutEffect(() => {
-    if (!isAtv && truncated) registerGate();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [truncated, isAtv]);
+  // The shared clamp guard (tiles/_ds/clampGuard) runs this pre-paint and again
+  // on resize / web-font load (C3), and takes the pills under the cut out of
+  // the Tab order (R6 commentary-G2). The gate follows the measure both ways.
+  const clamped = !expanded && !isAtv;
+  const onScroll = useClampGuard(
+    bodyRef,
+    clamped,
+    (body) => {
+      const aside = asideRef.current;
+      if (!aside) return;
+      const lh = parseFloat(getComputedStyle(body).lineHeight) || 18;
+      const beside = aside.offsetLeft > body.offsetLeft + 4;
+      const titleH = body.previousElementSibling ? body.previousElementSibling.offsetHeight + 6 : 0;
+      const asideTarget = Math.max(72, aside.offsetHeight - titleH - 30); // 30 ≈ read-more row
+      const target = Math.min(beside ? asideTarget : WIDE_LINES * lh, MAX_LINES * lh);
+      const rects = contentRects(body).filter((r) => r.height > 0);
+      const box = body.getBoundingClientRect();
+      const h = snapToLines(rects, box.top, target);
+      const over = rects.length
+        ? Math.max(...rects.map((r) => r.bottom)) - box.top > h + 2
+        : body.scrollHeight > h + 2;
+      // apply the bound now, so the Tab-order pass right after sees the real edge
+      body.style.maxHeight = `${h}px`;
+      setMaxH(h);
+      setTruncated(over);
+      registerGate(over, "commentary");
+      setLineEnd(over && rects.length ? lastLineEnd(rects, { left: box.left, right: box.right, bottom: box.top + h }, lh) : null);
+    },
+    [paragraphs],
+  );
 
   if (!data?.id) return null;
   const pub = data.publication || {};
@@ -212,6 +217,7 @@ function CommentaryTileInner({ data }) {
           <div
             ref={bodyRef}
             className={`commentaryTileExcerpt${expanded ? " expanded" : truncated && !isAtv ? " isClamped" : ""}`}
+            onScroll={onScroll}
             style={!expanded && maxH ? { maxHeight: maxH, ...(lineEnd != null ? { "--line-end": `${lineEnd}px` } : null) } : undefined}
           >
             {shown.map((p, i) => (

@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { clampWords } from "../textUtils";
+import { onLayoutChange } from "./clampGuard";
 
 /**
  * Text that fits `lines` whole lines by WORDS, never mid-word: renders the full
@@ -9,7 +10,7 @@ import { clampWords } from "../textUtils";
  * card bands ("later occupie…", "Lamanites in…") (audit places H3).
  *
  * `prefix` (e.g. a RefPill) shares the first line and is never cut. Re-fits on
- * width changes. With no layout (jsdom) the full text stays. The text span is
+ * width changes and web-font loads. With no layout (jsdom) the full text stays. The text span is
  * written by the layout effect (pre-paint), never by React, so the binary
  * search can't desync React's text node.
  */
@@ -17,6 +18,7 @@ export default function FitWords({ text = "", lines = 2, className = "", prefix 
   const ref = useRef(null);
   const [shown, setShown] = useState(text);
   const [width, setWidth] = useState(0);
+  const [fontTick, setFontTick] = useState(0);
 
   useLayoutEffect(() => {
     const box = ref.current;
@@ -54,20 +56,21 @@ export default function FitWords({ text = "", lines = 2, className = "", prefix 
     }
     target.textContent = best;
     setShown(best);
-  }, [text, lines, width]);
+  }, [text, lines, width, fontTick]);
 
+  // Re-fit on a width change, and whenever the web fonts settle (a fit taken
+  // in the fallback font is wrong both ways once the face swaps in — C3).
   useEffect(() => {
     const box = ref.current;
-    if (!box || typeof ResizeObserver === "undefined") return undefined;
+    if (!box) return undefined;
     let last = box.clientWidth;
-    const ro = new ResizeObserver(() => {
-      if (box.clientWidth !== last) {
+    return onLayoutChange(box, (why) => {
+      if (why === "fonts") setFontTick((t) => t + 1);
+      else if (box.clientWidth !== last) {
         last = box.clientWidth;
         setWidth(last);
       }
     });
-    ro.observe(box);
-    return () => ro.disconnect();
   }, []);
 
   return (

@@ -26,6 +26,10 @@ const RevealContext = createContext({
 export function RevealProvider({ children, onReveal }) {
   const [revealed, setRevealed] = useState(false);
   const [gated, setGated] = useState(false);
+  // Gates by id, so a re-measure can retract its own gate (blind R6
+  // josephSmith-C3: a gate registered on a fallback-font measurement that
+  // overflowed was never un-registered, and the tile lost its Layer-2 link).
+  const gates = useRef(new Set());
   const bound = useContext(TileBoundContext);
   // latest callbacks without re-creating the context value each render
   const cbRef = useRef();
@@ -39,7 +43,12 @@ export function RevealProvider({ children, onReveal }) {
         cbRef.current.onReveal?.();
         cbRef.current.bound?.();
       },
-      registerGate: () => setGated(true),
+      // registerGate() / registerGate(true, id) adds a gate; (false, id) retracts it.
+      registerGate: (on = true, id = "default") => {
+        if (on === false) gates.current.delete(id);
+        else gates.current.add(id);
+        setGated(gates.current.size > 0);
+      },
     }),
     [revealed, gated]
   );

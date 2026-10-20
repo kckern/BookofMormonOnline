@@ -1,6 +1,7 @@
 import React, { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { TileBoundContext } from "./Reveal";
 import TileCTA from "./TileCTA";
+import { onLayoutChange } from "./clampGuard";
 
 /**
  * A tile wrapper with a visible height bound (phone single column). Instead of
@@ -66,12 +67,10 @@ export default function BoundedTile({ className = "", tileId, children }) {
     if (!el || revealed) return undefined;
     const measure = () => setOverflowing(el.scrollHeight > el.clientHeight + 2);
     measure();
-    // images and lazy content change the height after first paint
-    if (typeof ResizeObserver === "undefined") return undefined;
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    Array.from(el.children).forEach((c) => ro.observe(c));
-    return () => ro.disconnect();
+    // images, lazy content and the web font swapping in change the height
+    // after first paint — re-measure two-way (tiles/_ds/clampGuard, C3)
+    const offs = [el, ...Array.from(el.children)].map((c) => onLayoutChange(c, measure));
+    return () => offs.forEach((off) => off());
   }, [revealed, children]);
 
   const cls = [className, "boundedTile", overflowing ? "isOverflowing" : "", revealed ? "revealed" : ""]

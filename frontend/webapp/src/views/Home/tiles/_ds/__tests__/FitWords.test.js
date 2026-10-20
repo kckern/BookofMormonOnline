@@ -72,3 +72,25 @@ test("a padded box fits against its CONTENT bottom, not the padding (padding onl
     vi.restoreAllMocks();
   }
 });
+
+// Systemic C3 (blind R6): a fit computed in the fallback font is stale once the
+// web font lands — FitWords re-fits on fonts.ready / loadingdone, both ways.
+test("re-fits when a web font loads (fallback measure → web-font measure)", () => {
+  const { act } = require("@testing-library/react");
+  const fonts = new EventTarget();
+  fonts.ready = new Promise(() => {});
+  Object.defineProperty(document, "fonts", { configurable: true, value: fonts });
+  try {
+    stubFit(200); // fallback font: fits whole
+    const { container } = render(<FitWords text={TEXT} />);
+    expect(container.textContent).toBe(TEXT);
+    stubFit(26); // web font is wider: now it overflows
+    act(() => { fonts.dispatchEvent(new Event("loadingdone")); });
+    expect(container.textContent.endsWith("…")).toBe(true);
+    stubFit(200); // and back: the full text returns
+    act(() => { fonts.dispatchEvent(new Event("loadingdone")); });
+    expect(container.textContent).toBe(TEXT);
+  } finally {
+    delete document.fonts;
+  }
+});

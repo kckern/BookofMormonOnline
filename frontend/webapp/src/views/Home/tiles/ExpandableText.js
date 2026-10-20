@@ -1,7 +1,8 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import { useReveal } from "./_ds/Reveal";
 import TileCTA from "./_ds/TileCTA";
 import { readExpanded, writeExpanded } from "./samplerSession";
+import { useClampGuard } from "./_ds/clampGuard";
 
 /**
  * Width-aware clamp: collapsed state is a CSS line-clamp (so the cut point
@@ -28,30 +29,6 @@ import { readExpanded, writeExpanded } from "./samplerSession";
  * remounts the box expanded (same height, Layer-2 still revealed) instead of
  * collapsing it under the scroll anchor.
  */
-const FOCUSABLE = "a[href], button, input, select, textarea, [tabindex]";
-const HIDDEN = "data-clamp-hidden";
-
-function restoreFocusables(box) {
-  box.querySelectorAll(`[${HIDDEN}]`).forEach((n) => {
-    const prev = n.getAttribute(HIDDEN);
-    if (prev === "") n.removeAttribute("tabindex");
-    else n.setAttribute("tabindex", prev);
-    n.removeAttribute(HIDDEN);
-  });
-}
-
-function hideClippedFocusables(box) {
-  restoreFocusables(box);
-  const edge = box.getBoundingClientRect().bottom;
-  box.querySelectorAll(FOCUSABLE).forEach((n) => {
-    if (n.getAttribute("tabindex") === "-1") return;
-    if (n.getBoundingClientRect().bottom > edge + 1) {
-      n.setAttribute(HIDDEN, n.getAttribute("tabindex") ?? "");
-      n.setAttribute("tabindex", "-1");
-    }
-  });
-}
-
 /**
  * Does the collapsed box hide content? Measured off the CONTENT's own boxes (a
  * Range over the children), not scrollHeight: a ref chip's absolutely
@@ -113,53 +90,36 @@ export default function ExpandableText({ children, lines = 6, className, fade = 
   const [truncated, setTruncated] = useState(open);
   const ref = useRef(null);
   const { reveal, registerGate } = useReveal();
+  const gateId = useRef(Symbol("expandable")).current;
   // A restored expansion re-fires the gate + reveal pre-paint, so the Layer-2
   // link (and any enclosing bound) come back open with it.
   useLayoutEffect(() => {
     if (!open) return;
-    registerGate();
+    registerGate(true, gateId);
     reveal();
     // mount only
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  // Measure PRE-paint (useLayoutEffect) so the gate registers before the browser
-  // paints — otherwise the deeplink flashes visible for one frame before the
-  // gate hides it. Two-way setTruncated so a re-measure can retract a stale pill.
-  // Only the COLLAPSED box is measured: expanded, it never overflows, so a
-  // re-measure triggered by a parent re-render (new JSX children) would drop
-  // the pill and strand the reader with no Show less. Collapsing re-measures.
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (open) {
-      restoreFocusables(el);
-      return;
-    }
-    const over = overflows(el);
-    setTruncated(over);
-    if (over) registerGate(); // there IS something to expand → gate a sibling deeplink
-    hideClippedFocusables(el);
-    if (fade && over) markLineEnd(el);
-    else ref.current.style.removeProperty("--line-end");
-    // registerGate is intentionally omitted from deps (stable-enough; matches the
-    // no-op default when there is no provider).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [children, lines, open, fade]);
-  // Width changes (container resize, font load) move the clamp edge: re-run the
-  // Tab-order pass while collapsed.
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || open || typeof ResizeObserver === "undefined") return undefined;
-    const ro = new ResizeObserver(() => {
-      hideClippedFocusables(el);
-      if (fade) markLineEnd(el);
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [open, fade]);
-  const onScroll = (e) => {
-    if (!open && e.currentTarget.scrollTop) e.currentTarget.scrollTop = 0;
-  };
+  // Measure PRE-paint so the gate registers before the browser paints —
+  // otherwise the deeplink flashes visible for one frame before the gate hides
+  // it. The shared clamp guard (tiles/_ds/clampGuard) re-runs this on resize,
+  // fonts.ready and every font load, two-way: a fallback-font measure that
+  // overflowed can retract its gate and pill once the web font fits (C3), or
+  // add them when the web font overflows. Only the COLLAPSED box is measured:
+  // expanded it never overflows, and dropping the pill would strand the reader
+  // with no Show less. Clipped controls leave the Tab order (G2).
+  const onScroll = useClampGuard(
+    ref,
+    !open,
+    (el) => {
+      const over = overflows(el);
+      setTruncated(over);
+      registerGate(over, gateId);
+      if (fade && over) markLineEnd(el);
+      else el.style.removeProperty("--line-end");
+    },
+    [children, lines, fade],
+  );
   const toggle = (e) => {
     e.preventDefault();
     e.stopPropagation();
