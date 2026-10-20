@@ -96,7 +96,7 @@ export default function MobileUser() {
   );
 }
 
-function MobileProgressBox() {
+export function MobileProgressBox() {
   const appController = useAppController();
   let tokenToLoad = appController.states.user.token;
   let userToLoad = appController.states.user.user;
@@ -124,7 +124,9 @@ function MobileProgressBox() {
           loading: false,
           queryBy: queryBy,
           progressData: r.divisionProgress,
-          userProgress: r.userprogress?.[appController.states.user.token],
+          // a guest (null token) has no progress row: keep the 0% shell rather
+          // than null, which threw and unmounted the whole app on phone
+          userProgress: r.userprogress?.[appController.states.user.token] || { completed: -1, started: -1 },
         });
     });
   }, []);
@@ -140,8 +142,8 @@ function MobileProgressBox() {
     <div>
       <h4>{label("study_progress_for_x", [name ? name : label("guest")])}</h4>
       <ProgressBar
-        complete={ProgressBoxData.userProgress.completed}
-        started={ProgressBoxData.userProgress.started}
+        complete={complete}
+        started={started}
       />
       <div className="completed_started">
         {numericLoad(complete)}% {label("completed")} • {numericLoad(started)}%{" "}
@@ -151,9 +153,10 @@ function MobileProgressBox() {
 
       <div className="divisionProgress">
         {ProgressBoxData.progressData?.map((item) => {
-          const percentage = item.progress.completed || 0;
+          const percentage = item.progress?.completed || 0;
           return (
             <div
+              key={item.slug}
               className="divisionProgressItem"
               onClick={() =>
                 appController.functions.setPopUp({
