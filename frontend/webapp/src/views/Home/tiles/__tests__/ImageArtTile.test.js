@@ -40,6 +40,9 @@ describe("ImageArtTile", () => {
     renderTile();
     expect(globalThis.__excerptProps).toMatchObject({ refText: "Alma 17:7", highlight: "Zarahemla is Rebuilt", refAsPopup: true });
     expect(globalThis.__excerptProps.focusVerses).toBeGreaterThanOrEqual(5);
+    // R6 art-A1-excerpt-box: a one-verse ref is widened with the verses that
+    // follow, so the fade always cuts text instead of a blank band
+    expect(globalThis.__excerptProps.fillVerses).toBe(globalThis.__excerptProps.focusVerses);
   });
 
   // A3: the art tile speaks the Home header grammar — an uppercase eyebrow
@@ -99,6 +102,14 @@ describe("ImageArtTile", () => {
     const img = container.querySelector("img");
     expect(img.classList.contains("tileImage")).toBe(true);
     expect(img.hasAttribute("srcset")).toBe(false);
+  });
+
+  // R6 art-A1/F1 (tablet): the 3:4 cap alone still made a full-width 820px
+  // tablet tile 1379px tall; the frame also stops at a height bound.
+  test("Sampler.css: the artwork frame has a max-height as well as the aspect cap", () => {
+    const css = fs.readFileSync(path.resolve(__dirname, "../../Sampler.css"), "utf8");
+    const frame = css.match(/\.imageArtFrame \{[^}]*\}/)[0];
+    expect(frame).toMatch(/max-height:\s*[\d.]+rem/);
   });
 
   test("Sampler.css: no doubled title in the excerpt, reserved excerpt height, transparent dark inset", () => {

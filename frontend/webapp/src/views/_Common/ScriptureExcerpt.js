@@ -117,6 +117,29 @@ const chaptersOf = (seg, wanted) => {
   return out.length ? out : own ? [own] : [];
 };
 
+/**
+ * Widen a short reference to `min` verses of its own chapter(s) (R6
+ * art-A1-excerpt-box: a one-verse ref left a fixed excerpt box two-thirds
+ * blank). `order` is the fetched chapters' verse ids in reading order; the
+ * window grows forward from the last wanted verse, then back from the first
+ * when the chapter runs out. Unresolved (empty) or already-long refs, and refs
+ * not found in `order`, come back as the same Set.
+ */
+export const fillWanted = (order, wanted, min) => {
+  if (!min || !wanted.size || wanted.size >= min) return wanted;
+  const idx = order.map((id, i) => (wanted.has(id) ? i : -1)).filter((i) => i >= 0);
+  if (!idx.length) return wanted;
+  const out = new Set(wanted);
+  for (let i = idx[idx.length - 1] + 1; i < order.length && out.size < min; i++) out.add(order[i]);
+  for (let i = idx[0] - 1; i >= 0 && out.size < min; i--) out.add(order[i]);
+  return out;
+};
+const verseOrder = (chapters) => {
+  const out = [];
+  for (const ch of chapters) for (const s of ch?.sections || []) for (const b of s.blocks || []) for (const l of b.lines || []) if (!out.includes(l.verse_id)) out.push(l.verse_id);
+  return out;
+};
+
 // Filter a `read` chapter to the wanted verses. The API sometimes returns a
 // verse's line twice with identical text (Helaman 1:1, Alma 6:8 — seen live);
 // drop exact (verse_id, text) repeats. Distinct lines of one verse (a verse
@@ -278,20 +301,22 @@ const rememberExcerpt = (ref, results) => {
   if (excerptCache.size > EXCERPT_CACHE_MAX) excerptCache.delete(excerptCache.keys().next().value);
 };
 
-export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = false, refAsPopup = false, highlight = null, onBoMSections = null, focusVerses = 0, focusLead = 1 }) {
+export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = false, refAsPopup = false, highlight = null, onBoMSections = null, focusVerses = 0, focusLead = 1, fillVerses = 0 }) {
   const anchor = cleanPhrase(highlight);
   const ref = refText ? canonical(refText) : null;
+  // a widened excerpt is a different result from the bare ref: cache apart
+  const cacheKey = ref && fillVerses ? `${ref}#fill${fillVerses}` : ref;
   // One entry per compound segment, IN ORDER — each is either a BoM result
   // ({ sections }) or a Bible/cross-ref result ({ passages }). Keeping the
   // ordered mix (not flattening to sections-OR-passages) is what lets a
   // reference like "Acts 10:3-4; 3 Ne. 27:1; Psalm 35:13" render every segment
   // instead of dropping the Bible ones the moment any BoM section appears.
-  const [segments, setSegments] = useState(() => (ref && excerptCache.get(ref)) || null);
+  const [segments, setSegments] = useState(() => (ref && excerptCache.get(cacheKey)) || null);
 
   useEffect(() => {
     if (!ref) return undefined;
     let cancelled = false;
-    const cached = excerptCache.get(ref);
+    const cached = excerptCache.get(cacheKey);
     if (cached) {
       setSegments(cached);
       if (onBoMSections) onBoMSections(cached.some((s) => s.sections?.length > 0));
@@ -336,7 +361,8 @@ export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = fals
           .then((r) => r?.read?.[ch] || (r?.read && Object.values(r.read)[0]) || null)
           .catch(() => null)))
           .then((chs) => {
-            const kept = chs.flatMap((chapter) => keepSections(chapter, wanted));
+            const keep = units.length === 1 ? fillWanted(verseOrder(chs), wanted, fillVerses) : wanted;
+            const kept = chs.flatMap((chapter) => keepSections(chapter, keep));
             if (kept.length) return { sections: kept };
             // Bible / cross-ref segment → plain passages
             return Promise.all(segs.map((seg) => BoMOnlineAPI({ scripture: [seg] }, { useCache: false }).then((sr) => {
@@ -350,7 +376,7 @@ export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = fals
     ).then((results) => {
       // only a clean result is kept: a failed chapter fetch resolves to null
       // and must be retried on the next mount, not remembered as "not found"
-      if (results.every((r) => r.sections?.length || r.passages?.length)) rememberExcerpt(ref, results);
+      if (results.every((r) => r.sections?.length || r.passages?.length)) rememberExcerpt(cacheKey, results);
       if (cancelled) return;
       setSegments(results);
       // Report whether any segment resolved to actual Book of Mormon content
@@ -360,7 +386,7 @@ export default function ScriptureExcerpt({ refText, onNavigate, hideStudy = fals
       if (onBoMSections) onBoMSections(results.some((s) => s.sections?.length > 0));
     });
     return () => { cancelled = true; };
-  }, [ref]);
+  }, [cacheKey]);
 
   if (!ref) return null;
   const focusId = [...targetVerseIds(ref)][0] || null;

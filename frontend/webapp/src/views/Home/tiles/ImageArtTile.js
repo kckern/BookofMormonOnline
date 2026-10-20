@@ -23,6 +23,8 @@ import labelOr from "./_ds/labelOr";
  * Verses fed to the tile excerpt: from the anchor verse -1 onward, enough to
  * fill the fixed excerpt box (Sampler.css --art-excerpt-h), which clips the
  * rest with a fade (R3 B2: a 3-verse excerpt ran 99-564px and resized the tile).
+ * The same count is the FLOOR (fillVerses): a one-verse ref is widened with the
+ * verses after it, so the fade always cuts text (R6 art-A1-excerpt-box).
  */
 export const ART_EXCERPT_VERSES = 6;
 
@@ -68,7 +70,7 @@ export default function ImageArtTile({ payload, artIndex = 0 }) {
             {/* the header + "see in context" already navigate — drop the
                 redundant Study button. focusVerses: from the anchor verse -1, not
                 the whole section range (audit H3); the box clips, See in context has the rest. */}
-            <ScriptureExcerpt refText={art.ref} hideStudy refAsPopup highlight={art.title} focusVerses={ART_EXCERPT_VERSES} />
+            <ScriptureExcerpt refText={art.ref} hideStudy refAsPopup highlight={art.title} focusVerses={ART_EXCERPT_VERSES} fillVerses={ART_EXCERPT_VERSES} />
           </div>
         ) : null}
         {to ? <TileDeepLink to={to} always verb="seeInContext" className="imageArtContext" /> : null}

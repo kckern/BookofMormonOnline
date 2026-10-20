@@ -2297,7 +2297,9 @@ html[data-theme="dark"] .faxTileEdition { color: #9a9a9a; }
 .imageArtTile { padding: 0; overflow: hidden; }
 /* title bar + image: one link to /art/:id */
 .imageArtLink { display: block; color: inherit; text-decoration: none; }
-.imageArtFrame { position: relative; display: block; width: 100%; overflow: hidden; background: #e8e6e1; }
+/* R6 A1/F1: 3:4 portrait cap (mediaAspect) AND a height bound, so a full-width
+   tablet tile (771px wide → 1028px at 3:4) never outruns the viewport */
+.imageArtFrame { position: relative; display: block; width: 100%; max-height: 30rem; overflow: clip; background: #e8e6e1; }
 .imageArtFrame img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 25%; display: block; transition: transform 0.35s ease, filter 0.2s ease; }
 .imageArtLink:hover .imageArtFrame img { transform: scale(1.025); }
 html[data-theme="dark"] .imageArtFrame { background: #2c2c2c; }
