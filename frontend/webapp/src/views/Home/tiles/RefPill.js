@@ -62,6 +62,33 @@ export default function RefPill({ refText, openRef, className = "" }) {
   );
 }
 
+// The book a piece names ("1 Nephi 15:25" → "1 Nephi", "Moroni 4–5" → "Moroni"),
+// or null when the piece continues the previous book ("19:15–16").
+const BOOK = /^((?:\d\s+)?[^\d\s;,][^\d;]*?)\s+\d/;
+
+/**
+ * Split a detected citation list ("1 Nephi 15:25; 19:15–16; Jacob 3:9–11") into
+ * its references, each with the full ref it opens (the book carried forward).
+ * Blind r8 commentary-A1: as one nowrap chip such a list ran 465px wide.
+ * Returns null for a single reference.
+ */
+export function splitRefList(text) {
+  const parts = (text || "").split(/\s*;\s*/).filter(Boolean);
+  if (parts.length < 2) return null;
+  let book = null;
+  return parts.map((part) => {
+    const own = BOOK.exec(part)?.[1];
+    if (own) book = own;
+    return { text: part, full: own || !book ? part : `${book} ${part}` };
+  });
+}
+
+const DetectedPill = ({ text, full, contextRef }) => {
+  const target = resolveDetectedRef(full, contextRef);
+  if (!target) return <>{text}</>;
+  return <RefPill refText={text} openRef={target === text ? undefined : target} />;
+};
+
 /**
  * html-react-parser options that turn the scripture-detection pass's
  * anchor (a.scripture_link, wrapping the ref text) (any attribute spelling — the browser
@@ -75,9 +102,28 @@ export const makeRefPillParserOptions = ({ contextRef } = {}) => ({
     if (name !== "a" || !/\bscripture_link\b/.test(cls)) return undefined;
     const ref = children?.[0]?.data;
     if (!ref) return undefined;
-    const target = resolveDetectedRef(ref, contextRef);
-    if (!target) return <>{ref}</>;
-    return <RefPill refText={ref} openRef={target === ref ? undefined : target} />;
+    const list = splitRefList(ref);
+    if (list) {
+      // a run that may wrap between the pills even inside a .refNoBreak span;
+      // each separator stays on its pill's line (never a ";" opening a line)
+      return (
+        <span className="refList">
+          {list.map((p, i) => (
+            <React.Fragment key={i}>
+              {i ? " " : null}
+              {i < list.length - 1 ? (
+                <span className="refNoBreak">
+                  <DetectedPill text={p.text} full={p.full} contextRef={contextRef} />;
+                </span>
+              ) : (
+                <DetectedPill text={p.text} full={p.full} contextRef={contextRef} />
+              )}
+            </React.Fragment>
+          ))}
+        </span>
+      );
+    }
+    return <DetectedPill text={ref} full={ref} contextRef={contextRef} />;
   },
 });
 

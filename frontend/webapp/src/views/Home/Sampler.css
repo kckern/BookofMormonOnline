@@ -829,6 +829,12 @@ html[data-theme="dark"] .commentaryTileTitle { color: #f0f0f0; }
    (blind audit r4 H3). A read-more shows only when actually cut. */
 .commentaryTileExcerpt {
   margin: 0;
+  /* bound to the column (blind r8 commentary-A1): as a flex-start child a wide
+     unbreakable chip grew it past the column and under the cover */
+  align-self: stretch;
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
   font-size: 0.8rem;
   line-height: 1.45;
   color: #555;
@@ -840,6 +846,11 @@ html[data-theme="dark"] .commentaryTileTitle { color: #f0f0f0; }
   overflow: visible;
 }
 .commentaryTileExcerpt p { margin: 0 0 0.4rem; }
+/* a chip wider than the column wraps inside itself rather than overflow */
+.commentaryTileExcerpt .scripture_link { max-width: 100%; white-space: normal; }
+/* a split citation list (RefPill splitRefList) may break between its pills,
+   even inside a .refNoBreak run */
+.sampler .refList { white-space: normal; }
 .commentaryTileExcerpt p:last-child { margin-bottom: 0; }
 /* cut: the last visible line's tail fades out where its TEXT ends
    (--line-end, measured), the same treatment as ExpandableText's fade clamp */
@@ -915,6 +926,14 @@ html[data-theme="dark"] .commentaryTileCover { background: #2c2c2c; border-color
   font-style: italic;
   line-height: 1.3;
   color: var(--tile-meta);
+  /* at most three lines (blind r8 commentary-A3: a long publication name ran
+     6-7 lines, taller than the cover); the full name is the title tooltip */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+  overflow: clip;
 }
 /* center the ref over the cover (the cover fills the aside width; when the ref
    text is wider than the cover it wraps, centered, rather than left-aligning) */

@@ -19,3 +19,14 @@ test("a short first sentence lifts whole and leaves the body", () => {
   expect(headline).toBe("Verse 19 is a promise.");
   expect(rest).toEqual(["It is kept later.", "Next."]);
 });
+
+// Blind r8 commentary-H2: any 20-160 char first sentence became the bold hook,
+// setting a 103-char sentence as a 3-line title. A hook stays short (<= ~70).
+test("a long first sentence is cut to a short hook, the body picking up after it", () => {
+  const S = "Nephi begins a new chapter after closing the previous chapter when the quoted text from Isaiah ended.";
+  const { headline, rest } = liftHeadline([`${S} Then he explains.`]);
+  expect(headline.length).toBeLessThanOrEqual(72);
+  expect(headline.endsWith("…")).toBe(true);
+  expect(rest[0].startsWith("…")).toBe(true);
+  expect(rest[0]).toContain("Isaiah ended.");
+});

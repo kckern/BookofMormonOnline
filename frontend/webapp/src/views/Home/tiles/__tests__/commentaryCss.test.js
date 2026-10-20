@@ -31,3 +31,23 @@ test("the tile's ATV apparatus uses the Scripture serif, never monospace", () =>
 test("a ref pill and its bracket never part at a line break", () => {
   expect(rule(".sampler .refNoBreak")).toMatch(/white-space:\s*nowrap/);
 });
+
+// Blind r8 commentary-A1: the excerpt was a flex-start child of the main column,
+// so a wide unbreakable chip grew it to 465px inside a 233px column and the
+// prose ran under the cover. It is bound to the column; a citation list wraps.
+test("the commentary excerpt can never outgrow its column", () => {
+  const ex = rule(".commentaryTileExcerpt");
+  expect(ex).toMatch(/align-self:\s*stretch/);
+  expect(ex).toMatch(/max-width:\s*100%/);
+  expect(ex).toMatch(/overflow-wrap:\s*anywhere/);
+  expect(rule(".sampler .refList")).toMatch(/white-space:\s*normal/);
+  expect(rule(".commentaryTileExcerpt .scripture_link")).toMatch(/max-width:\s*100%/);
+});
+
+// Blind r8 commentary-A3: a long publication name wrapped into a 6-7 line
+// italic stack in the narrow aside, taller than the cover. Three lines max.
+test("the commentary attribution is clamped to three lines", () => {
+  const src = rule(".commentaryTileSource");
+  expect(src).toMatch(/-webkit-line-clamp:\s*3/);
+  expect(src).toMatch(/overflow:\s*clip/);
+});

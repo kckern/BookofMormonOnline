@@ -74,3 +74,29 @@ test("a spaced cross-chapter range reads closed, like the popup title (audit tex
   render(<RefPill refText="3 Nephi 12:1 – 13:24" />);
   expect(screen.getByRole("button").textContent).toBe("3 Nephi 12:1–13:24");
 });
+
+// Blind r8 commentary-A1: scripture detection hands back a whole citation list
+// as ONE ref ("1 Nephi 15:25; 19:15–16; Jacob 3:9–11; …"); as one nowrap chip
+// it was 465px wide and pushed the commentary excerpt out of its 233px column.
+// A list becomes one pill per reference (book carried forward), inside a run
+// that may wrap between them.
+test("a detected citation list splits into one pill per reference", () => {
+  const LIST = "1 Nephi 15:25; 19:15–16; Jacob 3:9–11; Alma 37:35; 3 Nephi 18:7, 11; Moroni 4–5";
+  const { container } = render(<p>{Parser(`see <a class="scripture_link">${LIST}</a>.`, refPillParserOptions)}</p>);
+  const names = [...container.querySelectorAll("button")].map((b) => b.textContent);
+  expect(names).toEqual(["1 Nephi 15:25", "19:15–16", "Jacob 3:9–11", "Alma 37:35", "3 Nephi 18:7, 11", "Moroni 4–5"]);
+  expect(container.textContent).toBe(`see ${LIST}.`);
+  expect(container.querySelector(".refList")).not.toBeNull();
+  // the "; " separator travels with the pill before it, never opening a line
+  const first = container.querySelector(".refList button").parentElement;
+  expect(first).toHaveClass("refNoBreak");
+  expect(first.textContent).toBe("1 Nephi 15:25;");
+  fireEvent.click(screen.getByRole("button", { name: "19:15–16" }));
+  expect(openScripture.mock.calls.at(-1)[0]).toBe("1 Nephi 19:15–16");
+});
+
+test("a short single ref is not split", () => {
+  const { container } = render(<p>{Parser('<a class="scripture_link">Alma 32:21</a>', refPillParserOptions)}</p>);
+  expect(container.querySelectorAll("button")).toHaveLength(1);
+  expect(container.querySelector(".refList")).toBeNull();
+});

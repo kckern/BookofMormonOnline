@@ -83,22 +83,24 @@ const isBareRef = (s) => {
 };
 /**
  * Lift a hook headline off the first paragraph for a bare-reference title.
- * A short first sentence (20-160 chars) becomes the headline and leaves the
+ * A short first sentence (20-70 chars) becomes the headline and leaves the
  * body. A longer opening is cut at a word near HEADLINE_CUT with "…" and the
  * body picks up where it broke off ("…the rest") — never the same sentence
  * twice (audit commentary-H3: the truncated headline failed a startsWith
  * dedupe, so the whole sentence was printed again under it).
  */
-const HEADLINE_CUT = 90;
+// A hook stays short (blind r8 commentary-H2: a 103-char first sentence set as
+// a 3-line bold title); a longer opening sentence is cut near HEADLINE_CUT.
+const HEADLINE_CUT = 64;
 export const liftHeadline = (paras) => {
   const p = paras[0] || "";
   if (!p) return { headline: "", rest: paras };
-  const m = /^(.{20,160}?[.!?][”"’]?)(\s|$)/.exec(p);
+  const m = /^(.{20,70}?[.!?][”"’]?)(\s|$)/.exec(p);
   if (m) {
     const after = p.slice(m[1].length).trim();
     return { headline: m[1], rest: [after, ...paras.slice(1)].filter(Boolean) };
   }
-  if (p.length <= HEADLINE_CUT + 20) return { headline: p, rest: paras.slice(1) };
+  if (p.length <= HEADLINE_CUT + 8) return { headline: p, rest: paras.slice(1) };
   const head = p.slice(0, HEADLINE_CUT).replace(/\s+\S*$/, "").replace(/[\s,;:–—-]+$/, "");
   const after = p.slice(head.length).replace(/^[\s,;:]+/, "");
   return { headline: `${head}…`, rest: [`…${after}`, ...paras.slice(1)] };
@@ -248,7 +250,7 @@ function CommentaryTileInner({ data }) {
               />
             </Link>
           ) : null}
-          {author ? <div className="commentaryTileSource">{author}</div> : null}
+          {author ? <div className="commentaryTileSource" title={author}>{author}</div> : null}
         </div>
       </div>
       <div className="commentaryTileFoot">
