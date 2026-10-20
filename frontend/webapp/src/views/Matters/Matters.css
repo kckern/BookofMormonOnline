@@ -31,16 +31,28 @@
     font-variant-numeric: tabular-nums;
     vertical-align: middle;
 }
-.mattersGroupClear
+/* Group index breadcrumb (R7 XC3): the entity page's '‹ Matters' way back —
+   black link, gold underline, 44px on touch. */
+.mattersCrumb
+{
+    margin: 0 0 0.25rem;
+    font-size: 0.875rem;
+}
+.mattersCrumb a
 {
     display: inline-block;
-    margin-left: 0.7em;
-    font-size: 0.6em;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    vertical-align: middle;
-    white-space: nowrap;
+    padding: 0.25rem 0;
+    color: #000;
+    text-decoration: underline;
+    text-decoration-color: #c9a24b;
+    text-underline-offset: 3px;
+}
+html[data-theme="dark"] .mattersCrumb a { color: #eee; }
+.mattersCrumb a:focus-visible { outline: 2px solid #c9a24b; outline-offset: 2px; }
+@media (pointer: coarse)
+{
+    .mattersCrumb { margin-top: -0.5rem; }
+    .mattersCrumb a { display: inline-flex; align-items: center; min-height: 44px; padding: 0; }
 }
 
 /* Row-major grid so the verse_id-ascending sort reads left→right, top→bottom.

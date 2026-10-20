@@ -67,3 +67,21 @@ describe("<Matters group>", () => {
     expect(screen.queryByText(/Narrative/)).not.toBeInTheDocument();
   });
 });
+
+// R7 XC3: the group index (the Home tiles' View all) gets the entity page's
+// '‹ Matters' way back above the title, and no second "View all" echoing the
+// tile CTA the reader just pressed.
+describe("<Matters group> return affordance", () => {
+  test("a group shows a '‹ Matters' breadcrumb to the full index above the title", () => {
+    renderGroup("narrative", "/matters/narrative");
+    const nav = screen.getByRole("navigation", { name: "Breadcrumb" });
+    const link = nav.querySelector("a");
+    expect(link).toHaveAttribute("href", "/matters");
+    expect(link.textContent).toMatch(/^‹ /);
+    expect(screen.queryByText(/^View all$/i)).toBeNull();
+  });
+  test("the full index has no breadcrumb", () => {
+    renderGroup(undefined, "/matters");
+    expect(screen.queryByRole("navigation", { name: "Breadcrumb" })).toBeNull();
+  });
+});

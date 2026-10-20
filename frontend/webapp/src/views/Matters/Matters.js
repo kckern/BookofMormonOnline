@@ -183,6 +183,13 @@ function MattersComponent({ group } = {}) {
   return (
     <div className="container noselect" style={{ display: "block" }}>
       <div id="page">
+        {/* a group index is where the Home tiles' View all lands: the entity
+            page's breadcrumb way back, above the fold (R7 XC3) */}
+        {activeGroup && (
+          <nav className="mattersCrumb" aria-label="Breadcrumb">
+            <Link to="/matters">‹ {tr("menu_matters", "Matters")}</Link>
+          </nav>
+        )}
         <h3 className="title lg-4 text-center">
           {label("title_matters")}
           {activeGroup && (
@@ -191,7 +198,6 @@ function MattersComponent({ group } = {}) {
                 {tr(CATEGORY_BY_TAG[activeGroup].key, CATEGORY_BY_TAG[activeGroup].label)}
                 <span className="mattersGroupCount">{filtered.length}</span>
               </span>
-              <Link className="mattersGroupClear" to="/matters">{tr("view_all", "View all")}</Link>
             </>
           )}
         </h3>
