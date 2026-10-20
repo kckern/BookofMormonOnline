@@ -128,7 +128,7 @@ export default function XrelSection({ xrels, showEmpty, noHeading }) {
         )}
         <div className="xrel-text">
           <span className={clickable ? "xrel-name nameLink" : "xrel-name xrel-tag"}>
-          {clickable ? x.dst_name : tagLabel(x.dst_name)}
+          {clickable && x.dst_name && x.dst_name !== x.dst_slug ? x.dst_name : tagLabel(x.dst_name || x.dst_slug)}
         </span>
           {x.note && <div className="xrel-note">{x.note}</div>}
         </div>

@@ -205,3 +205,11 @@ describe("XrelSection", () => {
     expect(screen.queryByRole("button", { name: /show all/i })).toBeNull();
   });
 });
+
+// R8 matters narrative-D5: group endpoints carry the slug as dst_name
+// ("Worn by: daughters-of-zion"); the card must show a readable name.
+test("a group card whose name is its slug shows a humanized name, never the slug", () => {
+  render(<XrelSection xrels={[{ rel: "worn-by", dst_type: "group", dst_slug: "daughters-of-zion", dst_name: "daughters-of-zion", direction: "src" }]} />);
+  expect(screen.getByText("Daughters of Zion")).toBeInTheDocument();
+  expect(screen.queryByText("daughters-of-zion")).toBeNull();
+});

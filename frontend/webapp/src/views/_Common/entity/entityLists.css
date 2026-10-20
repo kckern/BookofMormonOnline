@@ -16,6 +16,12 @@ button.ppref {
   color: #000;
   text-align: left;
   cursor: pointer;
+  /* UA buttons are nowrap: one long reference forced the matter page to a
+     745px layout viewport on a 390px phone (R8 matters concept-D5). */
+  white-space: normal;
+  overflow-wrap: anywhere;
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* "Show all N" under a capped list: a gold-underlined text control. */
