@@ -16,6 +16,8 @@ Playwright scripts used for the Home/Discover tile audit
 | `pagepass.mjs` | Page-level pass. Covers cold/warm CLS timeline, infinite scroll, Back, tab round-trip, resample, and forced batch failure. Writes `pagepass.json` and screenshots to `OUT`. |
 | `verify-back.mjs` | One Back from a tile link restores Home with the same tiles and scroll. `VP=phone`, plus `SEL` (CSS selector of links to pick from). |
 | `verify-back-edges.mjs` | Back edge cases from tiles deep in the feed: keyboard Enter, tile top above the fold, three chained cycles, link → in-destination link → Back ×2. Prints Δ of the clicked link (`TOL`, default 40px). `VP`, `DEEP=1` (infinite-batch tiles only), `PRESCROLL`, `DEBUG=1`. |
+| `prod-smoke.mjs` | Prod smoke (desktop + phone): Home renders, phone single column, CLS < 0.1, media variants served, one Back from a tile link, guest `/home/user`, `/matters/narrative`, no page errors. `BASE` defaults to prod. |
+| `prod-soak.sh` | Read-only prod log summary (NPM telemetry 5xx, active-container error lines, container health). Run via `scripts/with-prod-secrets.sh ssh -- scripts/home-audit/prod-soak.sh [hours]`. |
 | `verify-feedend.mjs` | Blocks infinite batches. Expects the end-of-feed terminus, then checks that Retry loads. |
 | `rubric-blind.md` | The rubric alone (scoring, criteria, protocol), with no results. This is the only audit document a blind reviewer gets. |
 
@@ -26,3 +28,5 @@ Run: `node scripts/home-audit/verify-back.mjs` (env: `BASE`, `VP`, `SEL`, `OUT`)
 - Captures go to `docs/audits/home-discover-audit-2026-10-15/`, which is **gitignored**. Never commit screenshots.
 - `.tile-community` and message rows are masked in every capture. Don't screenshot the Community tab or user pages.
 - Never quote real user names, messages or note text in findings.
+
+`scripts/with-prod-secrets.sh aws|ssh -- <cmd>` runs a command with prod credentials from local Infisical (nothing printed); it needs `/home/bom/infisical/.prod-project-id` locally (never committed).
