@@ -35,12 +35,19 @@ export const parseTeaser = (html) => {
 export const displayAuthor = (a, { datedOnly = false } = {}) => {
   const raw = String(a || "").trim();
   const s = raw
+    // parenthesised life dates anywhere: "Raumer, Fredrich von (1781-1873)"
+    .replace(/\s*\([^)]*\d{3,4}[^)]*\)/g, "")
     .replace(/,?\s*(?:b\.|d\.|fl\.)\s*\d{3,4}\??\s*$/i, "")
-    .replace(/,?\s*\d{3,4}\s*[-–]\s*(?:\d{3,4})?\s*$/, "")
+    // trailing life dates, incl. catalog hedges: "1789-1849", "1875 or 6-1853", "1801-"
+    .replace(/,?\s*(?:ca\.\s*)?\d{3,4}\??(?:\s*or\s*\d{1,4})?\s*[-–]\s*(?:ca\.\s*)?(?:\d{1,4}\??(?:\s*or\s*\d{1,4})?)?\s*$/i, "")
     .trim();
   if (datedOnly && s === raw) return raw;
   const m = /^([^,]+),\s*([^,]+)$/.exec(s);
-  return m ? `${m[2].trim()} ${m[1].trim()}` : s;
+  if (!m) return s;
+  const flipped = `${m[2].trim()} ${m[1].trim()}`;
+  // a fragment we don't understand left digits behind — the raw form is clearer
+  // than a scrambled one ("1875 or 6 Tyler Parsons")
+  return /\d/.test(flipped) ? raw : flipped;
 };
 
 // The full bibliographic citation (a whole 1834 long title) dominated the card
@@ -70,13 +77,20 @@ export default function ArchiveDocTile({ data, heading, headingTo, to, images = 
             ) : null}
             {meta ? <div className="historyTileMeta">{meta}</div> : null}
             {hasQuote ? (
+              // clamped like the witness / Joseph Smith quotes: an 88-word quote
+              // ran 19 lines on phone (blind audit history-H3)
+              // the clamp sits INSIDE the quote frame, so its line unit is the
+              // quote's own serif line and the gold-ruled box stays whole
               <blockquote className="historyTileQuote">
+                <ExpandableText className="historyTileQuoteWrap" lines={6} fade persistKey={data.slug ? `history:${data.slug}` : undefined}>
                 {data.quote_speaker && !data.quote_is_witness_voice ? (
                   <span className="historyTileQuoteBy prefix">{data.quote_speaker}:</span>
                 ) : null}{" "}
                 &ldquo;{data.money_quote
                   ? renderMoneyQuote(data.money_quote, data.mini_quote)
                   : data.mini_quote}&rdquo;
+                </ExpandableText>
+                {/* attribution outside the clamp: always visible */}
                 {data.quote_speaker && data.quote_is_witness_voice ? (
                   <cite className="historyTileQuoteBy">&mdash; {data.quote_speaker}</cite>
                 ) : null}

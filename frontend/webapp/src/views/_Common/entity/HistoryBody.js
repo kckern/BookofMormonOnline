@@ -60,10 +60,14 @@ export default function HistoryBody({ data }) {
   const pageCount = Number(doc.pages) || 0;
   // Reception transcripts open with the citation as their first paragraph;
   // the citation already renders above, so drop that leading repeat.
-  const citationStripped = strip(doc.citation);
+  // Compared letters-and-digits only, entities dropped: the transcript copy is
+  // often typed slightly differently ("10 February1838", &rsquo; vs ’) and
+  // printed twice in a row (blind audit history-D5).
+  const compact = (h) => String(h || "").replace(/<[^>]+>/g, "").replace(/&[a-z0-9#]+;/gi, "").replace(/[^a-z0-9]+/gi, "").toLowerCase();
+  const citationCompact = compact(doc.citation);
   let transcript = doc.transcript || "";
   const firstPara = /^\s*<p[^>]*>([\s\S]*?)<\/p>\s*/i.exec(transcript);
-  if (citationStripped && firstPara && strip(firstPara[1]) === citationStripped) {
+  if (citationCompact && firstPara && compact(firstPara[1]) === citationCompact) {
     transcript = transcript.slice(firstPara[0].length);
   }
 

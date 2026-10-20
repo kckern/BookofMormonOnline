@@ -49,9 +49,11 @@ describe("FaxTile", () => {
     expect(pill.closest("a")).toBeNull();
     fireEvent.click(pill);
     expect(openScripture).toHaveBeenCalledWith("1 Nephi 3:1-7");
-    // each page has exactly one link, into the viewer at that folio
+    // each page has exactly one link, into the viewer at that SCAN: the viewer's
+    // route segment is the image-file number (faxGeometry.buildLeafIndex), so
+    // linking the index folio landed 9 leaves off for 1981 (blind audit fax-D4)
     const pageLinks = [...container.querySelectorAll("a.faxTilePageLink")];
-    expect(pageLinks.map((a) => a.getAttribute("href"))).toEqual(["/fax/1883/12", "/fax/1883/13"]);
+    expect(pageLinks.map((a) => a.getAttribute("href"))).toEqual(["/fax/1883/14", "/fax/1883/15"]);
     expect(container.querySelector("a .scripture_link")).toBeNull();
   });
 
@@ -60,8 +62,9 @@ describe("FaxTile", () => {
     const img = container.querySelector("a.faxTilePageLink img");
     expect(img).toHaveClass("tileImage");
     expect(img.getAttribute("src")).toBe("https://media.test/fax/thumb/1883/014.jpg");
-    expect(img.getAttribute("alt")).toBe("1883 Liverpool Edition, page 12");
-    expect(container.querySelector(".faxPageBarNum")).toHaveTextContent("p. 12");
+    // label matches the page the thumbnail and the viewer show (fax-D4)
+    expect(img.getAttribute("alt")).toBe("1883 Liverpool Edition, page 14");
+    expect(container.querySelector(".faxPageBarNum")).toHaveTextContent("p. 14");
     expect(container.querySelector(".faxTileMeta")).toHaveTextContent("568 pages");
   });
 

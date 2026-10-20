@@ -241,6 +241,8 @@ export type Fax = {
 
 export type FaxEdition = {
   __typename?: 'FaxEdition';
+  /** Scan image-file number: what the viewer routes /fax/<version>/<n> and labels "Page n" by. */
+  imageFile?: Maybe<Scalars['Int']['output']>;
   page: Scalars['Int']['output'];
   title?: Maybe<Scalars['String']['output']>;
   version: Scalars['String']['output'];
@@ -2780,6 +2782,7 @@ export type FaxResolvers<ContextType = AppContext, ParentType extends ResolversP
 };
 
 export type FaxEditionResolvers<ContextType = AppContext, ParentType extends ResolversParentTypes['FaxEdition'] = ResolversParentTypes['FaxEdition']> = {
+  imageFile?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   page?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   version?: Resolver<ResolversTypes['String'], ParentType, ContextType>;

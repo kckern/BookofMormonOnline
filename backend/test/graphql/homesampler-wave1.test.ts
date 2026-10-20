@@ -217,6 +217,19 @@ describe('faxVerse editions', () => {
     expect(fv.selector).toMatch(/^([a-z0-9.-]+|ids\/[0-9-]+)$/); // canonical render selector
     for (const e of fv.editions) expect(e.page).toBeGreaterThan(0);
   });
+
+  // blind audit fax-D4: the viewer routes and labels by the scan image-file
+  // number; the index page is offset from it (1981/2013: -9), so each edition
+  // carries imageFile = page + that edition's offset.
+  it('each edition carries the scan number the viewer uses (imageFile = page + offset)', async () => {
+    type FV = { faxVerse: { editions: { version: string; page: number; imageFile: number | null }[] } | null };
+    const d = await exec<FV>('faxVerse { editions { version page imageFile } }', 7);
+    const { imageScanMeta } = await import('../../src/media/fax/resolve.js');
+    for (const e of d.faxVerse!.editions) {
+      const { offset } = await imageScanMeta(e.version);
+      expect(e.imageFile).toBe(e.page + offset);
+    }
+  });
 });
 
 // ─── mapstory ─────────────────────────────────────────────────────────────────

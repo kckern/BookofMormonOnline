@@ -22,8 +22,9 @@
  * only journeys of 3+ moves (story audit H1). v5 = notes skip textual-variant
  * (sigla/ATV) rows (scripture R3 notes-H1). v6 = commentaries require a host
  * text block, so their /commentary/:id deeplink resolves (scripture r4 C4).
+ * v7 = faxVerse editions carry imageFile, the viewer's scan number (archive r4 D4).
  */
-export const SAMPLER_KEY_PREFIX = 'homesampler:v6:';
+export const SAMPLER_KEY_PREFIX = 'homesampler:v7:';
 
 /** Front-door window key ({ bucket }) or explicit-seed key ({ seed }). */
 export const samplerCacheKey = (lang: string, at: { bucket: number } | { seed: number }): string =>

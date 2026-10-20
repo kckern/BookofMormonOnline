@@ -46,6 +46,9 @@ const refSlug = (ref) => (ref || "").replace(/[ :]+/g, ".").toLowerCase();
 export default function FaxVerseTile({ data }) {
   // bumped as crops load, so cropBox swaps the placeholder for the real box
   const [, setLoaded] = React.useState(0);
+  // editions whose crop failed (render 502 etc.): their rows drop out and the
+  // eyebrow counts only what rendered (blind audit faxVerse-B4)
+  const [failed, setFailed] = React.useState(() => new Set());
   if (!data || !data.selector) return null;
 
   // Prefer the editions list; fall back to a single row from legacy fields.
@@ -57,24 +60,23 @@ export default function FaxVerseTile({ data }) {
       : []
   ).filter((ed) => ed?.version);
   if (!editions.length) return null;
+  const shown = editions.filter((ed) => !failed.has(ed.version));
 
   const selector = data.selector;
   const slug = refSlug(data.ref);
-  const viewerPath = (ed) => (slug ? `/fax/${ed.version}/${slug}` : `/fax/${ed.version}/${ed.page}`);
+  const viewerPath = (ed) => (slug ? `/fax/${ed.version}/${slug}` : `/fax/${ed.version}/${ed.imageFile ?? ed.page}`);
   const cropUrl = (ed, w) => `${renderBaseUrl}/fax/render/${ed.version}/crop/w${w}/${selector}.jpg`;
 
-  const hideRow = (e) => {
-    const row = e.target.closest(".faxEditionRow");
-    if (row) row.style.display = "none";
-  };
+  const hideRow = (version) => () =>
+    setFailed((f) => (f.has(version) ? f : new Set(f).add(version)));
 
   return (
     <div className="samplerTileInner faxVerseTile">
       {/* its own name: the Fax tile shares the 'Facsimiles' family (blind audit faxVerse-H2) */}
       <h3 className="tileHeading">
         <Link to="/fax">
-          {label("facsimiles")} · {editions.length > 1
-            ? labelOr("one_verse_editions", "One verse, $1 editions", [editions.length])
+          {label("facsimiles")} · {shown.length > 1
+            ? labelOr("one_verse_editions", "One verse, $1 editions", [shown.length])
             : labelOr("one_verse", "One verse")}
         </Link>
       </h3>
@@ -88,14 +90,15 @@ export default function FaxVerseTile({ data }) {
 
       {/* Facsimiles on bottom */}
       <div className="faxVerseEditions">
-        {editions.map((ed) => {
+        {shown.map((ed) => {
           const name = shortEdition(ed.title) || ed.version;
           return (
             <Link key={ed.version} to={viewerPath(ed)} className="faxEditionRow" title={ed.title || undefined}>
               <span className="faxEditionRail">
                 <span className="faxEditionRailTitle">{name}</span>
-                {ed.page != null ? (
-                  <span className="faxEditionRailPage">{labelOr("page_n", "p. $1", [ed.page])}</span>
+                {(ed.imageFile ?? ed.page) != null ? (
+                  // the scan number — what the viewer labels "Page N" (fax-D4)
+                  <span className="faxEditionRailPage">{labelOr("page_n", "p. $1", [ed.imageFile ?? ed.page])}</span>
                 ) : null}
               </span>
               <span className="faxEditionCropWrap">
@@ -107,14 +110,14 @@ export default function FaxVerseTile({ data }) {
                   style={cropBox(cropUrl(ed, CROP_WIDTH))}
                   onLoad={() => setLoaded((n) => n + 1)}
                   alt={data.ref || ""}
-                  onError={hideRow}
+                  onError={hideRow(ed.version)}
                 />
               </span>
             </Link>
           );
         })}
       </div>
-      <TileDeepLink to={readPath(data.ref) || viewerPath(editions[0])} always verb="seeInContext" />
+      <TileDeepLink to={readPath(data.ref) || viewerPath(shown[0] || editions[0])} always verb="seeInContext" />
     </div>
   );
 }

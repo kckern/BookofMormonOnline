@@ -1883,7 +1883,13 @@ html[data-theme="dark"] .faxTilePage img { border-color: #444; background: #2c2c
 .sampler .faxTilePage .faxPageBarRef:hover { background: rgba(201, 162, 75, 0.14); color: #000; }
 html[data-theme="dark"] .sampler .faxTilePage .faxPageBarRef { border-color: #444; background: rgba(255, 255, 255, 0.05); color: #d6d6d6; }
 @media (pointer: coarse) {
-  .sampler .faxTilePage .faxPageBarRef { min-height: 44px; display: flex; align-items: center; justify-content: center; }
+  /* 44px tall but still a BLOCK: display:flex disabled the ellipsis and the
+     range was cut at the edge ("…Mosiah 1:") — blind audit fax-A1. Centre the
+     single line with padding instead. */
+  .sampler .faxTilePage .faxPageBarRef {
+    min-height: 44px;
+    padding-block: calc((44px - 1px - 1.3em) / 2);
+  }
 }
 /* page number kept as a small overlay, bottom-right of the image */
 .faxPageBarNum {
@@ -3456,6 +3462,12 @@ html[data-theme="dark"] .faxVerseTile .read-content .read-block { background: tr
     left: -0.4rem;
     right: -0.4rem;
   }
+  /* fax / history: the extension reached 32px below the eyebrow and covered the
+     title link right under it (a tap on the title opened the index — blind
+     audit fax-C1/history-C1). The heading holds that 32px itself, so the
+     title starts where the eyebrow's hit ends. */
+  .faxTile > .tileHeading,
+  .historyTile > .tileHeading { min-height: calc(44px - 12px); margin-bottom: 0.2rem; }
 }
 
 /* Analysis tiles (Biblical language / Chiasmus / Art) — blind audit fixes.

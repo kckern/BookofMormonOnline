@@ -205,7 +205,8 @@ const routes = [
       component: Witnesses,
   },
   {
-      path: "/history/joseph-smith",
+      // /:source opens that statement over the page (as witnesses/:w/:source)
+      path: "/history/joseph-smith/:source?",
       component: JosephSmith,
   },
   {

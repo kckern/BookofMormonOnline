@@ -113,6 +113,8 @@ type FaxEdition {
   version: String!
   title: String
   page: Int!
+  "Scan image-file number: what the viewer routes /fax/<version>/<n> and labels \"Page n\" by."
+  imageFile: Int
 }
 
 type FaxVersePage {

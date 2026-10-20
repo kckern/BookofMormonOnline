@@ -122,7 +122,7 @@ describe("archive tile wrappers", () => {
     const { container } = wrap(<JosephSmithTile data={doc} />);
     expect(container.querySelector(".tileHeading a")).toHaveAttribute("href", "/history/joseph-smith");
     const cta = container.querySelector("a.tileMoreLink");
-    expect(cta).toHaveAttribute("href", "/history/d1");
+    expect(cta).toHaveAttribute("href", "/history/joseph-smith/d1");
     expect(cta).toHaveTextContent("See in context");
     const portrait = container.querySelector("a.witnessLeft");
     expect(portrait).toHaveAttribute("tabindex", "-1");

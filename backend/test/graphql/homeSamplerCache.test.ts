@@ -197,10 +197,10 @@ describe('getOrCompute', () => {
 import { SAMPLER_KEY_PREFIX, samplerCacheKey } from '../../src/graphql/homeSamplerCache.js';
 describe('sampler cache key', () => {
   it('is versioned past the 17-per-matters-group payload (v2)', () => {
-    expect(SAMPLER_KEY_PREFIX).toBe('homesampler:v6:');
+    expect(SAMPLER_KEY_PREFIX).toBe('homesampler:v7:');
   });
   it('builds window and seed keys under the one prefix', () => {
-    expect(samplerCacheKey('en', { bucket: 42 })).toBe('homesampler:v6:en:42');
-    expect(samplerCacheKey('ko', { seed: 7 })).toBe('homesampler:v6:ko:seed:7');
+    expect(samplerCacheKey('en', { bucket: 42 })).toBe('homesampler:v7:en:42');
+    expect(samplerCacheKey('ko', { seed: 7 })).toBe('homesampler:v7:ko:seed:7');
   });
 });

@@ -1,5 +1,6 @@
 /** @format */
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
 import moment from "moment";
 import Masonry from "react-masonry-css";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
@@ -82,7 +83,9 @@ export default function JosephSmith() {
     return sources.filter((s) => matchesYearMonth(s, selectedYearMonth));
   }, [sources, selectedYearMonth]);
 
-  const openSource = (doc) => {
+  // replaceSlug: the auto-open on a /:source deep link replaces that URL rather
+  // than pushing a second entry, so one Back returns to where the link was tapped.
+  const openSource = (doc, { replaceSlug = false } = {}) => {
     if (!doc) return;
     appController.functions.setPopUp({
       type: "history",
@@ -90,8 +93,24 @@ export default function JosephSmith() {
       popUpData: doc,
       underSlug: "history/joseph-smith",
       vhtop: 10,
+      ...(replaceSlug ? { replaceSlug: true } : {}),
     });
   };
+
+  // /history/joseph-smith/<slug> (the Home tile's CTA) opens that statement
+  // over the page — the witness route's mechanism. Once per slug: setPopUp
+  // hands consumers a new appController, which would otherwise re-fire this.
+  const { source: sourceSlug } = useParams();
+  const autoOpened = useRef(null);
+  useEffect(() => {
+    if (!sourceSlug || !sources?.length || !appController) return;
+    if (autoOpened.current === sourceSlug) return;
+    const doc = sources.find((s) => s.slug === sourceSlug);
+    if (!doc) return;
+    autoOpened.current = sourceSlug;
+    openSource(doc, { replaceSlug: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sourceSlug, sources, appController]);
 
   const ageIn1829 = moment("1829-06-28").diff(moment(JOSEPH.birthday), "years");
 

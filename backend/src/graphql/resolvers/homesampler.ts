@@ -100,9 +100,10 @@ const sampleFaxPages = async (ctx: AppContext, seed: number) => {
     const start = seed % rows.length;
     const picks = [rows[start], rows[(start + 1) % rows.length]]
       .filter((r, i, a) => r && a.findIndex((x) => x?.page === r.page) === i);
-    // `page` is the printed folio (bom_xtras_fax_index.page, the canonical route
-    // identity). The thumbnail asset is keyed by the scan image-file number, which
-    // differs by the per-edition offset: imageFile = folio + offset.
+    // `page` is bom_xtras_fax_index.page (the index's own numbering). The scan
+    // image-file number differs by the per-edition offset (imageFile = page +
+    // offset) and is what the thumbnail asset AND the viewer route (/fax/slug/N,
+    // "Page N") are keyed by — the tile links and labels by imageFile.
     const { offset } = await imageScanMeta(String(fax.slug));
     return picks.map((r) => ({
       page: Number(r!.page),
@@ -288,10 +289,14 @@ const sampleFaxVerse = async (ctx: AppContext, seed: number) => {
     ...edRows.filter((e) => String(e.version) === String(r.version)),
     ...edRows.filter((e) => String(e.version) !== String(r.version)),
   ].slice(0, 4);
-  const editions = ordered.map((e) => ({
+  // imageFile: the scan number the viewer routes and labels by ("Page N");
+  // the index page is offset from it per edition (1981/2013: −9).
+  const offsets = await Promise.all(ordered.map((e) => imageScanMeta(String(e.version)).then((m) => m.offset)));
+  const editions = ordered.map((e, i) => ({
     version: String(e.version),
     title: e.title ?? null,
     page: Number(e.page),
+    imageFile: Number(e.page) + (offsets[i] || 0),
   }));
 
   return {

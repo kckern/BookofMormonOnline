@@ -17,7 +17,12 @@ const PAGES_GAP_REM = 0.4;
 // leaf, w/h). Once a page has loaded this session its real aspect is reused,
 // so a remount on Back has its final height at once (blind audit fax-B1/XC2).
 const DEFAULT_PAGE_ASPECT = 0.64;
-const thumbPath = (slug, p, format) => `fax/thumb/${slug}/${String(p.imageFile ?? p.page).padStart(3, "0")}.${format}`;
+// The scan image-file number: the thumbnail asset key AND the viewer's route
+// segment (faxGeometry.buildLeafIndex — "/fax/{slug}/N opens scan N", labelled
+// "Page N"). The index's `page` is offset from it per edition (1981: −9), so it
+// must never reach the link or the "p. N" label (blind audit fax-D4).
+const scanOf = (p) => p.imageFile ?? p.page;
+const thumbPath = (slug, p, format) => `fax/thumb/${slug}/${String(scanOf(p)).padStart(3, "0")}.${format}`;
 const learnedAspect = (path) => {
   const s = knownSize(path);
   return s ? s.w / s.h : null;
@@ -68,8 +73,8 @@ export default function FaxTile({ data, payload }) {
       {pages.length ? (
         <div className="faxTilePages" style={rowStyle}>
           {pages.map((p) => {
-            // Thumbnail is keyed by the scan image-file number; the deep-link and
-            // the "p. N" label stay on p.page (the printed folio, canonical route id).
+            // Thumbnail, deep-link and "p. N" label all use the scan number, so
+            // the tile, its label and the viewer show the same leaf.
             return (
               <div
                 key={p.page}
@@ -77,12 +82,12 @@ export default function FaxTile({ data, payload }) {
                 style={{ flexGrow: aspectOf(p) }}
               >
                 {p.ref ? <RefPill refText={p.ref} className="faxPageBarRef" /> : null}
-                <Link to={`${to}/${p.page}`} className="faxTilePageLink">
+                <Link to={`${to}/${scanOf(p)}`} className="faxTilePageLink">
                   <TileImage
                     path={thumbPath(data.slug, p, format)}
                     aspect={String(aspectOf(p))}
                     remember
-                    alt={labelOr("x_page_n", "$1, page $2", [title, p.page])}
+                    alt={labelOr("x_page_n", "$1, page $2", [title, scanOf(p)])}
                     onLoad={(e) => {
                       const { naturalWidth: w, naturalHeight: h } = e.target;
                       if (w && h) setAspects((a) => (a[p.page] ? a : { ...a, [p.page]: w / h }));
@@ -90,7 +95,7 @@ export default function FaxTile({ data, payload }) {
                     onError={(e) => (e.target.closest(".faxTilePage").style.display = "none")}
                   />
                   {/* page number kept as a small overlay, bottom-right */}
-                  <span className="faxPageBarNum" aria-hidden="true">{labelOr("page_n", "p. $1", [p.page])}</span>
+                  <span className="faxPageBarNum" aria-hidden="true">{labelOr("page_n", "p. $1", [scanOf(p)])}</span>
                 </Link>
               </div>
             );

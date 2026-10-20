@@ -19,8 +19,8 @@ const INDEX = "/history/joseph-smith";
  * account names its reporter as a meta line above the quote. A long quote
  * clamps with a reversible Layer-1 reveal.
  *
- * Destinations: the eyebrow → the statements page; the CTA → the featured
- * document itself. The portrait is a mouse shortcut to the statements page
+ * Destinations: the eyebrow → the statements page; the CTA → the statements
+ * page with the featured statement opened (/history/joseph-smith/<slug>). The portrait is a mouse shortcut to the statements page
  * (tabIndex -1: the eyebrow already is that tab stop).
  * A "JS" monogram stands in if the portrait fails to load.
  */
@@ -33,7 +33,9 @@ export default function JosephSmithTile({ data }) {
     [data.year, data.document].filter(Boolean).join(" · ") ||
     (data.citation ? clampWords(flatten(data.citation), 18) : null);
   const reporter = hasQuote && data.quote_speaker && !data.quote_is_witness_voice ? data.quote_speaker : null;
-  const to = data.slug ? `/history/${data.slug}` : INDEX;
+  // the statement opened over the Joseph Smith page (portrait, name, the other
+  // statements) — the same mechanism as the witness tile (blind audit josephSmith-C4)
+  const to = data.slug ? `${INDEX}/${data.slug}` : INDEX;
   return (
     <RevealProvider>
       <div className="samplerTileInner witnessTile josephSmithTile">
@@ -55,7 +57,7 @@ export default function JosephSmithTile({ data }) {
           <span className="witnessBody">
             {reporter ? <span className="witnessSpeaker">{reporter}:</span> : null}
             {hasQuote || lead ? (
-              <ExpandableText className="witnessStatementWrap" lines={4} persistKey={data.slug ? `josephSmith:${data.slug}` : undefined}>
+              <ExpandableText className="witnessStatementWrap" lines={4} fade persistKey={data.slug ? `josephSmith:${data.slug}` : undefined}>
                 <span className="witnessStatement">
                   {hasQuote ? (
                     <>

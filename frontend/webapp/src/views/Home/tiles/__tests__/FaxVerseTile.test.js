@@ -93,12 +93,12 @@ describe("FaxVerseTile", () => {
     expect(screen.getByRole("link", { name: "See in context" }).getAttribute("href")).toBe("/fax/1866/3");
   });
 
-  test("onError hides the failing edition row", () => {
+  test("onError drops the failing edition row", () => {
     const { container } = renderTile(data);
     const img = container.querySelector("img.faxEditionCrop");
     const row = img.closest("a");
     fireEvent.error(img);
-    expect(row.style.display).toBe("none");
+    expect(row).not.toBeInTheDocument();
   });
 });
 

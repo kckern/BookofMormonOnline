@@ -101,7 +101,7 @@ export default function WitnessTile({ data }) {
           </Link>
           <span className="witnessBody">
             {reporter ? <span className="witnessSpeaker">{reporter}:</span> : null}
-            <ExpandableText className="witnessStatementWrap" lines={4} persistKey={w.slug ? `witness:${w.slug}` : undefined}>
+            <ExpandableText className="witnessStatementWrap" lines={4} fade persistKey={w.slug ? `witness:${w.slug}` : undefined}>
               <span className="witnessStatement">&ldquo;{withBrackets(quote)}&rdquo;</span>
             </ExpandableText>
             {source ? <span className="witnessSource">{inlineMarkdown(source)}</span> : null}
