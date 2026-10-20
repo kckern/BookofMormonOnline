@@ -91,7 +91,7 @@ html[data-theme="dark"] .samplerResample:hover { color: #fff; border-color: #999
   gap: 0.7rem;
 }
 /* programmatic scrolls (Show less, focus) align below the fixed heading-bar */
-.samplerSingle .tile { flex: 0 0 auto; scroll-margin-top: calc(60px + 0.75rem); }
+.samplerSingle .tile { flex: 0 0 auto; scroll-margin-top: 0.25rem; } /* + html scroll-padding (60px bar) */
 .tile.boundedTile { flex-direction: column; }
 .samplerSingle .tile-narration.boundedTile:not(.revealed),
 .samplerSingle .tile-contents.boundedTile:not(.revealed) { max-height: 24rem; }

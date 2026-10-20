@@ -2,6 +2,7 @@ import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import { useLegacyParams } from "src/models/routeParams";
 import "./Read.scss";
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { landTarget } from "src/views/_Common/landTarget";
 import BoMOnlineAPI from "../../models/BoMOnlineAPI";
 import { label } from "../../models/Utils";
 
@@ -490,6 +491,8 @@ export default function ReadScripture() {
     // Auto-scroll to highlighted verse - debounced to prevent flickering
     // ---------------------------------------------------------
     const debouncedHighlightedVerses = useDebounce(highlightedVerses, 300);
+    const landStopRef = useRef(null);
+    useEffect(() => () => landStopRef.current?.(), []);
     
     useEffect(() => {
         if (!debouncedHighlightedVerses?.length || isContentLoading) return;
@@ -510,8 +513,19 @@ export default function ReadScripture() {
             // screens below its heading — then center the verse itself.
             const fits = section &&
                 verseElement.getBoundingClientRect().top - section.getBoundingClientRect().top <= window.innerHeight * 0.45;
-            if (fits) section.scrollIntoView({ behavior: "smooth", block: "start" });
-            else verseElement.scrollIntoView({ behavior: "smooth", block: "center" });
+            // landTarget keeps re-landing while the chapter is still growing
+            // (a first scroll that clamped at the document end left Helaman
+            // 5:50 below the fold — R6 notes-D4); html scroll-padding clears
+            // the fixed header and phone bottom nav.
+            const verseId = maxVerse;
+            landStopRef.current?.();
+            landStopRef.current = landTarget(
+                () => {
+                    const v = findVerseElement(verseId);
+                    return fits ? v?.closest(".read-section") || v : v;
+                },
+                { block: fits ? "start" : "center", behavior: "smooth" },
+            );
         }
     }, [debouncedHighlightedVerses, isContentLoading]);
 

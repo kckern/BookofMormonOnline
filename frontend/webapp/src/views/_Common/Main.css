@@ -8,6 +8,14 @@ html {
        scroll container and breaks the body.noscroll scroll lock used by
        StudyGroupBar.js. */
     scrollbar-gutter: stable;
+    /* Fixed chrome is reserved on the ROOT scroller, once (systemic D4): every
+       scrollIntoView, #anchor, verse landing and keyboard focus scroll clears
+       the fixed 60px .heading-bar (all widths) — targets never add it again. */
+    scroll-padding-top: calc(60px + 0.5rem);
+}
+@media only screen and (max-width: 900px) {
+    /* …and the 4rem .bottom-nav (BottomNav.css, shown at <=900px) */
+    html { scroll-padding-bottom: calc(4rem + 0.5rem); }
 }
 
 .card

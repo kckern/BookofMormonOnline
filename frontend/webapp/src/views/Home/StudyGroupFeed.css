@@ -55,7 +55,4 @@
   scroll-margin-top: 12px;
   box-shadow: 0 0 0 2px #c9a24b;
 }
-@media (max-width: 767.98px) {
-  .homeFeed.homeFeedTarget,
-  .commentThreadItem.homeFeedTarget { scroll-margin-top: 72px; }
-}
+/* (the mobile top bar is reserved by html scroll-padding — Main.css) */
