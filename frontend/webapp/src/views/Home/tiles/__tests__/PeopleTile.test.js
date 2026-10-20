@@ -71,7 +71,7 @@ describe("PeopleTile: CTA vocabulary", () => {
     renderIn(<PeopleTile data={sample()} payload={{ peopleCount: 435 }} />);
     const shown = 1 + document.querySelectorAll(".peopleTile .peopleFaceCard:not(.viewAllCard)").length;
     expect(shown).toBe(10);
-    expect(document.querySelector(".peopleTile .viewAllCard").textContent).toMatch(/^\+425\b/);
+    expect(document.querySelector(".peopleTile .viewAllCard").textContent).toMatch(/\+425 more/);
   });
 });
 
@@ -299,5 +299,55 @@ describe("PeopleTile skeleton (audit B1)", () => {
     const px = parseInt(skeletonHeight("tile-people", true), 10);
     expect(px).toBeGreaterThanOrEqual(850);
     expect(px).toBeLessThanOrEqual(890);
+  });
+});
+
+describe("PeopleTile: blind R7 fixes", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const css = fs.readFileSync(path.resolve(__dirname, "../../Sampler.css"), "utf8");
+  const coarse = css.split("@media (pointer: coarse)").slice(1).map((b) => b.split("\n}\n")[0]).join("\n");
+  const body = (sel) => {
+    const re = new RegExp(sel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\s*\\{([^}]*)\\}", "g");
+    return [...coarse.matchAll(re)].map((m) => m[1]).join(";");
+  };
+
+  test("C1: a bio chip's own box paints above every neighbour's extended hit (no tap steals)", () => {
+    // the chip makes no stacking context, so its pseudo layers interleave with its neighbours'
+    expect(body(".peopleFeatureDesc .scripture_link")).not.toMatch(/z-index/);
+    expect(body(".peopleFeatureDesc .scripture_link::after")).toMatch(/z-index:\s*1\b/);
+    const own = body(".peopleFeatureDesc .scripture_link::before");
+    expect(own).toMatch(/content:\s*""/);
+    expect(own).toMatch(/inset:\s*-1px/);
+    expect(own).toMatch(/z-index:\s*2\b/);
+  });
+
+  test("C1: the touch bio gets a taller line pitch so stacked chips keep a usable hit", () => {
+    const lh = body(".peopleFeatureDesc").match(/line-height:\s*([\d.]+)/);
+    expect(lh && Number(lh[1])).toBeGreaterThanOrEqual(1.7);
+  });
+
+  test("H1: the lead is an individual (unit I strictly) with a bio long enough to earn Read more", () => {
+    const data = sample().map((p, i) => ({ ...p, description: long(100) })); // ~690 chars: too short
+    data[0] = person(0, { name: "Holy Order", unit: "", description: long(200) });
+    data[1] = person(1, { name: "Concept", unit: "C", description: long(200) });
+    data[3] = person(3, { name: "Rich", description: long(160) });
+    expect(peopleLayout(data).featured.slug).toBe("p3");
+  });
+
+  test("H1: with no qualifying lead, the richest named individual leads (not list[0])", () => {
+    const data = [
+      person(0, { unit: "G", description: long(150) }),
+      person(1, { description: long(40) }),
+      person(2, { description: long(80) }),
+    ];
+    expect(peopleLayout(data).featured.slug).toBe("p2");
+  });
+
+  test("A1/H2: the view-all label is the grid family's 'View all' + '+N more' pair", () => {
+    renderIn(<PeopleTile data={sample()} payload={{ peopleCount: 435 }} />);
+    const lbl = document.querySelector(".peopleTile .viewAllCard .viewAllOverlay");
+    expect(lbl.querySelector(".viewAllVerb").textContent).toBe("View all");
+    expect(lbl.querySelector(".viewAllCount").textContent).toBe("+425 more");
   });
 });

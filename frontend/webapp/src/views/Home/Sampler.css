@@ -550,9 +550,17 @@ html[data-theme="dark"] .peopleTile .peopleFaceCard:hover { border-color: #555; 
   .peopleTile .peopleFaceTitle { display: none; }
 }
 /* featured bio ref pills (People + PersonProfile): ≥44px tap target without
-   changing the look (audit F2; same recipe as the matter profile) */
+   changing the look (audit F2; same recipe as the matter profile).
+   Chips on consecutive lines overlap their 44px zones, and the later chip used
+   to win — a tap on the visible "2 Nephi 27:15" opened 27:16 (blind R7
+   people-C1). Two layers fix it: the chip makes NO stacking context, so its
+   pseudos interleave with every neighbour's; ::after (the padded zone) sits at
+   z 1 and ::before (the chip's own border box) at z 2, so a visible chip always
+   wins inside its own box and the padding only claims empty line space. The
+   touch bio also runs a taller line pitch, so stacked chips keep a gap. */
 @media (pointer: coarse) {
-  .peopleFeatureDesc .scripture_link { position: relative; z-index: 1; }
+  .peopleFeatureDesc { line-height: 1.7; }
+  .peopleFeatureDesc .scripture_link { position: relative; }
   .peopleFeatureDesc .scripture_link::after {
     content: "";
     position: absolute;
@@ -560,6 +568,13 @@ html[data-theme="dark"] .peopleTile .peopleFaceCard:hover { border-color: #555; 
     bottom: calc((100% - 44px) / 2);
     left: -0.4rem;
     right: -0.4rem;
+    z-index: 1;
+  }
+  .peopleFeatureDesc .scripture_link::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    z-index: 2;
   }
   /* the clamp clips at its padding box: pad its top (offset by a negative
      margin, nothing moves) so first-line chips keep their full hit */

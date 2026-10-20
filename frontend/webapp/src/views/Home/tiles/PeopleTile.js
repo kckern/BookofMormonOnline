@@ -4,12 +4,17 @@ import { label, processName } from "src/models/Utils";
 import RefPill from "./RefPill";
 import TileImage from "./_ds/TileImage";
 import { verbLabel } from "./_ds/TileCTA";
+import labelOr from "./_ds/labelOr";
 import PersonFeature, { PersonPortrait, personName } from "./PersonFeature";
 import { flatten, clampWords, supDigits, tidy } from "./textUtils";
 
 const FACES = 9; // 5-up × 2 rows with the view-all card (3-up × 3 on narrow tiles shows 8)
 const MOSAIC = 12; // 3×4 fills the view-all card
-const MIN_FEATURE_BIO = 600; // chars: a featured bio that rewards Read more
+// chars: a featured bio that always overflows its 7-line clamp, so the lead
+// earns its Read more. At 600 the slot drew walk-ons whose whole bio is "the
+// record gives no account of his deeds" (blind R7 people-H1); every sample of
+// 24 measured 2026-10-20 holds 8-16 individuals past 900 chars.
+const MIN_FEATURE_BIO = 1000;
 
 // A good lead: a named individual (unit I) of the Book of Mormon proper (not a
 // Bible-only figure, identification B) with a substantial bio. Groups and
@@ -57,8 +62,15 @@ export function faceTitle(title) {
   return clampWords(t, 2, { phrase: true });
 }
 
-const isStrongLead = (p) =>
-  (!p.unit || p.unit === "I") && p.identification !== "B" && flatten(p.description).length >= MIN_FEATURE_BIO;
+// unit must be exactly "I": a missing/blank unit let a concept ("Holy Order of
+// God") take the portrait slot (blind R7 people-H1).
+const isIndividual = (p) => p.unit === "I" && p.identification !== "B";
+const bioLength = (p) => flatten(p.description).length;
+const isStrongLead = (p) => isIndividual(p) && bioLength(p) >= MIN_FEATURE_BIO;
+// no strong lead in the sample: the named individual with the richest bio, so
+// the hero is still a person with the most to say (stable on ties)
+const richestIndividual = (list) =>
+  list.filter(isIndividual).reduce((best, p) => (!best || bioLength(p) > bioLength(best) ? p : best), null);
 
 /**
  * Split the seeded sample into featured / profile reserve / faces / mosaic so
@@ -92,8 +104,12 @@ export function peopleLayout(people) {
   const list = dedupeAliases((people || []).filter((p) => p?.slug));
   if (!list.length) return { featured: null, profile: null, faces: [], mosaic: [] };
   const leads = list.filter(isStrongLead);
-  const featured = leads[0] || list[0];
-  const profile = leads.find((p) => p !== featured) || list.find((p) => p !== featured && flatten(p.description)) || null;
+  const featured = leads[0] || richestIndividual(list) || list[0];
+  const profile =
+    leads.find((p) => p !== featured) ||
+    richestIndividual(list.filter((p) => p !== featured && bioLength(p))) ||
+    list.find((p) => p !== featured && bioLength(p)) ||
+    null;
   // Faces lead with people whose hook line is a real phrase; stub-only people
   // still appear, in the view-all mosaic (stable order otherwise).
   const others = list.filter((p) => p !== featured && p !== profile);
@@ -156,7 +172,15 @@ export default function PeopleTile({ data, seed = 0, payload }) {
               <TileImage key={p.slug} path={`people/${p.slug}`} sizes="48px" onError={(e) => (e.target.style.visibility = "hidden")} />
             ))}
           </span>
-          <span className="peopleFaceName viewAllOverlay">{more > 0 ? `+${more} ${label("people")}` : verbLabel("viewAll")}</span>
+          {/* the card-grid family's one end-card label, as Places/Matters:
+              "View all" over "+N more" — two short lines that fit the ~99px
+              phone card (blind R7 people-A1/H2) */}
+          <span className="peopleFaceName viewAllOverlay mattersViewAllLabel">
+            <span className="mattersViewAllVerb viewAllVerb">{verbLabel("viewAll")}</span>
+            {more > 0 ? (
+              <span className="mattersViewAllCount viewAllCount">{labelOr("plus_n_more", "+$1 more", [String(more)])}</span>
+            ) : null}
+          </span>
         </Link>
       </div>
     </div>
