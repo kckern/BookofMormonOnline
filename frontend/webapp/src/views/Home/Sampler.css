@@ -960,6 +960,12 @@ html[data-theme="dark"] .contentsTile img { background: #2c2c2c; }
   margin: 0.55rem 0 0;
 }
 html[data-theme="dark"] .contentsTileTitle { color: #f0f0f0; }
+/* the whole division's size (its intro page isn't an outline row) */
+.contentsTileMeta {
+  margin: 0.15rem 0 0;
+  font-size: 0.68rem;
+  color: var(--tile-meta);
+}
 .contentsTileDesc {
   margin: 0.3rem 0 0;
   font-size: 0.8rem;
@@ -3467,6 +3473,8 @@ html[data-theme="dark"] .faxVerseTile .read-content .read-block { background: tr
   .personProfileTile .tileHeading a,
   .placesTilePlaces .tileHeading a,
   .communityTile .tileHeading a,
+  .contentsTile .tileHeading a,
+  .readingProgressTile .tileHeading a,
   .placeProfilePlace .tileHeading a { position: relative; z-index: 2; } /* above the portrait img / card link (z 1) */
   .faxTile .tileHeading a::after,
   .faxVerseTile .tileHeading a::after,
@@ -3476,6 +3484,8 @@ html[data-theme="dark"] .faxVerseTile .read-content .read-block { background: tr
   .personProfileTile .tileHeading a::after,
   .placesTilePlaces .tileHeading a::after,
   .communityTile .tileHeading a::after,
+  .contentsTile .tileHeading a::after,
+  .readingProgressTile .tileHeading a::after,
   .placeProfilePlace .tileHeading a::after {
     content: "";
     position: absolute;
@@ -3490,6 +3500,10 @@ html[data-theme="dark"] .faxVerseTile .read-content .read-block { background: tr
      title starts where the eyebrow's hit ends. */
   .faxTile > .tileHeading,
   .historyTile > .tileHeading { min-height: calc(44px - 12px); margin-bottom: 0.2rem; }
+  /* contents / reading progress (blind rail contents-F2): same, so the hit
+     ends where the banner / user row starts */
+  .contentsTile > .tileHeading,
+  .readingProgressTile > .tileHeading { min-height: calc(44px - 12px); }
 }
 
 /* Analysis tiles (Biblical language / Chiasmus / Art) — blind audit fixes.

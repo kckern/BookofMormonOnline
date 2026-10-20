@@ -12,6 +12,8 @@ export const MAX_PAGES = 6;
 
 const sectionCount = (n) =>
   n === 1 ? labelOr("one_section", "1 section") : labelOr("n_sections", "$1 sections", [n]);
+const pageCount = (n) =>
+  n === 1 ? labelOr("one_page", "1 page") : labelOr("n_pages", "$1 pages", [n]);
 
 /**
  * One sampled division rendered like a single /contents entry: banner + title,
@@ -36,6 +38,11 @@ export default function ContentsTile({ data }) {
   const allPages = (data.pages || []).filter((pg) => pg?.slug && pg.title && pg.slug !== data.slug && pg.title !== data.title);
   const pages = allPages.slice(0, MAX_PAGES);
   const morePages = allPages.length - pages.length;
+  // The intro page is dropped from the outline (same href as the CTA), which
+  // made a 2-page division with 15 sections on its intro read as one small
+  // page (blind contents-H1). The whole division's size stays as a summary.
+  const divPages = (data.pages || []).filter((pg) => pg?.slug);
+  const divSections = divPages.reduce((n, pg) => n + (pg.sections?.length || 0), 0);
   return (
     <RevealProvider>
       <div className="samplerTileInner contentsTile">
@@ -52,6 +59,11 @@ export default function ContentsTile({ data }) {
           />
         </Link>
         <h4 className="contentsTileTitle">{data.title}</h4>
+        {divPages.length && divSections ? (
+          <p className="contentsTileMeta">
+            {pageCount(divPages.length)} · {sectionCount(divSections)}
+          </p>
+        ) : null}
         {data.description ? (
           bounded ? (
             <div className="contentsTileDesc">{data.description}</div>

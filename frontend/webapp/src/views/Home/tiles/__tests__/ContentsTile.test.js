@@ -92,5 +92,18 @@ describe("ContentsTile", () => {
     expect(reveals[0].closest(".boundedTileMore")).toBeTruthy();
     expect(container.querySelector(".contentsTileDesc").textContent).toBe(data.description);
   });
-});
 
+  test("the division's size survives dropping its intro page: a quiet 'N pages · M sections' summary under the title (contents-H1)", () => {
+    const { container } = renderTile();
+    const meta = container.querySelector(".contentsTileMeta");
+    // intro (1 section) + isaiah (2) + olive tree (1): 3 pages, 4 sections
+    expect(meta.textContent).toBe("3 pages · 4 sections");
+    expect(meta.querySelector("a")).toBeNull();
+    expect(meta.previousElementSibling.classList.contains("contentsTileTitle")).toBe(true);
+  });
+
+  test("no summary when the division has no page data", () => {
+    const { container } = renderTile({ slug: "war", title: "War" });
+    expect(container.querySelector(".contentsTileMeta")).toBeNull();
+  });
+});
