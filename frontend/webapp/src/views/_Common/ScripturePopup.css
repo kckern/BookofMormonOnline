@@ -136,6 +136,14 @@ html[data-theme="dark"] .samplerScriptureReadLink:hover { background: rgba(201, 
   outline: 2px solid #c9a24b;
   outline-offset: 2px;
 }
+/* links in the body (section-header "Alma 51:22–27 / Study") take the same
+   gold ring, not the UA one (blind r8 popup-C5) */
+.samplerScriptureBody a:focus-visible,
+.samplerScriptureBody button:focus-visible {
+  outline: 2px solid #c9a24b;
+  outline-offset: 2px;
+  border-radius: 0.3rem;
+}
 .samplerScriptureHead button:focus-visible {
   outline: 2px solid #c9a24b;
   outline-offset: 2px;
