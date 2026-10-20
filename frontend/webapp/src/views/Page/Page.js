@@ -221,6 +221,7 @@ export default function Page() {
         const rowSlug = rowSlugDuringNoteLanding({
           resolvingNoteLink: resolvingNoteLink && noteLandingRef.current && window.location.pathname.startsWith("/commentary/"),
           slug,
+          mounted: isMounted.current,
         });
         if (rowSlug) applySlug(refs.current.appController, rowSlug, { replace: auto === true || resolvingNoteLink });
         localStorage.setItem("studybookmark", slug);
@@ -404,6 +405,9 @@ export default function Page() {
   const onTail = pageController.states.initOpen.commentaryId
     ? () => {
         noteLandingRef.current = false;
+        // Back left mid-landing: the note popup must not open over (and
+        // rewrite the URL of) the page the reader went back to (R6 commentary-E1)
+        if (!isMounted.current) return;
         pageController.appController.functions.setPopUp({
           type: "commentary",
           ids: [pageController.states.initOpen.commentaryId],
