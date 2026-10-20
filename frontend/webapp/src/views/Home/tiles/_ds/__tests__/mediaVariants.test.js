@@ -39,6 +39,7 @@ describe("variant families mirror the generator", () => {
     "people/nephi1", "places/zarahemla", "matters/swords",
     "art/1039", "history/thumbs/0120", "history/fax/0120.001.jpg",
     "fax/thumb/1830/010.jpg", "fax/covers/1830", "source/cover/012",
+    "history/witnesses/people/martin-harris.jpg",
   ])("%s has variants", (p) => expect(hasVariants(p)).toBe(true));
 
   test.each(["fax/pages/1830/010.jpg", "home/lehites-1", "profiles/grp_x.jpg", "map/z/1/2", "https://x/y.jpg", "history/other/1"])(

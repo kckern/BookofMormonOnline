@@ -10,6 +10,8 @@ export const FAMILIES = [
   { name: 'history-fax', prefix: 'history/fax/', widths: [256, 640] },
   // fax/thumb originals are ~261px wide: a 640 variant would duplicate the 256 one (35k wasted files)
   { name: 'fax-thumb', prefix: 'fax/thumb/', widths: [256] },
+  // witness portraits (Witness / Joseph Smith tiles): 190-490KB originals shown at ~100px
+  { name: 'witness-portraits', prefix: 'history/witnesses/people/', widths: [256, 640] },
   { name: 'fax-covers', prefix: 'fax/covers/', widths: [256, 640], stripExt: true },
   { name: 'source-cover', prefix: 'source/cover/', widths: [256], stripExt: true },
 ];

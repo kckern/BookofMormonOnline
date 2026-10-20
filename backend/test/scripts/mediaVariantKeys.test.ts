@@ -47,4 +47,11 @@ describe('plan', () => {
     expect(plan(['art/1000.jpg'], have)).toEqual([]);
     expect(plan(['art/1000.jpg'], new Set())[0].served).toBe('art/1000');
   });
+
+  it('covers the witness portraits (history/witnesses/people/*.jpg), keeping their extension', () => {
+    const p = plan(['history/witnesses/people/martin-harris.jpg'], new Set())[0];
+    expect(p.family).toBe('witness-portraits');
+    expect(p.served).toBe('history/witnesses/people/martin-harris.jpg');
+    expect(variantKey(256, p.served)).toBe('variants/256/history/witnesses/people/martin-harris.jpg.webp');
+  });
 });
