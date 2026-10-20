@@ -4,6 +4,7 @@ import "./FacsimilePageViewer.scss";
 import { lookupReference } from "scripture-guide";
 import { useFaxHighlight } from "./useFaxHighlight";
 import FaxScrollPageRow from "./FaxScrollPageRow";
+import { firstRealLeaf } from "./faxGeometry";
 import FaxVerseModal from "./FaxVerseModal";
 import { useFaxPageVerses } from "./useFaxPageVerses";
 import { readPath } from "../_Common/ScriptureExcerpt";
@@ -109,7 +110,10 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
 
   // ---- Resolve a URL page/ref to a leaf index ----
   const resolveIndex = useCallback((raw) => {
-    if (raw == null) return 0;
+    // no page in the URL (or an unknown one): the first real page, never the
+    // unlabeled roman-0 slot (faxGeometry.firstRealLeaf)
+    const first = firstRealLeaf(leafIndex);
+    if (raw == null) return first;
     if (/[A-Za-z]/.test(raw)) {
       try {
         const verseIds = lookupReference(raw)?.verse_ids || [];
@@ -121,7 +125,7 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
           }
         }
       } catch { /* fall through */ }
-      return 0;
+      return first;
     }
     // Digits beyond the page count are a verse id — find its page.
     const n = parseInt(raw, 10);
@@ -130,10 +134,10 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
         const pr = leafIndex[i]?.pageReference;
         if (pr && (lookupReference(pr)?.verse_ids || []).includes(n)) return i;
       }
-      return 0;
+      return first;
     }
     const idx = leafIndex.findIndex((l) => `${l.pageSlugLeaf}` === `${raw}`);
-    return idx !== -1 ? idx : 0;
+    return idx !== -1 ? idx : first;
   }, [leafIndex]);
 
   const scrollToIndex = useCallback((idx, smooth) => {

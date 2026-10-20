@@ -107,3 +107,17 @@ describe("getRefFromIndex (dense, image-page-keyed array)", () => {
     expect(getRefFromIndex(dense, 99)).toBeNull();
   });
 });
+
+import { firstRealLeaf } from "../faxGeometry";
+
+// Blind R9 fax-D5: /fax/<edition> on phone opened on leaf 0 — the roman-0 slot
+// with no label and no scan ("Page … NOT AVAILABLE") filling the viewport.
+describe("firstRealLeaf", () => {
+  test("skips leading leaves with neither a page number nor a roman label", () => {
+    expect(firstRealLeaf([{ pageNumInt: null, pageNumRoman: "" }, { pageNumInt: null, pageNumRoman: "i" }, { pageNumInt: 1 }])).toBe(1);
+  });
+  test("0 when the first leaf is real, and for an empty index", () => {
+    expect(firstRealLeaf([{ pageNumInt: 1 }])).toBe(0);
+    expect(firstRealLeaf([])).toBe(0);
+  });
+});

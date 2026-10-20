@@ -88,3 +88,13 @@ export function buildLeafIndex(item, pgoffset, pageIndex, getRef, assetBaseUrl, 
     };
   });
 }
+
+/**
+ * Index of the first leaf that is a real page: it has a page number or a roman
+ * front-matter label. Leaf 0 can be the roman-0 slot (no label, no scan), which
+ * a viewer must never open on (blind R9 fax-D5).
+ */
+export function firstRealLeaf(leafIndex) {
+  const i = (leafIndex || []).findIndex((l) => l && (l.pageNumInt || l.pageNumRoman));
+  return i === -1 ? 0 : i;
+}
