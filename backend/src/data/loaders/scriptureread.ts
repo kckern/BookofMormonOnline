@@ -114,6 +114,33 @@ async function loadHeadings(
   return deduped.sort((a, b) => a.verse_id - b.verse_id);
 }
 
+type DedupeLine = { verse_id: unknown; line_num?: unknown; text: string | null; format?: string | null };
+/**
+ * lds_scriptures_lines carries a duplicate row for ~34 verses (same verse, the
+ * same full text under a second line_num), so /read rendered such a verse twice
+ * (blind r8 notes-D5: Alma 20:30). Drop a later line repeating an earlier line
+ * of the same verse, keeping the paragraph mark either copy carried. Short lines
+ * (< 40 chars) are left alone: a refrain ("saith the Father,") can recur in one
+ * verse. Input order is preserved.
+ */
+const MIN_DUP_LINE = 40;
+export function dropDuplicateLines<T extends DedupeLine>(lines: T[]): T[] {
+  const seen = new Map<string, T>();
+  const out: T[] = [];
+  for (const line of lines) {
+    const text = (line.text ?? '').trim();
+    const key = `${String(line.verse_id)}\u0000${text}`;
+    const first = text.length >= MIN_DUP_LINE ? seen.get(key) : undefined;
+    if (first) {
+      if (!first.format && line.format) first.format = line.format;
+      continue;
+    }
+    if (text.length >= MIN_DUP_LINE) seen.set(key, line);
+    out.push(line);
+  }
+  return out;
+}
+
 /**
  * Main read fetcher. Mirrors legacy BomPage.ts read resolver (lines 235–336).
  * Builds sections → blocks → lines from lds_scriptures_lines with heading
@@ -158,13 +185,15 @@ export async function fetchRead(
   }
 
   // Filter ∅ lines, sort by verse_id then line_num
-  const lines = lineRows
-    .filter((l) => l.text !== '∅')
-    .sort((a, b) => {
-      const aKey = `${a.verse_id}.${a.line_num}`;
-      const bKey = `${b.verse_id}.${b.line_num}`;
-      return aKey > bKey ? 1 : -1;
-    });
+  const lines = dropDuplicateLines(
+    lineRows
+      .filter((l) => l.text !== '∅')
+      .sort((a, b) => {
+        const aKey = `${a.verse_id}.${a.line_num}`;
+        const bKey = `${b.verse_id}.${b.line_num}`;
+        return aKey > bKey ? 1 : -1;
+      }),
+  );
 
   // Load headings for section grouping (mirrors loadVerses → findHeading)
   const headingRows = await loadHeadings(db, verse_ids, langCode);
