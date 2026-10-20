@@ -26,8 +26,9 @@
  * v8 = faxVerse offers only scanned editions (pages > 0) (archive r5 B2).
  * v9 = faxVerse editions carry cropAspect (archive r5 B1).
  * v10 = faxVerse offers only editions whose crop validates (archive r7 A2).
+ * v11 = commentaries skip pointer / stub / citation-dump / fragment rows (scripture r8 commentary-H1).
  */
-export const SAMPLER_KEY_PREFIX = 'homesampler:v10:';
+export const SAMPLER_KEY_PREFIX = 'homesampler:v11:';
 
 /** Front-door window key ({ bucket }) or explicit-seed key ({ seed }). */
 export const samplerCacheKey = (lang: string, at: { bucket: number } | { seed: number }): string =>

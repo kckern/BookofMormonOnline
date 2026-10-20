@@ -25,6 +25,7 @@ import { getHomeSamplerCache } from '../homeSamplerCacheStore.js';
 import { currentBucket, samplerCacheKey, seedForBucket } from '../homeSamplerCache.js';
 import { dropVariantNotes } from './noteFilters.js';
 import { anchorArtRef, artCandidateIds } from './artRef.js';
+import { isDudCommentary } from './commentaryFilters.js';
 
 // 24 people = 1 featured + 11 face cards + 12 view-all mosaic thumbs (3×4);
 // 17 places = 5 cards + a full 3×4 mosaic.
@@ -616,9 +617,12 @@ const sampleCommentaries = async (ctx: AppContext, seed: number) => {
     .where('bom_xtras_source.source_lang', '=', lang)
     .where('bom_xtras_source.source_rating', '=', 'G')
     .orderBy(seededOrder('bom_xtras_commentary.id', seed))
-    .limit(30)
+    .limit(45)
     .execute();
-  return pickVaried(rows, 3);
+  // Blind r8 commentary-H1: skip pointer / stub / citation-dump / fragment
+  // rows; fall back to the raw pool only if that leaves too few to vary.
+  const picked = pickVaried(rows.filter((r) => !isDudCommentary(r)), 3);
+  return picked.length === 3 ? picked : pickVaried(rows, 3);
 };
 
 const sampleCommentary = async (ctx: AppContext, seed: number) =>
