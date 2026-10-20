@@ -33,6 +33,7 @@ import { parsePagePath } from "src/models/pagePath";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { PageControllerProvider } from "src/contexts/PageControllerContext";
 import ReactTooltip from "react-tooltip";
+import { resetsToTopOnLanding, rowSlugDuringNoteLanding } from "./pageLanding";
 import { tooltipTheme } from "src/utils/themeColors";
 
 // Thin helper: applies a Main slug change via appFunctions.setSlug, called
@@ -90,8 +91,8 @@ export default function Page() {
     // Deep links position the viewport themselves; everything else resets
     // instantly (a smooth scroll here raced the pipeline's scroll — whiplash).
     const i = prepareInitOpen(routeParams);
-    const hasScrollTarget = !!(i.textId || i.goToSection || i.commentaryId || i.imageId || i.faxVersion);
-    if (!hasScrollTarget) window.scrollTo({ top: 0, behavior: "auto" });
+    noteLandingRef.current = !!routeParams.commentaryId;
+    if (resetsToTopOnLanding(i)) window.scrollTo({ top: 0, behavior: "auto" });
     pageController.functions.setLoading(true);
     if (routeParams.imageId || routeParams.commentaryId)
       getPageDataFromAPIViaNote(routeParams);
@@ -106,6 +107,10 @@ export default function Page() {
   // Stage-swap transition class. Declared here (before the functions memo) so
   // the memoized setStageClass handler can close over the stable setter.
   const [stageClass, setStageClass] = useState(null);
+
+  // True from a /commentary/:id landing until its popup opens (onTail): only
+  // the landing's own row opens leave the URL on the note.
+  const noteLandingRef = useRef(false);
 
   const initialPageState = {
     loading: null,
@@ -210,7 +215,14 @@ export default function Page() {
         const resolvingNoteLink =
           !!(io.commentaryId || io.imageId) &&
           /^\/(commentary|image)\//.test(window.location.pathname);
-        applySlug(refs.current.appController, slug, { replace: auto === true || resolvingNoteLink });
+        // While landing on the note, the URL stays /commentary/:id (no
+        // host-row bounce); the popup records the row as its underSlug.
+        // (commentary only: the image lightbox keeps its own /image → /art rewrite)
+        const rowSlug = rowSlugDuringNoteLanding({
+          resolvingNoteLink: resolvingNoteLink && noteLandingRef.current && window.location.pathname.startsWith("/commentary/"),
+          slug,
+        });
+        if (rowSlug) applySlug(refs.current.appController, rowSlug, { replace: auto === true || resolvingNoteLink });
         localStorage.setItem("studybookmark", slug);
         dispatch({ fn: "setActiveRow", val: { slug, auto } });
         BoMOnlineAPI(
@@ -390,13 +402,18 @@ export default function Page() {
     pageController.states.initOpen.faxVersion || "",
   ].join("|");
   const onTail = pageController.states.initOpen.commentaryId
-    ? () =>
+    ? () => {
+        noteLandingRef.current = false;
         pageController.appController.functions.setPopUp({
           type: "commentary",
           ids: [pageController.states.initOpen.commentaryId],
+          // the URL never left /commentary/<id> while landing, so closing
+          // must return to the host row explicitly
+          underSlug: refs.current.states.activeRow || undefined,
           // landing on /commentary/<id>: the popup URL replaces, not a 2nd entry
           replaceSlug: true,
-        })
+        });
+      }
     : pageController.states.initOpen.imageId
     ? () =>
         pageController.appController.functions.requestImageActivation({
