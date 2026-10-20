@@ -15,7 +15,6 @@ for (const name of want) {
   const h = await open(vp, `sweep-${name}`);
   const p = h.page;
   console.log(`\n== ${name}`);
-  await p.addInitScript(() => { window.__cls = 0; new PerformanceObserver((l) => { for (const e of l.getEntries()) if (!e.hadRecentInput) window.__cls += e.value; }).observe({ type: "layout-shift", buffered: true }); });
   await h.home();
   if (dark) { await p.evaluate(() => document.documentElement.setAttribute("data-theme", "dark")); await p.waitForTimeout(600); }
   await h.shot("top");
@@ -54,8 +53,10 @@ for (const name of want) {
     return out;
   }, dark);
 
-  const cls = await p.evaluate(() => window.__cls);
-  console.log(`  tiles ${await p.locator(".sampler .tile").count()} · CLS ${cls.toFixed(3)} · page errors ${h.errors.filter((e) => /^pageerror/.test(e)).length}`);
+  const cls = (await h.cls()).filter((e) => !e.input).reduce((a, e) => a + e.v, 0);
+  const perrs = h.errors.filter((e) => /^pageerror/.test(e));
+  console.log(`  tiles ${await p.locator(".sampler .tile").count()} · CLS ${cls.toFixed(3)} · page errors ${perrs.length}`);
+  for (const [msg, n] of Object.entries(perrs.reduce((o, e) => ((o[e.slice(0, 140)] = (o[e.slice(0, 140)] || 0) + 1), o), {})).slice(0, 4)) note(`${n}× ${msg}`);
   if (m.overflow) note("horizontal overflow");
   for (const [k, hgt] of m.tall) note(`${k} is ${hgt}px tall (> 1.5 viewports)`);
   for (const s of m.broken.slice(0, 6)) note(`broken image ${s}`);

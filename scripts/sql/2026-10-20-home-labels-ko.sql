@@ -49,4 +49,6 @@ INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELE
 INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '문맥에서 보기', 'kcsql' FROM bom_label WHERE label_id = 'view_in_context';
 INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '증인', 'kcsql' FROM bom_label WHERE label_id = 'witnesses';
 INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '첫 스터디 그룹 시작하기', 'kcsql' FROM bom_label WHERE label_id = 'start_group';
+INSERT INTO bom_label (guid, label_id, label_text, type) SELECT 'hm5eddc9b2', 'history', 'History', 'home' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM bom_label WHERE label_id = 'history');
+INSERT IGNORE INTO bom_translation (guid, lang, refkey, value, contributor) SELECT guid, 'ko', 'label_text', '역사', 'kcsql' FROM bom_label WHERE label_id = 'history';
 COMMIT;
