@@ -1901,3 +1901,23 @@ This dev machine cannot reach the database host over TCP (`ETIMEDOUT`; prod is f
 
 ### R7 post-deploy (prod `1206135f`, CI run 39494841636 success)
 `prod-smoke.mjs` 15/15; **`/people/moroni1` for a crawler: 500 → 200**; desktop deep-scroll images **8.3 MB → 2.75–2.8 MB** (3 runs, 0 originals, 0 broken, 0 4xx), phone 4.4 MB → 1.6 MB. (A reading ~1 min after the swap showed 7.6 MB while the edge still served the old bundle.) Open: the second soak reading ~24 h after the deploy; the Korean label SQL (needs KC + a reachable DB); `<html lang>` fix is deployed but the CRA shell still ships `lang="en"` in the static HTML (it is corrected on boot).
+
+## R8. First real click — 2026-10-20 evening
+
+**Finding (KC's first manual pass, after 13 review rounds):** Discover → place tile → full page → the page's own "‹ Places" control → landed in the Places index, out of Discover. The harness only ever pressed the *browser* Back button; it never clicked the page's own back control or the tile → popup path. (Product decision of record: places/people/matters open a popup that can maximize; never an immediate page switch.)
+
+**Fixed + on prod (e7be1739, baedf477):**
+- `tiles/_ds/entityPopup.js`: one delegated handler on the Sampler root opens the existing popup for tile links to `/people|places|matters/<slug>` (modified clicks, `target=_blank`, and matter-group index links navigate normally).
+- `EntityPage`: the top/bottom back control is a history Back when the reader arrived in-app (as `ArtPage` already did); direct loads keep the index link.
+- Phone drawer: Full-page + close toolbar, and a Matter drawer (`matters` had no drawer branch and rendered the raw type name).
+- `_Common/navPath.js`: sidebar and bottom bar follow the page under a popup (they highlighted Places / Study over a Discover popup).
+
+**CI:** `ci-build` had been red on every push since `b9e04c09` (hooks after an early `return null` in `NarrationTile`, `react-hooks/rules-of-hooks`). Fixed in `8bf95cba` (dev; green). It stays red on the `prod` branch until that commit is deployed. Lesson: run `npm run lint` before pushing, not only vitest.
+
+**New verification (`scripts/home-audit/click-sweep.mjs`, `verify-entity-popup.mjs`):** every control in every tile clicked on prod, phone and desktop (~270 controls): **0 dead-end / blank / "Not found" destinations**, entity links open the popup, no page errors apart from 429s caused by the sweep itself.
+- Back, isolated with real input: link offset **0–15 px** at 12/50/88% of the viewport, at feed depths 0–8, and over **9–11 consecutive round trips per viewport in one session** (±1 px). All 88 desktop tiles had identical content after a round trip; on phone, four self-fetching tiles went unloaded → loaded (not a swap).
+- The sweep's own "control moved after Back" flags did **not** reproduce with real input. Harness traps found along the way: `scrollIntoViewIfNeeded` honors the site's smooth scroll; programmatic scrolls don't cancel `pinAnchor`'s 3 s window; the default headless UA is classed as a crawler; DOM attributes added by a script vanish after Back (tiles remount); `aria-hidden`/`tabindex=-1`/`data-clamp-hidden` controls are not real controls. Treated as sweep artifacts, not defects.
+
+**Soak reading 2 (≈6 h after the second deploy, 27.4k requests):** 3 × 5xx (2 on `/` SSR, 1 on the analytics proxy path); no container errors. 429s: **1,785 — correction:** an earlier check of mine reported zero because it compared a number to the string status; 1,250 of them are my own harness (one IPv6 address, iPhone UA, `/fax/*` and `/commentary/*`), the rest are DotBot/AhrefsBot-style crawlers being limited as intended. A lone human visit gets **zero 429s** even on `/fax/1852` (~600 requests). 912 × 403, all on the analytics reverse-proxy path (my harness plus ~45 real Windows/Mac requests): an analytics-collection quirk, not a Discover issue (path is an env-only secret; not recorded here).
+
+**Still open:** deploy `8bf95cba` to prod (needs KC's go); Korean label SQL (needs KC + reachable DB); soak reading 3 at ≈24 h; the analytics-proxy 403s for real browsers (low priority).
