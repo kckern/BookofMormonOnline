@@ -73,11 +73,13 @@ function NarrationList({ section, items, showStatus }) {
 export const BEAT_BUDGET = 6;
 
 export default function NarrationTile({ data, next, seed = 0 }) {
+  // Hooks first: an early return before them changes the hook order if the data
+  // ever goes empty ⇄ populated (react-hooks/rules-of-hooks; CI lint gates on it).
+  const [open, setOpen] = usePersistedOpen("narration-beats"); // survives Back (E2)
+  const liftBound = useContext(TileBoundContext);
   const items = narrationItems(data);
   if (!items.length) return null;
   const art = sectionArt(data, seed);
-  const [open, setOpen] = usePersistedOpen("narration-beats"); // survives Back (E2)
-  const liftBound = useContext(TileBoundContext);
   const overBudget = items.length > BEAT_BUDGET;
   const shown = overBudget && !open ? items.slice(0, BEAT_BUDGET) : items;
   // The top-up stays a minority: a 2-beat section once showed 4 beats of the
