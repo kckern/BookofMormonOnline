@@ -24,5 +24,5 @@ export default function HistoryTile({ data }) {
           `history/fax/${pad4(data.id)}.${pad3(i + 1)}.jpg`)
       : [`history/thumbs/${pad4(data.id)}`];
   }
-  return <ArchiveDocTile data={data} heading={labelOr("history", "History")} headingTo="/history" to={to} images={images} />;
+  return <ArchiveDocTile data={data} heading={labelOr("History", "History")} headingTo="/history" to={to} images={images} />;
 }
