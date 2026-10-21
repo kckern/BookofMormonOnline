@@ -48,6 +48,7 @@ import slv from "./svg/flags/slv.svg";
 import tr from "./svg/flags/tr.svg";
 import { menuConfig } from "./menuConfig";
 import { resolveActivePath } from "./sidebarPath";
+import { navPath } from "./navPath";
 import { filterMenu } from "./menuFilter";
 import { isMobile } from "../../models/Utils";
 import { useAppController } from "src/contexts/AppControllerContext";
@@ -258,14 +259,14 @@ function Sidebar(props) {
     // Use the UNFILTERED menuConfig slugs: hidden rooms are still routable by
     // direct URL, and their active-highlight must not fall through to /study.
     const slugs = menuConfig.map((m) => m.slug);
-    return resolveActivePath(window.location.pathname, slugs);
+    return resolveActivePath(navPath(appController.states), slugs);
   };
 
   const [activePath, setActivePath] = useState(determinePath);
 
   useEffect(() => {
     setActivePath(determinePath);
-  }, [window.location.pathname, match.params])
+  }, [window.location.pathname, match.params, appController.states.popUp?.open, appController.states.popUp?.underSlug])
 
 
   let URLsearchTerm = window.location.pathname.split("/").reverse()[0];

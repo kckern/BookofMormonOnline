@@ -1,6 +1,7 @@
 import chat from './svg/chat.svg'
 import { isMessengerNavigationEnabled } from '../../models/featureFlags'
 import { resolveBottomSelection } from './bottomNavSelection'
+import { navPath } from './navPath'
 import group_icon from './svg/group_icon.svg'
 import { label } from 'src/models/Utils'
 import { Link, useParams, useLocation } from "react-router-dom"
@@ -20,7 +21,7 @@ export function BottomMenu() {
   const match = { params: useLegacyParams(), url: useLocation().pathname }
 
   const determineSelection = () =>
-    resolveBottomSelection(window.location.pathname, USE_MESSENGER)
+    resolveBottomSelection(navPath(appController.states), USE_MESSENGER)
 
   const [activeSelection, setActiveSelection] = useState(determineSelection)
 
@@ -31,7 +32,7 @@ export function BottomMenu() {
       .querySelector(`.bottom-nav-item.active`)
       ?.classList.remove('active')
     document.getElementById(`nav-item-${val}`)?.classList.add('active')
-  }, [window.location.pathname, match.params])
+  }, [window.location.pathname, match.params, appController.states.popUp?.open, appController.states.popUp?.underSlug])
   
   const activeGroup =
     appController.states.studyGroup.studyModeOn &&

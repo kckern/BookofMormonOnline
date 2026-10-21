@@ -52,7 +52,11 @@ export async function open(vpName = "desktop", group = "misc", { reducedMotion =
     page, ctx, browser, errors, dir,
     /** Load Home and wait until tiles render and the balancer settles. */
     async home(path = "/home") {
-      await page.goto(BASE + path, { waitUntil: "domcontentloaded" });
+      // this dev machine's network flaps (ERR_NETWORK_CHANGED); a flap is not a finding
+      for (let i = 0; ; i++) {
+        try { await page.goto(BASE + path, { waitUntil: "domcontentloaded" }); break; }
+        catch (e) { if (i >= 3 || !/ERR_NETWORK_CHANGED|ERR_INTERNET_DISCONNECTED|ERR_CONNECTION/.test(String(e))) throw e; await page.waitForTimeout(6000); }
+      }
       await page.waitForSelector(".tile:not(.skeleton)", { timeout: 30000 });
       await page.waitForTimeout(3500);
     },
