@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "../../models/Utils";
 import { HISTORY_SECTIONS, pickRandom } from "./sections";
+import { isEnabled } from "src/models/flags";
 import { deriveSignal, formatSignal } from "./historySignal";
 import { renderMoneyQuote } from "../_Common/moneyQuote";
 import "./HistoryHub.css";
@@ -174,7 +175,7 @@ export default function HistoryHub() {
             <div className="historyHub-rule" />
           </div>
           <div className="historyHub-grid">
-            {HISTORY_SECTIONS.map((s) =>
+            {HISTORY_SECTIONS.filter((s) => !s.flag || isEnabled(s.flag)).map((s) =>
               s.status === "placeholder" ? (
                 <PlaceholderCard key={s.key} section={s} />
               ) : (

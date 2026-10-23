@@ -88,6 +88,7 @@ export const HISTORY_SECTIONS = [
     status: "live",
     hero: { type: "placeholder", icon: josephIcon },
     archive: "1820s-ny-pa",
+    flag: "history1820s", // dark until the archive has rows (config/features.yml flags)
   },
   {
     key: "josephNewYork",

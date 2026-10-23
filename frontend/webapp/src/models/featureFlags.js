@@ -1,5 +1,5 @@
 /** @format */
-import features from '../config/features.generated.json';
+import { isEnabled } from './flags';
 /**
  * Feature flags — single source of truth.
  *
@@ -85,9 +85,10 @@ export const USE_MESSENGER = isMessengerEnabled();
  * hidden. A single prod build serves both staging and prod, so staging also
  * applies them (accepted). Source of truth: config/features.yml.
  */
-const IS_PROD = process.env.NODE_ENV === 'production';
-
-export const HIDE_HOME_NAV      = IS_PROD && !!features.homeNav?.hidden;
-export const HIDE_MATTERS_NAV   = IS_PROD && !!features.mattersNav?.hidden;
-export const HIDE_HISTORY_NAV   = IS_PROD && !!features.historyNav?.hidden;
-export const HIDE_PASSAGE_NOTES = IS_PROD && !!features.passageNotes?.hidden;
+export const HIDE_HOME_NAV      = false; // Discover is always in the nav (2026-10-23)
+// Everything else is a real, rollout-able flag: see models/flags.js and config/features.yml `flags:`.
+export const HIDE_MATTERS_NAV   = !isEnabled('matters');
+export const HIDE_HISTORY_NAV   = !isEnabled('history');
+export const HIDE_PASSAGE_NOTES = !isEnabled('passageNotes');
+export const HIDE_THEOLOGY      = !isEnabled('theology');
+export const HIDE_HISTORY_1820S = !isEnabled('history1820s');

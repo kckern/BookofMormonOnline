@@ -1,5 +1,5 @@
 import { lazy } from "react";
-import { isMessengerNavigationEnabled } from './featureFlags';
+import { isMessengerNavigationEnabled, HIDE_THEOLOGY, HIDE_HISTORY_1820S } from './featureFlags';
 import { determineLanguage } from "./Utils.js";
 import { Navigate, useParams } from "react-router-dom";
 
@@ -8,6 +8,7 @@ const USE_MESSENGER = isMessengerNavigationEnabled();
 
 // Navigate component for disabled routes
 const DisabledRedirect = () => <Navigate to="/" />;
+const HistoryRedirect = () => <Navigate to="/history" replace />;
 
 // Legacy /community/* and /user/* now live under the unified Home.
 export const CommunityRedirect = () => {
@@ -170,7 +171,7 @@ const routes = [
   },
   {
     path: "/theology",
-    component: Theology,
+    component: HIDE_THEOLOGY ? DisabledRedirect : Theology, // flags.theology: placeholder data
   },
   {
     path: "/analysis",
@@ -224,7 +225,7 @@ const routes = [
   },
   {
       path: "/history/1820s-ny-pa",
-      component: NyPa1820s,
+      component: HIDE_HISTORY_1820S ? HistoryRedirect : NyPa1820s, // flags.history1820s
   },
   {
       // The document itself, matching what SSR has always meant by this URL

@@ -165,7 +165,8 @@ export default function HistoryArchiveFeed({ archive, sectionKey, groupBy = "chr
     setDocs(null);
     setPrincipal("");
     BoMOnlineAPI({ history: { archive } }).then((r) => {
-      if (alive) setDocs((r && r.history) || []);
+      // an archive with no rows can come back as [undefined] (or a non-array); keep only real documents
+      if (alive) setDocs(Array.isArray(r && r.history) ? r.history.filter(Boolean) : []);
     });
     return () => {
       alive = false;
@@ -241,7 +242,9 @@ export default function HistoryArchiveFeed({ archive, sectionKey, groupBy = "chr
               </div>
             ) : null}
 
-            {visible.length === 0 ? (
+            {docs.length === 0 ? (
+              <div className="archiveEmpty">This collection is still being assembled. Check back soon.</div>
+            ) : visible.length === 0 ? (
               <div className="archiveEmpty">
                 No accounts for this {byNarrative ? dim.empty : "voice"}.{" "}
                 <button type="button" className="archiveClear" onClick={() => setPrincipal("")}>

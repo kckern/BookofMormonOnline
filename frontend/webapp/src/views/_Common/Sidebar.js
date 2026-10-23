@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { discoverLabel } from "./discoverLabel";
-import { isMessengerNavigationEnabled, HIDE_HOME_NAV, HIDE_MATTERS_NAV, HIDE_HISTORY_NAV } from '../../models/featureFlags';
+import { isMessengerNavigationEnabled, HIDE_HOME_NAV, HIDE_MATTERS_NAV, HIDE_HISTORY_NAV, HIDE_THEOLOGY } from '../../models/featureFlags';
 import { Link, NavLink, useNavigate, useParams, useLocation } from "react-router-dom";
 import { useLegacyParams } from "src/models/routeParams";
 import { Nav, Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
@@ -105,6 +105,7 @@ export function loadMenu(){
     home: HIDE_HOME_NAV,
     matters: HIDE_MATTERS_NAV,
     history: HIDE_HISTORY_NAV,
+    theology: HIDE_THEOLOGY,
   };
 
   // Filter the RAW menuConfig (still carries hiddenFlag), THEN attach JSX — so

@@ -6,12 +6,22 @@
 # NOTE: one prod build serves both staging and prod, so STAGING ALSO applies
 # these (accepted).
 
-homeNav:      { hidden: false, seo: remove,  paths: [/home] }   # Discover is in the nav (2026-10-23); /home itself stays out of sitemaps
-mattersNav:   { hidden: true, seo: remove,  paths: [/matters] }
-historyNav:   { hidden: true, seo: noindex, paths: [/history] }
+homeNav:      { seo: remove,  paths: [/home] }   # Discover is in the nav (2026-10-23); /home itself stays out of sitemaps
+mattersNav:   { seo: remove,  paths: [/matters] }      # nav visibility is now flags.matters; seo here is crawler-only
+historyNav:   { seo: noindex, paths: [/history] }      # nav visibility is now flags.history
 searchSeo:    { seo: noindex, paths: [/search] }
 userSeo:      { seo: noindex, paths: [/user] }
-passageNotes: { hidden: true }   # reader panel — no SSR/crawl surface; SSR ignores it
+# passageNotes (reader panel — no SSR/crawl surface) is now flags.passageNotes
 
 # Site root (/): first-time visitors (no login, nothing read yet) see Discover; everyone else sees Read. All envs.
 frontDoor:    { firstVisitDiscover: true }
+
+# Real feature flags (src/models/flags.js). rollout: 0 = off, 100 = everyone, N = N% of browsers (stable per browser).
+# Test any flag in your own browser with ?ff=name (on) / ?ff=-name (off) / ?ff=reset. Dev builds show everything.
+# To widen a rollout: change the number, deploy. Keep a one-line reason beside each dark flag.
+flags:
+  matters:      { rollout: 100 }   # nav + search group; pages verified 2026-10-23
+  history:      { rollout: 100 }   # nav; hub + 4 collections verified 2026-10-23
+  history1820s: { rollout: 0 }     # NY & PA 1820s collection: no rows in prod bom_xtras_history yet
+  theology:     { rollout: 0 }     # scaffold with placeholder data (the page says so)
+  passageNotes: { rollout: 0 }     # reader notes panel: WIP, unreviewed
