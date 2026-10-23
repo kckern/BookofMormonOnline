@@ -172,6 +172,7 @@ export default function Reader({ state, navigate }) {
     <button
       className="xref-sort"
       aria-label={`sort by ${label}`}
+      title={`Sort by ${label} verse order`}
       onClick={() =>
         setSort((s) => ({
           column,
@@ -207,7 +208,7 @@ export default function Reader({ state, navigate }) {
           {(() => {
             let lastBomHeading = null;
             let lastBibleHeading = null;
-            return visible.map(({ bomVid, bibleVid, isQuote, bomRef, bibleRef }) => {
+            return visible.map(({ bomVid, bibleVid, isQuote, bomRef, bibleRef }, n) => {
               const pairHighlights = highlights[`${bomVid},${bibleVid}`] || {};
               const bomData = verseData[bomVid] || {};
               const bibleData = verseData[bibleVid] || {};
@@ -217,7 +218,7 @@ export default function Reader({ state, navigate }) {
               if (bibleData.heading) lastBibleHeading = bibleData.heading;
               return (
               <React.Fragment key={`${bomVid}-${bibleVid}`}>
-                <tr data-testid="xref-pair" className={isQuote ? "quote" : "phrase"}>
+                <tr data-testid="xref-pair" className={isQuote ? "quote" : "phrase"} style={{ "--n": n }}>
                   <td className="scriptureRef left">
                     <div className="header_container">
                       <Link className="ref" to={`/read/${verseIdToSlug([bomVid])}`}>
@@ -236,7 +237,7 @@ export default function Reader({ state, navigate }) {
                     </div>
                   </td>
                 </tr>
-                <tr className={isQuote ? "quote" : "phrase"}>
+                <tr className={isQuote ? "quote" : "phrase"} style={{ "--n": n }}>
                   <td className="scriptureCell left">
                     <p>{highlightTextJSX(bomData.text, pairHighlights.bom_highlight, bomVid)}</p>
                   </td>
@@ -304,7 +305,10 @@ function ReaderHeader({ bomBook, bibleBook, bomChapter, bibleChapter, anchorCano
         <span className="book">{bibleBook}{bibleChapter ? ` ${bibleChapter}` : ""}</span>
       </h3>
       <p className="xref-readercount">
-        {total} references · {quoteTotal} quotes
+        {total} {total === 1 ? "reference" : "references"}
+        {quoteTotal === total && total > 0
+          ? ", all direct quotes"
+          : `, ${quoteTotal} of them direct ${quoteTotal === 1 ? "quote" : "quotes"}`}
       </p>
     </header>
   );

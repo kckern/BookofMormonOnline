@@ -121,7 +121,7 @@ describe("Reader", () => {
 
   test("header shows the pair total and quote count", async () => {
     setup();
-    expect(await screen.findByText(/\d+ references · \d+ quotes/)).toBeInTheDocument();
+    expect(await screen.findByText(/\d+ references?, (all direct quotes|\d+ of them direct quotes?)/)).toBeInTheDocument();
   });
 
   test("show-all reveals every pair at once", async () => {

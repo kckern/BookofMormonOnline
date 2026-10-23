@@ -239,3 +239,5 @@
   position: relative;
   bottom: 0.3ex;
 }
+/* A guest (or anyone with no progress yet) gets no empty bar / "0.0%" pill: it looked like a disabled control. */
+.progresslist.is-empty { display: none !important; }

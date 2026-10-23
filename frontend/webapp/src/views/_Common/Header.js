@@ -121,7 +121,7 @@ function MobileHeader() {
       </div>
       <div className="userheader">
         <div>
-          <div className="progresslist">
+          <div className={"progresslist" + (completed > 0 || started > 0 ? "" : " is-empty")}>
             <div className="progress_text">
               <img src={green} alt="" /> {completed?.toFixed(1) || 0}%
               {startedString}

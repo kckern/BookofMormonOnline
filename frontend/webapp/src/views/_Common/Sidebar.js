@@ -505,7 +505,7 @@ function UserInfo({ setActivePath, activePath }) {
             <UserAvatar userId={appController.states?.user?.user} profileUrl={img} size={50} />
             <div className={"name"}>{name}</div>
           </div>
-          <div className="progresslist">
+          <div className={"progresslist" + (completed > 0 || started > 0 ? "" : " is-empty")}>
             <div className="progress_text">
               {completed?.toFixed(1) || 0}% {label("completed")}
               {startedString}

@@ -67,3 +67,10 @@ The shell should say "a careful study tool for a book", not "admin dashboard", a
 1. Is the analysis shell a candidate for the **site-wide** header/sidebar refresh, or only this section? (The shell is shared by every view, so a sidebar change is a site change.)
 2. Is the QUOTE badge ever anything other than QUOTE? If not, remove it.
 3. Is the "Open in app" banner in your screenshot the site's, or the browser's?
+
+## Stage 1 shipped to dev (2026-10-22) — Analysis-only fixes + shell dead controls
+Root cause of V1/U7: the site `--link` token is `#cfcfcf` in light mode (the dark navbar's link grey) and blue in dark; the page used it for the breadcrumb and focus ring. `.xref-root` now scopes `--link` to the ink colour.
+- **Fixed:** V1 breadcrumb contrast, U7 focus ring (2 px ink), V4 pericope subtitle (`--text-faint` → `--text-muted`), V2 title chips removed, V5 count line ("34 references, all direct quotes"), U6 sort buttons get a title, V7/U4 chapter cells 30 px (numerals 12 px) and 44 px on touch, U1 chapter rail sticky on desktop, U2 phone stacks each pair (BoM ref → text → Bible ref → text, `--n` row ordering on a grid; `display: contents` on rows below 600 px).
+- **Shell:** the empty grey `.progress` bar under "Guest" and the phone header's "0.0% ● 0.0%" pill are hidden when there is no progress (`.progresslist.is-empty`).
+- **Answered:** the QUOTE badge is `isQuote` (boolean) — it only shows on quote rows, so it does distinguish; this chapter happens to be all quotes. Kept.
+- **Not done (needs KC's yes — site-wide):** header with page context, one-weight icon rail, palette pulled from the page, language into Settings; prev/next chapter; verse-number → Read. Check: `scripts/home-audit/shot-xref.mjs`.

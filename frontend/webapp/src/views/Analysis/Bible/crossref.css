@@ -11,6 +11,10 @@
   --xref-ramp-4: #3f9169;
   --xref-ramp-5: #1a6446;
   --xref-ramp-6: #0b4530;
+  /* The site-wide --link is #cfcfcf (the dark navbar's) in light mode and blue in
+     dark; neither reads as a link or a focus ring on this page. Ink it. */
+  --link: var(--text-primary, #212529);
+  --link-hover: var(--text-primary, #212529);
 
   display: flex;
   flex-direction: column;
@@ -428,12 +432,13 @@ html[data-theme="dark"] .xref-root {
 }
 
 .xref-chaptercell {
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
   border: 1px solid var(--border, #ddd);
   border-radius: 4px;
   background: var(--surface-1, #f8f8f8);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
   color: var(--text-secondary, #444);
   cursor: pointer;
   padding: 0;
@@ -453,6 +458,7 @@ html[data-theme="dark"] .xref-chaptercell.ramp-6 {
 }
 
 .xref-chaptercell.selected {
+  font-weight: 700;
   outline: 2px solid var(--text-primary, #212529);
   outline-offset: 1px;
 }
@@ -599,6 +605,13 @@ html[data-theme="dark"] .xref-chaptercell.ramp-6 {
   align-items: flex-start;
 }
 
+.xref-readerbody > .xref-rail {
+  position: sticky;
+  top: 4.5rem; /* below the fixed navbar */
+  max-height: calc(100vh - 5.5rem);
+  overflow-y: auto;
+}
+
 .xref-readermain {
   flex: 1;
   min-width: 0; /* let the fixed-layout table shrink instead of overflowing */
@@ -617,12 +630,7 @@ html[data-theme="dark"] .xref-chaptercell.ramp-6 {
   font-variant-numeric: tabular-nums;
 }
 
-.xref-readertitle .book {
-  border: 1px solid var(--border-strong, #bbb);
-  background: var(--surface-2, #f0f0f0);
-  border-radius: 0.5ex;
-  padding: 0 0.5ex;
-}
+.xref-readertitle .book { white-space: nowrap; }
 
 .xref-quote-badge {
   display: inline-block;
@@ -690,7 +698,7 @@ html[data-theme="dark"] .xref-chaptercell.ramp-6 {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--text-faint, #999);
+  color: var(--text-muted, #777);
 }
 
 
@@ -892,4 +900,29 @@ html[data-theme="dark"] .xref-sample-side p span.highlight { background-color: r
 html[data-theme="dark"] .xref-back-btn { color: var(--text-primary, #eee); }
 @media (pointer: coarse) {
   .xref-back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 0; }
+}
+
+/* Touch: chapter cells and the rail's rows are tapped, not pointed at. */
+@media (pointer: coarse) {
+  .xref-chapterstrip { gap: 4px; }
+  .xref-chaptercell { width: 44px; height: 44px; }
+  .xref-sort { min-height: 44px; }
+}
+
+/* Phone: stack the pair instead of squeezing two ~150px columns. Each pair reads
+   BoM reference, BoM text, Bible reference, Bible text. */
+@media (max-width: 600px) {
+  .xref-readerbody > .xref-rail { position: static; max-height: 240px; }
+  .verseViewerTable,
+  .verseViewerTable tbody { display: block; width: 100%; }
+  .verseViewerTable tbody { display: grid; grid-template-columns: minmax(0, 1fr); row-gap: 0.25rem; }
+  .verseViewerTable tbody tr { display: contents; }
+  .verseViewerTable td { display: block; width: 100%; }
+  .verseViewerTable td.scriptureRef.left  { grid-row: calc(var(--n) * 4 + 1); }
+  .verseViewerTable td.scriptureCell.left { grid-row: calc(var(--n) * 4 + 2); padding-right: 0; }
+  .verseViewerTable td.scriptureRef.right { grid-row: calc(var(--n) * 4 + 3); margin-top: 0.5rem; }
+  .verseViewerTable td.scriptureCell.right { grid-row: calc(var(--n) * 4 + 4); padding-left: 0; margin-bottom: 1.25rem; }
+  .verseViewerTable td { grid-column: 1; }
+  .verseViewerTable thead tr { display: flex; gap: 0.5rem; }
+  .verseViewerTable thead th { flex: 1; text-align: left; }
 }
