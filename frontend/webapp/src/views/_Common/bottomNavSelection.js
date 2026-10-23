@@ -9,7 +9,7 @@ export function resolveBottomSelection(pathname, useMessenger) {
 
   if (["groups", "group", "invite"].includes(root)) return useMessenger ? 0 : -1;
   if (root === "home" && sub === "user") return useMessenger ? 3 : 2; // User item
-  if (root === "home") return useMessenger ? 1 : -1; // Home item
+  if (root === "home") return useMessenger ? 1 : 0; // Discover item (always shown, messenger or not)
   if (root === "user") return useMessenger ? 3 : 2; // legacy /user*
   if (root === "mobilemenu") return useMessenger ? 4 : 3;
   return useMessenger ? 2 : 1; // study / default

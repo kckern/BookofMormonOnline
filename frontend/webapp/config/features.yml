@@ -6,9 +6,12 @@
 # NOTE: one prod build serves both staging and prod, so STAGING ALSO applies
 # these (accepted).
 
-homeNav:      { hidden: true, seo: remove,  paths: [/home] }
+homeNav:      { hidden: false, seo: remove,  paths: [/home] }   # Discover is in the nav (2026-10-23); /home itself stays out of sitemaps
 mattersNav:   { hidden: true, seo: remove,  paths: [/matters] }
 historyNav:   { hidden: true, seo: noindex, paths: [/history] }
 searchSeo:    { seo: noindex, paths: [/search] }
 userSeo:      { seo: noindex, paths: [/user] }
 passageNotes: { hidden: true }   # reader panel — no SSR/crawl surface; SSR ignores it
+
+# Site root (/): first-time visitors (no login, nothing read yet) see Discover; everyone else sees Read. All envs.
+frontDoor:    { firstVisitDiscover: true }

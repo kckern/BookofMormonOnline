@@ -17,7 +17,7 @@ describe("HomeTabs", () => {
 
   test("shows all three tabs when messenger on", () => {
     renderAt("/home");
-    expect(screen.getByText("Explore")).toBeInTheDocument();
+    expect(screen.getByText("Discover")).toBeInTheDocument();
     expect(screen.getByText("menu_community")).toBeInTheDocument();
     expect(screen.getByText("user")).toBeInTheDocument();
   });
@@ -26,19 +26,19 @@ describe("HomeTabs", () => {
     isMessengerEnabled.mockReturnValue(false);
     renderAt("/home");
     expect(screen.queryByText("menu_community")).not.toBeInTheDocument();
-    expect(screen.getByText("Explore")).toBeInTheDocument();
+    expect(screen.getByText("Discover")).toBeInTheDocument();
     expect(screen.getByText("user")).toBeInTheDocument();
   });
 
   test("marks the active tab from the URL", () => {
     renderAt("/home/community");
     expect(screen.getByText("menu_community").closest("a")).toHaveClass("active");
-    expect(screen.getByText("Explore").closest("a")).not.toHaveClass("active");
+    expect(screen.getByText("Discover").closest("a")).not.toHaveClass("active");
   });
 
   test("Explore is active on bare /home", () => {
     renderAt("/home");
-    expect(screen.getByText("Explore").closest("a")).toHaveClass("active");
+    expect(screen.getByText("Discover").closest("a")).toHaveClass("active");
   });
 });
 

@@ -53,6 +53,7 @@ const TranslationSources = lazy(() => import("../views/History/TranslationSource
 const LostPages = lazy(() => import("../views/History/LostPages.js"));
 const NyPa1820s = lazy(() => import("../views/History/NyPa1820s.js"));
 const ReadScripture = lazy(() => import("../views/Read/Read.js"));
+const FrontDoor = lazy(() => import("../views/FrontDoor/FrontDoor.js"));
 const EntityPage = lazy(() => import("../views/Entity/EntityPage"));
 const ArtPage = lazy(() => import("../views/Entity/ArtPage"));
 const lang = determineLanguage();
@@ -62,7 +63,7 @@ const routes = [
   {
     exact: true,
     path: "/",
-    component: (!lang || lang === "en") ? ReadScripture : ReadScripture,
+    component: FrontDoor, // first visit -> Discover; everyone else -> Read (resumes)
   },
   {
     // Unified tabbed Home: /home (Explore), /home/community, /home/user.

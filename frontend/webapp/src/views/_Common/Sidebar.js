@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
+import { discoverLabel } from "./discoverLabel";
 import { isMessengerNavigationEnabled, HIDE_HOME_NAV, HIDE_MATTERS_NAV, HIDE_HISTORY_NAV } from '../../models/featureFlags';
 import { Link, NavLink, useNavigate, useParams, useLocation } from "react-router-dom";
 import { useLegacyParams } from "src/models/routeParams";
@@ -121,7 +122,7 @@ export function loadMenu(){
       <MenuItem
         icon={iconMap[item.slug]}
         labelKey={item.labelKey}
-        customTitle={item.customTitle}
+        customTitle={item.slug === "home" ? discoverLabel() : item.customTitle}
       />
     ),
     beta: item.beta,

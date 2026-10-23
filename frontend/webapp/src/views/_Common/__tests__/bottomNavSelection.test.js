@@ -13,7 +13,7 @@ describe("resolveBottomSelection (messenger ON)", () => {
 
 describe("resolveBottomSelection (messenger OFF)", () => {
   const off = (p) => resolveBottomSelection(p, false);
-  test("/home → -1 (Home item hidden)", () => expect(off("/home")).toBe(-1));
+  test("/home → 0 (Discover item, shown without messenger too)", () => expect(off("/home")).toBe(0));
   test("/home/user → 2 (User item)", () => expect(off("/home/user")).toBe(2));
   test("legacy /user → 2 (User item)", () => expect(off("/user")).toBe(2));
   test("/study default → 1", () => expect(off("/study")).toBe(1));

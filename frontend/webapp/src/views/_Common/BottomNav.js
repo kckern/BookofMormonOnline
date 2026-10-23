@@ -4,6 +4,7 @@ import { resolveBottomSelection } from './bottomNavSelection'
 import { navPath } from './navPath'
 import group_icon from './svg/group_icon.svg'
 import { label } from 'src/models/Utils'
+import { discoverLabel } from './discoverLabel'
 import { Link, useParams, useLocation } from "react-router-dom"
 import { useLegacyParams } from "src/models/routeParams";
 import React, { useState, useEffect } from 'react'
@@ -66,11 +67,11 @@ export function BottomMenu() {
       requiresMessenger: true,
     },
     {
-      title: label('menu_home') || 'Home',
+      title: discoverLabel(),
       icon: <HomeIcon className="img" fill="#7F7F7F" />,
       activeIcon: <HomeIcon className="img" />,
       path: '/home',
-      requiresMessenger: true,
+      requiresMessenger: false,
     },
     {
       title: label('menu_study') || 'Study',

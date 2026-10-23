@@ -1,6 +1,6 @@
 {
   "homeNav": {
-    "hidden": true,
+    "hidden": false,
     "seo": "remove",
     "paths": [
       "/home"
@@ -34,5 +34,8 @@
   },
   "passageNotes": {
     "hidden": true
+  },
+  "frontDoor": {
+    "firstVisitDiscover": true
   }
 }

@@ -2,14 +2,12 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { label } from "src/models/Utils";
 import { isMessengerEnabled } from "src/models/featureFlags";
+import { discoverLabel } from "../_Common/discoverLabel";
 import "./HomeTabs.css";
 
 // The Sampler/explore tab has no dictionary key yet; fall back to "Explore"
 // until `home_tab_explore` is added to the label dictionary (backend).
-const exploreLabel = () => {
-  const t = label("home_tab_explore");
-  return t && t !== "home_tab_explore" ? t : "Explore";
-};
+const exploreLabel = () => discoverLabel();
 
 // Active tab from the pathname: /home/user → user, /home/community → community,
 // anything else under /home → explore.
