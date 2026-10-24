@@ -18,8 +18,8 @@ test.describe('hreflang alternates', () => {
     expect(getHreflang(html, 'tr')).toBeNull()
   })
 
-  test('a noindex subtree (/history) emits no hreflang', async ({ request }) => {
-    const html = await (await request.get('/history')).text()
+  test('a noindex page (a history document) emits no hreflang', async ({ request }) => {
+    const html = await (await request.get('/history/1836-03-oliver-cowdery')).text()
     expect(getHreflang(html, 'ko')).toBeNull()
     expect(getHreflang(html, 'x-default')).toBeNull()
   })

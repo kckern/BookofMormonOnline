@@ -13,9 +13,12 @@ test.describe('seoIntentForPath', () => {
     expect(seoIntentForPath('/home')).toBe('remove')
     expect(seoIntentForPath('/home/community')).toBe('remove')
   })
-  test('history → noindex, incl. deep + slug paths', () => {
-    expect(seoIntentForPath('/history')).toBe('noindex')
-    expect(seoIntentForPath('/history/lost-116-pages')).toBe('noindex')
+  test('history: hub + collections crawl (exact), documents under it noindex', () => {
+    expect(seoIntentForPath('/history')).toBe('crawl')
+    expect(seoIntentForPath('/history/lost-116-pages')).toBe('crawl')
+    expect(seoIntentForPath('/history/translation/')).toBe('crawl')
+    expect(seoIntentForPath('/history/1836-03-oliver-cowdery')).toBe('noindex')
+    expect(seoIntentForPath('/history/translation/extra')).toBe('noindex')
   })
   test('utility surfaces are noindex', () => {
     expect(seoIntentForPath('/search')).toBe('noindex')
@@ -26,12 +29,14 @@ test.describe('seoIntentForPath', () => {
     expect(seoIntentForPath('/homepage')).toBe('crawl')
   })
   test('locale prefix is stripped before matching', () => {
-    expect(seoIntentForPath('/ko/history')).toBe('noindex')
+    expect(seoIntentForPath('/ko/history')).toBe('crawl')
+    expect(seoIntentForPath('/ko/history/some-doc')).toBe('noindex')
     expect(seoIntentForPath('/en/home')).toBe('remove')
     expect(seoIntentForPath('/fr/home/community')).toBe('remove')
   })
   test('trailing slash + query are ignored', () => {
-    expect(seoIntentForPath('/history/')).toBe('noindex')
+    expect(seoIntentForPath('/history/')).toBe('crawl')
+    expect(seoIntentForPath('/history/some-doc/')).toBe('noindex')
     expect(seoIntentForPath('/home?q=x')).toBe('remove')
   })
 })

@@ -17,6 +17,18 @@
       "/history"
     ]
   },
+  "historyCollections": {
+    "seo": "crawl",
+    "exact": true,
+    "paths": [
+      "/history",
+      "/history/joseph-smith",
+      "/history/witnesses",
+      "/history/translation",
+      "/history/reception",
+      "/history/lost-116-pages"
+    ]
+  },
   "searchSeo": {
     "seo": "noindex",
     "paths": [

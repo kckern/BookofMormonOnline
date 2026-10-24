@@ -1,12 +1,11 @@
 import type { Metadata } from 'next'
-import { HistoryIndex, historyMetadata } from '../_index'
+import { collectionByKey } from '@/lib/history'
+import { CollectionPage, collectionMetadata } from '../_collection'
 
-// Static segment: wins over app/history/[slug]. The PHP box has no distinct SSR
-// for this path — it renders the History index, differing only in canonical/og:url.
-export async function generateMetadata(): Promise<Metadata> {
-  return historyMetadata('/history/joseph-smith')
-}
+const C = collectionByKey('joseph-smith')!
 
-export default async function HistoryJosephSmithPage() {
-  return <HistoryIndex />
+// Static segment: wins over app/history/[slug].
+export const generateMetadata = (): Promise<Metadata> => collectionMetadata(C)
+export default function Page() {
+  return <CollectionPage c={C} />
 }

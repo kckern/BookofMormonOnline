@@ -168,6 +168,7 @@ export const getSitemapUrls = cache(async (): Promise<SitemapUrl[]> => {
     { path: '/', priority: '1.0' },
     { path: '/contents', priority: '0.9' },
     { path: '/history', priority: '0.7' },
+    ...['joseph-smith', 'witnesses', 'translation', 'reception', 'lost-116-pages'].map((k) => ({ path: `/history/${k}`, priority: '0.6' })),
     { path: '/fax', priority: '0.7' },
     { path: '/map', priority: '0.7' },
     // superset:

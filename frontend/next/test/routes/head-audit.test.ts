@@ -30,8 +30,8 @@ for (const path of CRAWL) {
   })
 }
 
-test('history subtree is noindex with no hreflang', async ({ request }) => {
-  const html = await (await request.get('/history')).text()
+test('history documents are noindex with no hreflang', async ({ request }) => {
+  const html = await (await request.get('/history/1836-03-oliver-cowdery')).text()
   expect((getRobots(html) ?? '').toLowerCase()).toContain('noindex')
   expect(getHreflang(html, 'ko')).toBeNull()
 })

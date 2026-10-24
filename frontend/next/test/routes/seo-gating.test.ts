@@ -24,19 +24,21 @@ test.describe('remove-intent features 404 for bots', () => {
 })
 
 test.describe('sitemap excludes non-crawl features', () => {
-  test('/sitemap.xml has no /history URLs but keeps content', async ({ request }) => {
+  test('/sitemap.xml lists the history hub and collections but no individual documents', async ({ request }) => {
     const r = await request.get('/sitemap.xml', { headers: bot })
     const xml = await r.text()
-    expect(xml).not.toContain('<loc>https://bookofmormon.online/history')
+    expect(xml).toContain('<loc>https://bookofmormon.online/history</loc>')
+    expect(xml).toContain('<loc>https://bookofmormon.online/history/translation</loc>')
+    expect(xml).not.toContain('<loc>https://bookofmormon.online/history/1836-03-oliver-cowdery')
     expect(xml).toContain('<loc>https://bookofmormon.online/people</loc>')
   })
 })
 
 test.describe('default shell does not link noindexed sections', () => {
-  test('/ shell has no History nav link', async ({ request }) => {
+  test('/ shell has no Discover nav link', async ({ request }) => {
     const r = await request.get('/', { headers: bot })
     const html = await r.text()
-    expect(html).not.toContain('href="/history"')
+    expect(html).not.toContain('href="/home"')
     expect(html).toContain('href="/people"') // sanity: other nav links present
   })
 })
@@ -98,15 +100,23 @@ test.describe('SSR access defaults open', () => {
   })
 })
 
-test.describe('history is noindex for bots', () => {
-  test('/history → 200 + noindex meta + header', async ({ request }) => {
-    const r = await request.get('/history', { headers: bot })
+test.describe('history: hub + collections crawlable, documents noindex', () => {
+  test('/history and a collection → 200, no noindex', async ({ request }) => {
+    for (const p of ['/history', '/history/translation']) {
+      const r = await request.get(p, { headers: bot })
+      expect(r.status(), p).toBe(200)
+      expect(r.headers()['x-robots-tag'], p).toBeUndefined()
+      expect(await r.text(), p).not.toMatch(/<meta name="robots" content="noindex/)
+    }
+  })
+  test('a history document → noindex meta + header', async ({ request }) => {
+    const r = await request.get('/history/1836-03-oliver-cowdery', { headers: bot })
     expect(r.status()).toBe(200)
     expect(r.headers()['x-robots-tag']).toBe('noindex, follow')
     expect(await r.text()).toContain('noindex')
   })
-  test('/ko/history → noindex header (locale stripped)', async ({ request }) => {
-    const r = await request.get('/ko/history', { headers: bot })
+  test('/ko/history/<document> → noindex header (locale stripped)', async ({ request }) => {
+    const r = await request.get('/ko/history/1836-03-oliver-cowdery', { headers: bot })
     expect(r.headers()['x-robots-tag']).toBe('noindex, follow')
   })
   test('crawl pages have no noindex header', async ({ request }) => {

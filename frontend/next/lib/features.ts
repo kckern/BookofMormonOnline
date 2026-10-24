@@ -6,6 +6,10 @@ export type SeoIntent = 'crawl' | 'noindex' | 'remove'
 interface FeatureCfg {
   seo?: SeoIntent
   paths?: string[]
+  // Match only these exact paths, not their subtree. An exact entry beats a prefix
+  // entry of the same length, so e.g. /history can be crawlable while the
+  // /history/<document> pages under it stay noindex.
+  exact?: boolean
 }
 
 function normalize(input: string): string {
@@ -17,11 +21,12 @@ function normalize(input: string): string {
 }
 
 // Flatten non-crawl features into [normalized prefix, intent] once at module load.
-const GATES: Array<{ prefix: string; intent: SeoIntent }> = Object.values(
+const GATES: Array<{ prefix: string; intent: SeoIntent; exact: boolean }> = Object.values(
   features as Record<string, FeatureCfg>,
 )
-  .filter((f) => f && f.seo && f.seo !== 'crawl' && Array.isArray(f.paths))
-  .flatMap((f) => f.paths!.map((p) => ({ prefix: normalize(p), intent: f.seo! })))
+  // 'crawl' is the default, so a crawl entry only matters when it is exact.
+  .filter((f) => f && f.seo && (f.seo !== 'crawl' || f.exact) && Array.isArray(f.paths))
+  .flatMap((f) => f.paths!.map((p) => ({ prefix: normalize(p), intent: f.seo!, exact: !!f.exact })))
 
 function isSegmentPrefix(path: string, prefix: string): boolean {
   return path === prefix || path.startsWith(prefix + '/')
@@ -30,9 +35,11 @@ function isSegmentPrefix(path: string, prefix: string): boolean {
 // Longest-prefix wins; default 'crawl' when no gate owns the path.
 export function seoIntentForPath(pathname: string): SeoIntent {
   const path = normalize(pathname)
-  let best: { prefix: string; intent: SeoIntent } | null = null
+  let best: { prefix: string; intent: SeoIntent; exact: boolean } | null = null
   for (const g of GATES) {
-    if (isSegmentPrefix(path, g.prefix) && (!best || g.prefix.length > best.prefix.length)) {
+    const hit = g.exact ? path === g.prefix : isSegmentPrefix(path, g.prefix)
+    if (!hit) continue
+    if (!best || g.prefix.length > best.prefix.length || (g.prefix.length === best.prefix.length && g.exact && !best.exact)) {
       best = g
     }
   }

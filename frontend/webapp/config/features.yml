@@ -8,7 +8,9 @@
 
 homeNav:      { seo: remove,  paths: [/home] }   # Discover is in the nav (2026-10-23); /home itself stays out of sitemaps
 mattersNav:   { seo: crawl,   paths: [/matters] }      # server-rendered pages + sitemap entries (2026-10-23); nav visibility is flags.matters
-historyNav:   { seo: noindex, paths: [/history] }      # nav visibility is now flags.history
+historyNav:   { seo: noindex, paths: [/history] }      # nav visibility is now flags.history; the subtree (individual documents) stays noindex
+# The hub and the five collection pages are crawlable; each has its own server-rendered page. Exact paths only.
+historyCollections: { seo: crawl, exact: true, paths: [/history, /history/joseph-smith, /history/witnesses, /history/translation, /history/reception, /history/lost-116-pages] }
 searchSeo:    { seo: noindex, paths: [/search] }
 userSeo:      { seo: noindex, paths: [/user] }
 # passageNotes (reader panel — no SSR/crawl surface) is now flags.passageNotes
