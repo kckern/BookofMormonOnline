@@ -16,6 +16,7 @@ import { isMobile, useSwipe } from "../../models/Utils";
 import FacsimilePageViewer from './FacsimilePageViewer';
 import FacsimilePageViewerMobile from './FacsimilePageViewerMobile';
 import FaxBreadcrumbs from './FaxBreadcrumbs';
+import FaxCopyLink from './FaxCopyLink';
 import PageImage from './PageImage';
 import backIcon from '../_Common/svg/back.svg';
 import { resolvePgOffset, buildLeafIndex, getRefFromIndex } from "./faxGeometry";
@@ -96,7 +97,7 @@ function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
   return (
     <div className={`facsimileViewer${showGrid ? ' gridMode' : ''}`}>
       <div className="facsimileToolbar">
-        <Link id="fax_back" className="fax-back" to={displayLeaf ? `/fax/${item.slug}` : "/fax"} aria-label="Back to facsimiles">
+        <Link id="fax_back" className="fax-back" to={displayLeaf && !isMobile() ? `/fax/${item.slug}` : "/fax"} aria-label="Back to facsimiles">
           <img src={backIcon} alt="" aria-hidden="true" style={{ width: 20, height: 20 }} />
         </Link>
         <FaxBreadcrumbs
@@ -104,6 +105,7 @@ function FacsimileViewer({ item, volumeOrder, currentVolumeIndex }) {
           current={item}
           currentRef={displayLeaf?.pageReference}
         />
+        {!showGrid && <FaxCopyLink className="fax-toolbar-share" getUrl={() => window.location.href} title={item.title} />}
       </div>
       {showGrid ?
         <FacsimileGridViewer item={item} leafIndex={leafIndex} /> :

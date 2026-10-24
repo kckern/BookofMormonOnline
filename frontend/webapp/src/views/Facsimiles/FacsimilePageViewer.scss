@@ -540,6 +540,7 @@
     }
   }
 
+  .faxScrubBackdrop { position: fixed; inset: 0; z-index: 499; background: transparent; }
   .faxScrubSheet {
     /* Float above the global fixed .bottom-nav (4rem, z-index 400) so its
        controls aren't covered/intercepted by the app nav. */
@@ -554,12 +555,22 @@
     padding: 0.6rem 0.75rem;
     z-index: 500;
 
+    .scrub-head { display: flex; justify-content: flex-end; margin: -0.2rem 0 0.1rem; }
+    .scrub-close {
+      min-width: 44px; min-height: 44px; border: 0; background: transparent;
+      font-size: 1.6rem; line-height: 1; color: #555; cursor: pointer;
+    }
     .scrub-row {
       position: relative;
       display: flex;
       align-items: center;
-      height: 40px;
-      .custom-slider { width: 100%; }
+      height: 44px;
+      /* 44px touch band; the visible track stays slim */
+      .custom-slider {
+        width: 100%; height: 44px; background: transparent; opacity: 1;
+        &::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: #d3d3d3; }
+        &::-moz-range-track { height: 6px; border-radius: 3px; background: #d3d3d3; }
+      }
       .scrub-preview {
         position: absolute;
         bottom: 46px;
@@ -998,6 +1009,9 @@ html[data-theme="dark"] .faxVerseDrawer-inner { background: #1f1f1f; color: #eee
   &:disabled { opacity: 0.35; cursor: default; }
 }
 .faxVerseModal-actions { margin-top: 0.9rem; display: flex; }
+@media (pointer: coarse) {
+  .faxVerseModal-nav { width: 44px; height: 44px; }
+}
 .faxVerseModal-read {
   border: 0;
   background: transparent;
@@ -1008,3 +1022,20 @@ html[data-theme="dark"] .faxVerseDrawer-inner { background: #1f1f1f; color: #eee
   text-decoration: underline;
   &:hover { color: #3a3020; }
 }
+/* Share / copy-link button: quiet neutral text button (house style: neutral gray, black on hover) */
+.faxCopyLink {
+  border: 1px solid #cfcfcf;
+  background: transparent;
+  color: #555;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.8rem;
+  min-height: 36px;
+  border-radius: 999px;
+  cursor: pointer;
+  &:hover { color: #111; border-color: #999; }
+  &:focus-visible { outline: 2px solid #111; outline-offset: 2px; }
+  @media (pointer: coarse) { min-height: 44px; padding: 0.5rem 1rem; }
+}
+.fax-toolbar-share { margin-left: auto; }
+html[data-theme="dark"] .faxCopyLink { color: #ccc; border-color: #555; &:hover { color: #fff; border-color: #888; } }
+html[data-theme="dark"] .faxMobileViewer .faxScrubSheet .scrub-close { color: #ccc; }

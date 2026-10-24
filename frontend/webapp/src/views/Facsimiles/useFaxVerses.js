@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import BoMOnlineAPI, { renderBaseUrl } from "src/models/BoMOnlineAPI";
 import {
   chunkIds, mergeBoxes, chapterRefsForVerseIds, indexReadByVerse,
@@ -67,5 +67,12 @@ export function useFaxVerses(version, leftLeaf, rightLeaf) {
   // ready is true only when the resolved data is for the CURRENT key — stale data
   // from the spread we just left reads as not-ready, so the deep-link fallback can't
   // misfire on it mid-transition.
-  return { versesByPage: state.versesByPage, pageScale: state.pageScale, ready: state.ready && state.forKey === key };
+  // Memoized: callers derive memos/effects from this object, and a fresh identity
+  // every render re-fired the deep-link auto-open effect (the verse modal re-opened
+  // right after being closed).
+  const ready = state.ready && state.forKey === key;
+  return useMemo(
+    () => ({ versesByPage: state.versesByPage, pageScale: state.pageScale, ready }),
+    [state.versesByPage, state.pageScale, ready]
+  );
 }

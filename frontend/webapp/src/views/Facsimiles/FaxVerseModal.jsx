@@ -7,6 +7,7 @@ import { label, isMobile } from "src/models/Utils";
 import { unionBox } from "./faxVerseData";
 import FaxVerseZoom from "./FaxVerseZoom";
 import StudyBreadcrumb from "../_Common/StudyBreadcrumb";
+import FaxCopyLink from "./FaxCopyLink";
 
 // Desired on-screen width of the verse cutout in the modal (px).
 const CUTOUT_TARGET_W = 560;
@@ -202,6 +203,12 @@ export default function FaxVerseModal({ verse, version, pageScale = 700, anchorX
             onClick={onNext}
             disabled={!onNext}
           >›</button>
+        </div>
+        <div className="faxVerseModal-actions">
+          <FaxCopyLink
+            title={verse.ref}
+            getUrl={() => `${window.location.origin}/fax/${version}/${(verse.ref || "").replace(/[ :]+/g, ".").replace(/-+/g, "~").toLowerCase()}`}
+          />
         </div>
     </>
   );

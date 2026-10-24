@@ -153,8 +153,15 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
   }, [ready, ROW]);
 
   // ---- Initial deep-link scroll + external URL changes (edition switch / ref jump) ----
+  // A ref/verse-id slug can only resolve to a page once the page-reference index has
+  // loaded; until then resolveIndex falls back to page 1 and the scroll sync would
+  // overwrite the permalink with "/1". Wait for the index (indexed editions only).
+  const refsLoaded = useMemo(() => leafIndex.some((l) => l && l.pageReference), [leafIndex]);
+  const slugNeedsRefs = !!item.indexRef && !!pageNumber
+    && (/[A-Za-z]/.test(pageNumber) || parseInt(pageNumber, 10) > total);
   useEffect(() => {
     if (!ready) return;
+    if (slugNeedsRefs && !refsLoaded) return;
     // Ignore URL changes we caused ourselves via scroll sync.
     if (didInit.current && pageNumber === lastWrittenSlug.current) return;
     const idx = resolveIndex(pageNumber);
@@ -162,7 +169,7 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
     setScrubValue(idx);
     scrollToIndex(idx, didInit.current); // instant on first paint, smooth thereafter
     didInit.current = true;
-  }, [ready, pageNumber, resolveIndex, scrollToIndex]);
+  }, [ready, pageNumber, resolveIndex, scrollToIndex, slugNeedsRefs, refsLoaded]);
 
   // ---- Deep-link to a verse (ref slug or verse id) opens the inspector drawer ----
   // The URL scrolls to the page (above); here we also resolve the verse and open the
@@ -201,12 +208,16 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
   // scroll-sync overwrite it with the page number (read via ref so the sync effect,
   // which isn't keyed on openVerse, always sees the live value).
   const openVerseRef = useRef(null);
+  const mountedAt = useRef(Date.now());
+  const urlVerseIdRef = useRef(null);
+  urlVerseIdRef.current = urlVerseId;
   useEffect(() => { openVerseRef.current = openVerse; }, [openVerse]);
 
   // ---- Track the centered page → debounced URL sync ----
   const syncTimer = useRef(null);
   useEffect(() => {
     if (!ready) return;
+    if (!didInit.current) return; // the deep-link init hasn't placed us yet — don't write the URL
     const idx = Math.max(0, Math.min(total - 1, Math.floor((scrollTop + viewportH / 2) / ROW)));
     if (idx !== currentIndex) {
       setCurrentIndex(idx);
@@ -217,11 +228,14 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
       clearTimeout(syncTimer.current);
       syncTimer.current = setTimeout(() => {
         if (openVerseRef.current) return; // keep the ref permalink while the drawer is open
+        // A verse deep link whose boxes are still loading: don't replace the ref slug
+        // with the page number before the drawer can open (give up after 8 s).
+        if (urlVerseIdRef.current != null && !deepLinkDone.current && Date.now() - mountedAt.current < 8000) return;
         lastWrittenSlug.current = `${slug}`;
         navigate(`/fax/${item.slug}/${slug}`, { replace: true });
       }, 180);
     }
-  }, [scrollTop, viewportH, ROW, ready, total]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [scrollTop, viewportH, ROW, ready, total, slugNeedsRefs && !refsLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => clearTimeout(syncTimer.current), []);
 
   // ---- Preload scans just beyond the mounted window ----
@@ -318,8 +332,12 @@ function FacsimilePageViewerMobile({ item, leafIndex, pgoffset, volumeOrder = []
       )}
 
       {/* Scrubber sheet — fling across the book + jump-to-reference */}
+      {scrubOpen && <div className="faxScrubBackdrop" onClick={() => setScrubOpen(false)} aria-hidden="true" />}
       {scrubOpen && (
-        <div className="faxScrubSheet">
+        <div className="faxScrubSheet" role="dialog" aria-label="Navigate pages">
+          <div className="scrub-head">
+            <button type="button" className="scrub-close" aria-label="Close page navigator" onClick={() => setScrubOpen(false)}>×</button>
+          </div>
           <div className="scrub-row">
             <input
               type="range"

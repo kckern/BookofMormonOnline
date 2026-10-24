@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo, useReducer } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
 import { useSwipe } from "../../models/Utils";
 import { assetUrl, renderBaseUrl } from 'src/models/BoMOnlineAPI';
@@ -26,6 +26,7 @@ import { faxVerseReducer, initialFaxVerseState } from "./faxVerseState";
  */
 function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], currentVolumeIndex = -1, onSeamOffset }) {
   const navigate = useNavigate();
+  const routeLocation = useLocation();
   const { pageNumber } = useParams();
   
   // All hooks must be called at the top level before any conditionals
@@ -104,6 +105,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   const isRefSlug = /[a-z]/i.test(rawSlug) && /\d/.test(rawSlug) && !isRoman;
   const isVerseIdSlug = isDigits && Number.isFinite(slugNum) && slugNum > (parseInt(item.pages, 10) || 0);
   const urlTargetsVerse = isRefSlug || isVerseIdSlug;
+  const autoOpenedSlugRef = useRef(null);
   // The verse id a verse-targeting URL points at (the range's first verse).
   const urlVerseId = (() => {
     if (isVerseIdSlug) return slugNum;
@@ -131,7 +133,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   //     resolve a real hotspot.
   // In those cases we resolve to a page and rewrite the URL to the plain page number.
   const editionIndexed = !!item.indexRef;
-  const pageOnlyNav = !!(history.location && history.location.state && history.location.state.faxPageOnly);
+  const pageOnlyNav = !!(routeLocation.state && routeLocation.state.faxPageOnly);
   const suppressModal = urlTargetsVerse && (pageOnlyNav || !editionIndexed || (refsLoaded && versePageIdx === -1));
   const totalPages = leafIndex.length;
   // Highest printed folio, for the jump-input max + "/ N" total. Folio is the
@@ -519,9 +521,12 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
   // the spread + complete modal reveal together with no rug-pull.
   useEffect(() => {
     if (!urlTargetsVerse || suppressModal || urlVerseId == null || vstate.openVerse || !spreadVerses.length) return;
+    // At most once per arrival at this slug: closing the modal reverts the URL
+    // asynchronously, and the stale ref slug must not re-open it.
+    if (autoOpenedSlugRef.current === rawSlug) return;
     const target = spreadVerses.find((v) => v.verse_id === urlVerseId)
       || spreadVerses.find((v) => (lookupReference(v.ref)?.verse_ids || []).includes(urlVerseId));
-    if (target) vdispatch({ type: "OPEN", verse: target });
+    if (target) { autoOpenedSlugRef.current = rawSlug; vdispatch({ type: "OPEN", verse: target }); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlTargetsVerse, urlVerseId, spreadVerses]);
 
@@ -644,7 +649,7 @@ function FacsimilePageViewer({ item, leafIndex, pgoffset, volumeOrder = [], curr
         
         // faxPageOnly: this is an edition switch, not a verse deep-link — the ref in
         // targetPath only picks the page; the viewer must land there without a modal.
-        navigate(targetPath, { faxPageOnly: true });
+        navigate(targetPath, { state: { faxPageOnly: true } });
       }
     };
     window.addEventListener('keydown', onKey);

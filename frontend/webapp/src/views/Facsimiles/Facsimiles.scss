@@ -509,7 +509,7 @@
   flex-shrink: 0;
   padding: 0.4rem 1rem;
 
-  .fax-back { display: inline-flex; align-items: center; z-index: 1; }
+  .fax-back { display: inline-flex; align-items: center; justify-content: center; z-index: 1; min-width: 44px; min-height: 44px; margin: -0.4rem 0 -0.4rem -0.6rem; }
 
   /* Breadcrumb trail + dropdown chrome now come from the shared Breadcrumb.css
      (.breadcrumb, .bc-link, .bc-sep, .bc-trigger, .bc-chevron, .bc-dropdown). The
