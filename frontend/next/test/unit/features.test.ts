@@ -7,8 +7,9 @@ test.describe('seoIntentForPath', () => {
     expect(seoIntentForPath('/')).toBe('crawl')
   })
   test('remove features → remove', () => {
-    expect(seoIntentForPath('/matters')).toBe('remove')
-    expect(seoIntentForPath('/matters/swords')).toBe('remove')
+    expect(seoIntentForPath('/home')).toBe('remove')
+    expect(seoIntentForPath('/matters')).toBe('crawl') // Matters is crawlable since 2026-10-23
+    expect(seoIntentForPath('/home/user')).toBe('remove')
     expect(seoIntentForPath('/home')).toBe('remove')
     expect(seoIntentForPath('/home/community')).toBe('remove')
   })
@@ -22,15 +23,15 @@ test.describe('seoIntentForPath', () => {
   })
   test('segment-prefix only — /historyfoo is NOT history', () => {
     expect(seoIntentForPath('/historyfoo')).toBe('crawl')
-    expect(seoIntentForPath('/matterspedia')).toBe('crawl')
+    expect(seoIntentForPath('/homepage')).toBe('crawl')
   })
   test('locale prefix is stripped before matching', () => {
     expect(seoIntentForPath('/ko/history')).toBe('noindex')
-    expect(seoIntentForPath('/en/matters')).toBe('remove')
+    expect(seoIntentForPath('/en/home')).toBe('remove')
     expect(seoIntentForPath('/fr/home/community')).toBe('remove')
   })
   test('trailing slash + query are ignored', () => {
     expect(seoIntentForPath('/history/')).toBe('noindex')
-    expect(seoIntentForPath('/matters?q=x')).toBe('remove')
+    expect(seoIntentForPath('/home?q=x')).toBe('remove')
   })
 })

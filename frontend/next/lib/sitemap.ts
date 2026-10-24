@@ -2,6 +2,7 @@ import { cache } from 'react'
 import { gql } from './graphql'
 import { seoIntentForPath } from './features'
 import { bomChapterSlugs } from './scripture'
+import { getMattersList, MATTER_GROUPS } from './matters'
 
 // ── /sitemap.xml URL enumeration ─────────────────────────────────────────────
 // Parity target: the legacy PHP box's sitemap, which contains exactly 3179 URLs
@@ -67,6 +68,15 @@ async function peopleUrls(): Promise<SitemapUrl[]> {
 async function placeUrls(): Promise<SitemapUrl[]> {
   const d = await gql<{ place: { slug: string }[] }>(PLACES_QUERY, {}, { revalidate: 3600, lang: 'en' })
   return (d.place ?? []).map((p) => ({ path: `/place/${p.slug}`, priority: '0.6' }))
+}
+
+// ── matters (index 0.7, groups 0.6, ~476 entries at 0.5) ──────────────────────
+async function matterUrls(): Promise<SitemapUrl[]> {
+  const list = await getMattersList('en')
+  return [
+    ...MATTER_GROUPS.map((g) => ({ path: `/matters/${g.key}`, priority: '0.6' })),
+    ...list.map((m) => ({ path: `/matters/${m.slug}`, priority: '0.5' })),
+  ]
 }
 
 // ── history (index 0.7 + 1024 docs at 0.3) ───────────────────────────────────
@@ -141,10 +151,11 @@ async function timelineUrls(): Promise<SitemapUrl[]> {
 
 // ── full URL list ────────────────────────────────────────────────────────────
 export const getSitemapUrls = cache(async (): Promise<SitemapUrl[]> => {
-  const [content, people, places, history, fax, maps, timeline] = await Promise.all([
+  const [content, people, places, matters, history, fax, maps, timeline] = await Promise.all([
     contentTreeUrls(),
     peopleUrls(),
     placeUrls(),
+    matterUrls(),
     historyUrls(),
     faxUrls(),
     mapUrls(),
@@ -162,11 +173,12 @@ export const getSitemapUrls = cache(async (): Promise<SitemapUrl[]> => {
     // superset:
     { path: '/people', priority: '0.7' },
     { path: '/places', priority: '0.7' },
+    { path: '/matters', priority: '0.7' },
     { path: '/timeline', priority: '0.7' },
     { path: '/about', priority: '0.5' },
     { path: '/studyedition', priority: '0.5' },
   ]
 
-  const all = [...statics, ...content, ...people, ...places, ...history, ...fax, ...maps, ...timeline, ...scriptureUrls()]
+  const all = [...statics, ...content, ...people, ...places, ...matters, ...history, ...fax, ...maps, ...timeline, ...scriptureUrls()]
   return all.filter((u) => seoIntentForPath(u.path) === 'crawl')
 })

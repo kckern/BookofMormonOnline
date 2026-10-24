@@ -7,7 +7,7 @@
 # these (accepted).
 
 homeNav:      { seo: remove,  paths: [/home] }   # Discover is in the nav (2026-10-23); /home itself stays out of sitemaps
-mattersNav:   { seo: remove,  paths: [/matters] }      # nav visibility is now flags.matters; seo here is crawler-only
+mattersNav:   { seo: crawl,   paths: [/matters] }      # server-rendered pages + sitemap entries (2026-10-23); nav visibility is flags.matters
 historyNav:   { seo: noindex, paths: [/history] }      # nav visibility is now flags.history
 searchSeo:    { seo: noindex, paths: [/search] }
 userSeo:      { seo: noindex, paths: [/user] }

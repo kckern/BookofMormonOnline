@@ -1,20 +1,17 @@
 {
   "homeNav": {
-    "hidden": true,
     "seo": "remove",
     "paths": [
       "/home"
     ]
   },
   "mattersNav": {
-    "hidden": true,
-    "seo": "remove",
+    "seo": "crawl",
     "paths": [
       "/matters"
     ]
   },
   "historyNav": {
-    "hidden": true,
     "seo": "noindex",
     "paths": [
       "/history"
@@ -32,7 +29,24 @@
       "/user"
     ]
   },
-  "passageNotes": {
-    "hidden": true
+  "frontDoor": {
+    "firstVisitDiscover": true
+  },
+  "flags": {
+    "matters": {
+      "rollout": 100
+    },
+    "history": {
+      "rollout": 100
+    },
+    "history1820s": {
+      "rollout": 0
+    },
+    "theology": {
+      "rollout": 0
+    },
+    "passageNotes": {
+      "rollout": 0
+    }
   }
 }
