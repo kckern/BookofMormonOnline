@@ -55,6 +55,50 @@ export async function withRetry<T>(
   }
 }
 
+// Bounded in-process cache for GraphQL reads. Next's own fetch data cache writes
+// every distinct response to .next/cache/fetch-cache with no eviction: crawlers
+// walking the long tail (~220k distinct URLs / 44 h) grew it to 373k files / ~2 GB
+// in 5 days (disk alarm, a file write per render). The crawler HTML cache lives in
+// NPM, so here a small TTL'd LRU is enough. Responses are stored as JSON text and
+// parsed per hit so callers can mutate what they get. Errors are never stored, so
+// a DB blip can't poison a page for the TTL (prod 2026-10-20, /people/moroni1).
+const MEMO_MAX_BYTES = Number(process.env.GRAPHQL_MEMO_MAX_BYTES ?? 64 * 1024 * 1024)
+type Memo = { text: string; expires: number }
+const memo = new Map<string, Memo>() // insertion order = recency
+const inflight = new Map<string, Promise<string>>()
+let memoBytes = 0
+
+function memoGet(key: string): string | undefined {
+  const hit = memo.get(key)
+  if (!hit) return undefined
+  memo.delete(key)
+  if (hit.expires <= Date.now()) {
+    memoBytes -= hit.text.length
+    return undefined
+  }
+  memo.set(key, hit)
+  return hit.text
+}
+
+function memoSet(key: string, text: string, ttlSeconds: number) {
+  const prev = memo.get(key)
+  if (prev) memoBytes -= prev.text.length
+  memo.delete(key)
+  memo.set(key, { text, expires: Date.now() + ttlSeconds * 1000 })
+  memoBytes += text.length
+  for (const [k, v] of memo) {
+    if (memoBytes <= MEMO_MAX_BYTES) break
+    memo.delete(k)
+    memoBytes -= v.text.length
+  }
+}
+
+export function resetGraphqlMemo() {
+  memo.clear()
+  inflight.clear()
+  memoBytes = 0
+}
+
 export async function gql<T>(
   query: string,
   variables: Record<string, unknown> = {},
@@ -63,29 +107,37 @@ export async function gql<T>(
   // Override short-circuits BEFORE headers() so pinned callers (sitemap) stay static/ISR.
   const lang = options.lang ?? (await headers()).get('x-lang') ?? 'en'
   const url = `${GRAPHQL_URL}${lang === 'en' ? '' : '/' + lang}`
-  const send = async (extra: RequestInit & { next?: { revalidate: number } }) => {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, variables }),
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      ...extra,
+  const body = JSON.stringify({ query, variables })
+  const ttl = options.revalidate === false ? 0 : options.revalidate ?? 3600
+  const key = `${url}\n${body}`
+
+  const fetchData = () =>
+    withRetry(async () => {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        cache: 'no-store', // Next must not persist this; the memo above is the cache
+      })
+      if (!res.ok) throw new Error(`GraphQL fetch failed: ${res.status}`)
+      const json = (await res.json()) as { data?: unknown; errors?: Array<{ message: string }> }
+      if (json.errors?.length) throw new Error(json.errors[0].message)
+      return JSON.stringify(json.data ?? null)
     })
-    if (!res.ok) throw new Error(`GraphQL fetch failed: ${res.status}`)
-    return res.json() as Promise<{ data?: unknown; errors?: Array<{ message: string }> }>
+
+  if (ttl <= 0) return JSON.parse(await fetchData()) as T
+  const cached = memoGet(key)
+  if (cached !== undefined) return JSON.parse(cached) as T
+  let pending = inflight.get(key)
+  if (!pending) {
+    pending = fetchData()
+      .then((text) => {
+        memoSet(key, text, ttl)
+        return text
+      })
+      .finally(() => inflight.delete(key))
+    inflight.set(key, pending)
   }
-  const uncached = options.revalidate === false
-  const revalidate = options.revalidate === false ? 0 : options.revalidate ?? 3600
-  return withRetry(async () => {
-    let json = await send({ next: { revalidate } })
-    if (json.errors?.length && !uncached) {
-      // A GraphQL error comes back as HTTP 200, so Next has already stored this
-      // response for the whole revalidate window: one DB blip would 500 this page
-      // for an hour (prod 2026-10-20, /people/moroni1). Ask again, uncached
-      // (never combine no-store with `next.revalidate`) before giving up.
-      json = await send({ cache: 'no-store' })
-    }
-    if (json.errors?.length) throw new Error(json.errors[0].message)
-    return json.data as T
-  })
+  return JSON.parse(await pending) as T
 }
