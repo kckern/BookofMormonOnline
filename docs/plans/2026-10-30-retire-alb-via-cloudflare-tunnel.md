@@ -30,6 +30,12 @@ Realistic saving: about **$26-27/month**, not the $45-50 I quoted earlier. That 
 4. Whether any client depends on the ALB DNS name itself (health checks, webhooks, Sendy, mail links).
 5. Whether the ALB's one-time TLS (ACM cert) is used by anything else.
 
+## Findings from the Phase 0 DNS check (2026-10-30)
+
+- 10 of 11 BoM hostnames are on Cloudflare nameservers and can move to the tunnel one at a time.
+- `xn--289a67xla.kr` is NOT on Cloudflare: it resolves straight to the ALB's IPs. Its nameservers must move to Cloudflare (registrar action) before the ALB is deleted, or it goes down.
+- Cloudflare API access is still unconfirmed; the existing tunnel's routes can't be read from here.
+
 ## Phases (each independently reversible)
 
 **Phase 0, prerequisites (no prod change)**
