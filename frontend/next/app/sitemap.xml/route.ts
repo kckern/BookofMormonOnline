@@ -1,6 +1,6 @@
 import { headers } from 'next/headers'
 import { getSitemapUrls, CHANGEFREQ, LASTMOD } from '@/lib/sitemap'
-import { LANG_HOST, bcp47, safeHost } from '@/lib/locales'
+import { LANG_HOST, bcp47, safeHost, englishOnlyPath } from '@/lib/locales'
 
 // Serve /sitemap.xml as a hand-rendered XML string rather than via Next's
 // MetadataRoute.Sitemap convention: the benchmark's <priority> values are exact
@@ -29,7 +29,7 @@ export async function GET() {
     .map(({ path, priority }) => ({
       path: path === '/studyedition'
         ? (lang === 'ko' ? '/특별반' : null)
-        : path.startsWith('/read/') && lang !== 'en'
+        : (path.startsWith('/read/') && lang !== 'en') || (lang !== 'en' && englishOnlyPath(canonicalHost, path))
           ? null
           : path,
       priority,

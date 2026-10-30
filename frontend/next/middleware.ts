@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { LANG_PREFIXES, LOCALE_SEGS, LANG_HOST, langForHost, isAuthorizedHost, isInfraHost, isForceSsrHost, isPreviewHost, isNonIndexableLanguageHost, CANONICAL_EN_HOST } from '@/lib/locales'
+import { LANG_PREFIXES, LOCALE_SEGS, LANG_HOST, langForHost, isAuthorizedHost, isInfraHost, isForceSsrHost, isPreviewHost, isNonIndexableLanguageHost, CANONICAL_EN_HOST, englishOnlyPath } from '@/lib/locales'
 import { seoIntentForPath } from '@/lib/features'
 import { proxyClickyJs, proxyClickyBeacon } from '@/lib/clicky'
 import { classify, type Decision, type ClientClass, type RenderMode } from '@/lib/classify'
@@ -299,6 +299,19 @@ export async function middleware(request: NextRequest) {
       craResponse.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate')
     }
     return craResponse
+  }
+
+  // --- Language host + English-only route: send the crawler to the English URL ---
+  // Cheap 301 instead of a full render of a duplicate English page.
+  if (!isSeoAsset && decision.isNav && !forceSsr) {
+    const englishPath = englishOnlyPath(forwardedHost, pathname)
+    if (englishPath) {
+      return markResponse(
+        NextResponse.redirect(`https://${CANONICAL_EN_HOST}${englishPath}${request.nextUrl.search}`, 301),
+        clientClass,
+        'ssr',
+      )
+    }
   }
 
   // --- Bot/crawler: serve Next.js SSR with lang header ---

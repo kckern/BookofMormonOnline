@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { langForHost, bcp47, isAuthorizedHost, isInfraHost, isForceSsrHost, isPreviewHost, CANONICAL_EN_HOST, normalizeHost, safeHost } from '../../lib/locales'
+import { langForHost, bcp47, isAuthorizedHost, isInfraHost, isForceSsrHost, isPreviewHost, CANONICAL_EN_HOST, normalizeHost, safeHost, englishOnlyPath } from '../../lib/locales'
 
 test.describe('langForHost', () => {
   test('apex → en', () => { expect(langForHost('bookofmormon.online')).toBe('en') })
@@ -130,5 +130,35 @@ test.describe('safeHost', () => {
   test('unrelated + empty fall back to apex', () => {
     expect(safeHost('evil.example.com')).toBe('bookofmormon.online')
     expect(safeHost(null)).toBe('bookofmormon.online')
+  })
+})
+
+test.describe('englishOnlyPath — duplicate English routes on language hosts', () => {
+  test('English-only classes on a language host map to the English path', () => {
+    expect(englishOnlyPath('swe.bookofmormon.online', '/place/david')).toBe('/place/david')
+    expect(englishOnlyPath('livredemormon.fr', '/commentary/1013817101')).toBe('/commentary/1013817101')
+    expect(englishOnlyPath('buchmormon.de', '/map/malay')).toBe('/map/malay')
+    expect(englishOnlyPath('libromormon.es', '/matters/faith')).toBe('/matters/faith')
+    expect(englishOnlyPath('sachmacmon.vn', '/read/1-nephi/1')).toBe('/read/1-nephi/1')
+  })
+  test('a leading /{lang}/ segment is stripped', () => {
+    expect(englishOnlyPath('livredemormon.fr', '/fr/place/david')).toBe('/place/david')
+    expect(englishOnlyPath('livredemormon.fr', '/en/commentary/9')).toBe('/commentary/9')
+  })
+  test('translated classes stay on the language host', () => {
+    for (const p of ['/', '/contents', '/1-nephi/1', '/about']) {
+      expect(englishOnlyPath('swe.bookofmormon.online', p), p).toBeNull()
+    }
+  })
+  test('ko keeps its native people pages; other hosts do not', () => {
+    expect(englishOnlyPath('xn--289a67xla.kr', '/people/nephi')).toBeNull()
+    expect(englishOnlyPath('livredemormon.fr', '/people/nephi')).toBe('/people/nephi')
+  })
+  test('the English host, QA mirrors and unknown hosts never redirect', () => {
+    expect(englishOnlyPath('bookofmormon.online', '/place/david')).toBeNull()
+    expect(englishOnlyPath('ssr.bookofmormon.online', '/place/david')).toBeNull()
+    expect(englishOnlyPath('ssr-kr.bookofmormon.online', '/place/david')).toBeNull()
+    expect(englishOnlyPath('example.com', '/place/david')).toBeNull()
+    expect(englishOnlyPath(null, '/place/david')).toBeNull()
   })
 })

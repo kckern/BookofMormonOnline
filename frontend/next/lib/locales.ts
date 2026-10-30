@@ -145,3 +145,29 @@ export function isInfraHost(host: string | null | undefined): boolean {
   if (!bare.includes('.')) return true                    // single-label service name
   return false
 }
+
+// Route classes whose body text is English on every language host (see
+// docs/audits/2026-10-28-language-subdomain-seo-leak.md: 81% of each language
+// sitemap). Rendering them per language host just serves the English document at
+// up to nine URLs, so crawlers are sent to the English URL instead (301): no
+// render, no duplicate content. Translated classes (home, /contents, the content
+// tree, /people on ko) are NOT listed and stay on the language host.
+const ENGLISH_ONLY_ROOTS = new Set([
+  'place', 'places', 'matters', 'commentary', 'fax', 'map', 'maps', 'timeline', 'history', 'read', 'people',
+])
+
+/**
+ * If `pathname` on language host `host` is an English-only route class, return the
+ * path to serve it from on the English host (leading /{lang}/ segment stripped);
+ * otherwise null. English and unknown/mirror hosts always return null.
+ */
+export function englishOnlyPath(host: string | null | undefined, pathname: string): string | null {
+  const h = normalizeHost(host)
+  const lang = HOST_LANG[h]
+  if (!lang || lang === 'en' || isForceSsrHost(h) || isPreviewHost(h)) return null
+  const segs = pathname.split('/').filter(Boolean)
+  const rest = segs.length && LOCALE_SEGS.has(segs[0]) ? segs.slice(1) : segs
+  if (!rest.length || !ENGLISH_ONLY_ROOTS.has(rest[0])) return null
+  if (rest[0] === 'people' && lang === 'ko') return null // ko has native people pages
+  return '/' + rest.join('/')
+}
