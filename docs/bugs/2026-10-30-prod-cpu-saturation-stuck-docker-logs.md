@@ -50,12 +50,14 @@ Never leave `docker logs` un-`timeout`ed or with `-f` over SSH.
 - `CPUCredits:t3a` **$19.42** — surplus credits from the 100 % CPU spin (Oct 20–30) on an
   `unlimited`-mode instance. Instance switched to `standard` 2026-10-30; it can no longer
   accrue surplus charges (worst case is throttling to baseline, covered by the CPU alarm).
-- CloudFront `Invalidations` **$18.88** — NOT automated. CloudTrail: 562 `CreateInvalidation`
-  calls / 4,775 paths, all manual `aws-cli` runs under the `OfficeAWS` admin credential,
-  Oct 2–7 (peak Oct 6–7), per-file paths under `/sheetmusic/pdf`, `/audio`, `/albumart`,
-  `/waveforms` — a bulk media migration. First 1,000 paths/month are free, then $0.005 each.
-  **Rule:** bulk ingests must invalidate with one prefix wildcard (`/sheetmusic/*` = 1 path)
-  or use versioned keys, never a per-file loop.
+- CloudFront `Invalidations` **$18.88** — NOT BoM Online and NOT automated. CloudTrail:
+  562 `CreateInvalidation` calls / 4,775 paths, Oct 2–7 (peak Oct 6–7), all manual `aws-cli`
+  runs under the `OfficeAWS` admin credential. 436 of the 437 calls in Oct 2–8 targeted the
+  distribution fronting `media.crawfordgates.com` (a separate composer site in the same AWS
+  account: sheet-music PDFs, audio, album art, waveforms, video); only 1 touched BoM's
+  distribution (a profile image). The account-wide bill hides which project spent it.
+  First 1,000 paths/month are free, then $0.005 each. **Rule:** bulk invalidations use one
+  prefix wildcard (`/sheetmusic/*` = 1 path) or versioned keys, never a per-file loop.
 - Budget `bom-monthly-cap` ($105/mo; alerts at 60/80/100 % actual + 100 % forecast to the
   `bom-production-alerts` SNS topic) created 2026-10-30. AWS has no native hard cap; an
   auto-stop budget action would take prod down, so it is a deliberate owner decision.
