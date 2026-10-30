@@ -318,7 +318,11 @@ log "starting candidate $next"
 # Bound the container's json.log: Docker's default json-file driver does NOT
 # rotate, and an unbounded stdout log is the other half of what filled the
 # root disk (a sibling container's json.log had reached 387 MB).
+# --init: pm2-runtime is PID 1 in this image and does not reap orphans, so the
+# short-lived `timeout`/`sh`/`grep` children that get reparented to it piled up as
+# zombies (152 after 5 days, 2026-10-30). tini as PID 1 reaps them.
 docker run -d \
+  --init \
   --name "$next" \
   --log-driver json-file \
   --log-opt max-size=20m \
