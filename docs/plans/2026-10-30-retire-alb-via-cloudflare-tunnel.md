@@ -10,7 +10,11 @@ Status: IN PROGRESS (2026-10-30/31). Executed so far:
 - `.kr`: ACM cert issued in us-east-1 (DNS-validated, auto-renewing); CloudFront distribution created (caching disabled, AllViewer origin request policy, origin = EC2 EIP DNS name over HTTP:80). DNS cutover of the `.kr` apex/wildcard from the ALB to CloudFront is the next step.
 - `.рф` is sanctioned: out of scope, left untouched.
 
-Remaining: `.kr` DNS cutover, restrict origin :80 to CloudFront + remove world-open 80/443, a week at zero ALB traffic, then delete the ALB, target groups, its ACM certs, unused security groups; replace the Cloudflare Global API key with a scoped token.
+**BLOCKER found 2026-10-31 — the ALB is shared with other products.** Live Route 53 zones `scripture.guide` (Scripture Guide, do-not-touch), `archival.link` and `netlab.cloud` (plus the sanctioned `.рф` domain) still resolve to this ALB, and 12 ACM certs on its HTTPS listener cover them. Deleting the ALB would take those sites down. BoM-only traffic is now off the ALB (8 zones on the tunnel, `.kr` on CloudFront); the ALB is kept for the other products. Its configuration is dumped for recreation. Deleting it requires migrating those hostnames first (KC decision).
+
+Done after that: `.kr` DNS cutover to CloudFront (CloudFront + ACM us-east-1 cert + `bom-origin-cloudfront` SG on the instance), telemetry/alarm/Vector updated for `tunnel` and `cloudfront` ingress.
+
+Remaining (only if the other products move): `.kr` DNS cutover (done), restrict origin :80 to CloudFront + remove world-open 80/443, a week at zero ALB traffic, then delete the ALB, target groups, its ACM certs, unused security groups; replace the Cloudflare Global API key with a scoped token.
 
 Original plan follows (savings figures below are measured, see table).
 
