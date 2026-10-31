@@ -45,6 +45,8 @@ COPY --from=build /src/frontend/next/public ./frontend/next/public
 COPY --from=build /src/frontend/next/config ./frontend/next/config
 COPY --from=build /src/frontend/webapp/build ./frontend/webapp/build
 COPY ops/container ./ops/container
+RUN chmod 0755 /app/ops/container/entrypoint.sh
+ENTRYPOINT ["/app/ops/container/entrypoint.sh"]
 COPY ecosystem.config.cjs ./
 EXPOSE 8200 8201 5005
 HEALTHCHECK --interval=15s --timeout=10s --start-period=45s --retries=3 \
