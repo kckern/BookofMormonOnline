@@ -25,14 +25,14 @@ function ordered(source, ...needles) {
 }
 
 test('all deployment shell entrypoints parse as POSIX shell', () => {
-  execFileSync('sh', [
-    '-n',
-    resolve(root, 'deploy-blue-green.sh'),
-    resolve(root, 'migrate-blue-green.sh'),
-    resolve(root, 'rollback-blue-green.sh'),
-    resolve(root, 'publish-host-metrics.sh'),
-    resolve(root, 'secrets-receive.sh'),
-  ])
+  // one `sh -n` per file: extra operands would only become positional args of the first
+  for (const file of [
+    'deploy-blue-green.sh',
+    'migrate-blue-green.sh',
+    'rollback-blue-green.sh',
+    'publish-host-metrics.sh',
+    'secrets-receive.sh',
+  ]) execFileSync('sh', ['-n', resolve(root, file)])
 })
 
 test('initial migration health-gates before changing the live Docker name', () => {

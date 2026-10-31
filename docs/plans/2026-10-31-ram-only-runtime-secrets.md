@@ -229,28 +229,52 @@ git commit -m "fix(ops): ingest jobs load runtime config via container entrypoin
 // ops/production/test/secrets-receive.test.mjs
 import assert from 'node:assert/strict'
 import { execFileSync, spawnSync } from 'node:child_process'
-import { mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs'
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import test from 'node:test'
 
 const script = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'secrets-receive.sh')
+const source = readFileSync(script, 'utf8')
 const b64 = (s) => Buffer.from(s).toString('base64')
-function call(cmd, input, root) {
+// bundle([[name, value], ...]) -> "NAME\tbase64\n"... + ".END\tN\n"
+const bundle = (pairs) => pairs.map(([k, v]) => `${k}\t${b64(v)}\n`).join('') + `.END\t${pairs.length}\n`
+function call(cmd, input, root, extraPath) {
   return spawnSync('sh', [script], {
-    input, encoding: 'utf8',
-    env: { PATH: process.env.PATH, SSH_ORIGINAL_COMMAND: cmd, BOM_SECRETS_ROOT: root, BOM_SECRETS_SKIP_TMPFS_CHECK: '1' },
+    input, encoding: 'utf8', timeout: 30000,
+    env: {
+      PATH: extraPath ? `${extraPath}:${process.env.PATH}` : process.env.PATH,
+      SSH_ORIGINAL_COMMAND: cmd, BOM_SECRETS_ROOT: root, BOM_SECRETS_SKIP_TMPFS_CHECK: '1',
+    },
   })
 }
 const fresh = () => { const p = mkdtempSync(join(tmpdir(), 'rcv-')); return [p, join(p, 'bom-secrets')] }
+// Seed a live bundle containing only KEEP, then run fn; always clean up.
+function withLive(fn) {
+  const [p, root] = fresh()
+  try {
+    assert.equal(call('put', bundle([['KEEP', 'x']]), root).status, 0)
+    fn(p, root)
+  } finally { rmSync(p, { recursive: true, force: true }) }
+}
+const assertUntouched = (p, root) => {
+  assert.deepEqual(readdirSync(p), ['bom-secrets'], 'no .new/.old/lock leftovers')
+  assert.deepEqual(readdirSync(root), ['KEEP'])
+  assert.equal(readFileSync(join(root, 'KEEP'), 'utf8'), 'x')
+}
+function stub(name, body) {
+  const d = mkdtempSync(join(tmpdir(), 'stub-'))
+  writeFileSync(join(d, name), `#!/bin/sh\n${body}\n`); chmodSync(join(d, name), 0o755)
+  return d
+}
 
 test('parses as POSIX shell', () => { execFileSync('sh', ['-n', script]) })
 
 test('put stores one 0400 file per variable and reports a count, never values', () => {
   const [p, root] = fresh()
   try {
-    const r = call('put', `MYSQL_PASSWORD\t${b64('s3cr3t value')}\nOPENAI_BOT_API_KEY\t${b64('sk-abc')}\n`, root)
+    const r = call('put', bundle([['MYSQL_PASSWORD', 's3cr3t value'], ['OPENAI_BOT_API_KEY', 'sk-abc']]), root)
     assert.equal(r.status, 0, r.stderr)
     assert.equal(r.stdout.trim(), 'stored=2')
     assert.ok(!r.stdout.includes('s3cr3t') && !r.stderr.includes('s3cr3t'))
@@ -263,32 +287,110 @@ test('put stores one 0400 file per variable and reports a count, never values', 
 test('put replaces the whole bundle atomically (removed keys disappear)', () => {
   const [p, root] = fresh()
   try {
-    call('put', `A_KEY\t${b64('1')}\nB_KEY\t${b64('2')}\n`, root)
-    const r = call('put', `A_KEY\t${b64('3')}\n`, root)
+    call('put', bundle([['A_KEY', '1'], ['B_KEY', '2']]), root)
+    const r = call('put', bundle([['A_KEY', '3']]), root)
     assert.equal(r.status, 0, r.stderr)
     assert.deepEqual(readdirSync(root).sort(), ['A_KEY'])
-    assert.equal(readdirSync(p).length, 1, 'no .new/.old leftovers')
+    assert.equal(readdirSync(p).length, 1, 'no .new/.old/lock leftovers')
   } finally { rmSync(p, { recursive: true, force: true }) }
 })
 
-test('put rejects invalid names and empty bundles without touching the live dir', () => {
+test('an empty value after the TAB is allowed', () => {
   const [p, root] = fresh()
   try {
-    call('put', `KEEP\t${b64('x')}\n`, root)
-    assert.notEqual(call('put', `../etc/passwd\t${b64('x')}\n`, root).status, 0)
-    assert.notEqual(call('put', '', root).status, 0)
-    assert.deepEqual(readdirSync(root), ['KEEP'])
+    const r = call('put', 'EMPTY_OK\t\n.END\t1\n', root)
+    assert.equal(r.status, 0, r.stderr)
+    assert.equal(readFileSync(join(root, 'EMPTY_OK'), 'utf8'), '')
   } finally { rmSync(p, { recursive: true, force: true }) }
 })
+
+test('put rejects invalid names and empty bundles without touching the live dir', () => withLive((p, root) => {
+  assert.notEqual(call('put', `../etc/passwd\t${b64('x')}\n.END\t1\n`, root).status, 0)
+  assert.notEqual(call('put', '', root).status, 0)
+  assert.notEqual(call('put', '.END\t0\n', root).status, 0)
+  assertUntouched(p, root)
+}))
+
+test('truncated streams are refused: missing trailer, wrong count, data after trailer', () => withLive((p, root) => {
+  assert.notEqual(call('put', `A_KEY\t${b64('1')}\n`, root).status, 0, 'missing trailer')
+  assert.notEqual(call('put', `A_KEY\t${b64('1')}\n.END\t1`, root).status, 0, 'trailer without newline')
+  assert.notEqual(call('put', `A_KEY\t${b64('1')}\nB_KEY\t${b64('2')}\n.END\t3\n`, root).status, 0, 'wrong count')
+  assert.notEqual(call('put', `A_KEY\t${b64('1')}\n.END\tx\n`, root).status, 0, 'non-numeric count')
+  assert.notEqual(call('put', `A_KEY\t${b64('1')}\n.END\t1\nB_KEY\t${b64('2')}\n`, root).status, 0, 'after trailer')
+  assertUntouched(p, root)
+}))
+
+test('malformed lines, duplicates and reserved names are refused', () => withLive((p, root) => {
+  assert.notEqual(call('put', `NO_TAB_HERE\n.END\t1\n`, root).status, 0, 'no tab')
+  assert.notEqual(call('put', `\n.END\t0\n`, root).status, 0, 'blank line')
+  assert.notEqual(call('put', bundle([['DUP', '1'], ['DUP', '2']]), root).status, 0, 'duplicate')
+  for (const name of ['BOM_SECRETS_ROOT', 'BOM_X', 'PATH', 'NODE_OPTIONS', 'LD_PRELOAD', 'LD_LIBRARY_PATH']) {
+    assert.notEqual(call('put', bundle([[name, 'v']]), root).status, 0, name)
+  }
+  assertUntouched(p, root)
+}))
+
+test('caps: value over 65536 base64 chars or more than 256 variables is refused', () => withLive((p, root) => {
+  assert.notEqual(call('put', `BIG\t${'A'.repeat(65540)}\n.END\t1\n`, root).status, 0, 'big value')
+  const many = Array.from({ length: 257 }, (_, i) => [`K${i}`, 'v'])
+  assert.notEqual(call('put', bundle(many), root).status, 0, '257 vars')
+  assertUntouched(p, root)
+  const ok = call('put', bundle(many.slice(0, 256)), root)
+  assert.equal(ok.status, 0, ok.stderr)
+  assert.equal(ok.stdout.trim(), 'stored=256')
+}))
+
+test('unexpected failure mid-write leaves no leftovers and the live dir intact', () => withLive((p, root) => {
+  const d = stub('chmod', 'exit 1')
+  try {
+    assert.notEqual(call('put', bundle([['A_KEY', '1']]), root, d).status, 0)
+    assertUntouched(p, root)
+  } finally { rmSync(d, { recursive: true, force: true }) }
+}))
+
+test('failure while swapping restores the previous live dir', () => withLive((p, root) => {
+  // mv of the new dir into place fails after the live dir was moved aside
+  const d = stub('mv', 'case "$1" in *.new.*) exit 1 ;; esac\nexec /bin/mv "$@"')
+  try {
+    assert.notEqual(call('put', bundle([['A_KEY', '1']]), root, d).status, 0)
+    assertUntouched(p, root)
+  } finally { rmSync(d, { recursive: true, force: true }) }
+}))
+
+test('stale .new/.old dirs from a crashed run are swept under the lock', () => {
+  const [p, root] = fresh()
+  try {
+    mkdirSync(`${root}.new.99999`); mkdirSync(`${root}.old.99998`)
+    const r = call('put', bundle([['A_KEY', '1']]), root)
+    assert.equal(r.status, 0, r.stderr)
+    assert.deepEqual(readdirSync(p), ['bom-secrets'])
+  } finally { rmSync(p, { recursive: true, force: true }) }
+})
+
+test('a held lock makes put refuse without touching the live dir or the lock', () => withLive((p, root) => {
+  const lock = join(p, 'bom-secrets.lock.d')
+  mkdirSync(lock)
+  const r = call('put', bundle([['A_KEY', '1']]), root)
+  assert.notEqual(r.status, 0)
+  assert.match(r.stderr, /busy/)
+  assert.ok(statSync(lock).isDirectory(), 'lock held by another run is not released')
+  rmSync(lock, { recursive: true })
+  assertUntouched(p, root)
+}))
 
 test('status reports file count only; unknown commands are refused', () => {
   const [p, root] = fresh()
   try {
     assert.equal(call('status', '', root).stdout.trim(), 'files=0')
-    call('put', `K\t${b64('v')}\n`, root)
+    call('put', bundle([['K', 'v']]), root)
     assert.equal(call('status', '', root).stdout.trim(), 'files=1')
     assert.equal(call('bash -i', '', root).status, 64)
   } finally { rmSync(p, { recursive: true, force: true }) }
+})
+
+test('root ignores test overrides; redeploy runs with the normal umask', () => {
+  assert.match(source, /if \[ "\$\(id -u\)" = 0 \]; then\n\s*ROOT=\/run\/bom-secrets; SKIP_TMPFS_CHECK=0/)
+  assert.match(source, /redeploy\)\n\s*umask 022; exec \/home\/ubuntu\/greenfield\/deploy-blue-green\.sh --redeploy-active ;;/)
 })
 ```
 
@@ -303,40 +405,80 @@ Expected: FAIL (script missing).
 #!/bin/sh
 # Forced-command endpoint for homeserver's push key (installed as /usr/local/sbin/bom-secrets-receive).
 # Commands (via SSH_ORIGINAL_COMMAND): status | put | redeploy. Never prints values.
-# put reads lines "NAME<TAB>base64(value)" on stdin and atomically replaces $BOM_SECRETS_ROOT.
+# put reads lines "NAME<TAB>base64(value)" on stdin, then a trailer ".END<TAB>N" (N = number of
+# variable lines), and atomically replaces the bundle dir. Anything short of that is refused.
 set -eu
-ROOT="${BOM_SECRETS_ROOT:-/run/bom-secrets}"
+if [ "$(id -u)" = 0 ]; then
+  ROOT=/run/bom-secrets; SKIP_TMPFS_CHECK=0          # test overrides never apply in production
+else
+  ROOT="${BOM_SECRETS_ROOT:-/run/bom-secrets}"; SKIP_TMPFS_CHECK="${BOM_SECRETS_SKIP_TMPFS_CHECK:-0}"
+fi
 PARENT="$(dirname "$ROOT")"
+LOCK="$PARENT/bom-secrets.lock.d"
 TAB="$(printf '\t')"
+MAX_VARS=256
+MAX_B64=65536
 umask 077
+
+refuse() { echo "refusing: $1" >&2; exit 1; }
+
+new=""; old=""; locked=0
+cleanup() {
+  set +e                                             # best effort: always reach the lock release
+  [ -z "$new" ] || rm -rf "$new"
+  if [ -n "$old" ] && [ -d "$old" ] && [ ! -e "$ROOT" ]; then mv "$old" "$ROOT"; fi
+  [ -z "$old" ] || rm -rf "$old"
+  [ "$locked" != 1 ] || rmdir "$LOCK"
+}
+
 case "${SSH_ORIGINAL_COMMAND:-}" in
   status)
     n=0; [ -d "$ROOT" ] && n=$(find "$ROOT" -maxdepth 1 -type f | wc -l)
-    echo "files=$n" ;;
+    echo "files=$((n + 0))" ;;
   put)
-    if [ "${BOM_SECRETS_SKIP_TMPFS_CHECK:-0}" != 1 ] && [ "$(findmnt -no FSTYPE --target "$PARENT")" != tmpfs ]; then
-      echo "refusing: $PARENT is not tmpfs" >&2; exit 1
+    if [ "$SKIP_TMPFS_CHECK" != 1 ] && [ "$(findmnt -no FSTYPE --target "$PARENT")" != tmpfs ]; then
+      refuse "$PARENT is not tmpfs"
     fi
-    new="$ROOT.new.$$"; rm -rf "$new"; mkdir -m 700 "$new"
-    count=0
-    while IFS="$TAB" read -r name b64 || [ -n "${name:-}" ]; do
-      [ -n "$name" ] || continue
-      case "$name" in
-        [0-9]*|*[!A-Za-z0-9_]*) echo "refusing: invalid variable name" >&2; rm -rf "$new"; exit 1 ;;
-      esac
-      if ! printf '%s' "$b64" | base64 -d > "$new/$name" 2>/dev/null; then
-        echo "refusing: bad encoding" >&2; rm -rf "$new"; exit 1
-      fi
-      chmod 400 "$new/$name"; count=$((count + 1)); name=""
+    trap cleanup EXIT
+    trap 'exit 1' HUP INT TERM
+    tries=0
+    until mkdir "$LOCK" 2>/dev/null; do
+      tries=$((tries + 1)); [ "$tries" -lt 10 ] || refuse "busy (another put holds the lock)"
+      sleep 1
     done
-    [ "$count" -gt 0 ] || { echo "refusing: empty bundle" >&2; rm -rf "$new"; exit 1; }
+    locked=1
+    rm -rf "$ROOT".new.* "$ROOT".old.*                  # leftovers from a run that was killed
+    new="$ROOT.new.$$"; mkdir -m 700 "$new"
+    count=0; ended=0; expect=""
+    while IFS= read -r line; do
+      [ "$ended" = 0 ] || refuse "data after trailer"
+      case "$line" in *"$TAB"*) ;; *) refuse "malformed line" ;; esac
+      name="${line%%"$TAB"*}"; b64="${line#*"$TAB"}"
+      if [ "$name" = .END ]; then
+        case "$b64" in ''|*[!0-9]*) refuse "malformed trailer" ;; esac
+        expect="$b64"; ended=1; continue
+      fi
+      case "$name" in
+        ''|[0-9]*|*[!A-Za-z0-9_]*) refuse "invalid variable name" ;;
+        BOM_*|PATH|NODE_OPTIONS|LD_*) refuse "reserved variable name" ;;
+      esac
+      [ "$count" -lt "$MAX_VARS" ] || refuse "more than $MAX_VARS variables"
+      [ "${#b64}" -le "$MAX_B64" ] || refuse "value too large"
+      [ ! -e "$new/$name" ] || refuse "duplicate variable name"
+      printf '%s' "$b64" | base64 -d > "$new/$name" 2>/dev/null || refuse "bad encoding"
+      chmod 400 "$new/$name"; count=$((count + 1))
+    done
+    [ "$ended" = 1 ] || refuse "missing trailer (truncated stream?)"
+    [ "$expect" -eq "$count" ] || refuse "trailer count mismatch"
+    [ "$count" -gt 0 ] || refuse "empty bundle"
     old="$ROOT.old.$$"
-    [ -d "$ROOT" ] && mv "$ROOT" "$old"
-    mv "$new" "$ROOT"
-    rm -rf "$old"
+    if [ -d "$ROOT" ]; then mv "$ROOT" "$old"; fi
+    [ ! -e "$ROOT" ] || refuse "$ROOT is in the way"
+    mv "$new" "$ROOT"; new=""
+    rm -rf "$old"; old=""
     echo "stored=$count" ;;
   redeploy)
-    exec /home/ubuntu/greenfield/deploy-blue-green.sh --redeploy-active ;;
+    umask 022; exec /home/ubuntu/greenfield/deploy-blue-green.sh --redeploy-active ;;
   *)
     echo "usage: status | put | redeploy" >&2; exit 64 ;;
 esac
@@ -344,12 +486,17 @@ esac
 
 Running containers keep the values they loaded at start; a replaced bundle takes effect on the next deploy/redeploy.
 
-**Step 4: Run to verify it passes** — same command; Expected: 5 passing. Also run on Ubuntu dash if your dev shell differs: `docker run --rm -v "$PWD:/w" -w /w ubuntu:24.04 sh -n ops/production/secrets-receive.sh`.
+Every new container start reads the latest bundle, including a crash-restart under `--restart always`: Docker re-resolves the bind-mount source path on each start, so it mounts the current `/run/bom-secrets`, not the directory that `put` renamed away.
+
+Why the extra checks: the `.END<TAB>N` trailer means a cut-off SSH stream can never replace a good bundle with a partial one. The `mkdir` lock serializes concurrent pushes (and works on macOS for tests, unlike `flock`). The EXIT trap removes the staging dir and restores the old bundle if the swap fails, and the lock dir is released only by the run that took it. `BOM_*`, `PATH`, `NODE_OPTIONS` and `LD_*` are refused because some of them would allow code execution in the container. The caps are 256 variables and 65536 base64 chars per value. As root, the test overrides `BOM_SECRETS_ROOT` and `BOM_SECRETS_SKIP_TMPFS_CHECK` are ignored. `redeploy` keeps root (SSM deploys run as root and the state files are root-owned) but restores `umask 022` first. A run killed with SIGKILL can leave `bom-secrets.lock.d` behind; it is cleared by a reboot (tmpfs) or `sudo rmdir /run/bom-secrets.lock.d`.
+
+**Step 4: Run to verify it passes** — same command; Expected: 14 passing (the held-lock test waits ~10 s). Also run them with dash as `sh` (put a dir with an `sh -> /bin/dash` symlink first on PATH). Also run on Ubuntu dash if your dev shell differs: `docker run --rm -v "$PWD:/w" -w /w ubuntu:24.04 sh -n ops/production/secrets-receive.sh`.
 
 **Step 5: Commit**
 
 ```bash
-git add ops/production/secrets-receive.sh ops/production/test/secrets-receive.test.mjs
+git add -f ops/production/secrets-receive.sh   # .gitignore has a blanket *.sh rule
+git add ops/production/test/secrets-receive.test.mjs
 git commit -m "feat(ops): forced-command receiver writes runtime config to tmpfs"
 ```
 
@@ -485,12 +632,12 @@ const run = (d, args, env = {}) => spawnSync('bash', [script, ...args], { encodi
 
 test('parses as bash', () => { execFileSync('bash', ['-n', script]) })
 
-test('push streams NAME<TAB>base64 lines and never prints values', () => {
+test('push streams NAME<TAB>base64 lines plus the .END<TAB>N trailer and never prints values', () => {
   const d = stubs()
   try {
     const r = run(d, ['push']); assert.equal(r.status, 0, r.stderr)
     const lines = readFileSync(join(d, 'stdin.put'), 'utf8').trim().split('\n')
-    assert.deepEqual(lines, [`MYSQL_PASSWORD\t${Buffer.from('p w$').toString('base64')}`, `OPENAI_BOT_API_KEY\t${Buffer.from('sk-1').toString('base64')}`])
+    assert.deepEqual(lines, [`MYSQL_PASSWORD\t${Buffer.from('p w$').toString('base64')}`, `OPENAI_BOT_API_KEY\t${Buffer.from('sk-1').toString('base64')}`, '.END\t2'])
     assert.ok(!r.stdout.includes('sk-1') && !r.stderr.includes('sk-1'))
   } finally { rmSync(d, { recursive: true, force: true }) }
 })
@@ -543,7 +690,16 @@ fetch_json() {  # test hook: BOM_SECRETS_BUNDLE_JSON points at a canned API resp
     "$INFISICAL/api/v3/secrets/raw"
 }
 
-bundle() { fetch_json | jq -r '.secrets[] | "\(.secretKey)\t\(.secretValue | @base64)"'; }
+# Values live only in this shell variable and the pipe (printf is a builtin, so nothing shows in argv).
+# The trailer lets the receiver refuse a truncated stream. Explicit checks, because errexit is
+# ignored inside `bundle | remote put && ...`; on any failure nothing is printed, so the box refuses.
+bundle() {
+  local lines count
+  lines="$(fetch_json | jq -r '.secrets[] | "\(.secretKey)\t\(.secretValue | @base64)"')" || return 1
+  [ -n "$lines" ] || { echo "no runtime config found" >&2; return 1; }
+  count="$(printf '%s\n' "$lines" | wc -l | tr -d ' ')"
+  printf '%s\n.END\t%s\n' "$lines" "$count"
+}
 
 case "$cmd" in
   push)          bundle | remote put ;;
@@ -559,7 +715,7 @@ case "$cmd" in
 esac
 ```
 
-The bundle exists only in the pipe; nothing is written to disk on homeserver.
+The bundle exists only in a shell variable and the pipe; nothing is written to disk on homeserver. It always ends with `.END<TAB>N`, and the receiver commits only when it sees that trailer and N matches the number of lines it got.
 
 **Step 4: Run to verify it passes** — same command; Expected: 3 passing.
 
@@ -628,6 +784,7 @@ cat ~/.ssh/bom_secrets_ed25519.pub
 sudo useradd --system --create-home --shell /bin/sh bomsecrets
 sudo install -o root -g root -m 0755 /dev/stdin /usr/local/sbin/bom-secrets-receive < secrets-receive.sh   # copy from the repo
 echo 'Defaults!/usr/local/sbin/bom-secrets-receive env_keep += "SSH_ORIGINAL_COMMAND"
+Defaults!/usr/local/sbin/bom-secrets-receive !log_input,!log_output
 bomsecrets ALL=(root) NOPASSWD: /usr/local/sbin/bom-secrets-receive' | sudo tee /etc/sudoers.d/bom-secrets >/dev/null
 sudo chmod 0440 /etc/sudoers.d/bom-secrets && sudo visudo -cf /etc/sudoers.d/bom-secrets
 sudo install -d -o bomsecrets -g bomsecrets -m 0700 /home/bomsecrets/.ssh
