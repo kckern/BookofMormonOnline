@@ -1,6 +1,6 @@
 # Plan: retire the ALB, serve prod through Cloudflare Tunnel
 
-Status: IN PROGRESS (2026-10-30/31). Executed so far:
+Status: DONE 2026-10-31 (ALB deleted; see the retirement note below). Executed:
 
 - Tunnel `bom` routes added for all 8 Cloudflare zones (apex + wildcard -> `http://proxy:80`); dead `bom-portainer` route and DNS record removed.
 - NPM `bom_ingress` label map now reports `tunnel` (backup `http_top.conf.bak-20261030-tunnel`).
@@ -10,11 +10,17 @@ Status: IN PROGRESS (2026-10-30/31). Executed so far:
 - `.kr`: ACM cert issued in us-east-1 (DNS-validated, auto-renewing); CloudFront distribution created (caching disabled, AllViewer origin request policy, origin = EC2 EIP DNS name over HTTP:80). DNS cutover of the `.kr` apex/wildcard from the ALB to CloudFront is the next step.
 - `.рф` is sanctioned: out of scope, left untouched.
 
-**BLOCKER found 2026-10-31 — the ALB is shared with other products.** Live Route 53 zones `scripture.guide` (Scripture Guide, do-not-touch), `archival.link` and `netlab.cloud` (plus the sanctioned `.рф` domain) still resolve to this ALB, and 12 ACM certs on its HTTPS listener cover them. Deleting the ALB would take those sites down. BoM-only traffic is now off the ALB (8 zones on the tunnel, `.kr` on CloudFront); the ALB is kept for the other products. Its configuration is dumped for recreation. Deleting it requires migrating those hostnames first (KC decision).
+**ALB RETIRED 2026-10-31.** KC chose to move the other products (including Scripture Guide) and ignore `.рф`.
 
-Done after that: `.kr` DNS cutover to CloudFront (CloudFront + ACM us-east-1 cert + `bom-origin-cloudfront` SG on the instance), telemetry/alarm/Vector updated for `tunnel` and `cloudfront` ingress.
-
-Remaining (only if the other products move): `.kr` DNS cutover (done), restrict origin :80 to CloudFront + remove world-open 80/443, a week at zero ALB traffic, then delete the ALB, target groups, its ACM certs, unused security groups; replace the Cloudflare Global API key with a scoped token.
+- `archival.link`, `netlab.cloud` and `scripture.guide` now run on CloudFront (free ACM certs in us-east-1, DNS-validated; Route 53 alias A+AAAA; CachingDisabled + AllViewer; origin = EC2 Elastic IP over HTTP:80), the same recipe as `.kr`. Responses were compared byte-for-byte against the ALB before each DNS flip.
+- `scripture.guide`: another distribution already holds the alias `*.scripture.guide` (S3 assets), so the new distribution lists explicit aliases (apex, www, cover, meta, w-ww, ww-w, plain, api, next), the hosts seen in logs. The wildcard DNS CNAME was deleted: other subdomains now return NXDOMAIN (the rest was scanner noise).
+- `o-7799a14bc906.netlab.cloud` (Sendy open-tracking host) moved too. The ALB's `X-Origin-Verify` 403 gate for it is gone; the host serves Sendy like `mail.netlab.cloud` already did.
+- ALB traffic fell from about 100 to under 25 requests per 5 minutes after the flips (health checks and internal pings), then the ALB, both listeners and all three target groups were deleted. Config dump for recreation stays in the working session.
+- Also deleted: 9 ALB ACM certs in us-west-2, the legacy SG `bom_security` (world-open 80/443) with the instance's reference to it, `bom-alb-cloudflare`, `bom-origin-alb`. Three AWS-managed expired/foreign certs remain in use by AWS-internal load balancers and cannot be deleted.
+- The box now takes web traffic only from the CloudFront prefix list on :80 (`bom-origin-cloudfront`) and the Cloudflare tunnel (outbound).
+- `.рф` (sanctioned, out of scope) still has a Route 53 record at the deleted ALB name: it is dark.
+- Stale Route 53 zones for the 8 BoM domains still hold ALB records but are not authoritative (Cloudflare is); they can be deleted ($0.50/month each).
+- Still open: replace the Cloudflare Global API key with a scoped token (KC to create it).
 
 Original plan follows (savings figures below are measured, see table).
 
