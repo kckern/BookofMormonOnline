@@ -427,7 +427,7 @@ cleanup() {
   set +e                                             # best effort: always reach the lock release
   [ -z "$new" ] || rm -rf "$new"
   if [ -n "$old" ] && [ -d "$old" ] && [ ! -e "$ROOT" ]; then mv "$old" "$ROOT"; fi
-  [ -z "$old" ] || rm -rf "$old"
+  [ -z "$old" ] || [ ! -e "$ROOT" ] || rm -rf "$old"
   [ "$locked" != 1 ] || rmdir "$LOCK"
 }
 
@@ -443,7 +443,7 @@ case "${SSH_ORIGINAL_COMMAND:-}" in
     trap 'exit 1' HUP INT TERM
     tries=0
     until mkdir "$LOCK" 2>/dev/null; do
-      tries=$((tries + 1)); [ "$tries" -lt 10 ] || refuse "busy (another put holds the lock)"
+      tries=$((tries + 1)); [ "$tries" -lt 10 ] || refuse "busy: $LOCK held (stale after SIGKILL? rmdir it)"
       sleep 1
     done
     locked=1
