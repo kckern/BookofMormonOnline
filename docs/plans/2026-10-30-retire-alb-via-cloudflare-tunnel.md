@@ -20,7 +20,7 @@ Status: DONE 2026-10-31 (ALB deleted; see the retirement note below). Executed:
 - The box now takes web traffic only from the CloudFront prefix list on :80 (`bom-origin-cloudfront`) and the Cloudflare tunnel (outbound).
 - `.рф` (sanctioned, out of scope) still has a Route 53 record at the deleted ALB name: it is dark.
 - Stale Route 53 zones for the 8 BoM domains still hold ALB records but are not authoritative (Cloudflare is); they can be deleted ($0.50/month each).
-- Still open: replace the Cloudflare Global API key with a scoped token (KC to create it).
+- Cloudflare: a scoped API token (Tunnel Write on the account, DNS Write on the 9 zones) was created and stored in prod Infisical as `CLOUDFLARE_API_TOKEN`; verified with tunnel and DNS reads. The Global key is still in Infisical (`CLOUDFLARE_KEY`/`CLOUDFLARE_EMAIL`) until KC rolls it in the dashboard.
 
 Original plan follows (savings figures below are measured, see table).
 
