@@ -31,6 +31,7 @@ test('all deployment shell entrypoints parse as POSIX shell', () => {
     resolve(root, 'migrate-blue-green.sh'),
     resolve(root, 'rollback-blue-green.sh'),
     resolve(root, 'publish-host-metrics.sh'),
+    resolve(root, 'secrets-receive.sh'),
   ])
 })
 
