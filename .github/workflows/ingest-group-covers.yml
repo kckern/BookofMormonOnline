@@ -39,7 +39,7 @@ jobs:
             'set -eu' \
             'ACTIVE="$(sed -n 1p /home/ubuntu/greenfield/active-slot)"' \
             'docker container inspect "$ACTIVE" >/dev/null' \
-            "docker exec \"\$ACTIVE\" node /app/backend/scripts/ingest-group-covers.mjs $APPLY")"
+            "docker exec \"\$ACTIVE\" /app/ops/container/entrypoint.sh node /app/backend/scripts/ingest-group-covers.mjs $APPLY")"
           CMDB64="$(printf '%s' "$CMD" | base64 -w0)"
           CID="$(aws ssm send-command --region us-west-2 --instance-ids "$IID" \
             --document-name bom-ingest --parameters "Ref=${REF},CmdB64=${CMDB64}" \

@@ -35,7 +35,7 @@ jobs:
             'docker cp backend/scripts/ingest-korean-bot-avatars.ts "$ACTIVE":/app/backend/scripts/ingest-korean-bot-avatars.ts' \
             'docker exec "$ACTIVE" mkdir -p /app/backend/assets/bot-avatars' \
             'docker cp backend/assets/bot-avatars/kim-ho-jik-interpretive.png "$ACTIVE":/app/backend/assets/bot-avatars/kim-ho-jik-interpretive.png' \
-            "docker exec -w /app/backend \"\$ACTIVE\" node --import tsx scripts/ingest-korean-bot-avatars.ts $APPLY")"
+            "docker exec -w /app/backend \"\$ACTIVE\" /app/ops/container/entrypoint.sh node --import tsx scripts/ingest-korean-bot-avatars.ts $APPLY")"
           CMDB64="$(printf '%s' "$CMD" | base64 -w0)"
           CID="$(aws ssm send-command --region us-west-2 --instance-ids "$IID" \
             --document-name bom-ingest --parameters "Ref=${REF},CmdB64=${CMDB64}" \

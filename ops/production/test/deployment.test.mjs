@@ -97,3 +97,14 @@ test('90 percent disk pressure sacrifices only the inactive rollback slot before
   )
   assert.doesNotMatch(deployment, /docker (system|volume) prune[^\n]*--volumes/)
 })
+
+test('one-off docker exec jobs load runtime config through the entrypoint', () => {
+  for (const wf of ['ingest-korean-bot-avatars.yml', 'ingest-french-bot-avatars.yml', 'ingest-group-covers.yml']) {
+    const src = readFileSync(resolve(root, '..', '..', '.github', 'workflows', wf), 'utf8')
+    const lines = src.split('\n').filter((l) => /docker exec .*\bnode\b/.test(l))
+    assert.ok(lines.length >= 1, `${wf}: expected at least one docker exec … node line`)
+    for (const line of lines) {
+      assert.match(line, /\/app\/ops\/container\/entrypoint\.sh node/, `${wf}: ${line.trim()}`)
+    }
+  }
+})
