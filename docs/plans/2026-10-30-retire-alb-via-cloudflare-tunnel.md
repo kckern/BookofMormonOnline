@@ -1,6 +1,18 @@
 # Plan: retire the ALB, serve prod through Cloudflare Tunnel
 
-Status: PLAN ONLY. Nothing in AWS or Cloudflare has been changed. Needs KC approval per phase.
+Status: IN PROGRESS (2026-10-30/31). Executed so far:
+
+- Tunnel `bom` routes added for all 8 Cloudflare zones (apex + wildcard -> `http://proxy:80`); dead `bom-portainer` route and DNS record removed.
+- NPM `bom_ingress` label map now reports `tunnel` (backup `http_top.conf.bak-20261030-tunnel`).
+- DNS for all 8 zones flipped from the ALB to the tunnel (old values saved in the working session; rollback = point the apex/wildcard CNAME back at the ALB DNS name).
+- `cloudflared` pinned to 2026.10.6 in `/home/ubuntu/cloudflared/docker-compose.yml` (was `:latest`).
+- Elastic IP attached to the prod instance (origin for CloudFront); Infisical `HOST` updated to the new public DNS name.
+- `.kr`: ACM cert issued in us-east-1 (DNS-validated, auto-renewing); CloudFront distribution created (caching disabled, AllViewer origin request policy, origin = EC2 EIP DNS name over HTTP:80). DNS cutover of the `.kr` apex/wildcard from the ALB to CloudFront is the next step.
+- `.рф` is sanctioned: out of scope, left untouched.
+
+Remaining: `.kr` DNS cutover, restrict origin :80 to CloudFront + remove world-open 80/443, a week at zero ALB traffic, then delete the ALB, target groups, its ACM certs, unused security groups; replace the Cloudflare Global API key with a scoped token.
+
+Original plan follows (savings figures below are measured, see table).
 
 ## Why, and what it actually saves
 
