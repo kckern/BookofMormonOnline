@@ -2,10 +2,21 @@
 
 The stable Nginx gateway container owns the exact Docker name
 `bookofmormon-online`, so Nginx Proxy Manager keeps its existing upstream.
-Only one application slot runs at steady state. The deployment timer pulls the
-`:prod` image every five minutes, starts the inactive slot, waits for the image
+Only one application slot runs at steady state. Each deployment (CI → SSM
+`bom-deploy`, run as root with `BOM_IMAGE=<signed digest>`) pulls and
+cosign-verifies the image, starts the inactive slot, waits for the image
 healthcheck, gracefully reloads the gateway, verifies ports 8200 and 5005, and
 then drains the old slot.
+
+`bom-deploy.timer` is retired (2026-10-31): deploys are CI → SSM only; the timer
+redeployed a stale `desired-image` pin.
+
+Runtime config is not read from a secret store or `.env` file. The candidate
+bind-mounts the RAM bundle `/run/bom-secrets` read-only at `/run/secrets` (with
+`BOM_REQUIRE_SECRETS=1`); the deploy refuses to start a candidate if the bundle
+is missing (e.g. after a reboot, until homeserver re-pushes).
+`deploy-blue-green.sh --redeploy-active` redeploys the active slot's own image
+(re-verified) so a re-pushed bundle takes effect.
 
 Before every pull, routine cleanup removes build cache and images unused for 24
 hours. If the filesystem containing `BOM_DEPLOY_DIR` is at least 90% full
@@ -24,14 +35,14 @@ Install paths on the production host:
 - `/usr/local/sbin/bom-publish-host-metrics` (root-owned; it reads the
   root-owned NPM telemetry log)
 - `/home/ubuntu/greenfield/gateway/default.conf.template`
-- `/etc/systemd/system/bom-deploy.service`
-- `/etc/systemd/system/bom-deploy.timer`
+- `/etc/systemd/system/bom-deploy.service` (retired; disabled)
+- `/etc/systemd/system/bom-deploy.timer` (retired; disabled)
 - `/etc/systemd/system/bom-host-metrics.service`
 - `/etc/systemd/system/bom-host-metrics.timer`
 
 Watchtower must not manage the gateway or either app slot. They carry an
-explicit `com.centurylinklabs.watchtower.enable=false` label. The systemd timer
-is the sole production-image updater.
+explicit `com.centurylinklabs.watchtower.enable=false` label. CI → SSM is the
+sole production-image updater.
 
 For the initial cutover, install the new gateway-only `docker-compose.yml` and
 all scripts/config first, then run `migrate-blue-green.sh`. It starts and health
@@ -40,14 +51,11 @@ current app to the green rollback slot, starts the gateway under the original
 `bookofmormon-online` name, verifies both upstreams, and only then reloads NPM.
 NPM's old workers retain the legacy container IP throughout the name handoff.
 Any failure before commit restores the original container name and reloads NPM.
-Enable `bom-deploy.timer` only after that migration succeeds.
+After that migration succeeds, routine deploys go through CI → SSM.
 
 Useful commands:
 
 ```sh
-sudo systemctl start bom-deploy.service
-sudo journalctl -u bom-deploy.service -n 100 --no-pager
-sudo systemctl list-timers bom-deploy.timer
 sudo /home/ubuntu/greenfield/rollback-blue-green.sh
 ```
 

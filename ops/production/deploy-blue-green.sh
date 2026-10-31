@@ -4,11 +4,22 @@ set -eu
 BASE_DIR="${BOM_DEPLOY_DIR:-/home/ubuntu/greenfield}"
 # Deploy the immutable digest CI recorded in $BASE_DIR/desired-image (audit H4),
 # not the mutable :prod tag — a repointed tag or leaked Docker Hub token then can't
-# change what runs, and the 5-min reconcile timer converges to the pinned digest.
+# change what runs. Production runs come from CI -> SSM `bom-deploy` (root) with
+# BOM_IMAGE=<digest>; the bom-deploy.timer reconcile loop is retired (2026-10-31).
 # BOM_IMAGE overrides; fall back to :prod only if no pin has been recorded yet.
 IMAGE="${BOM_IMAGE:-$(cat "$BASE_DIR/desired-image" 2>/dev/null || echo 'kckern/bookofmormon-online:prod')}"
-ENV_FILE="${BOM_ENV_FILE:-$BASE_DIR/.env}"
-MAIL_ENV_FILE="${BOM_MAIL_ENV_FILE:-$BASE_DIR/mail.env}"
+REDEPLOY_ACTIVE=0
+if [ "${1:-}" = "--redeploy-active" ]; then
+  # Re-run the active slot's own image with a freshly pushed runtime bundle
+  # (secrets-receive.sh redeploy), even when it is already healthy.
+  REDEPLOY_ACTIVE=1
+fi
+SECRETS_DIR="${BOM_SECRETS_DIR:-/run/bom-secrets}"
+# Non-secret runtime flags (passed with -e, visible in docker inspect).
+# SOCKET_CORS_ORIGIN restricts cross-origin socket connections (audit H8) —
+# KEEP IN SYNC with frontend/next/lib/locales.ts (HOST_LANG + FORCE_SSR_HOSTS);
+# IDN hosts use their punycode (xn--) form since browsers send that in Origin.
+SOCKET_CORS_ORIGIN='https://bookofmormon.online,https://www.bookofmormon.online,https://xn--289a67xla.kr,https://libromormon.es,https://livredemormon.fr,https://buchmormon.de,https://swe.bookofmormon.online,https://sachmacmon.vn,https://xn--80aahtjpadfibw.net,https://mormonovaknjiga.si,https://tr.bookofmormon.online,https://tgl.bookofmormon.online,https://ssr.bookofmormon.online,https://ssr-kr.bookofmormon.online'
 NETWORK="${BOM_DOCKER_NETWORK:-bomdocker_phpnetwork}"
 GATEWAY="${BOM_GATEWAY_CONTAINER:-bookofmormon-online}"
 GATEWAY_IMAGE="${BOM_GATEWAY_IMAGE:-nginx:stable-alpine}"
@@ -195,57 +206,14 @@ verify_gateway() {
   docker exec "$GATEWAY" wget -q -T 15 -O /dev/null http://127.0.0.1:5005/health
 }
 
-# Assemble the runtime env at deploy time from AWS Secrets Manager (read via the
-# EC2 instance role bomdocker-role / BomSecretsRead) plus the non-secret public
-# flags below. Replaces a hand-made .env that could drift or vanish (it did —
-# every deploy failed on a missing .env). Idempotent and self-healing.
-# Secret groups: bom/prod/{db,openai,app} -> .env ; bom/prod/mail -> mail.env.
-# See docs/bugs/2026-09-08-npm-5xx-burst-ssr-econnrefused.md.
-render_env_from_secrets() {
-  command -v aws >/dev/null 2>&1 || fail "aws CLI required to render env from Secrets Manager"
-  command -v jq  >/dev/null 2>&1 || fail "jq required to render env from Secrets Manager"
-  sm_region="${BOM_SM_REGION:-us-west-2}"
-  sm_prefix="${BOM_SM_PREFIX:-bom/prod}"
-  sm() {  # emit a secret as KEY=VALUE lines; abort the deploy if it is missing/not an object
-    sm_val="$(aws secretsmanager get-secret-value --region "$sm_region" --secret-id "$1" --query SecretString --output text 2>/dev/null)" \
-      || fail "cannot read secret $1 (instance role / BomSecretsRead policy?)"
-    printf '%s' "$sm_val" | jq -e 'type == "object"' >/dev/null 2>&1 || fail "secret $1 is not a JSON object"
-    printf '%s' "$sm_val" | jq -r 'to_entries[] | "\(.key)=\(.value)"'
-  }
-  umask 077
-  env_tmp="$ENV_FILE.tmp.$$"
-  {
-    # Non-secret runtime flags — safe to keep in the (public) repo. SANDBOX=0
-    # enables writes; NODE_ENV=production masks raw resolver errors.
-    # SOCKET_CORS_ORIGIN restricts cross-origin socket connections (audit H8) —
-    # KEEP IN SYNC with frontend/next/lib/locales.ts (HOST_LANG + FORCE_SSR_HOSTS);
-    # IDN hosts use their punycode (xn--) form since browsers send that in Origin.
-    printf '%s\n' \
-      'SANDBOX=0' \
-      'NODE_ENV=production' \
-      'BOT_SCHEDULER_ENABLED=true' \
-      'LOG_LEVEL=info' \
-      'PORT=5005' \
-      'APP_BASE_URL=https://bookofmormon.online' \
-      'AWS_REGION=us-west-2' \
-      'SOCKET_CORS_ORIGIN=https://bookofmormon.online,https://www.bookofmormon.online,https://xn--289a67xla.kr,https://libromormon.es,https://livredemormon.fr,https://buchmormon.de,https://swe.bookofmormon.online,https://sachmacmon.vn,https://xn--80aahtjpadfibw.net,https://mormonovaknjiga.si,https://tr.bookofmormon.online,https://tgl.bookofmormon.online,https://ssr.bookofmormon.online,https://ssr-kr.bookofmormon.online'
-    sm "$sm_prefix/db"
-    sm "$sm_prefix/openai"
-    sm "$sm_prefix/app"
-  } > "$env_tmp"
-  mv -f "$env_tmp" "$ENV_FILE"
-  chmod 600 "$ENV_FILE"
-  mail_tmp="$MAIL_ENV_FILE.tmp.$$"
-  sm "$sm_prefix/mail" > "$mail_tmp"
-  mv -f "$mail_tmp" "$MAIL_ENV_FILE"
-  chmod 600 "$MAIL_ENV_FILE"
-  log "rendered $ENV_FILE ($(grep -c . "$ENV_FILE") vars) + $MAIL_ENV_FILE ($(grep -c . "$MAIL_ENV_FILE") vars) from Secrets Manager ($sm_prefix/*)"
+# Runtime config lives only in RAM, pushed from homeserver (scripts/bom-secrets-push.sh).
+# After an EC2 reboot it is empty until homeserver re-pushes; refuse rather than start a broken slot.
+require_runtime_bundle() {
+  [ -s "$SECRETS_DIR/MYSQL_PASSWORD" ] \
+    || fail "runtime config not present in $SECRETS_DIR; run scripts/bom-secrets-push.sh push on homeserver"
 }
 
 mkdir -p "$BASE_DIR" "$GATEWAY_DIR"
-render_env_from_secrets
-[ -r "$ENV_FILE" ] || fail "missing environment file: $ENV_FILE"
-[ -r "$MAIL_ENV_FILE" ] || fail "missing mail environment file: $MAIL_ENV_FILE"
 [ -r "$TEMPLATE" ] || fail "missing gateway template: $TEMPLATE"
 
 exec 9>"$LOCK_FILE"
@@ -264,6 +232,14 @@ case "$active" in
   bookofmormon-online-green) next="bookofmormon-online-blue" ;;
   *) fail "missing or invalid active slot; run migrate-blue-green.sh first" ;;
 esac
+
+# --redeploy-active: re-pull and re-verify (cosign) the reference the active slot
+# was started from, so the same signed digest is redeployed with the new bundle.
+if [ "$REDEPLOY_ACTIVE" = 1 ]; then
+  IMAGE="$(docker container inspect -f '{{.Config.Image}}' "$active")" \
+    || fail "cannot read the image of active slot $active for --redeploy-active"
+  log "redeploying active image $IMAGE with the current runtime bundle"
+fi
 
 # A retained rollback slot must stay down across Docker daemon and host
 # restarts. Normalize older slots before a no-op exit and after every drain.
@@ -303,11 +279,14 @@ desired_image="$(docker image inspect -f '{{.Id}}' "$IMAGE")"
 if [ -n "$active" ] && container_running "$active"; then
   active_image="$(docker container inspect -f '{{.Image}}' "$active")"
   active_health="$(docker container inspect -f '{{.State.Health.Status}}' "$active" 2>/dev/null || true)"
-  if [ "$active_image" = "$desired_image" ] && [ "$active_health" = "healthy" ]; then
+  if [ "$REDEPLOY_ACTIVE" = 0 ] && [ "$active_image" = "$desired_image" ] && [ "$active_health" = "healthy" ]; then
     log "$active already runs the desired healthy image"
     exit 0
   fi
 fi
+
+# Before the rollback slot or the active slot is touched.
+require_runtime_bundle
 
 if container_exists "$next"; then
   log "removing inactive slot $next"
@@ -327,8 +306,11 @@ docker run -d \
   --log-driver json-file \
   --log-opt max-size=20m \
   --log-opt max-file=3 \
-  --env-file "$ENV_FILE" \
-  --env-file "$MAIL_ENV_FILE" \
+  --mount "type=bind,src=$SECRETS_DIR,dst=/run/secrets,readonly" \
+  -e BOM_REQUIRE_SECRETS=1 \
+  -e SANDBOX=0 -e NODE_ENV=production -e BOT_SCHEDULER_ENABLED=true -e LOG_LEVEL=info \
+  -e PORT=5005 -e APP_BASE_URL=https://bookofmormon.online -e AWS_REGION=us-west-2 \
+  -e "SOCKET_CORS_ORIGIN=$SOCKET_CORS_ORIGIN" \
   --network "$NETWORK" \
   --restart always \
   --label com.centurylinklabs.watchtower.enable=false \

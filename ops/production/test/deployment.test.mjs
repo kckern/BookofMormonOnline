@@ -119,3 +119,47 @@ test('ingest jobs fail clearly when the active slot predates the entrypoint', ()
     assert.match(readWorkflow(wf), /docker exec "\$ACTIVE" test -x \/app\/ops\/container\/entrypoint\.sh \|\| \{ echo "[^"]*predates the runtime-secrets entrypoint[^"]*" >&2; exit 1; \}/, wf)
   }
 })
+
+test('deployment never reads a secret store or writes env files', () => {
+  assert.ok(!deployment.includes('secretsmanager'), 'no Secrets Manager calls')
+  assert.ok(!deployment.includes('--env-file'), 'no env files')
+  assert.ok(!/ENV_FILE/.test(deployment), 'no ENV_FILE / MAIL_ENV_FILE paths')
+  assert.ok(!/>\s*"\$ENV_FILE"/.test(deployment), 'no rendered .env')
+})
+
+test('candidate mounts the tmpfs bundle read-only and requires it', () => {
+  assert.match(deployment, /SECRETS_DIR="\$\{BOM_SECRETS_DIR:-\/run\/bom-secrets\}"/)
+  assert.match(deployment, /--mount "type=bind,src=\$SECRETS_DIR,dst=\/run\/secrets,readonly"/)
+  assert.match(deployment, /-e BOM_REQUIRE_SECRETS=1/)
+  assert.match(deployment, /\[ -s "\$SECRETS_DIR\/MYSQL_PASSWORD" \]/)
+})
+
+test('missing RAM bundle fails before the active slot is touched', () => {
+  // the CALL (a bare line), not the definition `require_runtime_bundle() {`
+  const call = deployment.search(/^require_runtime_bundle$/m)
+  assert.notEqual(call, -1, 'require_runtime_bundle is called')
+  const def = deployment.indexOf('require_runtime_bundle() {')
+  assert.ok(def !== -1 && def < call, 'defined before it is called')
+  assert.ok(deployment.indexOf('fail() {') < call, 'fail is defined before the call')
+  const before = (needle) => {
+    const at = deployment.indexOf(needle)
+    assert.notEqual(at, -1, `missing ${JSON.stringify(needle)}`)
+    assert.ok(call < at, `require_runtime_bundle must run before ${JSON.stringify(needle)}`)
+  }
+  before('removing inactive slot $next') // the retained rollback slot survives a missing bundle
+  before('docker run -d') // first docker run -d is the candidate
+  before('render_gateway_config "$next"')
+  before('docker stop --time 30 "$active"')
+})
+
+test('--redeploy-active redeploys the running image even when healthy', () => {
+  assert.match(deployment, /"\$\{1:-\}" = "--redeploy-active"/)
+  ordered(
+    deployment,
+    'IMAGE="$(docker container inspect -f \'{{.Config.Image}}\' "$active")',
+    'docker pull "$IMAGE"',
+    'verify_signature "$IMAGE"',
+    'if [ "$REDEPLOY_ACTIVE" = 0 ] && [ "$active_image" = "$desired_image" ]',
+    'already runs the desired healthy image',
+  )
+})

@@ -1,3 +1,4 @@
+# RETIRED (do not enable), 2026-10-31: deploys are CI -> SSM only; this ran without BOM_IMAGE and redeployed a stale desired-image pin.
 [Unit]
 Description=Poll for a new Book of Mormon Online production image
 
