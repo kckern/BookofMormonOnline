@@ -26,6 +26,18 @@ transforms:
       if .ingress == "cloudflare" {
         .client_ip = .cf_connecting_ip
         .client_ip_trusted = true
+      } else if .ingress == "tunnel" {
+        # cloudflared connects from the private Docker network; Cloudflare sets
+        # CF-Connecting-IP.
+        .client_ip = .cf_connecting_ip
+        .client_ip_trusted = true
+      } else if .ingress == "cloudfront" {
+        # The socket peer is a CloudFront edge; CloudFront appends the viewer
+        # address to X-Forwarded-For, so the rightmost entry is the viewer and
+        # anything to its left is client-supplied.
+        xff_parts = split(string(.x_forwarded_for) ?? "", ",")
+        .client_ip = strip_whitespace(xff_parts[-1]) ?? ""
+        .client_ip_trusted = true
       } else if .ingress == "direct_alb" {
         .client_ip = .alb_source
         .client_ip_trusted = true

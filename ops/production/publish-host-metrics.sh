@@ -66,9 +66,10 @@ non_cloudflare=0
 if [ -r "$TELEMETRY_FILE" ]; then
   telemetry_window="$(tail -n 50000 "$TELEMETRY_FILE" | jq -c --arg cutoff "$cutoff" 'select(.timestamp >= $cutoff)')"
   npm_5xx="$(printf '%s\n' "$telemetry_window" | jq -s '[.[] | select((.status | tonumber) >= 500)] | length')"
-  # The Korean hostname legitimately bypasses Cloudflare until its parent
-  # delegation moves from Route 53. Remove that exception after activation.
-  non_cloudflare="$(printf '%s\n' "$telemetry_window" | jq -s '[.[] | select(.ingress != "cloudflare" and .host != "xn--289a67xla.kr")] | length')"
+  # Expected ingress: Cloudflare (via the ALB or the cloudflared tunnel) and
+  # CloudFront (the Korean hostname, whose parent delegation cannot move to
+  # Cloudflare). Anything else reached the origin directly.
+  non_cloudflare="$(printf '%s\n' "$telemetry_window" | jq -s '[.[] | select(.ingress != "cloudflare" and .ingress != "tunnel" and .ingress != "cloudfront")] | length')"
 fi
 
 metrics_file="$(mktemp)"
