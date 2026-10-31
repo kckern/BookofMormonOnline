@@ -48,6 +48,8 @@ systemd timer (`bom-deploy.timer`) reconciles the box to the recorded digest (`d
   `workflow_dispatch`; **dispatch from the `prod` branch** (the OIDC role trust is
   prod-locked). They run hosted → OIDC → SSM (`bom-ingest`), which clones the repo on the
   box and runs the ingest in the active container.
+  Ingest jobs require an active slot built with the runtime-secrets entrypoint
+  (`ops/container/entrypoint.sh`, Task 1 or later) and exit with a clear error otherwise.
 
 ## Monitoring / alerts (SNS `bom-production-alerts` → email)
 

@@ -32,6 +32,7 @@ jobs:
           CMD="$(printf '%s\n' \
             'set -eu' \
             'ACTIVE="$(sed -n 1p /home/ubuntu/greenfield/active-slot)"' \
+            'docker exec "$ACTIVE" test -x /app/ops/container/entrypoint.sh || { echo "active slot $ACTIVE predates the runtime-secrets entrypoint; deploy prod first" >&2; exit 1; }' \
             'docker cp backend/scripts/ingest-korean-bot-avatars.ts "$ACTIVE":/app/backend/scripts/ingest-korean-bot-avatars.ts' \
             'docker exec "$ACTIVE" mkdir -p /app/backend/assets/bot-avatars' \
             'docker cp backend/assets/bot-avatars/kim-ho-jik-interpretive.png "$ACTIVE":/app/backend/assets/bot-avatars/kim-ho-jik-interpretive.png' \

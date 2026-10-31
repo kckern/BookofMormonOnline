@@ -38,6 +38,7 @@ jobs:
           CMD="$(printf '%s\n' \
             'set -eu' \
             'ACTIVE="$(sed -n 1p /home/ubuntu/greenfield/active-slot)"' \
+            'docker exec "$ACTIVE" test -x /app/ops/container/entrypoint.sh || { echo "active slot $ACTIVE predates the runtime-secrets entrypoint; deploy prod first" >&2; exit 1; }' \
             'docker container inspect "$ACTIVE" >/dev/null' \
             "docker exec \"\$ACTIVE\" /app/ops/container/entrypoint.sh node /app/backend/scripts/ingest-group-covers.mjs $APPLY")"
           CMDB64="$(printf '%s' "$CMD" | base64 -w0)"

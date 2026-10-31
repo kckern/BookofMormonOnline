@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import test from 'node:test'
@@ -98,13 +98,23 @@ test('90 percent disk pressure sacrifices only the inactive rollback slot before
   assert.doesNotMatch(deployment, /docker (system|volume) prune[^\n]*--volumes/)
 })
 
+const workflowsDir = resolve(root, '..', '..', '.github', 'workflows')
+const readWorkflow = (wf) => readFileSync(resolve(workflowsDir, wf), 'utf8')
+const ingestWorkflows = ['ingest-korean-bot-avatars.yml', 'ingest-french-bot-avatars.yml', 'ingest-group-covers.yml']
+
 test('one-off docker exec jobs load runtime config through the entrypoint', () => {
-  for (const wf of ['ingest-korean-bot-avatars.yml', 'ingest-french-bot-avatars.yml', 'ingest-group-covers.yml']) {
-    const src = readFileSync(resolve(root, '..', '..', '.github', 'workflows', wf), 'utf8')
-    const lines = src.split('\n').filter((l) => /docker exec .*\bnode\b/.test(l))
-    assert.ok(lines.length >= 1, `${wf}: expected at least one docker exec … node line`)
-    for (const line of lines) {
-      assert.match(line, /\/app\/ops\/container\/entrypoint\.sh node/, `${wf}: ${line.trim()}`)
+  let checked = 0
+  for (const wf of readdirSync(workflowsDir).filter((f) => /\.ya?ml$/.test(f))) {
+    for (const line of readWorkflow(wf).split('\n').filter((l) => /docker exec .*\bnode\b/.test(l))) {
+      assert.match(line, /ACTIVE\\?"\s+\/app\/ops\/container\/entrypoint\.sh node\b/, `${wf}: ${line.trim()}`)
+      checked++
     }
+  }
+  assert.ok(checked >= 3, `expected at least 3 docker exec … node lines, found ${checked}`)
+})
+
+test('ingest jobs fail clearly when the active slot predates the entrypoint', () => {
+  for (const wf of ingestWorkflows) {
+    assert.match(readWorkflow(wf), /docker exec "\$ACTIVE" test -x \/app\/ops\/container\/entrypoint\.sh \|\| \{ echo "[^"]*predates the runtime-secrets entrypoint[^"]*" >&2; exit 1; \}/, wf)
   }
 })
