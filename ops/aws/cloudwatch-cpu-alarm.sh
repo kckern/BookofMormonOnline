@@ -58,3 +58,23 @@ aws cloudwatch put-metric-alarm \
   --ok-actions "$SNS_TOPIC"
 
 printf 'updated alarm bom-production-cpu-surplus-credits: CPUSurplusCreditBalance>=480 x2/5min -> %s\n' "$SNS_TOPIC"
+
+# The direct billing signal: any surplus credit actually charged. Should stay silent.
+aws cloudwatch put-metric-alarm \
+  --region "$REGION" \
+  --alarm-name "bom-production-cpu-credits-charged" \
+  --alarm-description "AWS charged surplus CPU credits for the prod instance (unlimited mode). Find the CPU hog now; every hour above baseline is billed." \
+  --namespace "AWS/EC2" \
+  --metric-name "CPUSurplusCreditsCharged" \
+  --dimensions "Name=InstanceId,Value=$INSTANCE_ID" \
+  --statistic "Maximum" \
+  --period 3600 \
+  --threshold 0.01 \
+  --comparison-operator "GreaterThanOrEqualToThreshold" \
+  --evaluation-periods 1 \
+  --datapoints-to-alarm 1 \
+  --treat-missing-data "notBreaching" \
+  --alarm-actions "$SNS_TOPIC" \
+  --ok-actions "$SNS_TOPIC"
+
+printf 'updated alarm bom-production-cpu-credits-charged: CPUSurplusCreditsCharged>=0.01 /1h -> %s\n' "$SNS_TOPIC"
