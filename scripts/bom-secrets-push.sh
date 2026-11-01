@@ -17,7 +17,9 @@ shopt -s inherit_errexit 2>/dev/null || true   # bash >= 4.4; every step is also
 HOST="${BOM_SECRETS_HOST:-bomsecrets@52.42.0.250}"
 KEY="${BOM_SECRETS_KEY:-$HOME/.ssh/bom_secrets_ed25519}"
 KNOWN_HOSTS="${BOM_SECRETS_KNOWN_HOSTS:-$HOME/.ssh/bom_secrets_known_hosts}"   # line: bom-prod <key>
-PENDING="${XDG_RUNTIME_DIR:-$HOME/.cache}/bom-secrets-redeploy-pending"
+# On disk, not XDG_RUNTIME_DIR (tmpfs): a pending redeploy must survive a homeserver reboot.
+STATE_DIR="${BOM_SECRETS_STATE_DIR:-$HOME/.cache}"
+PENDING="$STATE_DIR/bom-secrets-redeploy-pending"
 
 usage() { echo "usage: $0 push|status|redeploy|push-redeploy|ensure (rotate with push-redeploy)" >&2; }
 
@@ -99,7 +101,7 @@ ensure() {
   case "$st" in
     files=0)
       echo "box has no runtime config (rebooted?); re-pushing" >&2
-      mkdir -p "${PENDING%/*}" && : > "$PENDING" || return 1
+      (umask 077; mkdir -p "$STATE_DIR") && : > "$PENDING" || return 1   # new dirs 0700
       push || return 1
       remote redeploy || return 1
       rm -f "$PENDING" ;;

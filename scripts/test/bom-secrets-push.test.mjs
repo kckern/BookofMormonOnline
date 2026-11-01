@@ -3,7 +3,7 @@
 // Never run scripts/bom-secrets-push.sh without them: unstubbed it talks to production.
 import assert from 'node:assert/strict'
 import { execFileSync, spawnSync } from 'node:child_process'
-import { existsSync, mkdirSync, mkdtempSync, writeFileSync, chmodSync, rmSync, readFileSync, readdirSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, writeFileSync, chmodSync, rmSync, readFileSync, readdirSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -37,10 +37,10 @@ exit 0
   return d
 }
 const run = (d, args, env = {}) => spawnSync('bash', [script, ...args], { encoding: 'utf8', timeout: 30000,
-  env: { PATH: `${d}:${process.env.PATH}`, HOME: d, XDG_RUNTIME_DIR: join(d, 'xdg'), BOM_SECRETS_TEST: '1',
+  env: { PATH: `${d}:${process.env.PATH}`, HOME: d, XDG_RUNTIME_DIR: join(d, 'xdg'), BOM_SECRETS_STATE_DIR: join(d, 'state'), BOM_SECRETS_TEST: '1',
     BOM_SECRETS_BUNDLE_JSON: join(d, 'bundle.json'), BOM_SECRETS_KEY: '/dev/null', ...env } })
 const calls = (d) => existsSync(join(d, 'calls')) ? readFileSync(join(d, 'calls'), 'utf8').trim().split('\n') : []
-const marker = (d) => join(d, 'xdg', 'bom-secrets-redeploy-pending')
+const marker = (d) => join(d, 'state', 'bom-secrets-redeploy-pending')
 // stdin of the single put call (fails if there was not exactly one)
 function putStdin(d, as) {
   const f = readdirSync(d).filter((n) => /^stdin\.\d+\.put$/.test(n))
@@ -97,6 +97,14 @@ test('ensure retries a failed redeploy on the next run even though files>0', () 
   assert.ok(!existsSync(marker(d)), 'marker cleared after a successful redeploy')
   assert.equal(run(d, ['ensure'], { FAKE_STATUS: 'files=3' }).status, 0)
   assert.deepEqual(calls(d).slice(5), ['status'])
+  assert.equal(statSync(join(d, 'state')).mode & 0o777, 0o700, 'state dir is private')
+  assert.deepEqual(readdirSync(join(d, 'xdg')), [], 'nothing in XDG_RUNTIME_DIR (tmpfs, lost on reboot)')
+}))
+
+test('the pending marker defaults to ~/.cache so it survives a homeserver reboot', () => withStubs((d) => {
+  assert.notEqual(run(d, ['ensure'], { FAKE_STATUS: 'files=0', FAKE_FAIL: 'redeploy', BOM_SECRETS_STATE_DIR: '' }).status, 0)
+  assert.ok(existsSync(join(d, '.cache', 'bom-secrets-redeploy-pending')))
+  assert.equal(statSync(join(d, '.cache')).mode & 0o777, 0o700)
 }))
 
 test('ensure fails on an unexpected status reply instead of doing nothing', () => withStubs((d) => {

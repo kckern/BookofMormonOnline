@@ -626,7 +626,7 @@ Do NOT push to `prod` yet; Task 8 sequences the cutover.
 // Never run scripts/bom-secrets-push.sh without them: unstubbed it talks to production.
 import assert from 'node:assert/strict'
 import { execFileSync, spawnSync } from 'node:child_process'
-import { existsSync, mkdirSync, mkdtempSync, writeFileSync, chmodSync, rmSync, readFileSync, readdirSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, writeFileSync, chmodSync, rmSync, readFileSync, readdirSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -660,10 +660,10 @@ exit 0
   return d
 }
 const run = (d, args, env = {}) => spawnSync('bash', [script, ...args], { encoding: 'utf8', timeout: 30000,
-  env: { PATH: `${d}:${process.env.PATH}`, HOME: d, XDG_RUNTIME_DIR: join(d, 'xdg'), BOM_SECRETS_TEST: '1',
+  env: { PATH: `${d}:${process.env.PATH}`, HOME: d, XDG_RUNTIME_DIR: join(d, 'xdg'), BOM_SECRETS_STATE_DIR: join(d, 'state'), BOM_SECRETS_TEST: '1',
     BOM_SECRETS_BUNDLE_JSON: join(d, 'bundle.json'), BOM_SECRETS_KEY: '/dev/null', ...env } })
 const calls = (d) => existsSync(join(d, 'calls')) ? readFileSync(join(d, 'calls'), 'utf8').trim().split('\n') : []
-const marker = (d) => join(d, 'xdg', 'bom-secrets-redeploy-pending')
+const marker = (d) => join(d, 'state', 'bom-secrets-redeploy-pending')
 // stdin of the single put call (fails if there was not exactly one)
 function putStdin(d, as) {
   const f = readdirSync(d).filter((n) => /^stdin\.\d+\.put$/.test(n))
@@ -720,6 +720,14 @@ test('ensure retries a failed redeploy on the next run even though files>0', () 
   assert.ok(!existsSync(marker(d)), 'marker cleared after a successful redeploy')
   assert.equal(run(d, ['ensure'], { FAKE_STATUS: 'files=3' }).status, 0)
   assert.deepEqual(calls(d).slice(5), ['status'])
+  assert.equal(statSync(join(d, 'state')).mode & 0o777, 0o700, 'state dir is private')
+  assert.deepEqual(readdirSync(join(d, 'xdg')), [], 'nothing in XDG_RUNTIME_DIR (tmpfs, lost on reboot)')
+}))
+
+test('the pending marker defaults to ~/.cache so it survives a homeserver reboot', () => withStubs((d) => {
+  assert.notEqual(run(d, ['ensure'], { FAKE_STATUS: 'files=0', FAKE_FAIL: 'redeploy', BOM_SECRETS_STATE_DIR: '' }).status, 0)
+  assert.ok(existsSync(join(d, '.cache', 'bom-secrets-redeploy-pending')))
+  assert.equal(statSync(join(d, '.cache')).mode & 0o777, 0o700)
 }))
 
 test('ensure fails on an unexpected status reply instead of doing nothing', () => withStubs((d) => {
@@ -908,7 +916,9 @@ shopt -s inherit_errexit 2>/dev/null || true   # bash >= 4.4; every step is also
 HOST="${BOM_SECRETS_HOST:-bomsecrets@52.42.0.250}"
 KEY="${BOM_SECRETS_KEY:-$HOME/.ssh/bom_secrets_ed25519}"
 KNOWN_HOSTS="${BOM_SECRETS_KNOWN_HOSTS:-$HOME/.ssh/bom_secrets_known_hosts}"   # line: bom-prod <key>
-PENDING="${XDG_RUNTIME_DIR:-$HOME/.cache}/bom-secrets-redeploy-pending"
+# On disk, not XDG_RUNTIME_DIR (tmpfs): a pending redeploy must survive a homeserver reboot.
+STATE_DIR="${BOM_SECRETS_STATE_DIR:-$HOME/.cache}"
+PENDING="$STATE_DIR/bom-secrets-redeploy-pending"
 
 usage() { echo "usage: $0 push|status|redeploy|push-redeploy|ensure (rotate with push-redeploy)" >&2; }
 
@@ -990,7 +1000,7 @@ ensure() {
   case "$st" in
     files=0)
       echo "box has no runtime config (rebooted?); re-pushing" >&2
-      mkdir -p "${PENDING%/*}" && : > "$PENDING" || return 1
+      (umask 077; mkdir -p "$STATE_DIR") && : > "$PENDING" || return 1   # new dirs 0700
       push || return 1
       remote redeploy || return 1
       rm -f "$PENDING" ;;
@@ -1016,9 +1026,9 @@ esac
 
 The bundle exists only in shell variables and pipes (no here-strings, which bash may back with a temp file); nothing is written to disk on homeserver. It is built completely before ssh starts, so a failed, empty, or malformed Infisical response means no connection to the box at all. It always ends with `.END<TAB>N`, and the receiver commits only when it sees that trailer and N matches the number of lines it got. The Infisical client secret reaches jq via `--rawfile` and curl via stdin; the access token reaches curl via `-K -` (stdin), so neither shows in `ps`. Rotate with `push-redeploy`: a plain `push` leaves running containers on the previous bundle and breaks `docker exec` one-off jobs until a redeploy.
 
-Other guards: `set +x` at the top (an inherited `SHELLOPTS=xtrace` would otherwise trace values). ssh runs with `-F none`, a pinned host key (`~/.ssh/bom_secrets_known_hosts`, alias `bom-prod`, `StrictHostKeyChecking=yes`), and `-n` for everything but `put`. It is wrapped in `timeout 1800`; the box runs `redeploy` in its own systemd unit, so cutting the session does not cut the deploy. curl gets `-q` so no `~/.curlrc` applies. The receiver's name, reserved-name, count, size and duplicate rules are checked locally first so a bad Infisical entry fails with a clear message and no connection. `ensure` keeps a marker (`$XDG_RUNTIME_DIR/bom-secrets-redeploy-pending`) from before its push until its redeploy succeeds, so a failed redeploy is retried on the next run even though the box then reports `files>0`. The canned-JSON hook works only with `BOM_SECRETS_TEST=1`. `include_imports` is not requested: imported secrets come back in a separate `.imports` list, which the script would need to merge; keep `/bom-runtime` free of imports instead.
+Other guards: `set +x` at the top (an inherited `SHELLOPTS=xtrace` would otherwise trace values). ssh runs with `-F none`, a pinned host key (`~/.ssh/bom_secrets_known_hosts`, alias `bom-prod`, `StrictHostKeyChecking=yes`), and `-n` for everything but `put`. It is wrapped in `timeout 1800`; the box runs `redeploy` in its own systemd unit, so cutting the session does not cut the deploy. curl gets `-q` so no `~/.curlrc` applies. The receiver's name, reserved-name, count, size and duplicate rules are checked locally first so a bad Infisical entry fails with a clear message and no connection. `ensure` keeps a marker (`${BOM_SECRETS_STATE_DIR:-~/.cache}/bom-secrets-redeploy-pending`, on disk so it survives a homeserver reboot; the marker holds no data) from before its push until its redeploy succeeds, so a failed redeploy is retried on the next run even though the box then reports `files>0`. The canned-JSON hook works only with `BOM_SECRETS_TEST=1`. `include_imports` is not requested: imported secrets come back in a separate `.imports` list, which the script would need to merge; keep `/bom-runtime` free of imports instead.
 
-**Step 4: Run to verify it passes** — same command; Expected: 37 passing. Also `bash -n scripts/bom-secrets-push.sh` and `shellcheck scripts/bom-secrets-push.sh` (clean).
+**Step 4: Run to verify it passes** — same command; Expected: 38 passing. Also `bash -n scripts/bom-secrets-push.sh` and `shellcheck scripts/bom-secrets-push.sh` (clean).
 
 **Step 5: Commit**
 
