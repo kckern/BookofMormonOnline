@@ -9,11 +9,18 @@ BASE_DIR="${BOM_DEPLOY_DIR:-/home/ubuntu/greenfield}"
 # BOM_IMAGE overrides; fall back to :prod only if no pin has been recorded yet.
 IMAGE="${BOM_IMAGE:-$(cat "$BASE_DIR/desired-image" 2>/dev/null || echo 'kckern/bookofmormon-online:prod')}"
 REDEPLOY_ACTIVE=0
-if [ "${1:-}" = "--redeploy-active" ]; then
+usage() {
+  echo "usage: $0 [--redeploy-active]" >&2
+  exit 64
+}
+[ $# -le 1 ] || usage
+case "${1:-}" in
+  '') ;;
   # Re-run the active slot's own image with a freshly pushed runtime bundle
   # (secrets-receive.sh redeploy), even when it is already healthy.
-  REDEPLOY_ACTIVE=1
-fi
+  --redeploy-active) REDEPLOY_ACTIVE=1 ;;
+  *) usage ;;
+esac
 SECRETS_DIR="${BOM_SECRETS_DIR:-/run/bom-secrets}"
 # Non-secret runtime flags (passed with -e, visible in docker inspect).
 # SOCKET_CORS_ORIGIN restricts cross-origin socket connections (audit H8) —
@@ -64,9 +71,15 @@ report_deploy_outcome() {
 
 fail() {
   log "ERROR: $*" >&2
+  reported=1
   report_deploy_outcome 1
   exit 1
 }
+
+# Any other non-zero exit (a `set -e` abort) still reports DeployFailed=1, once.
+# Clean exit-0 paths (lock busy, no-op) stay unreported, as before.
+reported=0
+trap 'rc=$?; [ "$rc" = 0 ] || [ "$reported" = 1 ] || report_deploy_outcome 1' EXIT
 
 # Verify the image's cosign signature before deploying (audit H4, phase 2 —
 # fail-closed): never run an unsigned or tampered image, even if a tag/digest was
@@ -196,6 +209,15 @@ wait_for_health() {
         return 1
         ;;
     esac
+    # A restart means the container already exited (e.g. the entrypoint's exit 78
+    # for a missing bundle); don't wait out HEALTH_TIMEOUT on a restart loop.
+    restarts="$(docker container inspect -f '{{.RestartCount}}' "$container" 2>/dev/null || true)"
+    case "$restarts" in ''|*[!0-9]*) restarts=0 ;; esac
+    if [ "$restarts" -gt 0 ]; then
+      log "$container restarted $restarts time(s) before becoming healthy"
+      docker logs --tail 100 "$container" >&2 || true
+      return 1
+    fi
     sleep 2
     elapsed=$((elapsed + 2))
   done
@@ -219,7 +241,10 @@ mkdir -p "$BASE_DIR" "$GATEWAY_DIR"
 [ -r "$TEMPLATE" ] || fail "missing gateway template: $TEMPLATE"
 
 exec 9>"$LOCK_FILE"
-if ! flock -n 9; then
+if [ "$REDEPLOY_ACTIVE" = 1 ]; then
+  # A redeploy carries a new bundle; dropping it would leave the old config running.
+  flock -w 900 9 || fail "lock busy; redeploy not applied"
+elif ! flock -n 9; then
   log "another deployment is already running"
   exit 0
 fi
@@ -394,5 +419,6 @@ fi
 # age-filtered for unused tagged service images.
 docker image prune -f >/dev/null 2>&1 || true
 docker image prune -a -f --filter 'until=24h' >/dev/null 2>&1 || true
+reported=1
 report_deploy_outcome 0
 log "deployment complete"

@@ -153,7 +153,7 @@ test('missing RAM bundle fails before the active slot is touched', () => {
 })
 
 test('--redeploy-active redeploys the running image even when healthy', () => {
-  assert.match(deployment, /"\$\{1:-\}" = "--redeploy-active"/)
+  assert.match(deployment, /^\s+--redeploy-active\) REDEPLOY_ACTIVE=1 ;;$/m)
   ordered(
     deployment,
     'IMAGE="$(docker container inspect -f \'{{.Config.Image}}\' "$active")',
@@ -183,7 +183,7 @@ test('emergency prune never removes the rollback slot without a runtime bundle',
 })
 
 test('redeploy mode requires the bundle and a digest-pinned image before prune or pull', () => {
-  const start = deployment.indexOf('if [ "$REDEPLOY_ACTIVE" = 1 ]; then')
+  const start = deployment.indexOf('if [ "$REDEPLOY_ACTIVE" = 1 ]; then\n  require_runtime_bundle')
   assert.notEqual(start, -1)
   const block = deployment.slice(start, deployment.indexOf('\nfi\n', start))
   assert.match(block, /^\s+require_runtime_bundle$/m)

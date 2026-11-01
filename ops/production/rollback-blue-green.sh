@@ -16,6 +16,14 @@ case "$active" in
 esac
 
 docker container inspect "$previous" >/dev/null 2>&1 || { echo "Rollback slot $previous does not exist" >&2; exit 1; }
+# Slots created from the RAM bundle bind-mount it at /run/secrets; docker start
+# re-binds the host path, which is empty after a reboot until homeserver re-pushes.
+# Older env-file slots have no such mount and need nothing here.
+secrets_src="$(docker container inspect -f '{{range .Mounts}}{{if eq .Destination "/run/secrets"}}{{.Source}}{{end}}{{end}}' "$previous")"
+if [ -n "$secrets_src" ] && ! [ -s "$secrets_src/MYSQL_PASSWORD" ]; then
+  echo "runtime config not present in $secrets_src; run scripts/bom-secrets-push.sh push on homeserver before rolling back" >&2
+  exit 1
+fi
 docker update --restart=always "$previous" >/dev/null
 docker start "$previous" >/dev/null
 
