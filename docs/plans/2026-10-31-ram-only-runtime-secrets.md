@@ -804,6 +804,8 @@ scripts/bom-secrets-push.sh status                                      # Expect
 
 **Step 4: First push** — `scripts/bom-secrets-push.sh push` → Expected: `stored=N` (N = Task 6 count). Then `status` → `files=N`. On the box: `sudo ls -la /run/bom-secrets` shows N files mode `-r--------` root, dir `drwx------`; `findmnt -no FSTYPE --target /run` → `tmpfs`.
 
+Before cutover use `push` only, never `push-redeploy`. The receiver's `redeploy` runs `/home/ubuntu/greenfield/deploy-blue-green.sh`, and the SSM `bom-deploy` document only rewrites that file when CI deploys. Until the first CI deploy of the new script (Task 8 Step 1) it is still the old Secrets Manager script, which does not know `--redeploy-active`.
+
 ---
 
 ### Task 8: Cutover (deploy via CI) and verify
@@ -812,6 +814,8 @@ scripts/bom-secrets-push.sh status                                      # Expect
 
 **Step 2: Watch the deploy** — GitHub Actions `deploy-prod` log shows "candidate … is healthy", "gateway switched", "deployment complete". If it fails with "runtime config not present", run Task 7 Step 4 and re-run the workflow.
 
+Then confirm SSM installed the new script (the receiver's `redeploy` depends on it): `grep -q -- --redeploy-active /home/ubuntu/greenfield/deploy-blue-green.sh && echo new-script` → `new-script`. Only after this may homeserver use `push-redeploy`.
+
 **Step 3: Verify no values on disk or in Docker config** (on the box)
 
 ```bash
@@ -819,12 +823,18 @@ A=$(sudo cat /home/ubuntu/greenfield/active-slot)
 sudo docker inspect "$A" --format '{{range .Config.Env}}{{println .}}{{end}}' | cut -d= -f1   # Expected: no MYSQL_PASSWORD / OPENAI_* names
 sudo docker inspect "$A" --format '{{range .Mounts}}{{.Source}}->{{.Destination}} {{.RW}}{{end}}'  # Expected: /run/bom-secrets->/run/secrets false
 sudo docker exec "$A" sh -c 'cat /proc/1/environ | tr "\0" "\n" | grep -c ^MYSQL_PASSWORD='  # tini's env: Expected 0
-sudo grep -l "$(sudo head -c 12 /run/bom-secrets/MYSQL_PASSWORD)" /var/lib/docker/containers/*/config.v2.json 2>/dev/null | wc -l   # Expected 0
 ```
+
+Do not run the `config.v2.json` value check yet (it is in Step 5). The stopped rollback slot is the old env-file container, so its `config.v2.json` still holds the values and the count is 1 here. It reaches 0 only after Step 5's second CI deploy replaces that slot.
 
 **Step 4: Verify the app works** — `curl -s -o /dev/null -w '%{http_code}' https://bookofmormon.online/` → 200; GraphQL `{__typename}` → 200; `sudo docker logs --since 5m "$A" 2>&1 | grep -ciE 'access denied|ER_ACCESS|OPENAI.*401'` → 0. Send one transactional email from the app (password reset to your own address) and confirm receipt.
 
-**Step 5: Verify an upgrade needs no secrets** — push a trivial commit to `prod` (e.g. README). Expected: CI deploys a new digest, healthy, with no homeserver action.
+**Step 5: Verify an upgrade needs no secrets (REQUIRED: this second deploy purges the old env-file slot)** — push a trivial commit to `prod` (e.g. README). Expected: CI deploys a new digest, healthy, with no homeserver action. This deploy removes the old env-file rollback slot and replaces it with a bundle-mounted one, so it is not optional. Then, on the box:
+
+```bash
+sudo sh -c 'grep -lF -- "$(head -c 12 /run/bom-secrets/MYSQL_PASSWORD)" /var/lib/docker/containers/*/config.v2.json 2>/dev/null | wc -l'   # Expected 0
+```
+(`sudo sh -c` so the glob expands as root; `-F --` so the value is a fixed string, never a pattern or option.)
 
 **Step 6: Verify one-off jobs** — run the `ingest-group-covers` workflow in dry-run mode (no `APPLY`). Expected: connects to DB, exits 0.
 
@@ -868,7 +878,7 @@ systemctl --user start bom-secrets-ensure.service && journalctl --user -u bom-se
 ```
 Expected: service succeeds silently (box reports files>0).
 
-**Step 3: Reboot drill (quiet hour)** — `aws ec2 reboot-instances --instance-ids i-02c9619a48343a8d9`. Expected within ~7 min: journal shows "re-pushing", then the redeploy completes and the site returns 200. Note: during that window the app container restarts (`--restart always`) and exits 78 until the bundle arrives; that is the intended fail-closed behavior.
+**Step 3: Reboot drill (quiet hour)** — `aws ec2 reboot-instances --instance-ids i-02c9619a48343a8d9`. Expected within ~7 min: journal shows "re-pushing", then the redeploy completes and the site returns 200. Note: during that window the app container fails to START. Its bind source `/run/bom-secrets` is gone with the tmpfs, so Docker cannot create the mount, and the site serves gateway errors. The receiver's `redeploy` then starts a fresh slot. (Exit 78 from the entrypoint only happens if the directory exists but has no `MYSQL_PASSWORD`.) This is the intended fail-closed behavior.
 
 **Step 4: Commit**
 
@@ -881,7 +891,7 @@ git commit -m "feat(ops): homeserver timer restores EC2 runtime config after reb
 
 ### Task 10: Remove the old secret stores
 
-Only after Task 8 Steps 3-6 and Task 9 Step 3 pass.
+Only after Task 8 Steps 3-6 and Task 9 Step 3 pass, **and** the Task 8 Step 5 `config.v2.json` grep prints `0` (no container config on disk still holds a value).
 
 **Step 1: Remove the role's read access**
 
@@ -920,9 +930,17 @@ git commit -m "docs(ops): runtime config is RAM-only, pushed from homeserver"
 ### Rotation runbook (after cutover)
 
 1. Change the value in Infisical (prod `/bom-runtime`).
-2. On homeserver as `bom`: `scripts/bom-secrets-push.sh push-redeploy`.
+2. On homeserver as `bom`: `scripts/bom-secrets-push.sh push-redeploy`. Always rotate with `push-redeploy`, not a plain `push`. A push swaps `/run/bom-secrets` for a new directory, while the running slot's bind mount still points at the swapped-out one. The app keeps its loaded env, but `docker exec … entrypoint.sh` one-off jobs (ingest workflows) fail until a redeploy.
 3. Expected: `stored=N`, then the blue/green log ending "deployment complete"; site 200.
+
+After a `push-redeploy`, both slots run the same image (the redeploy reuses the active digest), so `rollback-blue-green.sh` no longer undoes a code release. To undo a bad release, deploy the previous digest via CI (re-run the earlier `deploy-prod` run, or revert on `prod`).
 
 ### Rollback (any time before Task 10)
 
-`git revert` the Task 4 commit on `prod` and push: CI redeploys with the old Secrets Manager path (AWS secrets and `BomSecretsRead` still exist until Task 10).
+`git revert` all Task 4 commits on `prod` (newest first) and push: CI redeploys with the old Secrets Manager path (AWS secrets and `BomSecretsRead` still exist until Task 10). On `feat/ram-only-runtime-secrets` they are:
+
+- `2e175e27` fix(ops): deploy hardening from review (also the rollback-script bundle check)
+- `3eccf685` fix(ops): never touch rollback slot without runtime bundle; redeploy requires digest
+- `c0b9d144` feat(ops): deploy mounts tmpfs runtime config; drop Secrets Manager and .env
+
+`git revert 2e175e27 3eccf685 c0b9d144`. If the branch was squashed or rebased into `prod`, use the matching SHAs there. Reverting `c0b9d144` also removes the README/systemd "retired" notes; do not re-enable `bom-deploy.timer` anyway.

@@ -16,7 +16,14 @@ bind-mounts the RAM bundle `/run/bom-secrets` read-only at `/run/secrets` (with
 `BOM_REQUIRE_SECRETS=1`); the deploy refuses to start a candidate if the bundle
 is missing (e.g. after a reboot, until homeserver re-pushes).
 `deploy-blue-green.sh --redeploy-active` redeploys the active slot's own image
-(re-verified) so a re-pushed bundle takes effect.
+(digest only, re-verified) so a re-pushed bundle takes effect.
+
+Rotate with `scripts/bom-secrets-push.sh push-redeploy`, not a plain `push`.
+After a plain push the running slot's mount still points at the swapped-out
+directory, so `docker exec` one-off jobs fail until a redeploy. After a redeploy
+both slots run the same image, so `rollback-blue-green.sh` cannot undo a code
+release; deploy the previous digest via CI instead. `rollback-blue-green.sh`
+refuses to start a bundle-mounted slot while `/run/bom-secrets` is empty.
 
 Before every pull, routine cleanup removes build cache and images unused for 24
 hours. If the filesystem containing `BOM_DEPLOY_DIR` is at least 90% full
