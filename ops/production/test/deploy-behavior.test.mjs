@@ -53,15 +53,32 @@ if [ "$1 $2" = "container inspect" ]; then
   fi
   in_list "$3" "$STUB_EXISTS"; exit $?
 fi
+# nginx in the gateway resolves the rendered upstream: it fails when that slot is
+# neither running nor freshly created by docker run (STUB_NGINX_FAIL=1 always fails).
+resolvable() { [ "$(status_of "$1")" = running ] || grep -qx -- "$1" "$STUB_STARTED.created" 2>/dev/null; }
+forget() { for f in "$STUB_STARTED" "$STUB_STARTED.created"; do grep -vx -- "$1" "$f" > "$f.tmp" 2>/dev/null; mv "$f.tmp" "$f"; done; }
 case "$1" in
   pull) [ "\${STUB_FAIL_PULL:-0}" = 1 ] && exit 1 ;;
   image) [ "$2" = inspect ] && echo "$STUB_IMAGE_ID" ;;
-  start|restart) [ "\${STUB_NO_RESTART:-0}" = 1 ] || echo "$2" >> "$STUB_STARTED" ;;
+  start|restart)
+    [ "$1" = start ] && [ "$2" = "\${STUB_START_FAIL:-}" ] && exit 1
+    [ "\${STUB_NO_RESTART:-0}" = 1 ] || echo "$2" >> "$STUB_STARTED" ;;
+  run)
+    prev=; for a in "$@"; do [ "$prev" = --name ] && echo "$a" >> "$STUB_STARTED.created"; prev="$a"; done ;;
+  rm) [ "$2" = -f ] && forget "$3" ;;
   exec)
     if [ "$(status_of "$2")" != running ]; then
       echo "Error response from daemon: Container $2 is $(status_of "$2")" >&2
       exit 1
-    fi ;;
+    fi
+    case "$*" in
+      *" nginx -t"*|*" nginx -s reload"*)
+        [ "\${STUB_NGINX_FAIL:-0}" = 1 ] && exit 1
+        if [ "\${STUB_NGINX_FAIL_ONCE:-0}" = 1 ] && ! [ -e "$STUB_STARTED.failed" ]; then : > "$STUB_STARTED.failed"; exit 1; fi
+        up="$(sed -n 's/^upstream \\(.*\\);$/\\1/p' "$STUB_GW_CONF" 2>/dev/null)"
+        resolvable "$up" || { echo "host not found in upstream \"$up\"" >&2; exit 1; } ;;
+      *" wget "*) [ "\${STUB_VERIFY_FAIL:-0}" = 1 ] && exit 1 ;;
+    esac ;;
 esac
 exit 0
 `
@@ -75,6 +92,7 @@ function harness(t) {
   for (const d of [bin, join(base, 'gateway'), secrets]) mkdirSync(d, { recursive: true })
   const calls = join(dir, 'calls.log')
   const started = join(dir, 'started.list')
+  const conf = join(base, 'gateway', 'default.conf')
   const stub = (path, body) => { writeFileSync(path, body); chmodSync(path, 0o755) }
   stub(join(bin, 'docker'), DOCKER_STUB)
   stub(join(bin, 'flock'), '#!/bin/sh\necho "flock $*" >> "$STUB_CALLS"\nexit "${STUB_FLOCK_RC:-0}"\n')
@@ -87,7 +105,9 @@ function harness(t) {
 
   function run(script, args = [], env = {}) {
     writeFileSync(calls, '')
-    for (const f of [started, `${started}.rc`, `${started}.hp`]) writeFileSync(f, '')
+    for (const f of [started, `${started}.rc`, `${started}.hp`, `${started}.created`]) writeFileSync(f, '')
+    rmSync(`${started}.failed`, { force: true })
+    writeFileSync(conf, `upstream ${BLUE};\n`) // the gateway currently serves blue
     writeFileSync(join(base, 'active-slot'), `${BLUE}\n`) // rollback/deploy flip it
     const r = spawnSync('sh', [script, ...args], {
       encoding: 'utf8',
@@ -96,6 +116,8 @@ function harness(t) {
         PATH: `${bin}:${process.env.PATH}`,
         STUB_CALLS: calls,
         STUB_STARTED: started,
+        STUB_GW_CONF: conf,
+        BOM_GATEWAY_TIMEOUT: '4',
         BOM_DEPLOY_DIR: base,
         BOM_SECRETS_DIR: secrets,
         BOM_IMAGE: DIGEST,
@@ -114,7 +136,9 @@ function harness(t) {
     const metrics = log.filter((l) => l.startsWith('aws cloudwatch put-metric-data'))
     return { ...r, log, metrics, has: (re) => log.some((l) => re.test(l)) }
   }
-  return { run, bundle, secrets }
+  const state = () => readFileSync(join(base, 'active-slot'), 'utf8').trim()
+  const upstream = () => readFileSync(conf, 'utf8').trim()
+  return { run, bundle, secrets, state, upstream }
 }
 
 const SLOT_MUTATION = /^docker (rm|run|stop|start|update --restart=always)\b/
@@ -251,6 +275,21 @@ test('redeploy after a reboot starts the dead active slot before the candidate',
   const run = r.log.findIndex((l) => l.startsWith('docker run -d'))
   assert.ok(start !== -1 && run !== -1 && start < run, r.log.join('\n'))
   assert.ok(r.has(new RegExp(`^docker stop --time 30 ${BLUE}$`)), 'then blue/green proceeds and drains blue')
+  const gwRestart = r.log.indexOf('docker restart bookofmormon-online')
+  const prune = r.log.findIndex((l) => l.startsWith('docker builder prune'))
+  const pull = r.log.findIndex((l) => l.startsWith('docker pull'))
+  assert.ok(start < gwRestart, 'the gateway is kicked out of crash-loop backoff right after the active slot is back')
+  assert.ok(gwRestart < prune && prune < pull, 'fast path (start + gateway) precedes prune and pull')
+})
+
+test('fast path: an active slot that will not start is logged and the redeploy continues', (t) => {
+  const h = harness(t)
+  h.bundle('x')
+  const r = h.run(DEPLOY, ['--redeploy-active'], { STUB_RUNNING: 'bookofmormon-online', STUB_START_FAIL: BLUE })
+  assert.equal(r.status, 0, r.stderr)
+  assert.match(r.stdout + r.stderr, new RegExp(`active slot ${BLUE} did not recover on start; continuing with the redeploy`))
+  assert.ok(r.has(new RegExp(`^docker run -d .*--name ${GREEN} `)))
+  assert.equal(h.state(), GREEN)
 })
 
 test('a restarting gateway is restarted with the rendered config instead of exec-reloaded', (t) => {
@@ -285,4 +324,66 @@ test('restart attempts from before the bundle arrived do not defeat the reboot f
   assert.equal(r.status, 0, r.stderr)
   assert.match(r.stdout + r.stderr, new RegExp(`restarted active slot ${BLUE} after runtime config restore`))
   assert.doesNotMatch(r.stdout + r.stderr, /did not recover/)
+})
+
+for (const [what, env] of [['gateway rejects the candidate', { STUB_NGINX_FAIL: '1' }], ['verification fails', { STUB_VERIFY_FAIL: '1' }]]) {
+  test(`${what} while the active slot is dead: keep the candidate, leave the gateway on it`, (t) => {
+    const h = harness(t)
+    h.bundle('x')
+    const r = h.run(DEPLOY, [], { STUB_RUNNING: 'bookofmormon-online', ...env })
+    assert.notEqual(r.status, 0)
+    assert.match(r.stdout + r.stderr, new RegExp(`active ${BLUE} is not healthy; leaving gateway on ${GREEN}`))
+    const run = r.log.findIndex((l) => l.startsWith('docker run -d'))
+    assert.notEqual(run, -1)
+    assert.ok(!r.log.slice(run).includes(`docker rm -f ${GREEN}`), 'the only possibly-healthy slot is kept')
+    assert.equal(h.upstream(), `upstream ${GREEN};`)
+    assert.equal(h.state(), GREEN, 'state matches the gateway, so the next deploy does not stop it')
+    assert.equal(r.metrics.length, 1)
+    assert.match(r.metrics[0], /Value=1/)
+  })
+}
+
+test('verification fails with a healthy active slot: restore it and remove the candidate', (t) => {
+  const h = harness(t)
+  h.bundle('x')
+  const r = h.run(DEPLOY, [], { STUB_VERIFY_FAIL: '1' })
+  assert.notEqual(r.status, 0)
+  assert.match(r.stderr, /gateway verification failed; restored bookofmormon-online-blue/)
+  const run = r.log.findIndex((l) => l.startsWith('docker run -d'))
+  assert.ok(r.log.slice(run).includes(`docker rm -f ${GREEN}`), 'candidate removed after the failed switch')
+  assert.equal(h.upstream(), `upstream ${BLUE};`)
+  assert.equal(h.state(), BLUE)
+  assert.equal(r.metrics.length, 1)
+})
+
+test('a running gateway whose reload fails is restarted and polled before giving up', (t) => {
+  const h = harness(t)
+  h.bundle('x')
+  // exec reload fails once against a running gateway; after a restart nginx -t passes
+  const r = h.run(DEPLOY, [], { STUB_NGINX_FAIL_ONCE: '1' })
+  assert.equal(r.status, 0, r.stderr)
+  assert.ok(r.has(/^docker restart bookofmormon-online$/), r.log.join('\n'))
+  assert.equal(h.state(), GREEN)
+})
+
+test('rollback restarts a restarting gateway instead of exec-ing into it', (t) => {
+  const h = harness(t)
+  const r = h.run(ROLLBACK, [], { STUB_GW_STATUS: 'restarting' })
+  assert.equal(r.status, 0, r.stderr)
+  const restart = r.log.indexOf('docker restart bookofmormon-online')
+  assert.notEqual(restart, -1, r.log.join('\n'))
+  assert.ok(!r.log.slice(0, restart).some((l) => /^docker exec bookofmormon-online /.test(l)))
+  assert.equal(h.state(), GREEN)
+  assert.equal(h.upstream(), `upstream ${GREEN};`)
+})
+
+test('rollback that cannot apply the gateway config keeps state and config on the active slot', (t) => {
+  const h = harness(t)
+  const r = h.run(ROLLBACK, [], { STUB_NGINX_FAIL: '1' })
+  assert.notEqual(r.status, 0)
+  assert.equal(h.state(), BLUE)
+  assert.equal(h.upstream(), `upstream ${BLUE};`)
+  assert.ok(!r.has(new RegExp(`^docker stop .*${BLUE}$`)))
+  const tail = r.log.slice(r.log.indexOf(`docker start ${GREEN}`))
+  assert.ok(tail.includes(`docker update --restart=no ${GREEN}`), 'rollback slot is disarmed again')
 })

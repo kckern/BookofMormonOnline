@@ -17,9 +17,12 @@ bind-mounts the RAM bundle `/run/bom-secrets` read-only at `/run/secrets` (with
 is missing (e.g. after a reboot, until homeserver re-pushes). After a reboot
 the active slot cannot start (its bind source is gone) and the gateway
 crash-loops on the unresolvable upstream. The homeserver re-push's
-`--redeploy-active` first starts the dead active slot, then redeploys. Gateway
-reloads restart the gateway on the rendered config whenever it is not in the
-`running` state, instead of `docker exec`ing into it.
+`--redeploy-active` first starts the dead active slot and re-applies the
+gateway config for it, then redeploys. Gateway reloads (deploy and rollback)
+restart the gateway on the rendered config whenever it is not `running` or an
+exec reload fails, instead of `docker exec`ing into it. A failed switch restores
+the old slot only if it is healthy; otherwise the candidate stays in service
+and is recorded as active (the deploy still reports failure).
 `deploy-blue-green.sh --redeploy-active` redeploys the active slot's own image
 (digest only, re-verified) so a re-pushed bundle takes effect.
 

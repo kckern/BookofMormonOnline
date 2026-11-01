@@ -238,17 +238,33 @@ gateway_status() {
   docker container inspect -f '{{.State.Status}}' "$GATEWAY" 2>/dev/null || true
 }
 
+# docker exec into the gateway; `apply_gateway_config quiet` hides nginx's own
+# output (used on restore paths) while keeping this script's log lines.
+gw_exec() {
+  if [ "$GW_QUIET" = 1 ]; then
+    docker exec "$GATEWAY" "$@" >/dev/null 2>&1
+  else
+    docker exec "$GATEWAY" "$@"
+  fi
+}
+
 # Apply the rendered $CONFIG to the existing gateway. A gateway that is not
 # "running" (State.Running stays true while it is "restarting") can't be exec'd
 # into: after a reboot it crash-loops because its upstream (the dead active slot)
 # does not resolve. Restart it on the new config and wait until nginx -t passes.
+# A failed exec reload on a running gateway falls through to the same restart.
 apply_gateway_config() {
+  GW_QUIET=0
+  [ "${1:-}" = quiet ] && GW_QUIET=1
   gw_state="$(gateway_status)"
   if [ "$gw_state" = running ]; then
-    docker exec "$GATEWAY" nginx -t && docker exec "$GATEWAY" nginx -s reload
-    return
+    if gw_exec nginx -t && gw_exec nginx -s reload; then
+      return 0
+    fi
+    log "gateway $GATEWAY reload failed; restarting it on the rendered config"
+  else
+    log "gateway $GATEWAY is ${gw_state:-unknown}; restarting it on the rendered config"
   fi
-  log "gateway $GATEWAY is ${gw_state:-unknown}; restarting it on the rendered config"
   docker restart "$GATEWAY" >/dev/null || return 1
   gw_elapsed=0
   while [ "$gw_elapsed" -lt "$GATEWAY_TIMEOUT" ]; do
@@ -260,6 +276,20 @@ apply_gateway_config() {
   done
   log "gateway $GATEWAY did not come up within ${GATEWAY_TIMEOUT}s"
   return 1
+}
+
+active_is_healthy() {
+  [ -n "$active" ] && container_running "$active" \
+    && [ "$(docker container inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}missing{{end}}' "$active" 2>/dev/null || true)" = healthy ]
+}
+
+# Restore target is dead (e.g. after a reboot): never remove the candidate, the
+# only slot that may still serve. Leave the gateway on it and record it as active
+# so the next deploy does not stop it as an "unexpectedly running inactive slot".
+keep_candidate() {
+  log "active $active is not healthy; leaving gateway on $next"
+  printf '%s\n' "$next" > "$STATE_FILE.next"
+  mv "$STATE_FILE.next" "$STATE_FILE"
 }
 
 verify_gateway() {
@@ -314,6 +344,11 @@ if [ "$REDEPLOY_ACTIVE" = 1 ]; then
   if container_exists "$active" && ! container_running "$active"; then
     if docker start "$active" >/dev/null && wait_for_health "$active"; then
       log "restarted active slot $active after runtime config restore"
+      # Pull the gateway out of crash-loop backoff now rather than on its next retry.
+      if container_exists "$GATEWAY"; then
+        render_gateway_config "$active"
+        apply_gateway_config || log "gateway $GATEWAY not yet serving $active; the switch below retries"
+      fi
     else
       log "active slot $active did not recover on start; continuing with the redeploy"
     fi
@@ -407,10 +442,14 @@ render_gateway_config "$next"
 gateway_created=0
 if container_exists "$GATEWAY"; then
   if ! apply_gateway_config; then
-    render_gateway_config "$active"
-    apply_gateway_config >/dev/null 2>&1 || true
-    docker rm -f "$next" >/dev/null 2>&1 || true
-    fail "gateway rejected candidate config; restored $active"
+    if active_is_healthy; then
+      render_gateway_config "$active"
+      apply_gateway_config quiet || true
+      docker rm -f "$next" >/dev/null 2>&1 || true
+      fail "gateway rejected candidate config; restored $active"
+    fi
+    keep_candidate
+    fail "gateway rejected candidate config; kept $next because $active is not healthy"
   fi
 else
   log "starting stable gateway $GATEWAY"
@@ -435,9 +474,14 @@ fi
 if ! verify_gateway; then
   if [ "$gateway_created" -eq 1 ]; then
     docker rm -f "$GATEWAY" >/dev/null 2>&1 || true
-  else
+  fi
+  if ! active_is_healthy; then
+    keep_candidate
+    fail "gateway verification failed; kept $next because $active is not healthy"
+  fi
+  if [ "$gateway_created" -ne 1 ]; then
     render_gateway_config "$active"
-    apply_gateway_config >/dev/null 2>&1 || true
+    apply_gateway_config quiet || true
   fi
   docker rm -f "$next" >/dev/null 2>&1 || true
   fail "gateway verification failed; restored $active"
