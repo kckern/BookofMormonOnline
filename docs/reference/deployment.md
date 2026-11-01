@@ -26,8 +26,10 @@ kept stopped for one-command rollback.
    - triggers the deploy on the box via **AWS SSM Run Command** (`bom-deploy` document),
      passing the pinned **image digest** + the deploy script.
 4. **On the box** (`deploy-blue-green.sh`, run via SSM):
-   - renders `.env` + `mail.env` from **AWS Secrets Manager** (`bom/prod/{db,openai,app,mail}`)
-     via the instance role, plus non-secret flags,
+   - bind-mounts the RAM-only runtime bundle `/run/bom-secrets` (tmpfs) read-only at
+     `/run/secrets`; the container entrypoint loads it into the environment. The box holds
+     no secret store (no Secrets Manager reads, no `.env` files). Refuses to start a
+     candidate if the bundle is empty,
    - **`cosign verify`** the pinned digest against `cosign.pub` — **fail-closed** (refuses
      to deploy an unsigned/tampered image),
    - pulls the image **by digest** (not the mutable tag), health-gates the new slot,
@@ -39,9 +41,11 @@ systemd timer (`bom-deploy.timer`) reconciles the box to the recorded digest (`d
 ## Common operations
 
 - **Deploy:** merge to `prod` (PR must pass `build`), or run the `deploy-prod` workflow.
-- **Change a prod secret:** update the value in **AWS Secrets Manager** (`bom/prod/*`);
-  the next deploy renders it into `.env`. Do **not** hand-edit `.env` on the box (it's
-  regenerated every deploy).
+- **Change a prod secret:** edit it in Infisical (prod, folder `/bom-runtime`), then on the
+  homeserver as `bom` run `scripts/bom-secrets-push.sh push-redeploy` (not a plain `push`).
+  Config flows Infisical → homeserver → `/run/bom-secrets` (tmpfs) → container `/run/secrets`.
+  After an EC2 reboot the bundle is empty until `bom-secrets-ensure.timer` re-pushes it.
+  Ordinary CI deploys need no secret delivery.
 - **Rollback:** `ops/production/rollback-blue-green.sh` on the box (swaps back to the
   retained stopped slot).
 - **Ingest one-offs** (`ingest-group-covers`, `ingest-*-bot-avatars`): manual
