@@ -14,7 +14,12 @@ redeployed a stale `desired-image` pin.
 Runtime config is not read from a secret store or `.env` file. The candidate
 bind-mounts the RAM bundle `/run/bom-secrets` read-only at `/run/secrets` (with
 `BOM_REQUIRE_SECRETS=1`); the deploy refuses to start a candidate if the bundle
-is missing (e.g. after a reboot, until homeserver re-pushes).
+is missing (e.g. after a reboot, until homeserver re-pushes). After a reboot
+the active slot cannot start (its bind source is gone) and the gateway
+crash-loops on the unresolvable upstream. The homeserver re-push's
+`--redeploy-active` first starts the dead active slot, then redeploys. Gateway
+reloads restart the gateway on the rendered config whenever it is not in the
+`running` state, instead of `docker exec`ing into it.
 `deploy-blue-green.sh --redeploy-active` redeploys the active slot's own image
 (digest only, re-verified) so a re-pushed bundle takes effect.
 

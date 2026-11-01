@@ -36,6 +36,7 @@ CONFIG="$GATEWAY_DIR/default.conf"
 STATE_FILE="$BASE_DIR/active-slot"
 LOCK_FILE="$BASE_DIR/deploy.lock"
 HEALTH_TIMEOUT="${BOM_HEALTH_TIMEOUT:-180}"
+GATEWAY_TIMEOUT="${BOM_GATEWAY_TIMEOUT:-60}"
 DRAIN_SECONDS="${BOM_DRAIN_SECONDS:-15}"
 EMERGENCY_DISK_PERCENT="${BOM_EMERGENCY_DISK_PERCENT:-90}"
 # Container stdout logs larger than this are truncated during the emergency
@@ -225,6 +226,34 @@ wait_for_health() {
   return 1
 }
 
+gateway_status() {
+  docker container inspect -f '{{.State.Status}}' "$GATEWAY" 2>/dev/null || true
+}
+
+# Apply the rendered $CONFIG to the existing gateway. A gateway that is not
+# "running" (State.Running stays true while it is "restarting") can't be exec'd
+# into: after a reboot it crash-loops because its upstream (the dead active slot)
+# does not resolve. Restart it on the new config and wait until nginx -t passes.
+apply_gateway_config() {
+  gw_state="$(gateway_status)"
+  if [ "$gw_state" = running ]; then
+    docker exec "$GATEWAY" nginx -t && docker exec "$GATEWAY" nginx -s reload
+    return
+  fi
+  log "gateway $GATEWAY is ${gw_state:-unknown}; restarting it on the rendered config"
+  docker restart "$GATEWAY" >/dev/null || return 1
+  gw_elapsed=0
+  while [ "$gw_elapsed" -lt "$GATEWAY_TIMEOUT" ]; do
+    if [ "$(gateway_status)" = running ] && docker exec "$GATEWAY" nginx -t >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 2
+    gw_elapsed=$((gw_elapsed + 2))
+  done
+  log "gateway $GATEWAY did not come up within ${GATEWAY_TIMEOUT}s"
+  return 1
+}
+
 verify_gateway() {
   docker exec "$GATEWAY" wget -q -T 15 -O /dev/null http://127.0.0.1:8200/robots.txt
   docker exec "$GATEWAY" wget -q -T 15 -O /dev/null http://127.0.0.1:5005/health
@@ -272,6 +301,15 @@ if [ "$REDEPLOY_ACTIVE" = 1 ]; then
     *@sha256:*) ;;
     *) fail "active slot image is not pinned by digest ($IMAGE); deploy via CI instead" ;;
   esac
+  # After a reboot the active slot could not start (its bind source was gone).
+  # Bring it back first so the site is up within seconds; blue/green then proceeds.
+  if container_exists "$active" && ! container_running "$active"; then
+    if docker start "$active" >/dev/null && wait_for_health "$active"; then
+      log "restarted active slot $active after runtime config restore"
+    else
+      log "active slot $active did not recover on start; continuing with the redeploy"
+    fi
+  fi
   log "redeploying active image $IMAGE with the current runtime bundle"
 fi
 
@@ -360,13 +398,9 @@ render_gateway_config "$next"
 
 gateway_created=0
 if container_exists "$GATEWAY"; then
-  if ! container_running "$GATEWAY"; then
-    docker start "$GATEWAY" >/dev/null
-  fi
-  if ! docker exec "$GATEWAY" nginx -t || ! docker exec "$GATEWAY" nginx -s reload; then
+  if ! apply_gateway_config; then
     render_gateway_config "$active"
-    docker exec "$GATEWAY" nginx -t >/dev/null 2>&1 || true
-    docker exec "$GATEWAY" nginx -s reload >/dev/null 2>&1 || true
+    apply_gateway_config >/dev/null 2>&1 || true
     docker rm -f "$next" >/dev/null 2>&1 || true
     fail "gateway rejected candidate config; restored $active"
   fi
@@ -395,8 +429,7 @@ if ! verify_gateway; then
     docker rm -f "$GATEWAY" >/dev/null 2>&1 || true
   else
     render_gateway_config "$active"
-    docker exec "$GATEWAY" nginx -t >/dev/null 2>&1 || true
-    docker exec "$GATEWAY" nginx -s reload >/dev/null 2>&1 || true
+    apply_gateway_config >/dev/null 2>&1 || true
   fi
   docker rm -f "$next" >/dev/null 2>&1 || true
   fail "gateway verification failed; restored $active"

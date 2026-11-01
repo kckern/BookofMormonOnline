@@ -16,19 +16,31 @@ const BLUE = 'bookofmormon-online-blue'
 const GREEN = 'bookofmormon-online-green'
 const DIGEST = 'kckern/bookofmormon-online@sha256:' + 'a'.repeat(64)
 
+// Stateful enough for recovery paths: `docker start|restart X` makes X running
+// (recorded in $STUB_STARTED); the gateway can be held in $STUB_GW_STATUS
+// (e.g. restarting) until restarted; `docker exec` into a non-running container fails.
 const DOCKER_STUB = `#!/bin/sh
 echo "docker $*" >> "$STUB_CALLS"
 in_list() { case " $2 " in *" $1 "*) return 0 ;; esac; return 1; }
+status_of() {
+  if grep -qx -- "$1" "$STUB_STARTED" 2>/dev/null; then echo running
+  elif [ "$1" = bookofmormon-online ] && [ -n "\${STUB_GW_STATUS:-}" ]; then echo "$STUB_GW_STATUS"
+  elif in_list "$1" "$STUB_RUNNING"; then echo running
+  else echo exited; fi
+}
 if [ "$1 $2" = "container inspect" ]; then
   if [ "$3" = "-f" ]; then
     name="$5"
+    st="$(status_of "$name")"
     case "$4" in
-      '{{.State.Running}}') in_list "$name" "$STUB_RUNNING" && echo true || echo false ;;
+      # like Docker: a restarting container reports Running=true
+      '{{.State.Running}}') case "$st" in running|restarting) echo true ;; *) echo false ;; esac ;;
+      '{{.State.Status}}') echo "$st" ;;
       '{{.Config.Image}}') echo "$STUB_REF" ;;
       '{{.Image}}') echo "$STUB_ACTIVE_IMAGE" ;;
       '{{.RestartCount}}') echo "\${STUB_RESTARTS:-0}" ;;
       *Mounts*) echo "\${STUB_MOUNT_SRC:-}" ;;
-      *Health*) if in_list "$name" "$STUB_RUNNING"; then echo healthy; else echo "\${STUB_HEALTH:-healthy}"; fi ;;
+      *Health*) if [ "$st" = running ]; then echo healthy; else echo "\${STUB_HEALTH:-healthy}"; fi ;;
     esac
     exit 0
   fi
@@ -37,6 +49,12 @@ fi
 case "$1" in
   pull) [ "\${STUB_FAIL_PULL:-0}" = 1 ] && exit 1 ;;
   image) [ "$2" = inspect ] && echo "$STUB_IMAGE_ID" ;;
+  start|restart) [ "\${STUB_NO_RESTART:-0}" = 1 ] || echo "$2" >> "$STUB_STARTED" ;;
+  exec)
+    if [ "$(status_of "$2")" != running ]; then
+      echo "Error response from daemon: Container $2 is $(status_of "$2")" >&2
+      exit 1
+    fi ;;
 esac
 exit 0
 `
@@ -49,6 +67,7 @@ function harness(t) {
   const secrets = join(dir, 'secrets')
   for (const d of [bin, join(base, 'gateway'), secrets]) mkdirSync(d, { recursive: true })
   const calls = join(dir, 'calls.log')
+  const started = join(dir, 'started.list')
   const stub = (path, body) => { writeFileSync(path, body); chmodSync(path, 0o755) }
   stub(join(bin, 'docker'), DOCKER_STUB)
   stub(join(bin, 'flock'), '#!/bin/sh\necho "flock $*" >> "$STUB_CALLS"\nexit "${STUB_FLOCK_RC:-0}"\n')
@@ -61,6 +80,7 @@ function harness(t) {
 
   function run(script, args = [], env = {}) {
     writeFileSync(calls, '')
+    writeFileSync(started, '')
     writeFileSync(join(base, 'active-slot'), `${BLUE}\n`) // rollback/deploy flip it
     const r = spawnSync('sh', [script, ...args], {
       encoding: 'utf8',
@@ -68,6 +88,7 @@ function harness(t) {
       env: {
         PATH: `${bin}:${process.env.PATH}`,
         STUB_CALLS: calls,
+        STUB_STARTED: started,
         BOM_DEPLOY_DIR: base,
         BOM_SECRETS_DIR: secrets,
         BOM_IMAGE: DIGEST,
@@ -210,4 +231,40 @@ test('a dead (not running) old active slot still gets restart=no after the switc
   const update = r.log.findIndex((l) => l === `docker update --restart=no ${BLUE}`)
   assert.ok(switched !== -1 && update > switched, r.log.join('\n'))
   assert.ok(!r.has(new RegExp(`^docker stop .*${BLUE}$`)), 'nothing to drain')
+})
+
+test('redeploy after a reboot starts the dead active slot before the candidate', (t) => {
+  const h = harness(t)
+  h.bundle('x')
+  // blue (active) did not come back after the reboot; only the gateway "runs"
+  const r = h.run(DEPLOY, ['--redeploy-active'], { STUB_RUNNING: '', STUB_GW_STATUS: 'restarting' })
+  assert.equal(r.status, 0, r.stderr)
+  assert.match(r.stderr + r.stdout, new RegExp(`restarted active slot ${BLUE} after runtime config restore`))
+  const start = r.log.indexOf(`docker start ${BLUE}`)
+  const run = r.log.findIndex((l) => l.startsWith('docker run -d'))
+  assert.ok(start !== -1 && run !== -1 && start < run, r.log.join('\n'))
+  assert.ok(r.has(new RegExp(`^docker stop --time 30 ${BLUE}$`)), 'then blue/green proceeds and drains blue')
+})
+
+test('a restarting gateway is restarted with the rendered config instead of exec-reloaded', (t) => {
+  const h = harness(t)
+  h.bundle('x')
+  const r = h.run(DEPLOY, [], { STUB_GW_STATUS: 'restarting' })
+  assert.equal(r.status, 0, r.stderr)
+  assert.doesNotMatch(r.stderr + r.stdout, /gateway rejected/)
+  const restart = r.log.indexOf('docker restart bookofmormon-online')
+  assert.notEqual(restart, -1, r.log.join('\n'))
+  assert.ok(!r.log.slice(0, restart).some((l) => /^docker exec bookofmormon-online nginx/.test(l)), 'no exec into the restarting gateway')
+  assert.match(r.stdout + r.stderr, /gateway switched to bookofmormon-online-green/)
+  assert.ok(r.has(/^docker stop --time 30 bookofmormon-online-blue$/))
+})
+
+test('a gateway that never recovers still restores the active config and fails', (t) => {
+  const h = harness(t)
+  h.bundle('x')
+  // nginx -t keeps failing after the restart (exec stub fails for exited containers)
+  const r = h.run(DEPLOY, [], { STUB_GW_STATUS: 'exited', BOM_GATEWAY_TIMEOUT: '4', STUB_NO_RESTART: '1' })
+  assert.notEqual(r.status, 0)
+  assert.ok(!r.has(/^docker stop --time 30 bookofmormon-online-blue$/), 'active slot kept')
+  assert.ok(r.has(new RegExp(`^docker rm -f ${GREEN}$`)), 'candidate removed')
 })
