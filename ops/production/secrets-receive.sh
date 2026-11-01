@@ -74,7 +74,9 @@ case "${SSH_ORIGINAL_COMMAND:-}" in
     rm -rf "$old"; old=""
     echo "stored=$count" ;;
   redeploy)
-    umask 022; exec /home/ubuntu/greenfield/deploy-blue-green.sh --redeploy-active ;;
+    # Own transient unit: a dropped SSH session (homeserver timeout) cannot kill a deploy mid-way,
+    # and the fixed name refuses a second concurrent redeploy. Output goes to the journal.
+    exec systemd-run --wait --collect --quiet --unit=bom-redeploy --property=UMask=0022 /home/ubuntu/greenfield/deploy-blue-green.sh --redeploy-active ;;
   *)
     echo "usage: status | put | redeploy" >&2; exit 64 ;;
 esac
