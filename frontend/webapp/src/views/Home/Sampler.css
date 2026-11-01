@@ -590,22 +590,6 @@ html[data-theme="dark"] .peopleTile .peopleFaceCard:hover { border-color: #555; 
   .tile.skeleton { animation: none; }
 }
 /* view-all end cells (people face strip + places grid) */
-.viewAllBox {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  border-radius: 0.4rem;
-  border: 1px dashed #c4c4c4;
-  background: #fafafa;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.3rem;
-  color: #888;
-  transition: border-color 0.15s ease, color 0.15s ease;
-}
-.viewAllCard:hover .viewAllBox { border-color: #333333; color: #333333; }
-html[data-theme="dark"] .viewAllBox { border-color: #555; background: #2a2a2a; color: #999; }
-html[data-theme="dark"] .viewAllCard:hover .viewAllBox { border-color: #ddd; color: #ddd; }
 .samplerCard {
   display: flex;
   flex-direction: column;
@@ -705,7 +689,6 @@ html[data-theme="dark"] .peopleFaceImgWrap { background: #333; }
   min-width: 0;
   flex: 1;
 }
-.peopleFaceIndex { margin-top: 0.15rem; }
 .peopleFaceIndexText {
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -716,14 +699,6 @@ html[data-theme="dark"] .peopleFaceImgWrap { background: #333; }
   line-height: 1.3;
   color: var(--tile-meta);
 }
-.peopleFaceRef {
-  display: inline;
-  font-size: 0.62rem;
-  font-weight: 700;
-  color: #333;
-  white-space: nowrap;
-}
-html[data-theme="dark"] .peopleFaceRef { color: #ccc; }
 /* 3×3 "there is much more" mosaic inside the view-all end cells */
 .viewAllMosaic {
   display: grid;
@@ -1103,13 +1078,6 @@ html[data-theme="dark"] .guestPlanTitle { color: #f0f0f0; }
 html[data-theme="dark"] .guestPlanMeta { color: #a3a3a3; } /* ≥4.5:1 on #222 */
 /* the program's real segment cells (all not-started) — structure, not slogans */
 .guestSegmentList { margin-bottom: 0.2rem; }
-.valuePropText {
-  font-size: 0.95rem;
-  line-height: 1.45;
-  font-weight: 600;
-  color: #333;
-}
-html[data-theme="dark"] .valuePropText { color: #e4e4e4; }
 .valuePropCtas { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 /* guest CTAs are the shared deeplink pills: a flush-right pair like every
    sibling tile's "See in context" */
@@ -1130,18 +1098,10 @@ html[data-theme="dark"] .valuePropText { color: #e4e4e4; }
   font-family: inherit;
   line-height: 1.2;
 }
-button.valuePropSecondary { background: transparent; }
 .valuePropPrimary { background: #1f1f1f; color: #fff; } /* house: black, not slate-blue */
 .valuePropPrimary:hover { background: #3a3a3a; color: #fff; text-decoration: none; }
-.valuePropSecondary {
-  border: 1px solid #c9c9c9;
-  color: #444;
-}
-.valuePropSecondary:hover { border-color: #1f1f1f; color: #1f1f1f; text-decoration: none; }
 html[data-theme="dark"] .valuePropPrimary { background: #ececec; color: #1f1f1f; } /* near-white primary, no slate-blue */
 html[data-theme="dark"] .valuePropPrimary:hover { background: #fff; color: #111; }
-html[data-theme="dark"] .valuePropSecondary { border-color: #555; color: #ccc; }
-html[data-theme="dark"] .valuePropSecondary:hover { border-color: #ddd; color: #ddd; }
 @media (pointer: coarse) {
   .valuePropPrimary,
   .valuePropSecondary { min-height: 44px; display: inline-flex; align-items: center; }
@@ -1185,127 +1145,6 @@ html[data-theme="dark"] .guestSegmentList .segmentListItem.current { outline: 2p
 html[data-theme="dark"] .readingPlanClose { border-color: #555; color: #ddd; }
 html[data-theme="dark"] .readingPlanClose:hover { border-color: #ddd; }
 @media (pointer: coarse) { .readingPlanClose { min-height: 44px; } }
-
-/* ================================================================
-   SPOTLIGHT — community group card OR leaderboard/finishers list
-   ================================================================ */
-.spotlightGroup {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  margin-bottom: 0.55rem;
-}
-.spotlightGroup img {
-  width: 3.4rem;
-  height: 3.4rem;
-  border-radius: 0.5rem;
-  object-fit: cover;
-  border: 1px solid #ddd;
-  background: #eee;
-}
-html[data-theme="dark"] .spotlightGroup img { border-color: #444; background: #333; }
-.spotlightGroupName {
-  font-weight: 800;
-  font-size: 0.92rem;
-  color: #2a2a2a;
-}
-html[data-theme="dark"] .spotlightGroupName { color: #f0f0f0; }
-.spotlightGroupMeta { font-size: 0.74rem; color: var(--tile-meta); }
-
-.spotlightUsers h4 {
-  font-size: 0.82rem;
-  font-weight: 800;
-  margin: 0 0 0.4rem;
-  color: #2a2a2a;
-}
-html[data-theme="dark"] .spotlightUsers h4 { color: #f0f0f0; }
-.spotlightUser {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  margin-bottom: 0.3rem;
-  font-size: 0.8rem;
-  color: #444;
-}
-html[data-theme="dark"] .spotlightUser { color: #d0d0d0; }
-.spotlightUser img {
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1px solid #ddd;
-  background: #eee;
-  flex-shrink: 0;
-}
-html[data-theme="dark"] .spotlightUser img { border-color: #444; background: #333; }
-.spotlightUser span:first-of-type {
-  flex-grow: 1;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.spotlightProgress {
-  flex-shrink: 0;
-  font-weight: 700;
-  font-size: 0.72rem;
-  color: #40805e;
-  background: rgba(107, 208, 152, 0.35);
-  border-radius: 0.5rem;
-  padding: 0.05rem 0.45rem;
-}
-html[data-theme="dark"] .spotlightProgress { color: #8fe0b3; background: rgba(64, 128, 94, 0.4); }
-
-/* ================================================================
-   ACTIVITY — latest community message
-   ================================================================ */
-.activityTileMsg {
-  display: flex;
-  gap: 0.55rem;
-  align-items: flex-start;
-  color: inherit;
-  text-decoration: none;
-  border-radius: 0.4rem;
-  padding: 0.25rem;
-  margin-bottom: 0.3rem;
-  transition: background 0.15s ease;
-}
-.activityTileMsg:hover { background: rgba(0, 0, 0, 0.04); text-decoration: none; }
-html[data-theme="dark"] .activityTileMsg:hover { background: rgba(255, 255, 255, 0.06); }
-.activityTileMsg > img {
-  width: 2.1rem;
-  height: 2.1rem;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1px solid #ddd;
-  background: #eee;
-  flex-shrink: 0;
-}
-html[data-theme="dark"] .activityTileMsg > img { border-color: #444; background: #333; }
-.activityTileMsg > div { min-width: 0; }
-.activityTileUser {
-  font-weight: 800;
-  font-size: 0.82rem;
-  color: #2a2a2a;
-}
-html[data-theme="dark"] .activityTileUser { color: #f0f0f0; }
-.activityTileTime {
-  margin-left: 0.4rem;
-  font-weight: 400;
-  font-size: 0.7rem;
-  color: var(--tile-meta);
-}
-.activityTileMsg p {
-  margin: 0.2rem 0 0;
-  font-size: 0.78rem;
-  line-height: 1.35;
-  color: #555;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  overflow: clip; /* not a scroll container: focus cannot slide the clamp (G2) */
-}
-html[data-theme="dark"] .activityTileMsg p { color: #c4c4c4; }
 
 /* ================================================================
    FOOTER RAIL — bounded "pick your path" ending
@@ -1541,14 +1380,6 @@ html[data-theme="dark"] .historyTileThumb {
   filter: brightness(0.85); /* a white scan is otherwise the brightest thing on the page */
 }
 .historyTileMain { min-width: 0; display: flex; flex-direction: column; flex: 1; }
-.historyTileMore {
-  margin-top: auto;
-  padding-top: 0.4rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #333;
-}
-html[data-theme="dark"] .historyTileMore { color: #ccc; }
 .historyTileTitle {
   font-weight: 800;
   font-size: 0.92rem;
@@ -2789,10 +2620,6 @@ html[data-theme="dark"] .notesTile .notesCover { border-color: #444; }
   gap: 0.5rem;
   margin-top: 0.35rem;
 }
-
-/* ---- verse-fax tile (wave 1) ---- */
-.faxVerseTile .faxVerseTitle { font-size: 0.85rem; opacity: 0.8; margin: 0.4rem 0; }
-.notesTile .notesSource { font-size: 0.8rem; opacity: 0.7; }
 
 /* ---- map-story tile: semantic journey player ---- */
 .mapStoryTile { gap: 0; }
