@@ -160,6 +160,8 @@ emergency_prune_if_needed() {
   # image. Running containers (the active app, gateway, and unrelated services)
   # are never removed by docker system prune.
   if container_exists "$next"; then
+    # Never give up the rollback slot when no candidate could start anyway.
+    require_runtime_bundle
     [ "$(docker container inspect -f '{{.State.Running}}' "$next")" = "false" ] \
       || fail "refusing emergency prune because inactive slot $next is running"
     log "removing inactive rollback slot $next to release its pinned image"
@@ -234,10 +236,17 @@ case "$active" in
 esac
 
 # --redeploy-active: re-pull and re-verify (cosign) the reference the active slot
-# was started from, so the same signed digest is redeployed with the new bundle.
+# was started from. Only a digest reference is accepted, so the redeploy runs the
+# same image (a mutable tag could resolve to a different one); otherwise deploy via CI.
+# This mode never takes the no-op exit, so require the bundle before prune/pull.
 if [ "$REDEPLOY_ACTIVE" = 1 ]; then
+  require_runtime_bundle
   IMAGE="$(docker container inspect -f '{{.Config.Image}}' "$active")" \
     || fail "cannot read the image of active slot $active for --redeploy-active"
+  case "$IMAGE" in
+    *@sha256:*) ;;
+    *) fail "active slot image is not pinned by digest ($IMAGE); deploy via CI instead" ;;
+  esac
   log "redeploying active image $IMAGE with the current runtime bundle"
 fi
 

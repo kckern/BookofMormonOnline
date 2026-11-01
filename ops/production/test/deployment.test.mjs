@@ -163,3 +163,35 @@ test('--redeploy-active redeploys the running image even when healthy', () => {
     'already runs the desired healthy image',
   )
 })
+
+const shellFunction = (source, name) => {
+  const start = source.indexOf(`${name}() {`)
+  assert.notEqual(start, -1, `missing function ${name}`)
+  const end = source.indexOf('\n}\n', start)
+  assert.notEqual(end, -1, `unterminated function ${name}`)
+  return source.slice(start, end)
+}
+
+test('emergency prune never removes the rollback slot without a runtime bundle', () => {
+  const body = shellFunction(deployment, 'emergency_prune_if_needed')
+  const call = body.search(/^\s+require_runtime_bundle$/m)
+  assert.notEqual(call, -1, 'emergency prune calls require_runtime_bundle')
+  const rm = body.indexOf('docker rm "$next"')
+  assert.notEqual(rm, -1)
+  assert.ok(call < rm, 'require_runtime_bundle precedes docker rm "$next"')
+  assert.ok(call < body.indexOf('removing inactive rollback slot $next'))
+})
+
+test('redeploy mode requires the bundle and a digest-pinned image before prune or pull', () => {
+  const start = deployment.indexOf('if [ "$REDEPLOY_ACTIVE" = 1 ]; then')
+  assert.notEqual(start, -1)
+  const block = deployment.slice(start, deployment.indexOf('\nfi\n', start))
+  assert.match(block, /^\s+require_runtime_bundle$/m)
+  assert.match(block, /case "\$IMAGE" in\s+\*@sha256:\*\) ;;\s+\*\) fail "active slot image is not pinned by digest \(\$IMAGE\); deploy via CI instead" ;;\s+esac/)
+  assert.ok(block.indexOf('IMAGE="$(docker container inspect') < block.indexOf('case "$IMAGE" in'))
+  for (const later of ['emergency_prune_if_needed\n', 'docker image prune -f', 'docker pull "$IMAGE"']) {
+    const at = deployment.indexOf(later)
+    assert.ok(start < at, `redeploy checks precede ${JSON.stringify(later)}`)
+  }
+  assert.ok(deployment.indexOf('docker pull "$IMAGE"') > start + block.length)
+})
