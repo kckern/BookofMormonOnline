@@ -196,9 +196,18 @@ render_gateway_config() {
   mv "$tmp" "$CONFIG"
 }
 
+restart_count() {
+  _rc="$(docker container inspect -f '{{.RestartCount}}' "$1" 2>/dev/null || true)"
+  case "$_rc" in ''|*[!0-9]*) _rc=0 ;; esac
+  echo "$_rc"
+}
+
 wait_for_health() {
   container="$1"
   elapsed=0
+  # Baseline, so restarts from before this wait (e.g. dockerd's attempts while the
+  # bundle was missing after a reboot) don't count. A new candidate starts at 0.
+  restarts_at_start="$(restart_count "$container")"
   while [ "$elapsed" -lt "$HEALTH_TIMEOUT" ]; do
     status="$(docker container inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}missing{{end}}' "$container" 2>/dev/null || true)"
     case "$status" in
@@ -210,12 +219,11 @@ wait_for_health() {
         return 1
         ;;
     esac
-    # A restart means the container already exited (e.g. the entrypoint's exit 78
-    # for a missing bundle); don't wait out HEALTH_TIMEOUT on a restart loop.
-    restarts="$(docker container inspect -f '{{.RestartCount}}' "$container" 2>/dev/null || true)"
-    case "$restarts" in ''|*[!0-9]*) restarts=0 ;; esac
-    if [ "$restarts" -gt 0 ]; then
-      log "$container restarted $restarts time(s) before becoming healthy"
+    # A restart during the wait means the container already exited (e.g. the
+    # entrypoint's exit 78 for a missing bundle); don't wait out HEALTH_TIMEOUT.
+    restarts="$(restart_count "$container")"
+    if [ "$restarts" -gt "$restarts_at_start" ]; then
+      log "$container restarted $((restarts - restarts_at_start)) time(s) before becoming healthy"
       docker logs --tail 100 "$container" >&2 || true
       return 1
     fi

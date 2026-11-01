@@ -38,9 +38,16 @@ if [ "$1 $2" = "container inspect" ]; then
       '{{.State.Status}}') echo "$st" ;;
       '{{.Config.Image}}') echo "$STUB_REF" ;;
       '{{.Image}}') echo "$STUB_ACTIVE_IMAGE" ;;
-      '{{.RestartCount}}') echo "\${STUB_RESTARTS:-0}" ;;
+      # STUB_RESTARTS_GROW=1: the count rises by one on every query (a live restart loop)
+      '{{.RestartCount}}') if [ "\${STUB_RESTARTS_GROW:-0}" = 1 ]; then
+          echo "$name" >> "$STUB_STARTED.rc"; grep -cx -- "$name" "$STUB_STARTED.rc"
+        else echo "\${STUB_RESTARTS:-0}"; fi ;;
       *Mounts*) echo "\${STUB_MOUNT_SRC:-}" ;;
-      *Health*) if [ "$st" = running ]; then echo healthy; else echo "\${STUB_HEALTH:-healthy}"; fi ;;
+      # STUB_START_POLLS=N: a started container reports "starting" for its first N health polls
+      *Health*) if [ "$st" = running ]; then
+          echo "$name" >> "$STUB_STARTED.hp"
+          if [ "$(grep -cx -- "$name" "$STUB_STARTED.hp")" -gt "\${STUB_START_POLLS:-0}" ]; then echo healthy; else echo starting; fi
+        else echo "\${STUB_HEALTH:-healthy}"; fi ;;
     esac
     exit 0
   fi
@@ -80,7 +87,7 @@ function harness(t) {
 
   function run(script, args = [], env = {}) {
     writeFileSync(calls, '')
-    writeFileSync(started, '')
+    for (const f of [started, `${started}.rc`, `${started}.hp`]) writeFileSync(f, '')
     writeFileSync(join(base, 'active-slot'), `${BLUE}\n`) // rollback/deploy flip it
     const r = spawnSync('sh', [script, ...args], {
       encoding: 'utf8',
@@ -191,7 +198,7 @@ test('a restart-looping candidate fails fast and the active slot is kept', (t) =
   const h = harness(t)
   h.bundle('x')
   const started = Date.now()
-  const r = h.run(DEPLOY, [], { STUB_HEALTH: 'starting', STUB_RESTARTS: '2' })
+  const r = h.run(DEPLOY, [], { STUB_HEALTH: 'starting', STUB_RESTARTS_GROW: '1' })
   assert.notEqual(r.status, 0)
   assert.ok(Date.now() - started < 10000, 'did not wait out the health timeout')
   assert.ok(r.has(new RegExp(`^docker logs --tail 100 ${GREEN}$`)))
@@ -267,4 +274,15 @@ test('a gateway that never recovers still restores the active config and fails',
   assert.notEqual(r.status, 0)
   assert.ok(!r.has(/^docker stop --time 30 bookofmormon-online-blue$/), 'active slot kept')
   assert.ok(r.has(new RegExp(`^docker rm -f ${GREEN}$`)), 'candidate removed')
+})
+
+test('restart attempts from before the bundle arrived do not defeat the reboot fast path', (t) => {
+  const h = harness(t)
+  h.bundle('x')
+  // dockerd retried blue 5 times while /run/bom-secrets was missing; after `docker start`
+  // it is "starting" for one poll, then healthy, and RestartCount stays at 5
+  const r = h.run(DEPLOY, ['--redeploy-active'], { STUB_RUNNING: '', STUB_RESTARTS: '5', STUB_START_POLLS: '1' })
+  assert.equal(r.status, 0, r.stderr)
+  assert.match(r.stdout + r.stderr, new RegExp(`restarted active slot ${BLUE} after runtime config restore`))
+  assert.doesNotMatch(r.stdout + r.stderr, /did not recover/)
 })
