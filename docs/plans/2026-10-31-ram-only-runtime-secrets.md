@@ -604,31 +604,34 @@ Do NOT push to `prod` yet; Task 8 sequences the cutover.
 - Create: `scripts/bom-secrets-push.sh`
 - Create: `scripts/test/bom-secrets-push.test.mjs`
 
-**Step 1: Write the failing test** (exercises bundle encoding and command routing with stubs; no network)
+**Step 1: Write the failing test** (stub `ssh` and `curl` on PATH; no network. Covers bundle encoding with the trailer, command routing, fetch failures sending nothing, credentials staying out of argv, and a byte-exact round trip through the real receiver)
 
 ```js
 // scripts/test/bom-secrets-push.test.mjs
 import assert from 'node:assert/strict'
 import { execFileSync, spawnSync } from 'node:child_process'
-import { mkdtempSync, writeFileSync, chmodSync, rmSync, readFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, writeFileSync, chmodSync, rmSync, readFileSync, readdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import test from 'node:test'
 
-const script = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'bom-secrets-push.sh')
+const here = dirname(fileURLToPath(import.meta.url))
+const script = resolve(here, '..', 'bom-secrets-push.sh')
+const receiver = resolve(here, '..', '..', 'ops', 'production', 'secrets-receive.sh')
+const b64 = (s) => Buffer.from(s).toString('base64')
 
-function stubs() {
+function stubs(secrets = [{ secretKey: 'MYSQL_PASSWORD', secretValue: 'p w$' }, { secretKey: 'OPENAI_BOT_API_KEY', secretValue: 'sk-1' }]) {
   const d = mkdtempSync(join(tmpdir(), 'push-'))
   // fake ssh: records the remote command and stdin, answers status
   writeFileSync(join(d, 'ssh'), `#!/bin/sh\nfor a; do last="$a"; done\necho "$last" >> "${d}/calls"\ncat > "${d}/stdin.$last"\n[ "$last" = status ] && echo "\${FAKE_STATUS:-files=3}"\n[ "$last" = put ] && echo stored=2\nexit 0\n`)
   chmodSync(join(d, 'ssh'), 0o755)
-  writeFileSync(join(d, 'bundle.json'), JSON.stringify({ secrets: [
-    { secretKey: 'MYSQL_PASSWORD', secretValue: 'p w$' }, { secretKey: 'OPENAI_BOT_API_KEY', secretValue: 'sk-1' } ] }))
+  writeFileSync(join(d, 'bundle.json'), JSON.stringify({ secrets }))
   return d
 }
-const run = (d, args, env = {}) => spawnSync('bash', [script, ...args], { encoding: 'utf8',
+const run = (d, args, env = {}) => spawnSync('bash', [script, ...args], { encoding: 'utf8', timeout: 30000,
   env: { PATH: `${d}:${process.env.PATH}`, BOM_SECRETS_BUNDLE_JSON: join(d, 'bundle.json'), BOM_SECRETS_KEY: '/dev/null', ...env } })
+const calls = (d) => existsSync(join(d, 'calls')) ? readFileSync(join(d, 'calls'), 'utf8').trim().split('\n') : []
 
 test('parses as bash', () => { execFileSync('bash', ['-n', script]) })
 
@@ -637,19 +640,151 @@ test('push streams NAME<TAB>base64 lines plus the .END<TAB>N trailer and never p
   try {
     const r = run(d, ['push']); assert.equal(r.status, 0, r.stderr)
     const lines = readFileSync(join(d, 'stdin.put'), 'utf8').trim().split('\n')
-    assert.deepEqual(lines, [`MYSQL_PASSWORD\t${Buffer.from('p w$').toString('base64')}`, `OPENAI_BOT_API_KEY\t${Buffer.from('sk-1').toString('base64')}`, '.END\t2'])
+    assert.deepEqual(lines, [`MYSQL_PASSWORD\t${b64('p w$')}`, `OPENAI_BOT_API_KEY\t${b64('sk-1')}`, '.END\t2'])
     assert.ok(!r.stdout.includes('sk-1') && !r.stderr.includes('sk-1'))
+    assert.ok(!r.stdout.includes('p w$') && !r.stderr.includes('p w$'))
+    assert.deepEqual(calls(d), ['put'])
   } finally { rmSync(d, { recursive: true, force: true }) }
 })
 
 test('ensure re-pushes and redeploys only when the box reports zero files', () => {
   const d = stubs()
   try {
-    run(d, ['ensure'], { FAKE_STATUS: 'files=3' })
-    assert.deepEqual(readFileSync(join(d, 'calls'), 'utf8').trim().split('\n'), ['status'])
+    assert.equal(run(d, ['ensure'], { FAKE_STATUS: 'files=3' }).status, 0)
+    assert.deepEqual(calls(d), ['status'])
     rmSync(join(d, 'calls'))
-    run(d, ['ensure'], { FAKE_STATUS: 'files=0' })
-    assert.deepEqual(readFileSync(join(d, 'calls'), 'utf8').trim().split('\n'), ['status', 'put', 'redeploy'])
+    assert.equal(run(d, ['ensure'], { FAKE_STATUS: 'files=0' }).status, 0)
+    assert.deepEqual(calls(d), ['status', 'put', 'redeploy'])
+  } finally { rmSync(d, { recursive: true, force: true }) }
+})
+
+test('ensure fails on an unexpected status reply instead of doing nothing', () => {
+  const d = stubs()
+  try {
+    assert.notEqual(run(d, ['ensure'], { FAKE_STATUS: 'garbage' }).status, 0)
+    assert.deepEqual(calls(d), ['status'])
+  } finally { rmSync(d, { recursive: true, force: true }) }
+})
+
+test('status, redeploy and push-redeploy route to the right remote commands', () => {
+  const d = stubs()
+  try {
+    const s = run(d, ['status']); assert.equal(s.status, 0, s.stderr); assert.equal(s.stdout.trim(), 'files=3')
+    assert.equal(run(d, ['redeploy']).status, 0)
+    assert.equal(run(d, ['push-redeploy']).status, 0)
+    assert.deepEqual(calls(d), ['status', 'redeploy', 'put', 'redeploy'])
+  } finally { rmSync(d, { recursive: true, force: true }) }
+})
+
+test('unknown command exits 64 without contacting the box', () => {
+  const d = stubs()
+  try {
+    const r = run(d, ['bogus']); assert.equal(r.status, 64); assert.match(r.stderr, /usage/)
+    assert.deepEqual(calls(d), [])
+  } finally { rmSync(d, { recursive: true, force: true }) }
+})
+
+for (const [label, body] of [
+  ['invalid JSON', '{"secrets": [ {"secretKey": "A", "secretValue": "sk-leak'],
+  ['zero secrets', '{"secrets":[]}'],
+  ['no secrets key', '{"message":"forbidden"}'],
+  ['secrets not an array', '{"secrets":"sk-leak"}'],
+  ['non-string value', '{"secrets":[{"secretKey":"A","secretValue":null}]}'],
+  ['name with a newline', '{"secrets":[{"secretKey":"A\\nB","secretValue":"sk-leak"}]}'],
+  ['empty file', ''],
+]) {
+  test(`fetch failure (${label}) exits non-zero and never calls ssh`, () => {
+    const d = stubs()
+    try {
+      writeFileSync(join(d, 'bundle.json'), body)
+      for (const cmd of ['push', 'push-redeploy']) {
+        const r = run(d, [cmd]); assert.notEqual(r.status, 0, cmd)
+        assert.ok(!r.stdout.includes('sk-leak') && !r.stderr.includes('sk-leak'), 'value leaked to output')
+      }
+      assert.deepEqual(calls(d), [])
+      const e = run(d, ['ensure'], { FAKE_STATUS: 'files=0' }); assert.notEqual(e.status, 0)
+      assert.deepEqual(calls(d), ['status'], 'ensure must not put or redeploy after a failed fetch')
+    } finally { rmSync(d, { recursive: true, force: true }) }
+  })
+}
+
+test('missing bundle file exits non-zero and never calls ssh', () => {
+  const d = stubs()
+  try {
+    const r = run(d, ['push'], { BOM_SECRETS_BUNDLE_JSON: join(d, 'nope.json') })
+    assert.notEqual(r.status, 0); assert.deepEqual(calls(d), [])
+  } finally { rmSync(d, { recursive: true, force: true }) }
+})
+
+test('round trip through the real receiver stores the exact value bytes', () => {
+  const values = {
+    MYSQL_PASSWORD: 'p w$ "q" \'s\' `b` \\ %s %%',
+    MULTILINE: 'line1\nline2\n\n',
+    TRAILING_NL: 'x\n',
+    UNICODE: 'héllo wörld ✓ 日本語 🔑',
+    TABS: 'a\tb\t',
+    CTRL: '\u0001\u001b[0m\r\n',
+    LEADING_SPACE: '  padded  ',
+    DASHES: '-n -e --',
+  }
+  const d = stubs(Object.entries(values).map(([secretKey, secretValue]) => ({ secretKey, secretValue })))
+  try {
+    const r = run(d, ['push']); assert.equal(r.status, 0, r.stderr)
+    const stream = readFileSync(join(d, 'stdin.put'))
+    const root = join(d, 'box', 'bom-secrets')
+    execFileSync('mkdir', ['-p', join(d, 'box')])
+    const rcv = spawnSync('sh', [receiver], { input: stream, encoding: 'utf8', timeout: 30000,
+      env: { PATH: process.env.PATH, SSH_ORIGINAL_COMMAND: 'put', BOM_SECRETS_ROOT: root, BOM_SECRETS_SKIP_TMPFS_CHECK: '1' } })
+    assert.equal(rcv.status, 0, rcv.stderr)
+    assert.equal(rcv.stdout.trim(), `stored=${Object.keys(values).length}`)
+    assert.deepEqual(readdirSync(root).sort(), Object.keys(values).sort())
+    for (const [k, v] of Object.entries(values)) {
+      assert.ok(readFileSync(join(root, k)).equals(Buffer.from(v, 'utf8')), `${k} bytes differ`)
+    }
+  } finally { rmSync(d, { recursive: true, force: true }) }
+})
+
+// Fake curl for the real Infisical path: logs argv and stdin per call, answers login then secrets.
+function infisicalStubs(loginOk = true) {
+  const d = stubs()
+  const id = join(d, 'infisical'); execFileSync('mkdir', [id])
+  writeFileSync(join(id, '.client-id'), 'cid-123\n')
+  writeFileSync(join(id, '.client-secret'), 'csec-leak\n')
+  writeFileSync(join(id, '.prod-project-id'), 'proj-1\n')
+  writeFileSync(join(d, 'curl'), `#!/bin/sh
+n=$(ls "${d}" | grep -c '^curl-argv') ; n=$((n + 1))
+printf '%s\\n' "$@" > "${d}/curl-argv.$n"; cat > "${d}/curl-stdin.$n"
+case "$*" in
+  *universal-auth/login*) ${loginOk ? `echo '{"accessToken":"tok-leak"}'` : 'echo "curl: (22) 401" >&2; exit 22'} ;;
+  *secrets/raw*) cat "${d}/bundle.json" ;;
+  *) exit 99 ;;
+esac
+`)
+  chmodSync(join(d, 'curl'), 0o755)
+  return [d, { BOM_SECRETS_BUNDLE_JSON: '', BOM_INFISICAL_DIR: id, BOM_INFISICAL_HOST: 'http://infisical.test' }]
+}
+
+test('real Infisical path: login then raw secrets, credentials and token only on stdin', () => {
+  const [d, env] = infisicalStubs()
+  try {
+    const r = run(d, ['push'], env); assert.equal(r.status, 0, r.stderr)
+    const argv1 = readFileSync(join(d, 'curl-argv.1'), 'utf8'), argv2 = readFileSync(join(d, 'curl-argv.2'), 'utf8')
+    assert.match(argv1, /http:\/\/infisical\.test\/api\/v1\/auth\/universal-auth\/login/)
+    assert.deepEqual(JSON.parse(readFileSync(join(d, 'curl-stdin.1'), 'utf8')), { clientId: 'cid-123', clientSecret: 'csec-leak' })
+    assert.match(argv2, /http:\/\/infisical\.test\/api\/v3\/secrets\/raw/)
+    for (const p of ['environment=prod', 'secretPath=/bom-runtime', 'workspaceId=proj-1']) assert.ok(argv2.includes(p), p)
+    assert.equal(readFileSync(join(d, 'curl-stdin.2'), 'utf8'), 'header = "Authorization: Bearer tok-leak"\n')
+    for (const a of [argv1, argv2, r.stdout, r.stderr]) assert.ok(!/csec-leak|tok-leak|sk-1/.test(a), 'credential in argv/output')
+    assert.equal(readFileSync(join(d, 'stdin.put'), 'utf8').trim().split('\n').at(-1), '.END\t2')
+  } finally { rmSync(d, { recursive: true, force: true }) }
+})
+
+test('real Infisical path: failed login exits non-zero and never calls ssh', () => {
+  const [d, env] = infisicalStubs(false)
+  try {
+    const r = run(d, ['push'], env); assert.notEqual(r.status, 0)
+    assert.ok(!existsSync(join(d, 'curl-argv.2')), 'no secrets request without a token')
+    assert.deepEqual(calls(d), [])
   } finally { rmSync(d, { recursive: true, force: true }) }
 })
 ```
@@ -666,64 +801,97 @@ Expected: FAIL (script missing).
 # Push BoM runtime config (Infisical prod, folder /bom-runtime) into the EC2 box's RAM.
 # Runs as user `bom` on homeserver. One-way: homeserver connects out; the box holds no way back.
 # Usage: bom-secrets-push.sh push | status | redeploy | push-redeploy | ensure
+#   push           replace the box's RAM bundle (running containers keep the old one)
+#   status         print files=N (N = variables the box holds; 0 after a reboot)
+#   redeploy       restart the active slot so it picks up the current bundle
+#   push-redeploy  push, then redeploy (use this to rotate)
+#   ensure         if the box reports files=0, push + redeploy (reboot recovery timer)
+# Rotate with push-redeploy; a plain push leaves running containers on the previous bundle and
+# breaks docker exec one-off jobs until a redeploy.
+# Values are never printed, written to disk, or put in argv.
 set -euo pipefail
+shopt -s inherit_errexit 2>/dev/null || true   # bash >= 4.4; every step is also checked explicitly
 cmd="${1:-status}"
 HOST="${BOM_SECRETS_HOST:-bomsecrets@52.42.0.250}"
 KEY="${BOM_SECRETS_KEY:-$HOME/.ssh/bom_secrets_ed25519}"
-ID_DIR="${BOM_INFISICAL_DIR:-$HOME/infisical}"
-INFISICAL="${BOM_INFISICAL_HOST:-http://127.0.0.1:8070}"
-SECRET_PATH="${BOM_SECRETS_PATH:-/bom-runtime}"
+
+usage() { echo "usage: $0 push|status|redeploy|push-redeploy|ensure (rotate with push-redeploy)" >&2; }
 
 remote() { ssh -i "$KEY" -o IdentitiesOnly=yes -o BatchMode=yes -o ConnectTimeout=10 \
   -o ServerAliveInterval=5 -o ServerAliveCountMax=3 "$HOST" "$1"; }
 
+# Self-contained (Task 6 sources this function alone). Prints the raw API JSON on stdout.
 fetch_json() {  # test hook: BOM_SECRETS_BUNDLE_JSON points at a canned API response
-  if [ -n "${BOM_SECRETS_BUNDLE_JSON:-}" ]; then cat "$BOM_SECRETS_BUNDLE_JSON"; return; fi
-  local token
-  token="$(jq -nc --rawfile id "$ID_DIR/.client-id" --rawfile sec "$ID_DIR/.client-secret" \
+  if [ -n "${BOM_SECRETS_BUNDLE_JSON:-}" ]; then cat -- "$BOM_SECRETS_BUNDLE_JSON"; return; fi
+  local id_dir="${BOM_INFISICAL_DIR:-$HOME/infisical}" host="${BOM_INFISICAL_HOST:-http://127.0.0.1:8070}"
+  local path="${BOM_SECRETS_PATH:-/bom-runtime}" token project
+  project="$(tr -d '[:space:]' < "$id_dir/.prod-project-id")" || return 1
+  # Client id/secret go to jq via --rawfile and to curl via stdin; the token via curl -K - (stdin).
+  token="$(jq -nc --rawfile id "$id_dir/.client-id" --rawfile sec "$id_dir/.client-secret" \
       '{clientId:($id|rtrimstr("\n")),clientSecret:($sec|rtrimstr("\n"))}' \
-    | curl -fsS -m 20 -X POST -H 'content-type: application/json' --data @- \
-        "$INFISICAL/api/v1/auth/universal-auth/login" | jq -r .accessToken)"
-  curl -fsS -m 20 -H "Authorization: Bearer $token" --get \
-    --data-urlencode "environment=prod" --data-urlencode "secretPath=$SECRET_PATH" \
-    --data-urlencode "workspaceId=$(tr -d '\n' < "$ID_DIR/.prod-project-id")" \
-    "$INFISICAL/api/v3/secrets/raw"
+    | curl -fsS -m 20 -X POST -H 'Content-Type: application/json' --data-binary @- \
+        "$host/api/v1/auth/universal-auth/login" \
+    | jq -er '.accessToken | strings' 2>/dev/null)" || { echo "infisical login failed" >&2; return 1; }
+  printf 'header = "Authorization: Bearer %s"\n' "$token" \
+    | curl -fsS -m 20 -K - --get --data-urlencode "environment=prod" \
+        --data-urlencode "secretPath=$path" --data-urlencode "workspaceId=$project" \
+        "$host/api/v3/secrets/raw"
 }
 
-# Values live only in this shell variable and the pipe (printf is a builtin, so nothing shows in argv).
-# The trailer lets the receiver refuse a truncated stream. Explicit checks, because errexit is
-# ignored inside `bundle | remote put && ...`; on any failure nothing is printed, so the box refuses.
+# Builds the whole stream (lines NAME<TAB>base64(value), then .END<TAB>N) in memory, so a failed
+# or empty fetch means ssh is never started. jq's stderr is discarded: its type errors quote input.
 bundle() {
-  local lines count
-  lines="$(fetch_json | jq -r '.secrets[] | "\(.secretKey)\t\(.secretValue | @base64)"')" || return 1
-  [ -n "$lines" ] || { echo "no runtime config found" >&2; return 1; }
-  count="$(printf '%s\n' "$lines" | wc -l | tr -d ' ')"
-  printf '%s\n.END\t%s\n' "$lines" "$count"
+  local json out
+  json="$(fetch_json)" && [ -n "$json" ] || { echo "fetching runtime config failed" >&2; return 1; }
+  # printf | jq, not a here-string: bash may back here-strings with a temp file.
+  out="$(printf '%s' "$json" | jq -r '
+      .secrets as $s
+      | if ($s | type) != "array" or ($s | length) == 0 then error("none") else . end
+      | if all($s[]; (.secretKey | type) == "string" and (.secretKey | test("^[A-Za-z_][A-Za-z0-9_]*$"))
+                     and (.secretValue | type) == "string") then . else error("bad") end
+      | ($s[] | "\(.secretKey)\t\(.secretValue | @base64)"), ".END\t\($s | length)"
+    ' 2>/dev/null)" || { echo "no usable runtime config in Infisical response" >&2; return 1; }
+  [ -n "$out" ] || { echo "no usable runtime config in Infisical response" >&2; return 1; }
+  printf '%s\n' "$out"
+}
+
+push() {
+  local b
+  b="$(bundle)" || return 1
+  printf '%s\n' "$b" | remote put   # printf is a builtin: the bundle never appears in argv
+}
+
+ensure() {
+  local st
+  st="$(remote status)"
+  case "$st" in
+    files=0) echo "box has no runtime config (rebooted?); re-pushing" >&2
+             push && remote redeploy ;;
+    files=[1-9]*) ;;
+    *) echo "unexpected status reply from box" >&2; return 1 ;;
+  esac
 }
 
 case "$cmd" in
-  push)          bundle | remote put ;;
+  push)          push ;;
   status)        remote status ;;
   redeploy)      remote redeploy ;;
-  push-redeploy) bundle | remote put && remote redeploy ;;
-  ensure)
-    if [ "$(remote status)" = "files=0" ]; then
-      echo "box has no runtime config (rebooted?); re-pushing" >&2
-      bundle | remote put && remote redeploy
-    fi ;;
-  *) echo "usage: $0 push|status|redeploy|push-redeploy|ensure" >&2; exit 64 ;;
+  push-redeploy) push && remote redeploy ;;
+  ensure)        ensure ;;
+  *)             usage; exit 64 ;;
 esac
 ```
 
-The bundle exists only in a shell variable and the pipe; nothing is written to disk on homeserver. It always ends with `.END<TAB>N`, and the receiver commits only when it sees that trailer and N matches the number of lines it got.
+The bundle exists only in shell variables and pipes (no here-strings, which bash may back with a temp file); nothing is written to disk on homeserver. It is built completely before ssh starts, so a failed, empty, or malformed Infisical response means no connection to the box at all. It always ends with `.END<TAB>N`, and the receiver commits only when it sees that trailer and N matches the number of lines it got. The Infisical client secret reaches jq via `--rawfile` and curl via stdin; the access token reaches curl via `-K -` (stdin), so neither shows in `ps`. Rotate with `push-redeploy`: a plain `push` leaves running containers on the previous bundle and breaks `docker exec` one-off jobs until a redeploy.
 
-**Step 4: Run to verify it passes** — same command; Expected: 3 passing.
+**Step 4: Run to verify it passes** — same command; Expected: 17 passing. Also `bash -n scripts/bom-secrets-push.sh` and `shellcheck scripts/bom-secrets-push.sh` (clean).
 
 **Step 5: Commit**
 
 ```bash
 chmod 0755 scripts/bom-secrets-push.sh
-git add scripts/bom-secrets-push.sh scripts/test/bom-secrets-push.test.mjs
+git add -f scripts/bom-secrets-push.sh   # *.sh is gitignored
+git add scripts/test/bom-secrets-push.test.mjs
 git commit -m "feat(ops): homeserver pushes runtime config one-way to box RAM"
 ```
 
