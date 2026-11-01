@@ -13,7 +13,7 @@
 - CI: `.github/workflows/deploy-prod.yml` builds, cosign-signs, pushes `kckern/bookofmormon-online@sha256:…` to Docker Hub, then OIDC → SSM document `bom-deploy`, which writes `ops/production/deploy-blue-green.sh` to `/home/ubuntu/greenfield/` on the box and runs it as root with `BOM_IMAGE=<digest>`.
 - Today the deploy script calls `aws secretsmanager get-secret-value` for `bom/prod/{db,openai,app,mail}` (instance role `bomdocker-role`, inline policy `BomSecretsRead`) and writes `/home/ubuntu/greenfield/.env` + `mail.env`, then `docker run --env-file …`. That is what this plan removes.
 - Box: `i-02c9619a48343a8d9`, Elastic IP `52.42.0.250`, Ubuntu 24.04, `/run` is tmpfs (769 MB). SSH (22) is allowed only from home IP `73.109.47.154`. Admin access from a Mac uses EC2 Instance Connect (`aws ec2-instance-connect send-ssh-public-key …`, then `ssh ubuntu@52.42.0.250`).
-- Homeserver: `homeserver.local`, Infisical at `http://127.0.0.1:8070` (public name `secrets.kckern.net`, Cloudflare-blocked outside home). User `bom` has Infisical machine identity files in `/home/bom/infisical/{.client-id,.client-secret,.prod-project-id}`. BoMOnline project id: `ba310d37-dc60-4a4d-8503-4e486853995d`.
+- Homeserver: `homeserver.local`, Infisical at `http://127.0.0.1:8070` (public name `secrets.kckern.net`, Cloudflare-blocked outside home). User `bom` has Infisical machine identity files in `/home/bom/infisical/{.client-id,.client-secret,.prod-project-id}`. BoMOnline project id: the contents of `/home/bom/infisical/.prod-project-id` (also Infisical UI → BoMOnline → Project settings); the steps below read it from `$BOM_INFISICAL_PROJECT`, never a literal.
 - Never print secret values in logs, test output, or commit messages. Compare by `sha256sum | cut -c1-8` when you must check equality.
 
 **Out of scope (separate plan):** scripture-guide, php/BoMDocker, sendy, cloudflared compose apps (third-party images; need per-image `*_FILE` support); IMDS hop limit (the app still uses instance-role credentials for SES/SQS/S3/CloudFront; those are short-lived, not stored).
@@ -1063,9 +1063,10 @@ The container's variable names must match exactly what the app reads today (20 +
 **Step 2: Copy values from AWS once, without printing them** (run on the Mac with `OfficeAWS` and the logged-in `infisical` CLI):
 
 ```bash
+export BOM_INFISICAL_PROJECT="<BoMOnline project id: Infisical UI → Project settings, or homeserver's .prod-project-id>"
 TOKEN=$(infisical user get token --plain) python3 -I - <<'EOF'
 import json, os, subprocess, urllib.request
-B, W = 'https://secrets.kckern.net/api', 'ba310d37-dc60-4a4d-8503-4e486853995d'
+B, W = 'https://secrets.kckern.net/api', os.environ['BOM_INFISICAL_PROJECT']
 vals = {}
 for sid in ('bom/prod/db', 'bom/prod/openai', 'bom/prod/app', 'bom/prod/mail'):
     out = subprocess.run(['aws','secretsmanager','get-secret-value','--region','us-west-2','--secret-id',sid,
@@ -1084,7 +1085,7 @@ Expected: 25 lines ending in `200` (5 db + 2 openai + 5 app + 13 mail), then `co
 
 **Step 3: Verify by name only**
 
-Run: `infisical export --projectId ba310d37-dc60-4a4d-8503-4e486853995d --env prod --path /bom-runtime --format json | jq -r '.[].key' | sort`
+Run: `infisical export --projectId "$BOM_INFISICAL_PROJECT" --env prod --path /bom-runtime --format json | jq -r '.[].key' | sort`
 Expected: the same key names as `jq -r 'keys[]'` over the four AWS secrets; must include `MYSQL_PASSWORD`, `MYSQL_USER`, `MYSQL_HOST`, `OPENAI_BOT_API_KEY`, `OPENAI_EMBED_API_KEY`, `MAIL_FROM`.
 
 **Step 4: Confirm the `bom-dev` identity can read the folder** (on homeserver as `bom`):
@@ -1149,7 +1150,14 @@ Before cutover use `push` only, never `push-redeploy`. The receiver's `redeploy`
 
 **Step 2: Watch the deploy** — GitHub Actions `deploy-prod` log shows "candidate … is healthy", "gateway switched", "deployment complete". If it fails with "runtime config not present", run Task 7 Step 4 and re-run the workflow.
 
-Then confirm SSM installed the new script (the receiver's `redeploy` depends on it): `grep -q -- --redeploy-active /home/ubuntu/greenfield/deploy-blue-green.sh && echo new-script` → `new-script`. Only after this may homeserver use `push-redeploy`.
+Then confirm SSM installed the new script (the receiver's `redeploy` depends on it): `test -x /home/ubuntu/greenfield/deploy-blue-green.sh && grep -q -- --redeploy-active /home/ubuntu/greenfield/deploy-blue-green.sh && echo new-script` → `new-script`. Only after this may homeserver use `push-redeploy`.
+
+**Step 2b: Install the new rollback script** — SSM only writes `deploy-blue-green.sh`, so the bundle-aware `rollback-blue-green.sh` must be installed by hand from the repo at the deployed commit (e.g. a checkout at that SHA, or `curl -fsSL https://raw.githubusercontent.com/kckern/BookofMormonOnline/<deployed-sha>/ops/production/rollback-blue-green.sh -o ops/production/rollback-blue-green.sh`):
+
+```bash
+sudo install -m 0755 ops/production/rollback-blue-green.sh /home/ubuntu/greenfield/
+grep -q 'runtime config not present' /home/ubuntu/greenfield/rollback-blue-green.sh && echo new-rollback   # Expected: new-rollback
+```
 
 **Step 3: Verify no values on disk or in Docker config** (on the box)
 
@@ -1160,16 +1168,19 @@ sudo docker inspect "$A" --format '{{range .Mounts}}{{.Source}}->{{.Destination}
 sudo docker exec "$A" sh -c 'cat /proc/1/environ | tr "\0" "\n" | grep -c ^MYSQL_PASSWORD='  # tini's env: Expected 0
 ```
 
-Do not run the `config.v2.json` value check yet (it is in Step 5). The stopped rollback slot is the old env-file container, so its `config.v2.json` still holds the values and the count is 1 here. It reaches 0 only after Step 5's second CI deploy replaces that slot.
+Do not run the `config.v2.json` value check yet (it is in Step 5). The stopped rollback slot is the old env-file container, so its `config.v2.json` still holds the values and the count is 1 here. It reaches 0 only after Step 5's redeploy replaces that slot.
 
 **Step 4: Verify the app works** — `curl -s -o /dev/null -w '%{http_code}' https://bookofmormon.online/` → 200; GraphQL `{__typename}` → 200; `sudo docker logs --since 5m "$A" 2>&1 | grep -ciE 'access denied|ER_ACCESS|OPENAI.*401'` → 0. Send one transactional email from the app (password reset to your own address) and confirm receipt.
 
-**Step 5: Verify an upgrade needs no secrets (REQUIRED: this second deploy purges the old env-file slot)** — push a trivial commit to `prod` (e.g. README). Expected: CI deploys a new digest, healthy, with no homeserver action. This deploy removes the old env-file rollback slot and replaces it with a bundle-mounted one, so it is not optional. Then, on the box:
+**Step 5: Purge the old env-file rollback slot (REQUIRED)** — once Step 2 confirmed the new script, on homeserver as `bom`: `scripts/bom-secrets-push.sh push-redeploy`. A redeploy never takes the no-op exit, so it removes the old env-file rollback slot and replaces it with a bundle-mounted one. (A README-only push does not do this: `deploy-prod.yml` has `paths-ignore: docs/**, **/*.md`, and a `workflow_dispatch` of the already-deployed commit may no-op.) Then, on the box:
 
 ```bash
+sudo journalctl -u bom-redeploy -n 80 --no-pager | grep -E 'removing inactive slot|deployment complete'   # Expected: both lines
 sudo sh -c 'grep -lF -- "$(head -c 12 /run/bom-secrets/MYSQL_PASSWORD)" /var/lib/docker/containers/*/config.v2.json 2>/dev/null | wc -l'   # Expected 0
 ```
 (`sudo sh -c` so the glob expands as root; `-F --` so the value is a fixed string, never a pattern or option.)
+
+**Step 5b: Verify an upgrade needs no secrets** — with the next real (non-doc) change merged to `prod`: CI deploys a new digest, healthy, with no homeserver action.
 
 **Step 6: Verify one-off jobs** — run the `ingest-group-covers` workflow in dry-run mode (no `APPLY`). Expected: connects to DB, exits 0.
 
@@ -1209,6 +1220,8 @@ WantedBy=timers.target
 
 **Step 2: Install (as `bom`)**
 
+User timers only run while `bom` is logged in unless lingering is enabled. As an admin: `sudo loginctl enable-linger bom`, then `loginctl show-user bom -p Linger` → `Linger=yes`. (On this homeserver it already reports `Linger=yes`; the command is idempotent.)
+
 ```bash
 cp ops/homeserver/bom-secrets-ensure.{service,timer} ~/.config/systemd/user/
 systemctl --user daemon-reload && systemctl --user enable --now bom-secrets-ensure.timer
@@ -1217,6 +1230,14 @@ systemctl --user start bom-secrets-ensure.service && journalctl --user -u bom-se
 Expected: service succeeds silently (box reports files>0).
 
 **Step 3: Reboot drill (quiet hour)** — `aws ec2 reboot-instances --instance-ids i-02c9619a48343a8d9`. Expected within ~7 min: journal shows "re-pushing", then the redeploy completes and the site returns 200. Note: during that window the app container fails to START. Its bind source `/run/bom-secrets` is gone with the tmpfs, so Docker cannot create the mount, and the site serves gateway errors. The receiver's `redeploy` then starts a fresh slot. (Exit 78 from the entrypoint only happens if the directory exists but has no `MYSQL_PASSWORD`.) This is the intended fail-closed behavior.
+
+After the redeploy, check that the old active slot will not come back alongside the new one on the next dockerd restart:
+
+```bash
+A=$(sudo cat /home/ubuntu/greenfield/active-slot)
+for c in bookofmormon-online-blue bookofmormon-online-green; do [ "$c" = "$A" ] || sudo docker inspect -f '{{.Name}} {{.HostConfig.RestartPolicy.Name}} {{.State.Running}}' "$c"; done
+# Expected: /<inactive slot> no false
+```
 
 **Step 4: Commit**
 
@@ -1231,12 +1252,20 @@ git commit -m "feat(ops): homeserver timer restores EC2 runtime config after reb
 
 Only after Task 8 Steps 3-6 and Task 9 Step 3 pass, **and** the Task 8 Step 5 `config.v2.json` grep prints `0` (no container config on disk still holds a value).
 
+**Step 0: Confirm nothing else reads the old stores** (on the box, then from the Mac)
+
+```bash
+sudo grep -rlE 'secretsmanager|greenfield/(\.env|mail\.env)' /etc/cron* /etc/systemd /usr/local/sbin /usr/local/bin /home/ubuntu /root 2>/dev/null
+aws iam get-role-policy --role-name bomdocker-role --policy-name BomSecretsRead --query 'PolicyDocument.Statement[].Resource' --output json
+```
+Expected: the grep lists only `/home/ubuntu/greenfield/migrate-blue-green.sh` (stale: it is the one-time initial cutover script and still uses `--env-file`; never run it again) and nothing else. Investigate any other hit before continuing. The policy's resources are only `…:secret:bom/prod/*` ARNs; if it covers anything else, another consumer may need it, so stop and check.
+
 **Step 1: Remove the role's read access**
 
 ```bash
 aws iam delete-role-policy --role-name bomdocker-role --policy-name BomSecretsRead
 ```
-Expected: no output. Re-run Task 8 Step 5 (a CI deploy) — must still succeed.
+Expected: no output. The next non-doc CI deploy (as in Task 8 Step 5b) must still succeed.
 
 **Step 2: Schedule deletion of the AWS secrets (7-day recovery window)**
 
@@ -1271,14 +1300,16 @@ git commit -m "docs(ops): runtime config is RAM-only, pushed from homeserver"
 2. On homeserver as `bom`: `scripts/bom-secrets-push.sh push-redeploy`. Always rotate with `push-redeploy`, not a plain `push`. A push swaps `/run/bom-secrets` for a new directory, while the running slot's bind mount still points at the swapped-out one. The app keeps its loaded env, but `docker exec … entrypoint.sh` one-off jobs (ingest workflows) fail until a redeploy.
 3. Expected: `stored=N`, then the blue/green log ending "deployment complete"; site 200.
 
-After a `push-redeploy`, both slots run the same image (the redeploy reuses the active digest), so `rollback-blue-green.sh` no longer undoes a code release. To undo a bad release, deploy the previous digest via CI (re-run the earlier `deploy-prod` run, or revert on `prod`).
+After a `push-redeploy`, both slots run the same image (the redeploy reuses the active digest), so `rollback-blue-green.sh` no longer undoes a code release. To undo a bad release, deploy the previous digest via CI: re-run an earlier `deploy-prod` run only if it ran after the cutover (Task 8 Step 1), since an older run would reinstall the Secrets Manager deploy script. Otherwise revert the bad change on `prod`.
 
 ### Rollback (any time before Task 10)
 
-`git revert` all Task 4 commits on `prod` (newest first) and push: CI redeploys with the old Secrets Manager path (AWS secrets and `BomSecretsRead` still exist until Task 10). On `feat/ram-only-runtime-secrets` they are:
+1. First, on homeserver as `bom`: `systemctl --user disable --now bom-secrets-ensure.timer`. After the revert, do not use `redeploy` or `push-redeploy`. The old deploy script ignores `--redeploy-active` and, with no `BOM_IMAGE`, falls back to the stale `desired-image` pin.
+2. `git revert` all Task 4 commits on `prod` (newest first) and push: CI redeploys with the old Secrets Manager path (AWS secrets and `BomSecretsRead` still exist until Task 10). On `feat/ram-only-runtime-secrets` (after the rebase onto `origin/prod`) they are:
 
-- `2e175e27` fix(ops): deploy hardening from review (also the rollback-script bundle check)
-- `3eccf685` fix(ops): never touch rollback slot without runtime bundle; redeploy requires digest
-- `c0b9d144` feat(ops): deploy mounts tmpfs runtime config; drop Secrets Manager and .env
+   - `d9a30306` fix(ops): old active slot gets restart=no even when it is not running
+   - `c38ede78` fix(ops): deploy hardening from review (also the rollback-script bundle check)
+   - `66791feb` fix(ops): never touch rollback slot without runtime bundle; redeploy requires digest
+   - `cf80d955` feat(ops): deploy mounts tmpfs runtime config; drop Secrets Manager and .env
 
-`git revert 2e175e27 3eccf685 c0b9d144`. If the branch was squashed or rebased into `prod`, use the matching SHAs there. Reverting `c0b9d144` also removes the README/systemd "retired" notes; do not re-enable `bom-deploy.timer` anyway.
+   `git revert d9a30306 c38ede78 66791feb cf80d955`. If the branch was squashed or rebased again into `prod`, use the matching SHAs there. Reverting `cf80d955` also removes the README/systemd "retired" notes; do not re-enable `bom-deploy.timer` anyway. Reinstall the reverted `rollback-blue-green.sh` on the box as in Task 8 Step 2b if it was installed.
