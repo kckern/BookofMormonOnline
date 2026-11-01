@@ -21,17 +21,5 @@ services:
       - /home/ubuntu/BoMDocker/config/proxy/logs:/var/log/npm:ro
     mem_limit: 384m
     logging: { driver: json-file, options: { max-size: "10m", max-file: "3" } }
-  watchtower:
-    image: nickfedor/watchtower:latest
-    container_name: watchtower
-    restart: unless-stopped
-    volumes: ["/var/run/docker.sock:/var/run/docker.sock"]
-    environment:
-      WATCHTOWER_LABEL_ENABLE: "true"
-      WATCHTOWER_CLEANUP: "true"
-      WATCHTOWER_POLL_INTERVAL: "300"
-      WATCHTOWER_INCLUDE_RESTARTING: "true"
-    mem_limit: 128m
-    logging: { driver: json-file, options: { max-size: "10m", max-file: "3" } }
 volumes:
   vlogs-data:

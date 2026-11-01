@@ -55,9 +55,10 @@ Install paths on the production host:
 - `/etc/systemd/system/bom-host-metrics.service`
 - `/etc/systemd/system/bom-host-metrics.timer`
 
-Watchtower must not manage the gateway or either app slot. They carry an
-explicit `com.centurylinklabs.watchtower.enable=false` label. CI → SSM is the
-sole production-image updater.
+Watchtower was removed from prod (2026-11-01): with `WATCHTOWER_LABEL_ENABLE=true` and no
+opted-in container it scanned nothing, but held a read-write `docker.sock` (root on the host).
+CI → SSM is the sole production-image updater. The `watchtower.enable=false` labels on the
+gateway and app slots are kept as a guard in case a updater is ever reintroduced.
 
 For the initial cutover, install the new gateway-only `docker-compose.yml` and
 all scripts/config first, then run `migrate-blue-green.sh`. It starts and health
