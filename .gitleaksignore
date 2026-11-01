@@ -1,0 +1,4 @@
+# False positive: Infisical project UUID (an identifier, not a credential) in the plan
+# commit; the literal was later removed from the doc. Fingerprint is commit-specific:
+# update it if this history is rebased again.
+ba154972ce52a60a363b14a39217d02726330179:docs/plans/2026-10-31-ram-only-runtime-secrets.md:generic-api-key:587
