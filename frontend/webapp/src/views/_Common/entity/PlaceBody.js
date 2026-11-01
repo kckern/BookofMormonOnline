@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Parser from "html-react-parser";
 import { Button } from "reactstrap";
-import { label, processName, replaceNumbers, determineLanguage } from "src/models/Utils";
+import { label, determineLanguage } from "src/models/Utils";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { renderPersonPlaceHTML, detectScripturesPreservingTokens } from "../../Page/PersonPlace";
 import XrelSection from "../XrelSection";

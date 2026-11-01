@@ -215,15 +215,6 @@
     flex-grow: 1;
   }
 
-  .drawerScroller
-  {
-      height: calc(100vh - 180px);
-      overflow: auto;
-
-      padding-bottom: 30vh;
-
-  }
-
   .popupDrawer blockquote
   {
     font-size: small;
@@ -392,14 +383,55 @@ html[data-theme="dark"] .popupDrawer .commentaryDrawerEyebrow,
 html[data-theme="dark"] .popupDrawer .commentaryDrawerClose { color: var(--text-secondary); }
 
 .popupDrawer .drawerEntityBar {
-  display: flex; justify-content: space-between; align-items: center;
+  display: flex; justify-content: flex-end; align-items: center;
   padding: 4px 8px; border-bottom: 1px solid rgba(0,0,0,.08); flex: 0 0 auto;
 }
-.popupDrawer .drawerEntityFull,
 .popupDrawer .drawerEntityClose {
   background: none; border: 0; color: #222; min-height: 44px; min-width: 44px;
   font: inherit; font-size: 1.3rem; cursor: pointer;
 }
 .popupDrawer .drawerEntityClose { font-size: 2.4rem; line-height: 1; }
-.popupDrawer .drawerEntityFull:focus-visible,
 .popupDrawer .drawerEntityClose:focus-visible { outline: 2px solid #c9a24b; outline-offset: 2px; }
+
+/* Entity bodies (person / place / matter) in the phone drawer: one column.
+   The shared .ppbody/.refbox rules are the desktop popup's two-up layout; left
+   alone, the drawer kept a ~100px refbox rail and wrapped text a few letters
+   per line. Same flattening as EntityPage.css's phone rules: the portrait sits
+   under the title, then prose, then relationships and references full width. */
+.popupDrawer .ppbody {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: 0;
+}
+
+.popupDrawer .ppbody .bodytext,
+.popupDrawer .ppbody .refbox {
+  display: contents;
+}
+
+.popupDrawer .ppbody .bodytext > * { order: 2; }
+.popupDrawer .ppbody .bodytext > .entity-name { order: 0; }
+
+.popupDrawer .ppbody .refbox > * {
+  order: 3;
+  width: 100%;
+  margin-left: 0;
+  border-left: 0;
+}
+
+.popupDrawer .ppbody .refbox > .ppimg {
+  order: 1;
+  width: min(100%, 12rem);
+  margin-bottom: 1rem;
+}
+
+.popupDrawer .ppbody .refbox > .entity-show-all { width: auto; }
+
+/* One title block: the <br> plus the popup's 1ex line-height opened a dead gap. */
+.popupDrawer .ppbody .entity-name br { display: none; }
+.popupDrawer .ppbody .entity-name .ppbody-title {
+  display: block;
+  margin-top: 0.25rem;
+  line-height: 1.3;
+}

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Comments from "./Study/Study";
 import DraggableWindow from "./DraggableWindow";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Victory } from "src/views/User/Victory";
 import XrelSection from "./XrelSection";
 import "./PopUp.css";
@@ -10,7 +10,7 @@ import { processName, label, log, isMobile } from "src/models/Utils";
 import ReactMarkdown from "react-markdown";
 import Loader, { Spinner } from "./Loader";
 import { MobileDrawer } from "./Drawer";
-import { addHighlightTagSelectively } from "../Page/TextContent";
+
 import Commentary from "./Commentary";
 import { ScripturePanelSingle } from "../Page/Narration";
 import { useAppController } from "src/contexts/AppControllerContext";
@@ -57,7 +57,6 @@ function CommentsPlaceholder() {
 
 function PopUp() {
   const appController = useAppController();
-  // if (appController.states.popUp.open !== true) return (<></>);
   const [currentKeyVal, setCurrentKeyVal] = useState(null);
 
   //listen for escape key and close popup if pressed
@@ -183,7 +182,7 @@ function Person() {
   }
 
   let person = appController.popUpData[appController.states.popUp.activeId];
-  if (person === undefined) return <pre>{appController.popUp}</pre>;
+  if (person === undefined) return null;
   if (person === null) {
     const activeId = appController.states.popUp.activeId;
     const list = appController.preLoad?.personList || [];
@@ -308,7 +307,7 @@ function Place() {
   };
   
   let place = appController.popUpData[appController.states.popUp.activeId];
-  if (place === undefined) return <pre>{appController.popUp}</pre>;
+  if (place === undefined) return null;
   if (place === null) {
     const activeId = appController.states.popUp.activeId;
     const list = appController.preLoad?.placeList || [];
@@ -341,7 +340,6 @@ function Place() {
       </div>
     );
   }
-  //console.log(place.maps);
   return (
     <DraggableWindow handle=".card-header">
       <div
@@ -470,7 +468,7 @@ function MatterPopUp() {
       </div>
     );
   }
-  if (!obj) return <pre>{appController.popUp}</pre>;
+  if (!obj) return null;
 
   return (
     <DraggableWindow handle=".card-header">
@@ -651,7 +649,6 @@ export function setPopDocTitle(popUpData, type) {
 
   title = processName(popUpData?.name) || popUpData?.title;
 
-  //console.log(popUpData)
   const short = popUpData?.publication?.source_short || "";
   if (type === "commentary")
     title =

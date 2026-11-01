@@ -5,9 +5,7 @@ import { navPath } from './navPath'
 import group_icon from './svg/group_icon.svg'
 import { label } from 'src/models/Utils'
 import { discoverLabel } from './discoverLabel'
-import { Link, useParams, useLocation } from "react-router-dom"
-import { useLegacyParams } from "src/models/routeParams";
-import React, { useState, useEffect } from 'react'
+import { Link, useLocation } from "react-router-dom"
 import HomeIcon from './Icons/HomeIcon'
 import UserIcon from './Icons/UserIcon'
 import MenuIcon from './Icons/MenuIcon'
@@ -19,22 +17,10 @@ const USE_MESSENGER = isMessengerNavigationEnabled();
 
 export function BottomMenu() {
   const appController = useAppController();
-  const match = { params: useLegacyParams(), url: useLocation().pathname }
+  useLocation() // re-render on route change; navPath reads window.location
 
-  const determineSelection = () =>
-    resolveBottomSelection(navPath(appController.states), USE_MESSENGER)
+  const activeSelection = resolveBottomSelection(navPath(appController.states), USE_MESSENGER)
 
-  const [activeSelection, setActiveSelection] = useState(determineSelection)
-
-  useEffect(() => {
-    let val = determineSelection()
-    setActiveSelection(val)
-    document
-      .querySelector(`.bottom-nav-item.active`)
-      ?.classList.remove('active')
-    document.getElementById(`nav-item-${val}`)?.classList.add('active')
-  }, [window.location.pathname, match.params, appController.states.popUp?.open, appController.states.popUp?.underSlug])
-  
   const activeGroup =
     appController.states.studyGroup.studyModeOn &&
     appController.states.studyGroup?.activeGroup
@@ -90,7 +76,7 @@ export function BottomMenu() {
     {
       title: label('menu_more') || 'More',
       icon: <MenuIcon fill='#7F7F7F' className='img' />,
-      activeIcon: <MenuIcon className='img'  />,
+      activeIcon: <MenuIcon className='img' />,
       path: '/mobilemenu',
       requiresMessenger: false,
     },
@@ -108,10 +94,7 @@ export function BottomMenu() {
       {bottomNavItemsData.map((navItem, i) => {
         return (
           <Link key={navItem.path} to={navItem.path}>
-            <div
-            id={`nav-item-${i}`}
-            className={`bottom-nav-item`}
-            >
+            <div className={`bottom-nav-item${activeSelection === i ? ' active' : ''}`}>
               {navItem.path === '/groups' && <>{counter}</>}
               {activeSelection === i ? <>{navItem.activeIcon}</> :<>{navItem.icon}</> }
               <p>{navItem.title}</p>

@@ -27,7 +27,7 @@ import "./BottomNav.css";
 import { BottomMenu } from "./BottomNav";
 // getSingleCache was imported here but never existed in Cache.js and was never
 // called; webpack quietly bound it to undefined, esbuild/Rollup reject it.
-import { getCache, getSingleCacheFromKey, setCache } from "../../models/Cache";
+import { getSingleCacheFromKey } from "../../models/Cache";
 import { scrollAction, resetScroll, restoreScroll } from "src/scroll/routeScrollReset";
 
 
@@ -166,9 +166,6 @@ function Main(props) {
   }, [appController.functions]);
 
 
-  let debug = null;
-  // if (window.location.host !== "staging.bookofmormon.online") debug = <pre>APP CONTROLLER: {JSON.stringify(appController.states, null, 2)}</pre>;
-
   const isDarkMode = !!appController.states.preferences.darkMode;
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", isDarkMode ? "dark" : "light");
@@ -192,7 +189,6 @@ function Main(props) {
     <AppControllerProvider appController={appController}>
     <MessengerProvider appController={appController}>
       <div className={"body"+(lang ? " "+lang: "") + (isDev ? " dev" : "")}>
-        {debug}
         {/* app-wide scripture lookup: any scripture_link / RefPill click lands here */}
         <ScripturePopup />
         <Header {...props} isReady={true} />

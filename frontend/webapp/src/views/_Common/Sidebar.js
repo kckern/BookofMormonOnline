@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { discoverLabel } from "./discoverLabel";
 import { isMessengerNavigationEnabled, HIDE_HOME_NAV, HIDE_MATTERS_NAV, HIDE_HISTORY_NAV, HIDE_THEOLOGY } from '../../models/featureFlags';
-import { Link, NavLink, useNavigate, useParams, useLocation } from "react-router-dom";
+import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useLegacyParams } from "src/models/routeParams";
 import { Nav, Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import "./Sidebar.css";
-import { breakCache, determineLanguage, label, tokenImage } from "src/models/Utils.js";
+import { determineLanguage, label, tokenImage } from "src/models/Utils.js";
 import { analytics, GOALS } from "../../models/analytics/index.js";
 import { getSearchSlug } from "src/models/searchSlug";
 import UserAvatar from "src/components/UserAvatar";

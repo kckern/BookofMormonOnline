@@ -6,14 +6,10 @@ import 'react-modern-drawer/dist/index.css'
 import BoMOnlineAPI, { assetUrl } from 'src/models/BoMOnlineAPI';
 import "./Drawer.css"
 import { Spinner } from './Loader';
-import {
-    replaceNumbers,
-    processName,
-    label
-} from "src/models/Utils";
+import { label } from "src/models/Utils";
 import { ProgressDetailsCircles } from "../User/ProgressBox";
-import { displayDate, LegalNotice } from "./PopUp";
-import { renderPersonPlaceHTML } from "../Page/PersonPlace";
+import { LegalNotice } from "./PopUp";
+
 import { Victory } from "../User/Victory";
 import { GroupLeaderBoard } from "../Home/Community";
 import { InviteButton } from "./Study/StudyHall";
@@ -21,13 +17,14 @@ import groupIcon from "src/views/User/svg/group.svg";
 import { StudyGroupThread } from "./Study/StudyChat";
 import { getDetectedScripturesHtml, getHtmlScriptureLinkParserOptions, useIsMounted, useTimeouts } from "./ViewUtils";
 import { ScripturePanelSingle } from "../Page/Narration";
-import { findAncestor } from "../../models/Utils";
 import { useAppController } from "src/contexts/AppControllerContext";
 import XrelSection from "./XrelSection";
 import HistoryDrawer from "./HistoryDrawer";
 import MatterBody from "./entity/MatterBody";
+import PersonBody from "./entity/PersonBody";
+import PlaceBody from "./entity/PlaceBody";
+import { useNavigate } from "react-router-dom";
 import useEntityData from "./entity/useEntityData";
-import { useMaximize } from "./entity/MaximizeButton";
 import labelOr from "src/views/Home/tiles/_ds/labelOr";
 import { parse } from "node-html-parser";
 import { lookupReference } from "scripture-guide";
@@ -40,39 +37,37 @@ import { ATVApparatus } from "./ATV/ATVApparatus";
 import "./Commentary.css";
 
 
+// Slide out first, then drop the popup state once the animation has finished.
+function useDrawerClose(setLocalOpen) {
+    const appController = useAppController();
+    return () => {
+        setLocalOpen(false);
+        setTimeout(appController.functions.closePopUp, 500);
+        setTimeout(appController.functions.clearPopUp, 550);
+    };
+}
+
 export function MobileDrawer() {
     const appController = useAppController();
-    const [localOpen, setLocalOpen] = useState(appController.states.popUp.open);
-
-    const setSwipe = () => {
-        let touchstartX = 0
-        let touchendX = 0
-
-        const slider = document.querySelector('.popupDrawer')
-
-        function handleGesture() {
-            const diff = touchendX - touchstartX;
-            if (diff < 60) return null
-            if (touchendX > touchstartX)
-                setLocalOpen(false);
-            setTimeout(appController.functions.closePopUp, 500);
-            setTimeout(appController.functions.clearPopUp, 550);
-        }
-
-        slider.addEventListener('touchstart', e => {
-            touchstartX = e.changedTouches[0].screenX
-        })
-
-        slider.addEventListener('touchend', e => {
-            touchendX = e.changedTouches[0].screenX
-            handleGesture()
-        })
-    }
+    const open = appController.states.popUp.open;
+    const [localOpen, setLocalOpen] = useState(open);
+    const close = useDrawerClose(setLocalOpen);
 
     useEffect(() => {
-        setLocalOpen(appController.states.popUp.open);
-        setSwipe()
-    }, [appController.states.popUp.open])
+        setLocalOpen(open);
+        // swipe right to dismiss; removed on cleanup so listeners don't stack
+        const slider = document.querySelector('.popupDrawer');
+        if (!slider) return undefined;
+        let startX = 0;
+        const onStart = (e) => { startX = e.changedTouches[0].screenX; };
+        const onEnd = (e) => { if (e.changedTouches[0].screenX - startX >= 60) close(); };
+        slider.addEventListener('touchstart', onStart);
+        slider.addEventListener('touchend', onEnd);
+        return () => {
+            slider.removeEventListener('touchstart', onStart);
+            slider.removeEventListener('touchend', onEnd);
+        };
+    }, [open]);
     // documentElement.clientWidth, not innerWidth: a page that overflows
     // sideways (the witness heatmap) widens innerWidth, and a drawer sized from
     // it ran off the right edge, clipping its text (blind audit witness-D1).
@@ -84,26 +79,18 @@ export function MobileDrawer() {
             open={localOpen}
             size={vw * .85}
             direction="right"
-            onClose={() => {
-                setLocalOpen(false);
-                setTimeout(appController.functions.clearPopUp, 550);
-                setTimeout(appController.functions.closePopUp, 500);
-            }}
+            onClose={close}
         >
             <DrawerContent setLocalOpen={setLocalOpen} />
         </Drawer>
     )
 }
 
-// People / places / matters open as a drawer on phones: the way out (close) and
-// the way up (full page) belong at the top, where the thumb and the eye already are.
+// People / places / matters open as a drawer on phones: the way out (close)
+// belongs at the top, where the thumb and the eye already are.
 function DrawerEntityBar({ onClose }) {
-    const maximize = useMaximize();
     return (
         <div className="drawerEntityBar">
-            <button type="button" className="drawerEntityFull" onClick={maximize}>
-                ⤢ {labelOr("view_full_page", "Full page")}
-            </button>
             <button type="button" className="drawerEntityClose" aria-label={labelOr("close", "Close")} onClick={onClose}>×</button>
         </div>
     );
@@ -125,11 +112,7 @@ function DrawerContent({ setLocalOpen }) {
     const appController = useAppController();
     const type = appController.states.popUp.type;
     const id = appController.states.popUp.activeId;
-    const close = () => {
-        setLocalOpen(false);
-        setTimeout(appController.functions.clearPopUp, 550);
-        setTimeout(appController.functions.closePopUp, 500);
-    };
+    const close = useDrawerClose(setLocalOpen);
     if (type === "commentary")
         return <CommentaryDrawer onClose={close} />;
     if (type === "user/progress")
@@ -138,21 +121,15 @@ function DrawerContent({ setLocalOpen }) {
         return (
             <HistoryDrawer
                 slug={id}
-                onClose={() => {
-                    setLocalOpen(false);
-                    setTimeout(appController.functions.clearPopUp, 550);
-                    setTimeout(appController.functions.closePopUp, 500);
-                }}
+                onClose={close}
             />
         );
     if (type === "places")
-        return <><DrawerEntityBar onClose={close} /><Place key={id} setLocalOpen={setLocalOpen} /></>;
+        return <><DrawerEntityBar onClose={close} /><Place key={id} /></>;
     if (type === "people")
-        return <><DrawerEntityBar onClose={close} /><Person key={id} setLocalOpen={setLocalOpen} /></>;
+        return <><DrawerEntityBar onClose={close} /><Person key={id} /></>;
     if (type === "matters")
         return <><DrawerEntityBar onClose={close} /><MatterDrawer key={id} /></>;
-    if (type === "object")
-        return <ObjectDrawer key={id} />;
     if (type === "group")
         return <GroupDrawer key={id} />;
     if (type === "victory")
@@ -164,8 +141,7 @@ function DrawerContent({ setLocalOpen }) {
     if (/group\/[0-9a-f]{32}$/.test(type))
         return <MobileChatThread context="drawer" />;
 
-    //return null;
-    return <pre>{type}</pre>
+    return null;
 }
 
 
@@ -230,106 +206,72 @@ function PFilter() {
     return data.filterBox;
 }
 
-function Person({ setLocalOpen }) {
+function Person() {
     const appController = useAppController();
     const slug = appController.states.popUp.activeId;
-    const [person, setPersonData] = useState(null);
+    const { data: person, status } = useEntityData("people", slug);
     const [activeScriptureReference, setActiveScriptureReference] = useState(null);
-    const scripturePanelRef = useRef(null);
 
-    useEffect(() => {
-        setTimeout(() => {
-            BoMOnlineAPI(
-                { person: slug }
-            ).then((response) => {
-                setPersonData(response.person[slug]);
-            });
-        }, 500)
-    }, []);
+    if (status === "loading") return <Spinner />;
+    if (!person) return <div className="subject p-4">{labelOr("not_found", "Not found")}</div>;
 
-    if (!person) return <Spinner />;
-
-	const html = getDetectedScripturesHtml(person.description);
-  return (
-    <>
-      <div className="subject overflow-auto p-4">
-          <div className="pDrawerHeaderBox">
-              <div>
-                  <h3>{processName(person.name)}</h3>
-                  <h4>{replaceNumbers(person.title)}</h4>
-              </div>
-              <img src={`${assetUrl}/people/${person.slug}`} alt={person.slug} />
-          </div>
-
-          <div className="description">
-            {renderPersonPlaceHTML(html, appController, (reference) => {
-              setActiveScriptureReference(reference);
-            })}
-          </div>
-          <XrelSection xrels={person?.xrels} noHeading />
-      </div>
-      <div ref={scripturePanelRef}>
-          <ScripturePanelSingle
-              scriptureData={{ref:activeScriptureReference}}
-              closeButton={true}
-              onClose={()=>{
-                  setActiveScriptureReference(null);
-              }}
-          />
-      </div>
-    </>
-  );
+    return (
+        <>
+            <div className="subject overflow-auto p-4">
+                <PersonBody
+                    data={person}
+                    setPopUpRef={setActiveScriptureReference}
+                    onEntityClick={(id) =>
+                        appController.functions.setPopUp({ type: "people", ids: [id], underSlug: "people" })
+                    }
+                />
+            </div>
+            <ScripturePanelSingle
+                scriptureData={{ ref: activeScriptureReference }}
+                closeButton={true}
+                onClose={() => setActiveScriptureReference(null)}
+            />
+        </>
+    );
 }
 
-function Place({ setLocalOpen }) {
+function Place() {
     const appController = useAppController();
+    const navigate = useNavigate();
     const slug = appController.states.popUp.activeId;
-    const [place, setPlaceData] = useState(null);
+    const { data: place, status } = useEntityData("places", slug);
     const [activeScriptureReference, setActiveScriptureReference] = useState(null);
-    const scripturePanelRef = useRef(null);
 
-    useEffect(() => {
-        setTimeout(() => {
-            BoMOnlineAPI(
-                { places: slug }
-            ).then((response) => {
-                setPlaceData(response.places[slug]);
-            });
-        }, 500);
-    }, []);
+    if (status === "loading") return <Spinner />;
+    if (!place) return <div className="subject p-4">{labelOr("not_found", "Not found")}</div>;
 
-    if (!place) return <Spinner />;
+    // same hand-off as the desktop popup: close, tell the map, then route there
+    const onSelectMapType = (e, map, placeSlug) => {
+        e.preventDefault();
+        appController.functions.closePopUp();
+        const event = new CustomEvent("handleMapChange");
+        event.map = map;
+        event.place = placeSlug;
+        window.dispatchEvent(event);
+        navigate(`/map/${map}/place/${placeSlug}`);
+    };
 
-	const html = getDetectedScripturesHtml(place.description);
-	return (
-    <>
-      <div className="subject overflow-auto p-4">
-        <div className="pDrawerHeaderBox">
-          <div>
-            <h3>{processName(place.name)}</h3>
-            <h4>{replaceNumbers(place.info)}</h4>
-          </div>
-          <img src={`${assetUrl}/places/${place.slug}`} alt={place.slug} />
-        </div>
-
-        <div className="description">
-          {renderPersonPlaceHTML(html, appController, (reference) => {
-            setActiveScriptureReference(reference);
-          })}
-        </div>
-        <XrelSection xrels={place?.xrels} />
-      </div>
-      <div ref={scripturePanelRef}>
-          <ScripturePanelSingle
-              scriptureData={{ref:activeScriptureReference}}
-              closeButton={true}
-              onClose={()=>{
-                  setActiveScriptureReference(null);
-              }}
-          />
-      </div>
-    </>
-	);
+    return (
+        <>
+            <div className="subject overflow-auto p-4">
+                <PlaceBody
+                    data={place}
+                    setPopUpRef={setActiveScriptureReference}
+                    onMapClick={onSelectMapType}
+                />
+            </div>
+            <ScripturePanelSingle
+                scriptureData={{ ref: activeScriptureReference }}
+                closeButton={true}
+                onClose={() => setActiveScriptureReference(null)}
+            />
+        </>
+    );
 }
 
 function GroupDrawer() {
@@ -361,36 +303,6 @@ function GroupDrawer() {
     );
 }
 
-function ObjectDrawer() {
-    const appController = useAppController();
-    const slug = appController.states.popUp.activeId;
-    const [obj, setObjectData] = useState(null);
-
-    useEffect(() => {
-        setTimeout(() => {
-            BoMOnlineAPI(
-                { object: slug }
-            ).then((response) => {
-                setObjectData(response.object?.[slug]);
-            });
-        }, 500);
-    }, []);
-
-    if (!obj) return <Spinner />;
-
-    return (
-        <div className="subject overflow-auto p-4">
-            <div className="pDrawerHeaderBox">
-                <div>
-                    <h3>{processName(obj.name)}</h3>
-                    {obj.subtitle && <h4>{replaceNumbers(obj.subtitle)}</h4>}
-                </div>
-            </div>
-            <XrelSection xrels={obj.xrels} showEmpty />
-        </div>
-    );
-}
-
 function ProgressDrawer({ setLocalOpen }) {
     const appController = useAppController();
     const tokenToLoad = appController.states.user.token;
@@ -400,24 +312,22 @@ function ProgressDrawer({ setLocalOpen }) {
     const [progressPages, setDetails] = useState(null);
 
     useEffect(() => {
-        setTimeout(() => {
-            BoMOnlineAPI(
-                { divisionProgressDetails: slug },
-                {
-                    token: tokenToLoad,
-                    useCache: false
-                }
-            ).then((details) => {
-                setDetails({
-                    loading: false,
-                    queryBy: queryBy,
-                    slug: slug,
-                    pages: details.divisionProgressDetails?.[slug].pages || [],
-                    description: details.divisionProgressDetails?.[slug].description || [],
-                });
+        let cancelled = false;
+        BoMOnlineAPI(
+            { divisionProgressDetails: slug },
+            { token: tokenToLoad, useCache: false }
+        ).then((details) => {
+            if (cancelled) return;
+            setDetails({
+                loading: false,
+                queryBy: queryBy,
+                slug: slug,
+                pages: details.divisionProgressDetails?.[slug].pages || [],
+                description: details.divisionProgressDetails?.[slug].description || [],
             });
-        }, [])
-    }, 500);
+        });
+        return () => { cancelled = true; };
+    }, [slug]);
 
     if (!progressPages) return <Spinner />
 
@@ -452,7 +362,6 @@ export function CommentaryDrawer({ onClose }) {
     const [commentaryData, setCommentaryData] = useState(appController.popUpData[appController.states.popUp.activeId]);
     const [activeId, setActiveId] = useState(appController.states.popUp.activeId);
     const [activeScriptureReference, setActiveScriptureReference] = useState(null);
-    const [debug, setDebug] = useState("init");
     const [showLegal, setLegal] = useState(false);
     const [failed, setFailed] = useState(false);
     const scripturePanelRef = useRef(null);
@@ -460,14 +369,11 @@ export function CommentaryDrawer({ onClose }) {
     useEffect(() => setLegal(false), [appController.states.popUp.activeId])
 
     useEffect(() => {
-        setDebug("useEffect")
         setCommentaryData(null)
         timeouts.set('mount', () => {
-            setDebug("timeout")
             BoMOnlineAPI({ commentary: appController.states.popUp.ids }).then(
                 (response) => {
                     if (!isMounted()) return;
-                    setDebug(JSON.stringify(response, null, 2));
                     const commentary = response?.commentary || {};
                     // nothing came back: say so instead of an endless spinner
                     if (!Object.keys(commentary).length) return setFailed(true);
@@ -483,7 +389,6 @@ export function CommentaryDrawer({ onClose }) {
     }, [])
 
     useEffect(() => {
-        if (!appController.states.popUp.activeId) setCommentaryData(null);
         setCommentaryData(appController.popUpData[appController.states.popUp.activeId])
     }, [appController.popUpData[appController.states.popUp.activeId]]);
 

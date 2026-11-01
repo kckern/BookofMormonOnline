@@ -9,6 +9,9 @@ describe("resolveBottomSelection (messenger ON)", () => {
   test("legacy /user → 3 (User item)", () => expect(on("/user")).toBe(3));
   test("/mobilemenu → 4", () => expect(on("/mobilemenu")).toBe(4));
   test("/study default → 2", () => expect(on("/study")).toBe(2));
+  test.each(["/people", "/people/nephi1", "/places/jerusalem-1", "/matters", "/theater", "/maps", "/timeline", "/history/witnesses"])(
+    "%s (More-menu section) → 4", (p) => expect(on(p)).toBe(4));
+  test.each(["/read/1-nephi-1", "/search", "/study/x"])("%s stays on Study → 2", (p) => expect(on(p)).toBe(2));
 });
 
 describe("resolveBottomSelection (messenger OFF)", () => {
@@ -17,4 +20,5 @@ describe("resolveBottomSelection (messenger OFF)", () => {
   test("/home/user → 2 (User item)", () => expect(off("/home/user")).toBe(2));
   test("legacy /user → 2 (User item)", () => expect(off("/user")).toBe(2));
   test("/study default → 1", () => expect(off("/study")).toBe(1));
+  test("/people (More-menu section) → 3", () => expect(off("/people")).toBe(3));
 });
