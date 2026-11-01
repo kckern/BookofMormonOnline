@@ -107,6 +107,8 @@ ensure() {
       rm -f "$PENDING" ;;
     files=[1-9]*)
       if [ -e "$PENDING" ]; then
+        # If an earlier redeploy is still running on the box (we timed out locally), this one fails
+        # on the taken bom-redeploy unit name; the marker stays and the following run retries.
         echo "redeploy pending from an earlier run; retrying" >&2
         remote redeploy || return 1
         rm -f "$PENDING"
@@ -118,8 +120,8 @@ ensure() {
 case "${1:-}" in
   push)          push ;;
   status)        remote status ;;
-  redeploy)      remote redeploy ;;
-  push-redeploy) push && remote redeploy ;;
+  redeploy)      remote redeploy && rm -f "$PENDING" ;;     # a manual redeploy also settles ensure
+  push-redeploy) push && remote redeploy && rm -f "$PENDING" ;;
   ensure)        ensure ;;
   *)             usage; exit 64 ;;
 esac

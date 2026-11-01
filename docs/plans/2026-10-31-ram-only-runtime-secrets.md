@@ -390,7 +390,7 @@ test('status reports file count only; unknown commands are refused', () => {
 
 test('root ignores test overrides; redeploy runs detached from the SSH session with the normal umask', () => {
   assert.match(source, /if \[ "\$\(id -u\)" = 0 \]; then\n\s*ROOT=\/run\/bom-secrets; SKIP_TMPFS_CHECK=0/)
-  assert.match(source, /redeploy\)\n(\s*#.*\n)*\s*exec systemd-run --wait --collect --quiet --unit=bom-redeploy --property=UMask=0022 \/home\/ubuntu\/greenfield\/deploy-blue-green\.sh --redeploy-active ;;/)
+  assert.match(source, /redeploy\)\n(\s*#.*\n)*\s*exec systemd-run --wait --collect --quiet --unit=bom-redeploy --property=UMask=0022 --setenv=HOME=\/root \/home\/ubuntu\/greenfield\/deploy-blue-green\.sh --redeploy-active ;;/)
 })
 
 test('redeploy hands the deploy to a fixed-name transient unit and passes its exit status back', () => {
@@ -400,7 +400,7 @@ test('redeploy hands the deploy to a fixed-name transient unit and passes its ex
       const r = call('redeploy', '', join(d, 'bom-secrets'), d)
       assert.equal(r.status, rc)
       assert.deepEqual(readFileSync(join(d, 'argv'), 'utf8').trim().split('\n'), ['--wait', '--collect', '--quiet',
-        '--unit=bom-redeploy', '--property=UMask=0022', '/home/ubuntu/greenfield/deploy-blue-green.sh', '--redeploy-active'])
+        '--unit=bom-redeploy', '--property=UMask=0022', '--setenv=HOME=/root', '/home/ubuntu/greenfield/deploy-blue-green.sh', '--redeploy-active'])
     } finally { rmSync(d, { recursive: true, force: true }) }
   }
 })
@@ -492,7 +492,8 @@ case "${SSH_ORIGINAL_COMMAND:-}" in
   redeploy)
     # Own transient unit: a dropped SSH session (homeserver timeout) cannot kill a deploy mid-way,
     # and the fixed name refuses a second concurrent redeploy. Output goes to the journal.
-    exec systemd-run --wait --collect --quiet --unit=bom-redeploy --property=UMask=0022 /home/ubuntu/greenfield/deploy-blue-green.sh --redeploy-active ;;
+    # HOME=/root matches the old sudo environment (aws/cosign look there).
+    exec systemd-run --wait --collect --quiet --unit=bom-redeploy --property=UMask=0022 --setenv=HOME=/root /home/ubuntu/greenfield/deploy-blue-green.sh --redeploy-active ;;
   *)
     echo "usage: status | put | redeploy" >&2; exit 64 ;;
 esac
@@ -502,7 +503,7 @@ Running containers keep the values they loaded at start; a replaced bundle takes
 
 Every new container start reads the latest bundle, including a crash-restart under `--restart always`: Docker re-resolves the bind-mount source path on each start, so it mounts the current `/run/bom-secrets`, not the directory that `put` renamed away.
 
-Why the extra checks: the `.END<TAB>N` trailer means a cut-off SSH stream can never replace a good bundle with a partial one. The `mkdir` lock serializes concurrent pushes (and works on macOS for tests, unlike `flock`). The EXIT trap removes the staging dir and restores the old bundle if the swap fails, and the lock dir is released only by the run that took it. `BOM_*`, `PATH`, `NODE_OPTIONS` and `LD_*` are refused because some of them would allow code execution in the container. The caps are 256 variables and 65536 base64 chars per value. As root, the test overrides `BOM_SECRETS_ROOT` and `BOM_SECRETS_SKIP_TMPFS_CHECK` are ignored. `redeploy` keeps root (SSM deploys run as root and the state files are root-owned) and runs the deploy as its own transient systemd unit (`systemd-run --wait --collect --unit=bom-redeploy`, `UMask=0022`). If homeserver's ssh times out or drops, the deploy keeps going; the fixed unit name makes a second concurrent redeploy fail instead of racing. Its output goes to the journal (`journalctl -u bom-redeploy`), not back over ssh; only the exit status returns. A run killed with SIGKILL can leave `bom-secrets.lock.d` behind; it is cleared by a reboot (tmpfs) or `sudo rmdir /run/bom-secrets.lock.d`.
+Why the extra checks: the `.END<TAB>N` trailer means a cut-off SSH stream can never replace a good bundle with a partial one. The `mkdir` lock serializes concurrent pushes (and works on macOS for tests, unlike `flock`). The EXIT trap removes the staging dir and restores the old bundle if the swap fails, and the lock dir is released only by the run that took it. `BOM_*`, `PATH`, `NODE_OPTIONS` and `LD_*` are refused because some of them would allow code execution in the container. The caps are 256 variables and 65536 base64 chars per value. As root, the test overrides `BOM_SECRETS_ROOT` and `BOM_SECRETS_SKIP_TMPFS_CHECK` are ignored. `redeploy` keeps root (SSM deploys run as root and the state files are root-owned) and runs the deploy as its own transient systemd unit (`systemd-run --wait --collect --unit=bom-redeploy`, `UMask=0022`, `HOME=/root` as under the old sudo path). If homeserver's ssh times out or drops, the deploy keeps going; the fixed unit name makes a second concurrent redeploy fail instead of racing. Its output goes to the journal (`journalctl -u bom-redeploy`), not back over ssh; only the exit status returns. A run killed with SIGKILL can leave `bom-secrets.lock.d` behind; it is cleared by a reboot (tmpfs) or `sudo rmdir /run/bom-secrets.lock.d`.
 
 **Step 4: Run to verify it passes** — same command; Expected: 15 passing (the held-lock test waits ~10 s). Also run them with dash as `sh` (put a dir with an `sh -> /bin/dash` symlink first on PATH). Also run on Ubuntu dash if your dev shell differs: `docker run --rm -v "$PWD:/w" -w /w ubuntu:24.04 sh -n ops/production/secrets-receive.sh`.
 
@@ -728,6 +729,16 @@ test('the pending marker defaults to ~/.cache so it survives a homeserver reboot
   assert.notEqual(run(d, ['ensure'], { FAKE_STATUS: 'files=0', FAKE_FAIL: 'redeploy', BOM_SECRETS_STATE_DIR: '' }).status, 0)
   assert.ok(existsSync(join(d, '.cache', 'bom-secrets-redeploy-pending')))
   assert.equal(statSync(join(d, '.cache')).mode & 0o777, 0o700)
+}))
+
+test('a successful manual redeploy or push-redeploy clears the pending marker; a failed one keeps it', () => withStubs((d) => {
+  for (const cmd of ['redeploy', 'push-redeploy']) {
+    mkdirSync(join(d, 'state'), { recursive: true }); writeFileSync(marker(d), '')
+    assert.notEqual(run(d, [cmd], { FAKE_FAIL: 'redeploy' }).status, 0)
+    assert.ok(existsSync(marker(d)), `${cmd} failed: marker kept`)
+    assert.equal(run(d, [cmd]).status, 0)
+    assert.ok(!existsSync(marker(d)), `${cmd} ok: marker cleared`)
+  }
 }))
 
 test('ensure fails on an unexpected status reply instead of doing nothing', () => withStubs((d) => {
@@ -1006,6 +1017,8 @@ ensure() {
       rm -f "$PENDING" ;;
     files=[1-9]*)
       if [ -e "$PENDING" ]; then
+        # If an earlier redeploy is still running on the box (we timed out locally), this one fails
+        # on the taken bom-redeploy unit name; the marker stays and the following run retries.
         echo "redeploy pending from an earlier run; retrying" >&2
         remote redeploy || return 1
         rm -f "$PENDING"
@@ -1017,8 +1030,8 @@ ensure() {
 case "${1:-}" in
   push)          push ;;
   status)        remote status ;;
-  redeploy)      remote redeploy ;;
-  push-redeploy) push && remote redeploy ;;
+  redeploy)      remote redeploy && rm -f "$PENDING" ;;     # a manual redeploy also settles ensure
+  push-redeploy) push && remote redeploy && rm -f "$PENDING" ;;
   ensure)        ensure ;;
   *)             usage; exit 64 ;;
 esac
@@ -1026,9 +1039,9 @@ esac
 
 The bundle exists only in shell variables and pipes (no here-strings, which bash may back with a temp file); nothing is written to disk on homeserver. It is built completely before ssh starts, so a failed, empty, or malformed Infisical response means no connection to the box at all. It always ends with `.END<TAB>N`, and the receiver commits only when it sees that trailer and N matches the number of lines it got. The Infisical client secret reaches jq via `--rawfile` and curl via stdin; the access token reaches curl via `-K -` (stdin), so neither shows in `ps`. Rotate with `push-redeploy`: a plain `push` leaves running containers on the previous bundle and breaks `docker exec` one-off jobs until a redeploy.
 
-Other guards: `set +x` at the top (an inherited `SHELLOPTS=xtrace` would otherwise trace values). ssh runs with `-F none`, a pinned host key (`~/.ssh/bom_secrets_known_hosts`, alias `bom-prod`, `StrictHostKeyChecking=yes`), and `-n` for everything but `put`. It is wrapped in `timeout 1800`; the box runs `redeploy` in its own systemd unit, so cutting the session does not cut the deploy. curl gets `-q` so no `~/.curlrc` applies. The receiver's name, reserved-name, count, size and duplicate rules are checked locally first so a bad Infisical entry fails with a clear message and no connection. `ensure` keeps a marker (`${BOM_SECRETS_STATE_DIR:-~/.cache}/bom-secrets-redeploy-pending`, on disk so it survives a homeserver reboot; the marker holds no data) from before its push until its redeploy succeeds, so a failed redeploy is retried on the next run even though the box then reports `files>0`. The canned-JSON hook works only with `BOM_SECRETS_TEST=1`. `include_imports` is not requested: imported secrets come back in a separate `.imports` list, which the script would need to merge; keep `/bom-runtime` free of imports instead.
+Other guards: `set +x` at the top (an inherited `SHELLOPTS=xtrace` would otherwise trace values). ssh runs with `-F none`, a pinned host key (`~/.ssh/bom_secrets_known_hosts`, alias `bom-prod`, `StrictHostKeyChecking=yes`), and `-n` for everything but `put`. It is wrapped in `timeout 1800`; the box runs `redeploy` in its own systemd unit, so cutting the session does not cut the deploy. curl gets `-q` so no `~/.curlrc` applies. The receiver's name, reserved-name, count, size and duplicate rules are checked locally first so a bad Infisical entry fails with a clear message and no connection. `ensure` keeps a marker (`${BOM_SECRETS_STATE_DIR:-~/.cache}/bom-secrets-redeploy-pending`, on disk so it survives a homeserver reboot; the marker holds no data) from before its push until its redeploy succeeds, so a failed redeploy is retried on the next run even though the box then reports `files>0`. A successful manual `redeploy` or `push-redeploy` also clears it. The canned-JSON hook works only with `BOM_SECRETS_TEST=1`. `include_imports` is not requested: imported secrets come back in a separate `.imports` list, which the script would need to merge; keep `/bom-runtime` free of imports instead.
 
-**Step 4: Run to verify it passes** — same command; Expected: 38 passing. Also `bash -n scripts/bom-secrets-push.sh` and `shellcheck scripts/bom-secrets-push.sh` (clean).
+**Step 4: Run to verify it passes** — same command; Expected: 39 passing. Also `bash -n scripts/bom-secrets-push.sh` and `shellcheck scripts/bom-secrets-push.sh` (clean).
 
 **Step 5: Commit**
 
@@ -1167,6 +1180,7 @@ sudo sh -c 'grep -lF -- "$(head -c 12 /run/bom-secrets/MYSQL_PASSWORD)" /var/lib
 **Files:**
 - Create: `ops/homeserver/bom-secrets-ensure.service`
 - Create: `ops/homeserver/bom-secrets-ensure.timer`
+- Create: `scripts/test/bom-secrets-ensure-units.test.mjs` (asserts `ensure`, `Type=oneshot`, `TimeoutStartSec>=2100`, `OnBootSec`, `OnUnitActiveSec=5min`; on Linux also run `systemd-analyze --user verify ops/homeserver/bom-secrets-ensure.*`)
 
 **Step 1: Units**
 

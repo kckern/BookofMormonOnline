@@ -107,6 +107,16 @@ test('the pending marker defaults to ~/.cache so it survives a homeserver reboot
   assert.equal(statSync(join(d, '.cache')).mode & 0o777, 0o700)
 }))
 
+test('a successful manual redeploy or push-redeploy clears the pending marker; a failed one keeps it', () => withStubs((d) => {
+  for (const cmd of ['redeploy', 'push-redeploy']) {
+    mkdirSync(join(d, 'state'), { recursive: true }); writeFileSync(marker(d), '')
+    assert.notEqual(run(d, [cmd], { FAKE_FAIL: 'redeploy' }).status, 0)
+    assert.ok(existsSync(marker(d)), `${cmd} failed: marker kept`)
+    assert.equal(run(d, [cmd]).status, 0)
+    assert.ok(!existsSync(marker(d)), `${cmd} ok: marker cleared`)
+  }
+}))
+
 test('ensure fails on an unexpected status reply instead of doing nothing', () => withStubs((d) => {
   assert.notEqual(run(d, ['ensure'], { FAKE_STATUS: 'garbage' }).status, 0)
   assert.deepEqual(calls(d), ['status'])
