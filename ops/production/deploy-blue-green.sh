@@ -407,10 +407,14 @@ printf '%s\n' "$next" > "$tmp_state"
 mv "$tmp_state" "$STATE_FILE"
 log "gateway switched to $next"
 
-if [ -n "$active" ] && [ "$active" != "$next" ] && container_running "$active"; then
-  log "draining $active for ${DRAIN_SECONDS}s"
-  sleep "$DRAIN_SECONDS"
-  docker stop --time 30 "$active" >/dev/null
+if [ -n "$active" ] && [ "$active" != "$next" ] && container_exists "$active"; then
+  if container_running "$active"; then
+    log "draining $active for ${DRAIN_SECONDS}s"
+    sleep "$DRAIN_SECONDS"
+    docker stop --time 30 "$active" >/dev/null
+  fi
+  # Also when it was not running (e.g. dead after a reboot): with restart=always
+  # it would start alongside $next on the next dockerd restart.
   docker update --restart=no "$active" >/dev/null
   log "stopped previous slot $active (retained for rollback until the next deployment)"
 fi

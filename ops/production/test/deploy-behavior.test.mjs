@@ -199,3 +199,15 @@ test('rollback proceeds for a bundle-mounted slot with the bundle, and for env-f
     assert.ok(r.has(new RegExp(`^docker start ${GREEN}$`)))
   }
 })
+
+test('a dead (not running) old active slot still gets restart=no after the switch', (t) => {
+  const h = harness(t)
+  h.bundle('x')
+  // e.g. after a reboot: blue is recorded active and exists but did not start
+  const r = h.run(DEPLOY, [], { STUB_RUNNING: 'bookofmormon-online' })
+  assert.equal(r.status, 0, r.stderr)
+  const switched = r.log.findIndex((l) => /nginx -s reload/.test(l))
+  const update = r.log.findIndex((l) => l === `docker update --restart=no ${BLUE}`)
+  assert.ok(switched !== -1 && update > switched, r.log.join('\n'))
+  assert.ok(!r.has(new RegExp(`^docker stop .*${BLUE}$`)), 'nothing to drain')
+})
