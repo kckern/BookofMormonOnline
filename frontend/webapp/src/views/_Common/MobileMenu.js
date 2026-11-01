@@ -10,7 +10,7 @@ export default  function MobileMenu() {
         <h3>{label("title_more")}</h3>
         <div className="mobilemenu">
             {menu.filter(i=>!["home","study"].includes(i.slug)).map((item, index)=>(
-                <Link key={index} to={item.slug}><div>{item.jsx}</div></Link>
+                <Link key={index} to={"/" + item.slug}><div>{item.jsx}</div></Link>
             ))}
         </div>
     </div>
