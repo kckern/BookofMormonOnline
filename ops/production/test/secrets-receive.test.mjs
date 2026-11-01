@@ -161,7 +161,7 @@ test('status reports file count only; unknown commands are refused', () => {
 
 test('root ignores test overrides; redeploy runs detached from the SSH session with the normal umask', () => {
   assert.match(source, /if \[ "\$\(id -u\)" = 0 \]; then\n\s*ROOT=\/run\/bom-secrets; SKIP_TMPFS_CHECK=0/)
-  assert.match(source, /redeploy\)\n(\s*#.*\n)*\s*exec systemd-run --wait --collect --quiet --unit=bom-redeploy --property=UMask=0022 \/home\/ubuntu\/greenfield\/deploy-blue-green\.sh --redeploy-active ;;/)
+  assert.match(source, /redeploy\)\n(\s*#.*\n)*\s*exec systemd-run --wait --collect --quiet --unit=bom-redeploy --property=UMask=0022 --setenv=HOME=\/root \/home\/ubuntu\/greenfield\/deploy-blue-green\.sh --redeploy-active ;;/)
 })
 
 test('redeploy hands the deploy to a fixed-name transient unit and passes its exit status back', () => {
@@ -171,7 +171,7 @@ test('redeploy hands the deploy to a fixed-name transient unit and passes its ex
       const r = call('redeploy', '', join(d, 'bom-secrets'), d)
       assert.equal(r.status, rc)
       assert.deepEqual(readFileSync(join(d, 'argv'), 'utf8').trim().split('\n'), ['--wait', '--collect', '--quiet',
-        '--unit=bom-redeploy', '--property=UMask=0022', '/home/ubuntu/greenfield/deploy-blue-green.sh', '--redeploy-active'])
+        '--unit=bom-redeploy', '--property=UMask=0022', '--setenv=HOME=/root', '/home/ubuntu/greenfield/deploy-blue-green.sh', '--redeploy-active'])
     } finally { rmSync(d, { recursive: true, force: true }) }
   }
 })
