@@ -5,15 +5,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 import { error } from "src/models/alertMessageService";
 
-import {
-  Dropdown,
-  DropdownToggle,
-  DropdownMenu,
-  DropdownItem,
-  Label,
-  Button,
-  Toast,
-} from "reactstrap";
+import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem, Button } from "reactstrap";
 // import { groups } from "src/models/dummyData/dummydata";
 
 import { StudyHall } from "src/views/_Common/Study/StudyHall.js";
@@ -49,7 +41,7 @@ import moment from "moment";
 import momentDurationFormatSetup from "moment-duration-format";
 import { Link } from "react-router-dom";
 import { history } from "src/models/routeHistory";
-import { Routes } from "react-router-dom";
+
 import BoMOnlineAPI from "../../../models/BoMOnlineAPI";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { useMessenger } from "src/contexts/MessengerContext";
@@ -587,7 +579,7 @@ export function StudyGroupUserCircle({ userObject, isBot }) {
         }
       >
         {typingIndicator}
-        <div className={"progressBadge"} onClick={()=>console.log('bageClick')}>{badgeVal}</div>
+        <div className={"progressBadge"}>{badgeVal}</div>
         {trophyIcons}
       </div>
       <UnreadDMCount userId={userObject.userId} count={unreadMessageCount > 0?unreadMessageCount:''}/>

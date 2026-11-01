@@ -3,16 +3,9 @@ import React, { useEffect, useState } from "react";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import "./About.css";
 import Loader from "../_Common/Loader";
-import {
-  Card,
-  CardHeader,
-  CardBody,
-  CardFooter,
-  Button,
-  Input,
-} from "reactstrap";
+import { Card, CardBody } from "reactstrap";
 import Masonry from "react-masonry-css";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useLegacyParams } from "src/models/routeParams";
 import axios from "axios";
 import { label } from "src/models/Utils";

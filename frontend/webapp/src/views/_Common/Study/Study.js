@@ -14,19 +14,8 @@ import "views/_Common/Study/Study.css";
 import UserAvatar from "src/components/UserAvatar";
 import { shapeReacters } from "src/models/messengerShapes";
 import { analytics, GOALS } from "../../../models/analytics/index.js";
-import {
-  timeAgoString,
-  moveCaretToEnd,
-  label,
-  objectFlip,
-  getUsersFromTextInput,
-  formatText,
-  breakCache,
-  isMobile,
-  ParseMessage,
-  MAX_MESSAGE_LENGTH,
-} from "src/models/Utils";
-import Parser from "html-react-parser";
+import { timeAgoString, moveCaretToEnd, label, objectFlip, getUsersFromTextInput, formatText, isMobile, ParseMessage, MAX_MESSAGE_LENGTH } from "src/models/Utils";
+
 import { useAppController } from "src/contexts/AppControllerContext";
 import { useMessenger } from "src/contexts/MessengerContext";
 import { usePageController, PageControllerProvider } from "src/contexts/PageControllerContext";
@@ -171,7 +160,7 @@ export default function Comments({
         }
       });
     } catch (error) {
-      console.log({ error });
+      console.error({ error });
       return false;
     }
     channel.endTyping();
@@ -1002,7 +991,7 @@ export function EditComment({
         handleEditComment();
       });
     } catch (err) {
-      console.log("Update User Message ....", err);
+      console.error("Update User Message ....", err);
       throw new Error(err);
     }
   };
@@ -1086,7 +1075,7 @@ function MessageFooter({
         );
       }
     } catch (error) {
-      console.log({ error });
+      console.error({ error });
       return false;
     }
   };

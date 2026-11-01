@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useNavigate, useLocation, useParams } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useLegacyParams } from "src/models/routeParams";
 import { parseValue, serialize } from "./urlState";
 import { label } from "src/models/Utils";

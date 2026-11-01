@@ -12,7 +12,7 @@ import {
   playSound,
   isMobile,
 } from "src/models/Utils";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useLegacyParams } from "src/models/routeParams";
 import { analytics, GOALS } from "../../models/analytics/index.js";
 
@@ -470,7 +470,6 @@ export default function Page() {
 
   const getPageDataFromAPI = async (pageSlug, textId) => {
     //API Call
-    //console.log("getPageDataFromAPI",{pageSlug});
     activeAudioRef.current?.pause();
     let response = await BoMOnlineAPI(
       {

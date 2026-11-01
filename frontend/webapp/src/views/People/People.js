@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 
 import Loader, { Spinner } from "../_Common/Loader";
-import { Card, CardHeader, CardBody, CardFooter, Input } from "reactstrap";
-import { Link, useParams, useLocation } from "react-router-dom";
+import { Card, CardHeader, CardBody, CardFooter } from "reactstrap";
+import { Link, useLocation } from "react-router-dom";
 import { useLegacyParams } from "src/models/routeParams";
 import Masonry from 'react-masonry-css'
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";

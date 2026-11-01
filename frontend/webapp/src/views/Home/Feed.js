@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useLegacyParams } from "src/models/routeParams";
 import ProgressBox from "../User/ProgressBox.js";
-import { Card, CardHeader, CardBody, CardFooter, Button } from "reactstrap";
+import { Card, CardHeader, CardBody, Button } from "reactstrap";
 
 
-import { loadHomeFeed } from "src/models/dummyData/study";
+
 import {
   FaxInFeed,
   ImageInFeed,
@@ -19,14 +19,7 @@ import "./Home.css";
 import "./Home.m.css";
 
 import faceload from "src/views/_Common/svg/loadbar.svg";
-import {
-  BlankParagraph,
-  BlankWord,
-  breakCache,
-  timeAgoString,
-  tokenImage,
-  determineLanguage,
-} from "src/models/Utils";
+import { breakCache, timeAgoString, tokenImage, determineLanguage } from "src/models/Utils";
 import activityfeed from "src/views/_Common/svg/activityfeed.svg";
 import { label, ParseMessage } from "src/models/Utils";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI.js";
@@ -36,7 +29,7 @@ import like from "../_Common/Study/svg/like.svg";
 import comment from "../_Common/Study/svg/comment.svg";
 import SweetAlert from "react-bootstrap-sweetalert";
 import useModalA11y from "../_Common/AppModal/useModalA11y";
-import Parser from "html-react-parser";
+
 
 import soloIcon from "src/views/_Common/Study/svg/solo.svg";
 import privateIcon from "src/views/_Common/Study/svg/private.svg";
@@ -680,7 +673,6 @@ function MessageMedia({ item }) {
   };
 
     useEffect(()=>{
-      console.log("useEffect: setParentElementWidth");
       const parentElement = document.getElementById(componendId)?.parentElement;
       setParentElementWidth(parentElement?.offsetWidth);
 
@@ -993,7 +985,7 @@ function MyComment({
         ]);
       });
     } catch (error) {
-      console.log({ error });
+      console.error({ error });
       return false;
     }
     channel.endTyping();

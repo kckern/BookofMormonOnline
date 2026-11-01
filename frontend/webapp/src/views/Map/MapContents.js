@@ -245,7 +245,6 @@ const drawMap = ()=>{
 				features: [...markers]
 			}),
 			style: function (feature, resolution) {
-				console.log({feature,resolution});
 			}
 		});
 		markerLayer.setZIndex(200);
@@ -382,7 +381,6 @@ const drawMap = ()=>{
     });
 
     if(isAdmin){
-        console.log("Admin mode");
         var modify = new Modify({ 
             features: new Collection(markers),
             style: ()=>[],
@@ -432,7 +430,6 @@ const drawMap = ()=>{
         });
         map.current.addInteraction(modify);
     }else{
-        console.log("Not admin mode", {mapController});
     }
 
 

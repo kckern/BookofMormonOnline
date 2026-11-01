@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 // COMPONENTS
 import Loader from "../_Common/Loader";
-import ReactTooltip from "react-tooltip";
+
 
 import { Card, CardHeader, CardBody, Alert } from "reactstrap";
 import { Link } from 'react-router-dom';
@@ -10,9 +10,9 @@ import Masonry from 'react-masonry-css'
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { assetUrl } from 'src/models/BoMOnlineAPI';
 import "./Facsimiles.scss"
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { label } from "src/models/Utils";
-import { isMobile, useSwipe } from "../../models/Utils";
+import { isMobile } from "../../models/Utils";
 import FacsimilePageViewer from './FacsimilePageViewer';
 import FacsimilePageViewerMobile from './FacsimilePageViewerMobile';
 import FaxBreadcrumbs from './FaxBreadcrumbs';

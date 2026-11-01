@@ -30,7 +30,7 @@ import admin from "src/views/User/svg/admin.svg";
 import mute from "src/views/_Common/Study/svg/mute.svg";
 import remove from "src/views/_Common/Study/svg/remove.svg";
 import ban from "src/views/_Common/Study/svg/ban.svg";
-import { generateGroupHash } from "./StudyGroupSelect";
+
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { toast } from "react-toastify";
 import { useAppController } from "src/contexts/AppControllerContext";
@@ -97,7 +97,7 @@ export default function StudyGroupAdmin() {
       appController.functions.setActiveStudyGroup(freshGroup);
       setGroup(freshGroup);
     } catch (error) {
-      console.log({ error });
+      console.error({ error });
     }
 
     document.getElementById("group_name").disabled = false;
@@ -447,7 +447,6 @@ function Requester({ userObj }) {
     setWaiting(grant ? 1 : 2);
     let token = appController.states.user.token;
     let channel = appController.states.studyGroup.activeGroup.url;
-    console.log({ token, channel, user_id, grant });
     BoMOnlineAPI(
       { processRequest: { token, channel, user_id, grant } },
       { useCache: false },

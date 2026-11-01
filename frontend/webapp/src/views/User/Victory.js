@@ -7,20 +7,7 @@ import UserAvatar from "src/components/UserAvatar";
 import ReactRevealText from 'react-reveal-text'
 import moment from "moment";
 import momentDurationFormatSetup from "moment-duration-format";
-import {
-    Button,
-    Card,
-    CardHeader,
-    CardBody,
-    CardFooter,
-    Col,
-    Row,
-    NavItem,
-    NavLink,
-    Nav,
-    TabContent,
-    TabPane,
-} from "reactstrap";
+import { Card, CardHeader, CardBody } from "reactstrap";
 
 import "./Victory.css"
 import { useAppController } from "src/contexts/AppControllerContext";

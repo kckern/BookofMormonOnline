@@ -1,10 +1,10 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo, useReducer } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import ReactTooltip from "react-tooltip";
+
 import { useSwipe } from "../../models/Utils";
-import { assetUrl, renderBaseUrl } from 'src/models/BoMOnlineAPI';
+import { renderBaseUrl } from 'src/models/BoMOnlineAPI';
 import "./FacsimilePageViewer.scss";
-import { PageOverlay } from "./Facsimiles";
+
 import { useElementSize } from "./useElementSize";
 import PageImage from "./PageImage";
 import PageStack from "./PageStack";

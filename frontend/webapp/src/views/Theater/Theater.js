@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from "react";
 import Parser from "html-react-parser";
 import Loader from "../_Common/Loader";
-import { useNavigate, Link, useParams, useLocation } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useLegacyParams } from "src/models/routeParams";
 import { label } from "src/models/Utils";
 import { analytics, GOALS } from "../../models/analytics/index.js";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
-import { toast } from "react-toastify";
+
 import "./Theater.css";
 import { deriveNarrationList } from "./narrationList";
-import {Alert} from "reactstrap";
+
 import ReactAudioPlayer from "react-audio-player";
 import canAutoplay from 'can-autoplay';
 import ReactTooltip from "react-tooltip";
@@ -1576,7 +1576,6 @@ function PlaybackSettings({setShowPlaybackSettings}){
 	const {playbackRate,setPlaybackRate,playbackVolume,setPlaybackVolume,playbackMusicVolume,setPlaybackMusicVolume,toggleMusic,isMuted}=theaterController;
 	const inputRef = useRef(null);
 	const handleInput = (e)=>{
-		//console.log('e.target.id',e.target.id);
 			if(e.target.id === 'speedInput'){
 				setPlaybackRate(() => {
 					localStorage.setItem("playbackRate", +e.target.value);

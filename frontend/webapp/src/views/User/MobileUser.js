@@ -1,17 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  TabContent,
-  TabPane,
-  Nav,
-  NavItem,
-  NavLink,
-  Card,
-  Button,
-  CardTitle,
-  CardText,
-  Row,
-  Col,
-} from "reactstrap";
+import { TabContent, TabPane, Nav, NavItem, NavLink, Row } from "reactstrap";
 import { label } from "src/models/Utils";
 import "./MobileUser.css";
 import { ProfileItems } from "./User";

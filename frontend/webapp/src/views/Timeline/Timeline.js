@@ -14,12 +14,7 @@ import Loader from "../_Common/Loader"
 import BoMOnlineAPI from "src/models/BoMOnlineAPI"
 // CSS
 import "./Timeline.css"
-import {
-  snapSelectionToWord,
-  replaceNumbers,
-  processName,
-  label,
-} from "src/models/Utils";
+import { replaceNumbers, label } from "src/models/Utils";
 
 
 function TimeLine(props) {
@@ -124,7 +119,6 @@ function TimeLine(props) {
 
 
 
-    console.log(mark);
     return (
       <Router>
         <div className="leaflet-marker-container">

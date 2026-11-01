@@ -2,17 +2,17 @@ import React, { useState, useEffect } from "react";
 import Parser from "html-react-parser";
 // COMPONENTS
 import Loader from "../_Common/Loader";
-import { useNavigate, useLocation, Link, useParams } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useLegacyParams } from "src/models/routeParams";
 import { parseMode, buildSearchPath, shouldOfferRich, isRichDegraded, VERSE_CAP } from "./searchMode";
 import { label } from "src/models/Utils";
 import { HIDE_MATTERS_NAV } from "src/models/featureFlags";
 import { getSearchSlug, getSearchValue } from "src/models/searchSlug";
-import BoMOnlineAPI, {assetUrl} from "src/models/BoMOnlineAPI";
+import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { toast } from "react-toastify";
 import ResultGroup from "./ResultGroup";
 import VerseResult from "./VerseResult";
-import { renderHighlighted } from "./highlight";
+
 import "./Search.css";
 
 
@@ -29,7 +29,6 @@ function SearchComponent() {
 
   const highlight = (needle, haystack) => {
     const full_pattern =  new RegExp(needle.replace(/(ing|s|es|ed)$/,'') + ".*?(\\b| )", 'gi');
-    //console.log(full_pattern);
     if(full_pattern.test(haystack)) return Parser(haystack.replace(full_pattern, (str) => `<em>${str.trim()}</em> `));
 
     let needles = needle.split(/[ ,.;!?]+/).map(str=>(new RegExp("\\b"+str.replace(/(ing|s|es|ed)$/,'')  + ".*?\\b", 'gi')));

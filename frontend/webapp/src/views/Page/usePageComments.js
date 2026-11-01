@@ -147,7 +147,7 @@ export function usePageComments(pageController) {
       })
       .catch((error) => {
         clearTimeout(fallbackTimer);
-        console.log({ error });
+        console.error({ error });
         if (isMounted.current) setReadyToScroll(true);
       });
     return () => clearTimeout(fallbackTimer);

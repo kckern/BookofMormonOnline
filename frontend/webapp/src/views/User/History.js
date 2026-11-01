@@ -1,18 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import {
-  Button,
-  Card,
-  CardHeader,
-  CardBody,
-  CardFooter,
-  Col,
-  Row,
-  NavItem,
-  NavLink,
-  Nav,
-  TabContent,
-  TabPane,
-} from "reactstrap";
+import { Card, CardHeader, CardBody, NavItem, NavLink, Nav, TabContent, TabPane } from "reactstrap";
 
 import ReactTooltip from "react-tooltip";
 import CalendarHeatmap from "react-calendar-heatmap";
@@ -61,7 +48,6 @@ export function StudyHistory({
               const mostRecent = seriesData?.[0]?.data
                 ?.map((i) => i[1])
                 .reverse()[0];
-              //console.log({seriesData,mostRecent})
               setMaxValue(mostRecent || null);
             }
           });

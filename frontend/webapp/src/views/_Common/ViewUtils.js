@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { detectScriptures } from "scripture-guide";
-import { Collapse } from 'bootstrap';
+
 import { determineLanguage } from '../../models/Utils';
 import { makeScriptureLinkReplacer } from "./scriptureLinkReplacer";
 import { openScripture } from "./ScripturePopup";

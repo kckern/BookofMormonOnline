@@ -1,6 +1,6 @@
 import React, { Suspense, useCallback, useEffect, useState, useRef } from "react";
 import Loader from "../_Common/Loader";
-import { useNavigate, Link, useParams, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useLegacyParams } from "src/models/routeParams";
 import "./Audit.css";
 import axios from "axios";
@@ -173,13 +173,11 @@ export default function  Audit()
 
     useEffect(() => {
         if(!user) return;
-        //console.log("loading items", table, refkey);
         loadItems(
             table,
             refkey,
             user
         ).then((items) => {
-            //console.log("loaded items", table, refkey,items);
             setItems(items);
         })
     }, [table+refkey, user]);

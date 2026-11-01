@@ -1,15 +1,7 @@
 import "./User.css";
 import React, { useState, useEffect, useCallback } from "react";
 import { Link } from 'react-router-dom';
-import {
-  Button,
-  Card,
-  Alert,
-  CardBody,
-  Input,
-  InputGroupText,
-  InputGroup,
-} from "reactstrap";
+import { Button, Alert, Input, InputGroupText, InputGroup } from "reactstrap";
 import { label } from "src/models/Utils";
 import { analytics, GOALS } from "../../models/analytics/index.js";
 import BoMOnlineAPI, { fbPixel } from "src/models/BoMOnlineAPI";

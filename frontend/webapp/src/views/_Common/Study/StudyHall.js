@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom"
 import ReactTooltip from "react-tooltip"
 import {
@@ -12,14 +12,7 @@ import {
   StudyGroupChat,
   StudyGroupThread,
 } from "./StudyChat.js"
-import {
-  timeAgoString,
-  newPost,
-  replies,
-  label,
-  testJSON,
-  isMobile,
-} from "src/models/Utils"
+import { timeAgoString, label, testJSON, isMobile } from "src/models/Utils";
 import { analytics, GOALS } from "../../../models/analytics/index.js"
 import DirectMessages from "./DirectMessages"
 import StudyGroupProgress from "./StudyGroupProgress"

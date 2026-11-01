@@ -2,24 +2,9 @@ import "./Caractors.css";
 import tileData from "./tiles.json";
 import similarData from "./matches.json";
 import { label } from 'src/models/Utils';
-import {
-  Card,
-  CardHeader,
-  CardBody,
-  CardTitle,
-  Collapse,
-  NavItem,
-  NavLink,
-  Nav,
-  TabContent,
-  TabPane,
-  Row,
-  Col,
-  Alert,
-} from "reactstrap";
+
 import React, { useEffect, useState } from "react";
 import { assetUrl } from "src/models/BoMOnlineAPI";
-//console.log(similarData);
 function Caractors() {
   const [similars, setSimilars] = useState([]);
   const [activeGrid, setActiveGrid] = useState(false);

@@ -1,20 +1,7 @@
 import { randomHex } from "src/models/randomHex";
 import { isMessengerNavigationEnabled } from '../../../models/featureFlags';
 import React, { useEffect, useState } from "react";
-import {
-  Form,
-  Input,
-  FormGroup,
-  Label,
-  Card,
-  CardBody,
-  Button,
-  Dropdown,
-  DropdownToggle,
-  DropdownMenu,
-  DropdownItem,
-  ToastHeader,
-} from "reactstrap";
+import { Form, Input, FormGroup, Label, Card, CardBody, Button, Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from "reactstrap";
 import ToggleSwitch from "../ToggleSwitch";
 import {
   breakCache,
@@ -98,7 +85,6 @@ export function StudyGroupSelect() {
   const messenger = useMessenger();
   const setGroups = () => {
     // COMMENT BY ME
-    // console.log('StudyGroupSelect .....')
     // messenger.getStudyGroups().then((list) => {
     //   appController.functions.setStudyGroups(list);
     // });
@@ -147,7 +133,6 @@ export function StudyGroupSelect() {
   //LOADING USER GROUPS
   if (!appController.states.studyGroup.activeGroup) {
     // COMMENT BY ME
-    // console.log('LOADING USER GROUPS ..... StudyGroupSelect ....')
     // messenger
     //   .getStudyGroups()
     //   .then((list) => appController.functions.setStudyGroups(list));
@@ -433,7 +418,7 @@ function StudyGroupListItem({ group }) {
         appController.functions.setStudyGroups(list)
       });
 		} catch (error) {
-			console.log('Error',error);
+			console.error('Error',error);
 			return false;
 		}
   };
@@ -497,7 +482,6 @@ function StudyGroupListItem({ group }) {
     appController.functions.setActiveStudyGroup(group);
     appController.functions.openGroupList(false);
     let parentMessage = null;
-    console.log("LastMessage", group);
     if (group.lastMessage.customType !== "comment") {
       let slug =
         group.lastMessage.customType +

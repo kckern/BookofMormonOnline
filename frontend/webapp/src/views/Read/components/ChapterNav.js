@@ -74,7 +74,6 @@ export const ChapterNav = memo(({ chapterRef, onChapterClick }) => {
                 
                 const handleChapterClick = (e) => {
                     e.preventDefault();
-                    console.log('(1) Grid item clicked for chapter:', chapter);
                     if (onChapterClick) {
                         onChapterClick(chapter);
                     }

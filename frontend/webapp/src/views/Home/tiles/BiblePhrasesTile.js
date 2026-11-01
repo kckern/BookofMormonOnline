@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import DiffMatchPatch from "diff-match-patch";
 import { generateReference } from "scripture-guide";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
-import { label, determineLanguage } from "src/models/Utils";
+import { determineLanguage } from "src/models/Utils";
 import bibleData from "src/views/Analysis/Bible/data";
 import { bookOfVid } from "src/views/Analysis/Bible/canon";
 import { serialize } from "src/views/Analysis/Bible/urlState";

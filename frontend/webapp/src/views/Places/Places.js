@@ -5,15 +5,9 @@ import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI"
 import Loader, { Spinner } from "../_Common/Loader"
 import Masonry from "react-masonry-css"
 import { isMobile, label, processName, replaceNumbers } from "src/models/Utils"
-import { Link, useParams, useLocation } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom";
 import { useLegacyParams } from "src/models/routeParams";
-import {
-  Card,
-  CardHeader,
-  CardBody,
-  CardFooter,
-  Input,
-} from "reactstrap"
+import { Card, CardHeader, CardBody, CardFooter } from "reactstrap";
 import "./Places.css"
 import "../People/People.css"
 

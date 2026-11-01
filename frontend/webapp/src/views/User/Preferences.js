@@ -1,5 +1,5 @@
 
-import { Alert, Button, Card, CardBody, CardFooter, CardHeader, Label } from "reactstrap"
+import { Alert, Button, Card, CardBody, CardHeader, Label } from "reactstrap";
 import { isMessengerNavigationEnabled } from '../../models/featureFlags';
 import { label } from "src/models/Utils"
 import ToggleSwitch from "../_Common/ToggleSwitch";

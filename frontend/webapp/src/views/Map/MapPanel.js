@@ -32,7 +32,7 @@ import { ScripturePanelSingle } from "../Page/Narration";
 import { getHtmlScriptureLinkParserOptions } from "../_Common/ViewUtils";
 import { renderPersonPlaceHTML, detectScripturesPreservingTokens } from "../Page/PersonPlace";
 import RangeSlider from "./RangeSlider";
-import { computeRuns, colorForRun, buildPanelItems } from './colors';
+import { buildPanelItems } from './colors';
 import { useMapController } from "src/contexts/MapContext";
 import { placeUrlSyncTarget } from "./mapUrlSync";
 

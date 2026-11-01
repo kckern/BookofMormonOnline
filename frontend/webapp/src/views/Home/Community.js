@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useLayoutEffect, useCallback } from "react";
-import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import CommunityBack from "./CommunityBack";
 import { useLegacyParams } from "src/models/routeParams";
 import moment from "moment";
@@ -8,8 +8,8 @@ import SignIn from "../User/SignIn.js";
 import "../User/SignIn.css";
 import trophy from "../User/svg/trophy.svg";
 
-import { loadHomeFeed } from "src/models/dummyData/study";
-import { ImageInFeed } from "src/views/_Common/Study/StudyInFeed";
+
+
 import { HomeFeed } from "./Feed.js";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { useMessenger } from "src/contexts/MessengerContext";
@@ -28,21 +28,7 @@ import empty from "../User/svg/empty.svg";
 
 import { label, breakCache } from "src/models/Utils";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI.js";
-import {
-  TabContent,
-  TabPane,
-  Nav,
-  NavItem,
-  NavLink,
-  Card,
-  Button,
-  CardTitle,
-  CardText,
-  Row,
-  Col,
-  CardHeader,
-  CardBody,
-} from "reactstrap";
+import { Card, Button, CardHeader, CardBody } from "reactstrap";
 import { toast } from "react-toastify";
 import Loader, { Spinner } from "../_Common/Loader/index.js";
 import { md5 } from "../../models/MessengerController.js";
@@ -657,13 +643,12 @@ export function GroupCallToAction({ groupData, joinlabel }) {
         return true;
       } catch (error) {
         // Handle error.
-        console.log({ error });
+        console.error({ error });
         toast.warn(label("join_failed"));
         return false;
       }
     } else {
       //fail
-      console.log({ results, url, userToken });
       toast.warn(label("join_failed"));
       return false;
     }
@@ -676,7 +661,6 @@ export function GroupCallToAction({ groupData, joinlabel }) {
       toast.info(label("application_recieved"));
     } else {
       //fail
-      console.log({ results, url, userToken });
       toast.warn(label("join_failed"));
     }
   };
@@ -689,7 +673,6 @@ export function GroupCallToAction({ groupData, joinlabel }) {
       toast.info(label("application_withdrawn"));
     } else {
       //fail
-      console.log({ results, url, userToken });
       toast.warn(label("withdraw_failed"));
     }
   };

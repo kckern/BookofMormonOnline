@@ -1,24 +1,11 @@
 import { useEffect, useState } from "react";
-import {
-  Card,
-  CardHeader,
-  CardFooter,
-  CardBody,
-  Button,
-  NavLink,
-  Nav,
-  TabContent,
-  TabPane,
-  Row,
-  Col,
-  Alert,
-} from "reactstrap";
+import { Card, CardHeader, CardBody, Button, Alert } from "reactstrap";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import "./Invitation.css";
 import { Link, useNavigate } from "react-router-dom";
 import { useLegacyParams } from "src/models/routeParams";
 import { isMobile, label, testJSON } from "src/models/Utils";
-import { useParams, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import SignIn from "./SignIn"
 import { SignUp } from "./SignUp.js"
 import solo from "src/views/_Common/Study/svg/solo.svg"
@@ -76,7 +63,6 @@ export default function Invitation() {
     if (!appController.states.user.user) return setContentState("guestAccept");
     setAccepting(true);
     const {channel_url, group, results} = await joinGroupFromHash(hash, userToken); //.then((group) => {
-      console.log({channel_url,group, results});
       if(!channel_url || !group) return;
       messenger.getStudyGroups().then((list) =>{
         appController.functions.setStudyGroups(list);
@@ -127,7 +113,7 @@ export default function Invitation() {
         return {channel_url: null, group: null, results:{}}
       }
     } catch (error) {
-      console.log({error});
+      console.error({error});
       // Handle error appropriately
       navigate("/home");
       return {channel_url: null, group: null, results:false}

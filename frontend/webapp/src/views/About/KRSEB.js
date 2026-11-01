@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Button, Card, CardBody, CardHeader, Label } from "reactstrap";
+
+import { Button, Card, CardBody, Label } from "reactstrap";
 import { label } from "src/models/Utils";
 import { analytics, GOALS } from "../../models/analytics/index.js";
 import "./KRSEB.css"

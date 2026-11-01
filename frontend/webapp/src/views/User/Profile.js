@@ -1,22 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import {
-  Button,
-  Card,
-  CardHeader,
-  CardBody,
-  CardFooter,
-  Col,
-  Row,
-  NavItem,
-  NavLink,
-  Nav,
-  TabContent,
-  TabPane,
-  Dropdown,
-  DropdownToggle,
-  DropdownMenu,
-  DropdownItem,
-} from "reactstrap";
+import { Card, CardHeader, CardBody, CardFooter, Col, Row, Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from "reactstrap";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";
 import "./Profile.css";
@@ -236,11 +219,7 @@ export function Profile({
           <CardBody>
             <ul>
               {studySummary?.finished.map((timestamp) => (
-                <li
-                  onClick={() => {
-                    // appController.functions.setPopUp({ type: "victory" });
-                  }}
-                >
+                <li key={timestamp}>
                   <img src={trophy} />{" "}
                   {label("completed_on_x", [
                     moment

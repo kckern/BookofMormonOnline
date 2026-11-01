@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardHeader,
@@ -362,9 +362,6 @@ function ProgressPanel({ item }) {
   }
 
   useEffect(() => {
-		console.log('Item',item)
-		console.log('Before queryBy',queryBy)
-		console.log('Before ProgressPages', progressPages)
     if (progressPages.loading || progressPages.queryBy !== queryBy) {
       BoMOnlineAPI(
         { divisionProgressDetails: item.slug },

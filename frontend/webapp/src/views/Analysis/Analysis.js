@@ -4,7 +4,7 @@ import "./Analysis.css"
 import { Card, CardHeader, CardBody} from "reactstrap";
 import Masonry from 'react-masonry-css'
 import { assetUrl } from "src/models/BoMOnlineAPI";
-import { Link, useParams, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useLegacyParams } from "src/models/routeParams";
 import { label } from 'src/models/Utils';
 

@@ -4,16 +4,7 @@ import EditProfile from "./EditProfile";
 import Preferences from "./Preferences";
 import { ChangePassword } from "./Password";
 import { isMobile, label } from "src/models/Utils";
-import {
-  Button,
-  Card,
-  CardHeader,
-  Alert,
-  CardBody,
-  Input,
-  InputGroupText,
-  InputGroup,
-} from "reactstrap";
+import { Card, CardBody } from "reactstrap";
 import "./User.css";
 
 import "react-calendar-heatmap/dist/styles.css";
@@ -23,7 +14,7 @@ import { StudyHistory } from "./History";
 import { HistoryList } from "./HistoryList";
 import { Profile } from "./Profile";
 import { Col, Row } from "reactstrap";
-import { useParams, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useLegacyParams } from "src/models/routeParams";
 import MobileUser from "./MobileUser";
 import { Spinner } from "../_Common/Loader";

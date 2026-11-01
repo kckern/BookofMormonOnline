@@ -1,26 +1,17 @@
 
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useLegacyParams } from "src/models/routeParams";
-import {
-  Button,
-  ButtonGroup,
-  Pagination,
-  PaginationItem,
-  PaginationLink,
-  Row,
-  Col,
-  UncontrolledTooltip,
-} from "reactstrap";
+import { Button, ButtonGroup, UncontrolledTooltip } from "reactstrap";
 
 import "./History.css"
 import { docs } from "./docs.js"
 import Masonry from 'react-masonry-css'
-import BoMOnlineAPI, { assetUrl } from 'src/models/BoMOnlineAPI';
+import BoMOnlineAPI from 'src/models/BoMOnlineAPI';
 import { isMobile, label } from 'src/models/Utils';
 import Loader, { Spinner } from '../_Common/Loader';
-import Parser from "html-react-parser";
+
 import moment from 'moment';
 import ReactMarkdown from "react-markdown";
 import { history } from 'src/models/routeHistory';

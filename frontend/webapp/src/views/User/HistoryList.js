@@ -1,21 +1,7 @@
 import moment from "moment";
 import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import {
-  Button,
-  Card,
-  CardHeader,
-  CardBody,
-  CardFooter,
-  Col,
-  Row,
-  NavItem,
-  NavLink,
-  Nav,
-  TabContent,
-  Alert,
-  TabPane,
-} from "reactstrap";
+import { Card, CardHeader, CardBody, Alert } from "reactstrap";
 import { label } from "src/models/Utils";
 import calendar_icon from "./svg/calendar.svg";
 import momentDurationFormatSetup from "moment-duration-format";

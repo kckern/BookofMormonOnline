@@ -1,4 +1,4 @@
-import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useLegacyParams } from "src/models/routeParams";
 import "./Read.scss";
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";

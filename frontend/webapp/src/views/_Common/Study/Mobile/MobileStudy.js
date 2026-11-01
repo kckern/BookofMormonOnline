@@ -6,7 +6,7 @@ import back from "./back.svg";
 
 import groupicon from "src/views/User/svg/group.svg";
 import { history } from "src/models/routeHistory";
-import { useParams, Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useLegacyParams } from "src/models/routeParams";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { useMessenger } from "src/contexts/MessengerContext";
@@ -43,7 +43,6 @@ export default function MobileStudy() {
 
             const id = parseInt(params.messageId);
             const prevResultSize = 1;
-            console.log({ group, id, prevResultSize })
             messenger.loadPreviousMessages( { group, id, prevResultSize }).then(r=>{
                 appController.functions.setPopUp({
                     type: `group/${params.channelId}`,

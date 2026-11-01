@@ -1,6 +1,6 @@
 import React, { Suspense, useMemo } from "react";
 import Loader from "../_Common/Loader";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useLegacyParams } from "src/models/routeParams";
 import validWelcomes from "./_list.js";
 import "./Welcome.css";

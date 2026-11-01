@@ -38,7 +38,7 @@ import {
   DropdownMenu,
 } from "reactstrap";
 
-import Parser from "html-react-parser";
+
 import Loader from "../Loader/index.js";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { useMessenger } from "src/contexts/MessengerContext";
@@ -137,7 +137,7 @@ export function StudyGroupChatInput({ channel }) {
         }
       });
     } catch (error) {
-      console.log("Error", { error });
+      console.error("Error", { error });
       return false;
     }
     channel.endTyping();
@@ -704,7 +704,7 @@ export function StudyGroupThread({
         window.dispatchEvent(event);
       });
     } catch (error) {
-      console.log({ error });
+      console.error({ error });
       return false;
     }
     channel.endTyping();
@@ -1157,7 +1157,7 @@ function BaseMessage({
       event.index = index;
       window.dispatchEvent(event);
     } catch (error) {
-      console.log({ error });
+      console.error({ error });
       return false;
     }
   };
@@ -1217,7 +1217,7 @@ function BaseMessage({
       event = new CustomEvent("closeEdit");
       window.dispatchEvent(event);
     } catch (error) {
-      console.log({ error });
+      console.error({ error });
       return false;
     }
   };
