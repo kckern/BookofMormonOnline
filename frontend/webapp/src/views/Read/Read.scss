@@ -263,6 +263,20 @@ p.read-scripture.heading
     background-color: #EEE;
     font-weight: bold;
 }
+/* Touch: the packed ~21x15px cells were below a comfortable tap size. Cells can't
+   have an invisible larger hit area (neighbours touch), so grow them a little. */
+@media (pointer: coarse) {
+    .chapter-nav {
+        grid-template-columns: repeat(auto-fit, minmax(1.5rem, 1.5fr));
+        grid-auto-rows: 1.5rem;
+    }
+    .chapter-nav a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
 .chapter-nav a.first {
     outline: 1px solid black;
     z-index: 1;
