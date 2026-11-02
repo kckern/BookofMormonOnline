@@ -78,9 +78,6 @@
             user-select: none; /* Non-prefixed version, currently */
 }
 
-{
-}
-
 .popupwindow .source img {
     height: 150px;
 }

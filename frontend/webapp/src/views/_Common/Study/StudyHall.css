@@ -848,14 +848,6 @@ span.desc {
   opacity: 1;
 }
 
-.
-
-
-
-.StudyHall .messageBody
-{
-  line-height: 1.2rem;
-}
 .StudyHall .messageBody:hover .likeCount:not(.hasCount),
 .StudyHall .messageBody:hover .replyBubble {
   opacity: 0.5;
