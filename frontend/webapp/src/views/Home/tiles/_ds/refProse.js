@@ -1,4 +1,4 @@
-import React from "react";
+
 import Parser from "html-react-parser";
 import { getDetectedScripturesHtml } from "src/views/_Common/ViewUtils";
 import RefPill from "../RefPill";

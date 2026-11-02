@@ -1,4 +1,4 @@
-import React, { lazy, useState } from "react";
+import { lazy, useState } from "react";
 import features from "../../config/features.generated.json";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { frontDoorView, readChapterRef } from "./frontDoorView";

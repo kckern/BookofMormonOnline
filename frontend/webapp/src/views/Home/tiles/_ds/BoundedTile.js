@@ -1,4 +1,4 @@
-import React, { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { TileBoundContext } from "./Reveal";
 import TileCTA from "./TileCTA";
 import { onLayoutChange } from "./clampGuard";

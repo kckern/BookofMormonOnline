@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import uploadIcon from "./svg/uploadImage.svg";
 import ImageChanger from "./ImageChanger";
 import "./PictureWithOverlay.css";

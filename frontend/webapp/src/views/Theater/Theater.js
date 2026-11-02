@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from "react";
+import { useState, useEffect, useRef, useLayoutEffect, useMemo } from "react";
 import Parser from "html-react-parser";
 import Loader from "../_Common/Loader";
 import { useNavigate, Link, useLocation } from "react-router-dom";
@@ -16,7 +16,7 @@ import ReactTooltip from "react-tooltip";
 import nowifi from "src/views/_Common/svg/no-wifi.svg";
 import logo from "src/views/_Common/svg/logo.svg";
 import menu from "src/views/User/svg/settings.svg";
-import mute from "./svg/mute.svg";
+
 import studyimg from "src/views/_Common/svg/study.svg";
 import next from "./svg/next.svg";
 import pause from "./svg/pause.svg";

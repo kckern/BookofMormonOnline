@@ -3,7 +3,7 @@
 // Utils' ScripturesContainer (plain variant). Inner item markup is injectable
 // because the two sites style their items differently; the keyboard handling
 // stays at the Narration call site (it is the genuinely different part).
-import React from "react";
+
 
 export function ScriptureRefGrid({
   items,

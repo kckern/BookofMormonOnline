@@ -1,4 +1,4 @@
-import React from "react";
+
 import Parser from "html-react-parser";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { renderMoneyQuote } from "../moneyQuote";

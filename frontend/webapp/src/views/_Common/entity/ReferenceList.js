@@ -1,4 +1,4 @@
-import React from "react";
+
 import ReactTooltip from "react-tooltip";
 import { label, replaceNumbers } from "src/models/Utils";
 import useListCap from "./useListCap";

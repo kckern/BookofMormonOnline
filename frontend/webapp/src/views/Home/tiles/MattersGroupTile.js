@@ -1,4 +1,4 @@
-import React from "react";
+
 import { Link } from "react-router-dom";
 import { replaceNumbers } from "src/models/Utils";
 import RefPill from "./RefPill";

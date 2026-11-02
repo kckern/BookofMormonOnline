@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import ScriptureExcerpt, { readPath } from "src/views/_Common/ScriptureExcerpt";
 import TileDeepLink from "./_ds/TileDeepLink";

@@ -1,12 +1,12 @@
 import moment from "moment";
-import React, { useState, useEffect, useCallback } from "react";
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardHeader, CardBody, Alert } from "reactstrap";
 import { label } from "src/models/Utils";
 import calendar_icon from "./svg/calendar.svg";
 import momentDurationFormatSetup from "moment-duration-format";
 import { history } from "src/models/routeHistory";
-import Loader from "../_Common/Loader";
+
 momentDurationFormatSetup(moment);
 moment.locale(label("moment_locale"));
 

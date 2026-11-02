@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import "./Analysis.css"
 import { Card, CardHeader, CardBody} from "reactstrap";
 import Masonry from 'react-masonry-css'

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { MAX_PORTRAIT, PORTRAIT_FOCUS, isCapped, parseAspect } from "./mediaAspect";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { hasVariants, isAbsoluteSrc, variantUrl, variantWidthsFor, variantsEnabled } from "./mediaVariants";

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Comments from "./Study/Study";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import Parser from "html-react-parser";

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { md5hash } from 'src/models/Utils';
 
 const MD5_RE = /^[a-f0-9]{32}$/i;

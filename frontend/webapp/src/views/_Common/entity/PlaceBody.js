@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Parser from "html-react-parser";
 import { Button } from "reactstrap";
 import { label, determineLanguage } from "src/models/Utils";

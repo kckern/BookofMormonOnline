@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { isMessengerNavigationEnabled, HIDE_HOME_NAV } from '../../models/featureFlags';
 import { Link } from "react-router-dom";
 import { assetUrl } from "models/BoMOnlineAPI";

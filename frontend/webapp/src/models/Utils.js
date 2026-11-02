@@ -1,6 +1,6 @@
 import md5lib from "js-md5";
 import { randomHex } from "./randomHex";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import date from "date-and-time";
 import axios from "axios";
 import Parser from "html-react-parser";

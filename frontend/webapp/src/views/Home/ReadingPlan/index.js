@@ -1,7 +1,7 @@
 // Widget state machine: loading → none|active|completed|error (spec §Home widget).
 // The server is authoritative for progress/current/status — this component does
 // ZERO date math and ZERO progress arithmetic (fixes audit P0 #2/#3, P1 #6).
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI.js";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { label } from "src/models/Utils";

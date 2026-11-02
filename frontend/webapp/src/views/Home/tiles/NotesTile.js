@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Parser from "html-react-parser";
 import { detectReferences, lookup } from "scripture-guide";
 import ScriptureExcerpt, { readPath } from "src/views/_Common/ScriptureExcerpt";

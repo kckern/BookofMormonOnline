@@ -1,6 +1,6 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { Alert } from "reactstrap";
-import { label } from "src/models/Utils";
+
 import labelOr from "src/views/Home/tiles/_ds/labelOr";
 import { pushDocTitle, popDocTitle } from "./docTitle";
 

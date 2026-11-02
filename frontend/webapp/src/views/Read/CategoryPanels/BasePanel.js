@@ -1,4 +1,4 @@
-import React from 'react';
+
 import './BasePanel.scss';
 
 const BasePanel = ({ title, children, onClose, open }) => {

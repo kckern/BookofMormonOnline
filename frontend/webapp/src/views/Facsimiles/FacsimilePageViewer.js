@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef, useMemo, useReducer } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo, useReducer } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 
 import { useSwipe } from "../../models/Utils";

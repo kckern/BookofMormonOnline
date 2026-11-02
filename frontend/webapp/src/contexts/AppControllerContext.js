@@ -10,7 +10,7 @@
  * shallow copy on every dispatch, so every consumer re-renders per dispatch —
  * identical to the prop-drilling behavior this replaces.
  */
-import React, { createContext, useContext } from "react";
+import { createContext, useContext } from "react";
 
 export const AppControllerContext = createContext(null);
 

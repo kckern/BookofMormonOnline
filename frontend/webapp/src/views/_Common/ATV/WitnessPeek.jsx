@@ -1,4 +1,4 @@
-import React from "react";
+
 import { label } from "src/models/Utils";
 import { faxCandidates } from "./faxVersions";
 import { WITNESSES } from "./apparatus";

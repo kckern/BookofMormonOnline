@@ -1,4 +1,4 @@
-import React from "react";
+
 import labelOr from "./_ds/labelOr";
 import ArchiveDocTile from "./ArchiveDocTile";
 

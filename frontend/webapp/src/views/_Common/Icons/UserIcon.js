@@ -1,4 +1,4 @@
-import React from 'react'
+
 
 const UserIcon = ({ fill = '#ffffff', className }) => {
   return (

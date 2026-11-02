@@ -3,7 +3,7 @@ import { assetUrl } from "src/models/BoMOnlineAPI";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import { error } from "src/models/alertMessageService";
+
 
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem, Button } from "reactstrap";
 // import { groups } from "src/models/dummyData/dummydata";
@@ -11,7 +11,7 @@ import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem, Button } from "re
 import { StudyHall } from "src/views/_Common/Study/StudyHall.js";
 import { StudyGroupSelect } from "./StudyGroupSelect";
 import "./StudyGroupBar.scss";
-import { ActionBubble } from "./ActionBubble";
+
 import { breakCache, diffMap, label, playSound } from "src/models/Utils";
 
 import green from "src/views/User/svg/green.svg";
@@ -22,7 +22,7 @@ import count from "src/views/User/svg/count.svg";
 import cake from "src/views/User/svg/cake.svg";
 import parkingmeter from "src/views/User/svg/parkingmeter.svg";
 import bookmarkicon from "src/views/User/svg/bookmark.svg";
-import lastseen from "src/views/User/svg/lastseen.svg";
+
 import crosshairs from "src/views/User/svg/crosshairs.svg";
 import chat from "src/views/User/svg/chat.svg";
 import messageicon from "src/views/User/svg/messageicon.svg";

@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 
 
 import { Card, CardBody, CardHeader } from "reactstrap";
-import BoMOnlineAPI, { assetUrl } from 'src/models/BoMOnlineAPI';
+import { assetUrl } from 'src/models/BoMOnlineAPI';
 import { useNavigate } from "react-router-dom";
 import { ReadingPlan } from "../../Home/ReadingPlan";
 import logo from "src/views/_Common/svg/logo.svg";

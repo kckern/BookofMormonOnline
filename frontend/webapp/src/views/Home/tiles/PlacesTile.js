@@ -1,4 +1,4 @@
-import React from "react";
+
 import { Link } from "react-router-dom";
 import { label } from "src/models/Utils";
 import pin from "src/views/_Common/svg/map-icon.svg";

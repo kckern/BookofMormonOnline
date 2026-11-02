@@ -20,7 +20,7 @@ import StudyGroupAdmin from "./StudyGroupAdmin"
 import { getFreshUsers } from "./StudyGroupBar"
 
 import bookmarkicon from "src/views/User/svg/bookmark.svg"
-import lastseen from "src/views/User/svg/lastseen.svg"
+
 import crosshairs from "src/views/User/svg/crosshairs.svg"
 
 import admin from "src/views/User/svg/admin.svg"

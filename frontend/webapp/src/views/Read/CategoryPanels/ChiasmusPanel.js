@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Link } from 'react-router-dom';
 import MiniChiasm from '../../_Common/MiniChiasm';
 import ChiasmGlyph from '../../_Common/ChiasmGlyph';

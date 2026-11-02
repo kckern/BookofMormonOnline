@@ -3,8 +3,8 @@ import { useNavigate, Link, useLocation } from "react-router-dom";
 import CommunityBack from "./CommunityBack";
 import { useLegacyParams } from "src/models/routeParams";
 import moment from "moment";
-import ProgressBox from "../User/ProgressBox.js";
-import SignIn from "../User/SignIn.js";
+
+
 import "../User/SignIn.css";
 import trophy from "../User/svg/trophy.svg";
 
@@ -20,17 +20,17 @@ import "./StudyGroupFeed.css";
 import "./Home.css";
 import "./Home.m.css";
 import "../User/ProgressBox.css";
-import blue from "../User/svg/blue.svg";
-import green from "../User/svg/green.svg";
-import yellow from "../User/svg/yellow.svg";
-import blank from "../User/svg/blank.svg";
-import empty from "../User/svg/empty.svg";
+
+
+
+
+
 
 import { label, breakCache } from "src/models/Utils";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI.js";
 import { Card, Button, CardHeader, CardBody } from "reactstrap";
 import { toast } from "react-toastify";
-import Loader, { Spinner } from "../_Common/Loader/index.js";
+import { Spinner } from "../_Common/Loader/index.js";
 import { md5 } from "../../models/MessengerController.js";
 import { timeAgoString } from "../../models/Utils.js";
 

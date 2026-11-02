@@ -1,4 +1,4 @@
-import React from "react";
+
 import { chapterCounts } from "./aggregate";
 
 // Per-chapter density strip for the anchored book. Counts live in the

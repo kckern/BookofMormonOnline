@@ -1,4 +1,4 @@
-import React from "react";
+
 import { Link } from "react-router-dom";
 import { Card, CardHeader, Col } from "reactstrap";
 import { renderPersonPlaceHTML } from "./PersonPlace";

@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom"
 import { parseMapPath } from "src/models/mapPath"
 // VIEW

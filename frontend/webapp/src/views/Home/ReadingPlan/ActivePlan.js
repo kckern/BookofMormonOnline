@@ -1,7 +1,7 @@
 // Active-plan renderer. Ported from the legacy ReadingPlan.js markup/classes,
 // on the new server contract: plan.current picks the segment, plan.progress is
 // authoritative (no local date math), resume matches "completed" (fixes P0 #4).
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI.js";
 import { Link } from "react-router-dom";
 import ReactTooltip from "react-tooltip";

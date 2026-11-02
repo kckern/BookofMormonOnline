@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import OlMap from "ol/Map";
 import View from "ol/View";

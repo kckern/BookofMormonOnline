@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useMemo, useRef, useState } from "react";
 
 /**
  * Two-layer CTA gating. A tile wraps its body in <RevealProvider>. A Layer-1

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { discoverLabel } from "./discoverLabel";
 import { isMessengerNavigationEnabled, HIDE_HOME_NAV, HIDE_MATTERS_NAV, HIDE_HISTORY_NAV, HIDE_THEOLOGY } from '../../models/featureFlags';
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
@@ -32,7 +32,7 @@ import historyicon from "./svg/history.svg";
 import analysis from "./svg/analysis.svg";
 import about from "./svg/about.svg";
 import theater from "./svg/theater.svg";
-import contact from "./svg/contact.svg";
+
 import audit from "./svg/audit.svg";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 

@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
-import BoMOnlineAPI from "src/models/BoMOnlineAPI";
+
+
 import "./Contact.css";
-import Loader from "../_Common/Loader";
+
 import { Card, CardHeader, CardBody, Button } from "reactstrap";
 import Masonry from "react-masonry-css";
 import facebook from "./img/facebook.png";

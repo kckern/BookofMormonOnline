@@ -1,4 +1,4 @@
-import React from "react";
+
 import { PersonChip, PlaceChip, ContentCard, EventCard } from "./cards";
 
 const CARD = { person: PersonChip, place: PlaceChip, matter: ContentCard, commentary: ContentCard, narration: ContentCard, page: ContentCard, event: EventCard };

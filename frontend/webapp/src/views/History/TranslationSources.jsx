@@ -1,5 +1,5 @@
 /** @format */
-import React from "react";
+
 import HistoryArchiveFeed from "./HistoryArchiveFeed";
 
 export default function TranslationSources() {

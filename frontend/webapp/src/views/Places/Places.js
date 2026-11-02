@@ -1,8 +1,8 @@
 /** @format */
 
-import React, { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI"
-import Loader, { Spinner } from "../_Common/Loader"
+import { Spinner } from "../_Common/Loader";
 import Masonry from "react-masonry-css"
 import { isMobile, label, processName, replaceNumbers } from "src/models/Utils"
 import { Link, useLocation } from "react-router-dom";

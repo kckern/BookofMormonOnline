@@ -1,5 +1,5 @@
 /** @format */
-import React, { useState } from "react";
+import { useState } from "react";
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import "./EntityThumb.css";
 

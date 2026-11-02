@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { label } from "src/models/Utils";
 import "./Theology.css";
 import {

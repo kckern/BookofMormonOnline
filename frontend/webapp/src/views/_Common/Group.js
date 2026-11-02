@@ -1,6 +1,6 @@
 
 
-import React, { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useLegacyParams } from "src/models/routeParams";
 import { isMobile } from "src/models/Utils";

@@ -1,5 +1,5 @@
 /** @format */
-import React from "react";
+
 import HistoryArchiveFeed from "./HistoryArchiveFeed";
 
 // The lost-116-pages archive: primary sources on what the lost manuscript

@@ -1,6 +1,6 @@
 import './polyfills/randomUUID'; // must be first — secure-context polyfill
 // import 'babel-polyfill';
-import React from 'react';
+
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import { analytics } from './models/analytics/index.js';

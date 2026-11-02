@@ -1,6 +1,6 @@
 
 import Parser from "html-react-parser";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from 'react-router';
 import spinner from "../_Common/svg/loadbar.svg";
 import placesIcon from "../_Common/svg/places.svg";

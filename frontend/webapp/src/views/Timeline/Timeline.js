@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef } from "react";
 import ReactDOMServer from 'react-dom/server';
 import Parser from "html-react-parser";
 import leaflet from "leaflet"

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 // MEDIA URL
 // CHILD
 import Narration from "./Narration";

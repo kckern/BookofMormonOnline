@@ -1,5 +1,5 @@
 /** @format */
-import React from "react";
+
 import HistoryArchiveFeed from "./HistoryArchiveFeed";
 
 // The 1820s-ny-pa archive: primary sources on Joseph Smith's

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { flattenDescription, label, renderHTMLContentInFeed, determineLanguage } from "src/models/Utils";
 import { Link } from "react-router-dom";
 import Parser from "html-react-parser";

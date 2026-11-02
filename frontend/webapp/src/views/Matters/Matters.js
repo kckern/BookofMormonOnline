@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import { Spinner } from "../_Common/Loader";
 import { isMobile, label, processName, replaceNumbers, tr } from "src/models/Utils";

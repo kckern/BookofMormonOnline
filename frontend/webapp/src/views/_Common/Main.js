@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useLayoutEffect, useReducer, useRef, useState } from "react";
+import { Suspense, useEffect, useLayoutEffect, useReducer, useRef, useState } from "react";
 import { Routes, Route, useLocation, useNavigationType } from "react-router-dom";
 import { toast } from 'react-toastify';
 import Cookies from 'js-cookie';

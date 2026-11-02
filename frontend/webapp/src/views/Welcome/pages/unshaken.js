@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 
 import { HomeFeed } from "../../Home/Feed";
 import { Button, Card, CardBody, CardHeader } from "reactstrap";
-import BoMOnlineAPI, { assetUrl } from 'src/models/BoMOnlineAPI';
+import { assetUrl } from 'src/models/BoMOnlineAPI';
 import { useNavigate } from "react-router-dom";
 
 

@@ -1,4 +1,4 @@
-import React from "react";
+
 import { Link } from "react-router-dom";
 import { lookup } from "scripture-guide";
 import { flattenDescription, renderHTMLContentInFeed } from "src/models/Utils";

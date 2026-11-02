@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useReducer, useEffect, useState, useRef, useMemo } from "react";
+import { useReducer, useEffect, useState, useRef, useMemo } from "react";
 // API ACTIONS
 // COMPONENTS
 import Loader from "../_Common/Loader";

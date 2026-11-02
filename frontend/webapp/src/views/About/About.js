@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 // Actions
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import "./About.css";
@@ -7,13 +7,13 @@ import { Card, CardBody } from "reactstrap";
 import Masonry from "react-masonry-css";
 import { useLocation } from "react-router-dom";
 import { useLegacyParams } from "src/models/routeParams";
-import axios from "axios";
+
 import { label } from "src/models/Utils";
 import ReactMarkdown from "react-markdown";
 import bom from "./icons/bom.svg";
 import contribute from "./icons/contribute.svg";
 import disclaimer from "./icons/disclaimer.svg";
-import what from "./icons/what.svg";
+
 import who from "./icons/who.svg";
 import why from "./icons/why.svg";
 import contact from "./icons/contact.svg";

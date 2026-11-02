@@ -1,4 +1,4 @@
-import React from "react";
+
 import { useReveal } from "./Reveal";
 import TileCTA from "./TileCTA";
 

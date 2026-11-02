@@ -5,7 +5,7 @@ import ChiasmGlyph from "../../_Common/ChiasmGlyph";
 import "./Chiasmus.css";
 import Chiasm from "./Chiasm";
 import { label, determineLanguage } from 'src/models/Utils';
-import { useNavigate, useLocation, useParams } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useLegacyParams } from "src/models/routeParams";
 import { enrichChiasmus, applyBrowseState } from "./chiasmUtils";
 import useBrowseState, { DEFAULTS } from "./useBrowseState";

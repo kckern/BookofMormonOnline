@@ -13,7 +13,7 @@
  * than descendants under the side panel — exactly the split the prop-drilling
  * produced.
  */
-import React, { createContext, useContext } from "react";
+import { createContext, useContext } from "react";
 
 export const TheaterContext = createContext(null);
 

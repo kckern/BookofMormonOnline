@@ -1,4 +1,4 @@
-import React from "react";
+
 import { label, processName, replaceNumbers, determineLanguage } from "src/models/Utils";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { renderPersonPlaceHTML, detectScripturesPreservingTokens } from "../../Page/PersonPlace";

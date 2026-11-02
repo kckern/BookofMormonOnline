@@ -15,7 +15,7 @@
  * consumers), so useNarration() THROWS with no provider — like useAppController
  * / useTheater, not like usePageController.
  */
-import React, { createContext, useContext } from "react";
+import { createContext, useContext } from "react";
 
 export const NarrationContext = createContext(null);
 

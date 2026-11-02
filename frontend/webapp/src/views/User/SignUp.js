@@ -1,5 +1,5 @@
 import "./User.css";
-import React, { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { Link } from 'react-router-dom';
 import { Button, Alert, Input, InputGroupText, InputGroup } from "reactstrap";
 import { label } from "src/models/Utils";

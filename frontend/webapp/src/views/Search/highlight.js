@@ -1,4 +1,4 @@
-import React from "react";
+
 
 /**
  * Render `text` with the [range.start,range.end) slice wrapped in <em class="semantic-hl">.

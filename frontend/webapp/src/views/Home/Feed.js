@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useLegacyParams } from "src/models/routeParams";
-import ProgressBox from "../User/ProgressBox.js";
+
 import { Card, CardHeader, CardBody, Button } from "reactstrap";
 
 
@@ -20,7 +20,7 @@ import "./Home.m.css";
 
 import faceload from "src/views/_Common/svg/loadbar.svg";
 import { breakCache, timeAgoString, tokenImage, determineLanguage } from "src/models/Utils";
-import activityfeed from "src/views/_Common/svg/activityfeed.svg";
+
 import { label, ParseMessage } from "src/models/Utils";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI.js";
 import { analytics, GOALS } from "../../models/analytics/index.js";

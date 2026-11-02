@@ -1,4 +1,4 @@
-import React from "react";
+
 import labelOr from "./_ds/labelOr";
 import ArchiveDocTile, { parseTeaser } from "./ArchiveDocTile";
 

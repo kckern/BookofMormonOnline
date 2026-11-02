@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
 import BoMOnlineAPI, { assetUrl } from "src/models/BoMOnlineAPI";
 import { label } from "src/models/Utils";

@@ -1,4 +1,4 @@
-import React from "react";
+
 
 // Highlight shared phrases inside verse text. Highlight strings come from the
 // API and may not match the local text (translation/punctuation drift); an

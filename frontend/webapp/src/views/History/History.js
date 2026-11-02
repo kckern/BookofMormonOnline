@@ -6,11 +6,11 @@ import { useLegacyParams } from "src/models/routeParams";
 import { Button, ButtonGroup, UncontrolledTooltip } from "reactstrap";
 
 import "./History.css"
-import { docs } from "./docs.js"
+
 import Masonry from 'react-masonry-css'
 import BoMOnlineAPI from 'src/models/BoMOnlineAPI';
 import { isMobile, label } from 'src/models/Utils';
-import Loader, { Spinner } from '../_Common/Loader';
+import { Spinner } from '../_Common/Loader';
 
 import moment from 'moment';
 import ReactMarkdown from "react-markdown";

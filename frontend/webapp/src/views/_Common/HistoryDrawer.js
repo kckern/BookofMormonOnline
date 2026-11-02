@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import HistoryBody, { historyMeta, historyDocTitle } from "./entity/HistoryBody";
 import { label } from "src/models/Utils";

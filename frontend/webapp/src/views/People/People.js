@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 
-import Loader, { Spinner } from "../_Common/Loader";
+import { Spinner } from "../_Common/Loader";
 import { Card, CardHeader, CardBody, CardFooter } from "reactstrap";
 import { Link, useLocation } from "react-router-dom";
 import { useLegacyParams } from "src/models/routeParams";

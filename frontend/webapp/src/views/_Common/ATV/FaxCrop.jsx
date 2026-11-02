@@ -1,4 +1,4 @@
-import React from "react";
+
 import { renderBaseUrl } from "src/models/BoMOnlineAPI";
 
 /** One cropped verse scan. Collapses (no broken-image glyph) on load error —

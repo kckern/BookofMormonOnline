@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { allPairs } from "./aggregate";
 
 // Sortable, filterable table twin of the ribbon overview — the WCAG-clean

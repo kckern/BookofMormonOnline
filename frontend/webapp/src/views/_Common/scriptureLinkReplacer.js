@@ -8,7 +8,7 @@
 // no-op in every real browser — the exact bug this file previously had. Check
 // every spelling, always.
 // Consumers layer active-ref behavior via the onClick/getClassName callbacks.
-import React from "react";
+
 
 export function makeScriptureLinkReplacer({ onClick, getClassName } = {}) {
   return (domNode) => {

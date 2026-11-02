@@ -1,6 +1,6 @@
 /** @format */
 
-import React from "react";
+
 import { label, tr } from "src/models/Utils";
 import { filterAxes } from "./mattersFilterData";
 import { MatterDetailColumn } from "./MatterDetailColumn";

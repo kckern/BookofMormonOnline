@@ -1,4 +1,4 @@
-import React from "react";
+
 import Breadcrumb from "src/views/_Common/Breadcrumb/Breadcrumb";
 import { bookTotal, partnersFor, chapterCounts } from "./aggregate";
 import Rail from "./Rail";

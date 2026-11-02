@@ -1,7 +1,7 @@
 import { randomHex } from "./models/randomHex";
-import React from "react";
+
 import { BrowserRouter } from 'react-router-dom';
-import { Route } from 'react-router-dom';
+
 import { toast, ToastContainer } from "react-toastify";
 import Cookies from 'js-cookie';
 

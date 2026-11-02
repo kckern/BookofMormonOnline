@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import PageImage from "./PageImage";
 import FaxHighlightOverlay from "./FaxHighlightOverlay";
 import { openScripture } from "../_Common/ScripturePopup";

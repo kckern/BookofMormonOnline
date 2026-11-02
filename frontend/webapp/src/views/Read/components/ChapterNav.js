@@ -1,4 +1,4 @@
-import React, { useMemo, memo } from 'react';
+import { useMemo, memo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import ReactTooltip from 'react-tooltip';
 import { slugify, memoizedLookupReference } from '../../../utils/scriptureUtils';

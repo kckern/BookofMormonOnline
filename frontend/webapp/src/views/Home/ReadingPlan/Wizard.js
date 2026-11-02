@@ -1,7 +1,7 @@
 // 3-step builder (spec D7/D8): What (tabbed checklist) → How fast → Confirm.
 // Scope compiles to page slugs (site tab) or a canonical verse range (books tab).
 // Preview = the SAME server generator, dry-run — never local math.
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI.js";
 import SweetAlert from "react-bootstrap-sweetalert";
 import { Button } from "reactstrap";

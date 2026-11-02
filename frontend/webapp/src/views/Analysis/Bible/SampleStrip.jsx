@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { generateReference } from "scripture-guide";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
 import { determineLanguage } from "src/models/Utils";

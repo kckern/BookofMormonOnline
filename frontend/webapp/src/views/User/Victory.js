@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { label, playSound, useWindowSize } from "src/models/Utils";
 import { analytics, GOALS } from "../../models/analytics/index.js";
 import Confetti from 'react-confetti'

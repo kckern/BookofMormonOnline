@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { assetUrl } from "../../models/BoMOnlineAPI";
 import { isMobile } from "../../models/Utils";
 import { updatePlaceCoords } from '../Audit/Audit';

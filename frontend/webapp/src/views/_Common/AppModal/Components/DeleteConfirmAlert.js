@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import SweetAlert from "react-bootstrap-sweetalert";
 import { label } from "src/models/Utils";
 import useModalA11y from "../useModalA11y";

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Card, CardBody, CardHeader } from "reactstrap";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";

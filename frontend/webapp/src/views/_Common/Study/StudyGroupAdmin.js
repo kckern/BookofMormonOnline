@@ -21,7 +21,7 @@ import { breakCache, label, testJSON } from "src/models/Utils";
 
 import flag from "./svg/flag.svg";
 import info from "./svg/info.svg";
-import group from "./svg/group.svg";
+
 import members from "./svg/members.svg";
 import newuser from "./svg/newuser.svg";
 import membericon from "./svg/member.svg";

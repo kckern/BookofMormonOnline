@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import './PassageNotes.scss';
 import CommentaryPanel from './CategoryPanels/CommentaryPanel';
 import PeoplePanel from './CategoryPanels/PeoplePanel';

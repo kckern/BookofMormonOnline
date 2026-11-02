@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 // How far the on-hover magnifier zooms, as a multiple of the fit width — capped
 // so a very large `full` scan doesn't jump to an absurd magnification.

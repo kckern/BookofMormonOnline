@@ -1,4 +1,4 @@
-import React, { Suspense, useCallback, useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import Loader from "../_Common/Loader";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLegacyParams } from "src/models/routeParams";

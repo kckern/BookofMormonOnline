@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { label, isMobile } from "src/models/Utils";
 import ScriptureExcerpt, { canonical, readPath } from "./ScriptureExcerpt";

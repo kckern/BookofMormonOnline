@@ -1,5 +1,5 @@
 import "./User.css";
-import React, { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { Button, Alert, Input, InputGroupText, InputGroup } from "reactstrap";
 
 import { SignUp } from "./SignUp.js"

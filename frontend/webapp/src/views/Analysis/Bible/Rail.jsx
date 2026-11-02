@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { canons } from "./canon";
 import { bookTotal } from "./aggregate";
 import ChapterStrip from "./ChapterStrip";

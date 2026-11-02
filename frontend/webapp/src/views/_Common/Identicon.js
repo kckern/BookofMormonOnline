@@ -1,4 +1,4 @@
-import React from "react";
+
 
 // Deterministic square identicon (5×5 left-right mirrored grid) from a seed
 // string — no dependency. A small FNV-1a hash drives both the lit cells and the

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Parser from "html-react-parser";
 // COMPONENTS
 import Loader from "../_Common/Loader";

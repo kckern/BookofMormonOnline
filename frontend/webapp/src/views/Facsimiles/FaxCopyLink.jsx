@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { label } from "src/models/Utils";
 
 // A label with an English fallback (the dictionary returns the key when a row is missing).

@@ -1,4 +1,4 @@
-import React from "react";
+
 import Parser from "html-react-parser";
 import ReactTooltip from "react-tooltip";
 import { tooltipTheme } from "src/utils/themeColors";

@@ -1,4 +1,4 @@
-import React from "react";
+
 import { assetUrl } from "src/models/BoMOnlineAPI";
 import { label, processName, replaceNumbers } from "src/models/Utils";
 import "./EntityChooser.css";

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import "./entityLists.css";
 
 /** How many rows a long entity list shows before "Show all N". */

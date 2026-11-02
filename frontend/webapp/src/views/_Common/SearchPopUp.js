@@ -1,6 +1,6 @@
 
 import Parser from "html-react-parser";
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card, CardBody, CardHeader } from 'reactstrap';
 import { label } from "src/models/Utils";
 import EntityThumb from "./EntityThumb";

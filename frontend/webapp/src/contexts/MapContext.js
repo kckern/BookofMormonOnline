@@ -12,7 +12,7 @@
  * a fresh object every render, so every consumer re-renders per render —
  * identical to the prop-drilling behavior this replaces.
  */
-import React, { createContext, useContext } from "react";
+import { createContext, useContext } from "react";
 
 export const MapContext = createContext(null);
 

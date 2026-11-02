@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI.js";
 import { useAppController } from "src/contexts/AppControllerContext";
 import { label } from "src/models/Utils";

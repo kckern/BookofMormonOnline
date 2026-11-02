@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import Comments from "./Study/Study";
 import DraggableWindow from "./DraggableWindow";
 import BoMOnlineAPI from "src/models/BoMOnlineAPI";
@@ -8,7 +8,7 @@ import XrelSection from "./XrelSection";
 import "./PopUp.css";
 import { processName, label, log, isMobile } from "src/models/Utils";
 import ReactMarkdown from "react-markdown";
-import Loader, { Spinner } from "./Loader";
+import { Spinner } from "./Loader";
 import { MobileDrawer } from "./Drawer";
 
 import Commentary from "./Commentary";

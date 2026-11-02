@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { partnersFor, scopedPartnersFor } from "./aggregate";
 
 const FOLD = 8;

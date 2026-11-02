@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useMemo, useReducer, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useMemo, useReducer, useRef } from "react";
 // CHILD
 import TextContent from "./TextContent";
 import Comments from "../_Common/Study/Study";

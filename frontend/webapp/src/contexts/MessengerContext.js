@@ -8,7 +8,7 @@
  * compatibility bridge for existing consumers (including non-React code).
  * New code should consume useMessenger() instead of the bridge.
  */
-import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import MessengerController from "src/models/MessengerController";
 import { isMessengerEnabled } from "src/models/featureFlags";
 

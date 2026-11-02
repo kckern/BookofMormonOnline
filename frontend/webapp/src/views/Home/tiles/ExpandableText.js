@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useReveal } from "./_ds/Reveal";
 import TileCTA from "./_ds/TileCTA";
 import { readExpanded, writeExpanded } from "./samplerSession";

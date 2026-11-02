@@ -1,4 +1,4 @@
-import React from "react";
+
 import "./MiniChiasm.css";
 
 /** `_highlight_` markers → <mark>; the site's chiasm line convention. */

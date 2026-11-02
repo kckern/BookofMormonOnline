@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { isMobile } from "src/models/Utils";
 import { isMessengerEnabled } from "src/models/featureFlags";

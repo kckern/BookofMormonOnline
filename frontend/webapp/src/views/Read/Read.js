@@ -1,7 +1,7 @@
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useLegacyParams } from "src/models/routeParams";
 import "./Read.scss";
-import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { landTarget } from "src/views/_Common/landTarget";
 import BoMOnlineAPI from "../../models/BoMOnlineAPI";
 import { label } from "../../models/Utils";
@@ -20,7 +20,7 @@ import { ChapterNav } from "./components/ChapterNav";
 import { useCanonicalReadSlug } from "./useCanonicalReadSlug";
 import { SkeletonLoader } from "./components/SkeletonLoader";
 import { ChapterContent } from "./components/ChapterContent";
-import PassageNotes from "./PassageNotes";
+
 import { HIDE_PASSAGE_NOTES } from "src/models/featureFlags";
 
 const DEBUG_SKELETON = false;
