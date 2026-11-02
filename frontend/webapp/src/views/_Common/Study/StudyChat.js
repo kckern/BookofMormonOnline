@@ -112,7 +112,6 @@ export function StudyGroupChatInput({ channel }) {
       params.message = params.message.slice(0, MAX_MESSAGE_LENGTH);
     }
 
-    // setTimeout(channel.endTyping,1000);
 
     try {
       channel.sendUserMessage(params).onSucceeded((message) => {
@@ -148,7 +147,6 @@ export function StudyGroupChatInput({ channel }) {
   const [timeoutIds, setTimeoutIds] = useState([]);
   const [typing, setTyping] = useState(false);
   const typingIndicator = () => {
-    //if (typing) return false;
     channel.startTyping();
     setTyping(true);
     timeoutIds.map((id) => clearTimeout(id));
@@ -501,7 +499,6 @@ export function StudyGroupChat({
       messages[0]?.messageId > lastMessageId ||
       messages[messages.length - 1].messageId < firstMessageId)
   ) {
-    // setLoading(true);
     let query = prepareQuery(messages);
     setLastMessageId(messages[0].messageId);
     setFirstMessageId(messages[messages.length - 1].messageId);
@@ -617,7 +614,6 @@ function TypingIndicators({ channel }) {
     />
   ));
 
-  // return <><pre>{JSON.stringify(appController.states.studyGroup.typers,null,2)}</pre><br/><br/><br/><br/></>
   return (
     <div className={"messageContainer"}>
       {image}
@@ -892,9 +888,6 @@ function ThreadedMessages({
 
   // ** COMMENT BY ME
   // //Append New Messages
-  // window.addEventListener('addMessageToThread' + parentMessage.messageId, (e) => {
-  //     setMessages(messages => [...messages, e.message]);
-  // }, false);
 
   const loadThreadedMessages = useCallback(
     (needsToLoad) => {
@@ -1645,12 +1638,6 @@ function FaxComment({
     </div>
   );
 }
-
-// function AdminMessage({ appController, message }) {
-
-//     return <div className="AdminMessage">ADMIN: {JSON.stringify(message.data)}</div>
-
-// }
 
 function Message({
   message,

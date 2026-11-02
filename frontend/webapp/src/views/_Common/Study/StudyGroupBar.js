@@ -6,7 +6,6 @@ import "react-toastify/dist/ReactToastify.css";
 
 
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem, Button } from "reactstrap";
-// import { groups } from "src/models/dummyData/dummydata";
 
 import { StudyHall } from "src/views/_Common/Study/StudyHall.js";
 import { StudyGroupSelect } from "./StudyGroupSelect";
@@ -28,14 +27,6 @@ import chat from "src/views/User/svg/chat.svg";
 import messageicon from "src/views/User/svg/messageicon.svg";
 import groupicon from "src/views/User/svg/group.svg";
 import trophy from "src/views/User/svg/trophy.svg";
-// const uuid4 = () => {
-//     let d = new Date().getTime();
-//     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-//         const r = (d + Math.random() * 16) % 16 | 0;
-//         d = Math.floor(d / 16);
-//         return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
-//     });
-// };
 import typing from "./svg/typing.svg";
 import moment from "moment";
 import momentDurationFormatSetup from "moment-duration-format";
@@ -180,10 +171,8 @@ function StudyGroupStatus() {
     return map;
   };
 
-  // let { users, bots } = getFreshUsers(appController) || { users: [], bots: [] };
   const [ users,setUsers] = useState([]);
   const [ bots,setBots] = useState([]);
-  // let { users, bots } = getFreshUsers(appController) || { users: [], bots: [] };
   const [userColors, setUserColors] = useState(getColorMap(users));
 
 useEffect(()=>{
@@ -260,8 +249,6 @@ useEffect(()=>{
       //debugger;
 
       if (!!appController.states.studyGroup.studyModeOn && !isMe) {
-        // let notificationHistory =
-        //   JSON.parse(localStorage.getItem("notificationHistory")) || [];
         let notificationHistory = [];
         const time = moment().unix();
 
@@ -319,10 +306,6 @@ useEffect(()=>{
         notificationHistory = notificationHistory.filter(
           (x) => x.time > deadline,
         );
-        // localStorage.setItem(
-        //   "notificationHistory",
-        //   JSON.stringify(notificationHistory),
-        // );
       }
       return newColors;
     });

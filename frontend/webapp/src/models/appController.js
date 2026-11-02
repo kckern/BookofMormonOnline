@@ -165,13 +165,6 @@ export const appInit = () => {
   return initAppController;
 };
 
-// function processUpdateMessage(appController, { message, channel, index }) {
-//     if (message.channelUrl === appController.states.studyGroup.activeGroup.url) {
-
-//         appController.states.studyGroup.studyMessages[index] = message;
-//     }
-//     return appController;
-// }
 
 export const appDispatch = () => {
   let dispatches = {};
@@ -389,9 +382,6 @@ export const appFunctions = {
     }
     if(!!input.val?.personList && !!input.val?.placeList && !!input.val?.matterList) appController.states.preloaded = true;
     let preload = input.val;
-    // let fax = {};
-    // for(let i in preload.fax) { fax[preload.fax[i].slug] = preload.fax[i]; preload.fax[i].weight = i; };
-    // preload.fax = fax;
     if (typeof preload.fax === "object")
       preload.fax = Object.values(preload.fax);
     // Merge, don't replace: the labels-only fast path and the full network
