@@ -64,11 +64,6 @@ export function determineLanguage() {
   tld = index[tld] || null;
   return tld || subdomain || "en";
 }
-const pickOneRamdomly = (arr) => {
-
-  const selectedIndex = Array.from(Array(arr.length).keys()).sort(() => Math.random() - 0.5).pop();
-  return arr[selectedIndex];
-}
 
 // Single avatar generator — canonical implementation lives in
 // components/UserAvatar.js (mirrored by backend/src/messaging/avatarAssets.ts).
@@ -730,8 +725,8 @@ function CommentaryPreview({url}){
   if(!commentary) return error ? <code>{commentaryId} | {error}</code> : <Spinner />;
 
   const source_id = commentaryId.toString().slice(-5).slice(0,3);
-  const {title, reference, publication, location, text:html} = commentary[commentaryId] || {};
-  const {source_title, source_name, source_short, source_url, source_year, source_publisher} = publication || {};
+  const { title, publication, text:html } = commentary[commentaryId] || {};
+  const { source_title, source_name } = publication || {};
   const text = Parser(html);
 
   const popUpCommentary = () => {

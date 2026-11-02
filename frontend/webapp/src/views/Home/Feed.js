@@ -656,7 +656,6 @@ function MessageMedia({ item }) {
 
   const imageUrl = "https://ipxy.io/img/WVhKMGFXTnNaVWxrUFVNXlJFdyVkSEIyWjNZMkpuVl5iRDFvZEhSd2NeVV5OVE5CSlRJMU1rWWxNalVeUm5OamIyNTBaVzUwTFdOa1p6UXRNITVqWkc1KmJuTjBZV2ReWVcwdVkyOXRKVEkxTWtaMkpUSTFNa1owTlRFdU1qZzROUzAlTlNVXk5USkdOREU1TWprNU9ESTJYelk1T0RrJU5ETTRPVEUlTlRRME9EUmZOek0xTVRrek9UVTROVEU1TVRjMk1qVTVYMjR1YW5CbkpUSTFNMFp6ZEhBbE1qVXpSR1J6ZEMxcWNHZGZaVEUxSlRJMU1qWmZibU5mYUhRbE1qVXpSSE5qYjI1MFpXNTBMV05rWnpRdE0hNWpaRzUqYm5OMFlXZF5ZVzB1WTI5dEpUSTFNalpmYm1OZlkyRjBKVEkxTTBRJU1EQWxNalVeTmw5dVkxOXZhR01sTWpVelJGQmFVM2h3TlROWmFYTk5RVmd0ZW4qWFpuUWxNalVeTm1Wa2JTVV5OVE5FUVU5Uk1XTXdkMEpCUVVGQkpUSTFNalpqWTJJbE1qVXpSRGN0TlNVXk5USTJiMmdsTWpVelJEQXdYMEZtUVd0dE0wViFZbEJMWmpkRE1WWjFSWGx6T1clIVVFTjRRazR0VTJoTE9IQlpOVmR6V0VFdGJFNUtRMUVsTWpVXk5tOWxKVEkxTTBRMk5VRTBRVFkyUlNVXk5USTJYMjVqWDNOKlpDVV5OVE5FT0dJek5UUTI";
 
-  const overlay = "instagram";
   const url = "https://www.instagram.com/p/C2DL1tpvgv6"
 
 
@@ -666,11 +665,6 @@ function MessageMedia({ item }) {
       window.open(url, "_blank");
   }
 
-  const fitItem = () => {
-
-
-
-  };
 
     useEffect(()=>{
       const parentElement = document.getElementById(componendId)?.parentElement;
@@ -705,7 +699,7 @@ function Comments({ comments, count, item, group, memberMap, sbChannel, fetchCom
   const [newMessages, setNewMessages] = useState([]);
   let myUserId = appController.states.user.user;
 
-  const [itemState, setItem] = useState(item);
+  const [itemState] = useState(item);
   const [likes, setLikes] = useState(item.likes || []);
 
   const toggleLike = () => {

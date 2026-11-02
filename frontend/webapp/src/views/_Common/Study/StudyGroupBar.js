@@ -153,7 +153,6 @@ function StudyGroupStatus() {
   const appController = useAppController();
   const messenger = useMessenger();
 
-  let playSounds = appController.states.preferences.sound;
 
   const [cameOnline] = useState(() => {
     let sound = new Audio(`${assetUrl}/interface/audio/contacts-online`);
@@ -598,7 +597,6 @@ export function StudyGroupUser({
 
   const [isDroppedDown, setDroppedDown] = useState(false);
   const closeTimer = useRef(null);
-  const [speechBubbleOpen, setSpeechBubbleOpen] = useState(true);
   const [unplugging, setUnplugging] = useState(false);
 
   if (!userObject) return null;

@@ -145,7 +145,7 @@ export function StudyGroupChatInput({ channel }) {
   const [isOpen, setOpen] = useState(false);
 
   const [timeoutIds, setTimeoutIds] = useState([]);
-  const [typing, setTyping] = useState(false);
+  const [, setTyping] = useState(false);
   const typingIndicator = () => {
     channel.startTyping();
     setTyping(true);
@@ -780,7 +780,6 @@ function ThreadMessages({
     return <Loader />;
   }
 
-  let count = parentMessage?.threadInfo?.replyCount;
   //TODO: Keep count current with realtime updates;
   let messages = (
     <ThreadedMessages

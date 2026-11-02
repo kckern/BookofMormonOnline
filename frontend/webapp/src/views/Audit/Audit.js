@@ -123,7 +123,6 @@ const bom_types = [
 
 
 async function loadItems(table,refkey,user) {
-    const isLocalhost = window.location.hostname === "localhost";
     const lang = determineLanguage();
    
     const list = await axios.post(`${ApiBaseUrl}/translate`, {

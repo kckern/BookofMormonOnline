@@ -92,7 +92,6 @@ export function HistoryList({ studyLog, progressList, setHistoryView }) {
           let yearMonths = Object.keys(year).reverse();
           let yearDuration = sumDuration(year);
           let yearSessionCount = countSessions(year);
-          let yearMonthCount = yearMonths.length;
           return (
             <div className="studyYear" key={yearNum}>
               {i > 0 ? (
@@ -112,7 +111,6 @@ export function HistoryList({ studyLog, progressList, setHistoryView }) {
                 let monthDuration = sumDuration(month);
                 let monthSessionCount = countSessions(month);
                 let days = Object.keys(month).reverse();
-                let monthDayCount = days.length;
                 return (
                   <div className="studyMonth" key={monthNum}>
                     <h2>

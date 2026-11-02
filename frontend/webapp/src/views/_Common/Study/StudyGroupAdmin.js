@@ -403,7 +403,6 @@ function RequestManagement() {
   const token = appController.states.user.token;
   const group = appController.states.studyGroup.activeGroup;
   const data = testJSON(group.data) ? JSON.parse(group.data) : { requests: [] };
-  const [hash, setHash] = useState(null);
   const [requesters, setRequesters] = useState([]);
 
   useEffect(() => {

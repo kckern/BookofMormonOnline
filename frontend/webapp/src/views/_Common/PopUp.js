@@ -218,12 +218,6 @@ function Person() {
     );
   }
 
-  let ofs = {
-    Possibly: " ",
-    Preacher: "to",
-    Teacher: "to",
-    Mentioned: "by",
-  };
 
   return (
     <>
@@ -276,10 +270,8 @@ function Person() {
 function Place() {
 
   const appController = useAppController();
-  const [showOptions, setShowOptions] = useState(false);
   const [PopUpRef,setPopUpRef] = useState(null)
-  const [showMapsDropDown, showMapsDropDownSet] = useState(false),
-    navigate = useNavigate();
+  const navigate = useNavigate();
 
   if (appController.popUpData[appController.states.popUp.activeId] === undefined) {
     BoMOnlineAPI({ places: appController.states.popUp.ids }).then(

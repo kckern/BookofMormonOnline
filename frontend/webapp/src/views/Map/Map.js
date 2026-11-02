@@ -35,7 +35,7 @@ function MapContainer() {
     [zoomLevel,setZoomLevel] = useState(0),
     [mapCenter, setMapCenter] = useState([0,0]),
     [searching,setSearching] = useState(null),
-    [initSearchLetter, setInitSearchLetter] = useState(null),
+    [, setInitSearchLetter] = useState(null),
     [selectedStory, setSelectedStory] = useState(null),
     [panelContents, setPanelContents] = useState({});
 
@@ -200,10 +200,10 @@ function MapContainer() {
 function MapToolTip() {
   const mapController = useMapController();
   const { tooltip, appController, panelContents } = mapController;
-  const { x, y, w,h, slug, moving } = tooltip;
+  const { x, y, h, slug, moving } = tooltip;
   if(!slug || moving) return null;
   const placeInfo = getPlaceInfo(slug, appController);
-  const {name, info, location, occupants, type} = placeInfo;
+  const { name, info } = placeInfo;
 
   const [boxH,boxW] = [100,150];
   const margin = 10;

@@ -122,7 +122,6 @@ export function MapPanel() {
 
 
   const index = placeDetails?.index || [];
-  const maps = placeDetails?.maps || [];
 
   let desc_with_scripturelinks =  placeDetails?.description;
 

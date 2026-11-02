@@ -515,7 +515,7 @@ function TheaterQueueIntro() {
 
 
   const secondsToShow = 15;
-  const [countdown, setCountdown] = useState(secondsToShow);
+  const [, setCountdown] = useState(secondsToShow);
 
   useEffect(() => {
     if(!cursorIndex) playSound(initSFX);
@@ -589,9 +589,8 @@ function TheaterSectionIntro() {
   const { queue, cursorIndex } = theaterController;
   const currentItem = queue[cursorIndex] || null;
   const { parent_section } = currentItem || {};
-  const { title } = parent_section || {};
-  const [countdown, setCountdown] = useState(secondsToShow);
-  const [startTimestamp, setStartTimestamp] = useState(Date.now());
+  const [, setCountdown] = useState(secondsToShow);
+  const [startTimestamp] = useState(Date.now());
 
   const [visible, setVisible] = useState(false);
 
@@ -728,7 +727,6 @@ function TheaterCrossRoads() {
 
   const narration = thisItem?.narration?.description || null;
   const page = thisItem?.parent_page?.title || null;
-  const slug = thisItem?.slug || null;
 
 
   //add countdown from 10 sec
@@ -1070,7 +1068,7 @@ function TheaterControls({ visible }) {
 function TheatherMusicPlayer() {
   const theaterController = useTheater();
 
-  const { queue, cursorIndex,playbackVolume,playbackMusicVolume, isMuted } = theaterController;
+  const { queue, cursorIndex, playbackMusicVolume, isMuted } = theaterController;
   const currentItem = queue[cursorIndex] || null;
   const nextItem = queue[cursorIndex + 1] || null;
   const currentSection = currentItem?.parent_section?.title || null;
@@ -1347,7 +1345,7 @@ function TheaterContent() {
 
 function TheaterMetaContent() {
   const theaterController = useTheater();
-  const { queue, cursorIndex, queueStatus } = theaterController;
+  const { queue, cursorIndex } = theaterController;
   const currentItem = queue[cursorIndex] || null;
   if (!currentItem) return null;
   //page, section, narration, heading
@@ -1356,7 +1354,6 @@ function TheaterMetaContent() {
     parent_section: { title: section },
     heading
   } = currentItem;
-  const narration = currentItem?.narration?.description || "Sub Item...";
 
   const StudyButton = <Link className="studylink" to={`/${currentItem?.slug}`}><img src={studyimg} />{label("menu_study")}</Link>
 
@@ -1531,13 +1528,7 @@ function TheaterQueueIndicator() {
 
 function TheaterProgressBar() {
   const theaterController = useTheater();
-  const {
-    currentProgress,
-    currentDuration,
-    isPlaying,
-    playbackRate,
-    cyclePlaybackSpeed
-  } = theaterController;
+  const { currentDuration, isPlaying, playbackRate, cyclePlaybackSpeed } = theaterController;
   const seekTo = e => {
     const percent = e.nativeEvent.offsetX / e.target.offsetWidth;
     document.getElementById("theater-audio-player").currentTime =

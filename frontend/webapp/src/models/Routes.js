@@ -1,6 +1,6 @@
 import { lazy } from "react";
 import { isMessengerNavigationEnabled, HIDE_THEOLOGY, HIDE_HISTORY_1820S } from './featureFlags';
-import { determineLanguage } from "./Utils.js";
+
 import { Navigate, useParams } from "react-router-dom";
 
 // Feature flag - messaging disabled until Phase 5 data migration
@@ -41,7 +41,6 @@ const Theology = lazy(() => import("../views/Theology/Theology.js"));
 const History = lazy(() => import("../views/History/History.js"));
 const Invitation = lazy(() => import("../views/User/Invitation.js"));
 const ResetPassword = lazy(() => import("../views/User/ResetPassword.js"));
-const MobileGroups = lazy(() => import("../views/_Common/Study/Mobile/MobileStudy.js"));
 const MobileMenu = lazy(() => import("../views/_Common/MobileMenu.js"));
 const Group = lazy(() => import("../views/_Common/Group.js"));
 const Theater = lazy(() => import("../views/Theater/Theater.js"));
@@ -57,7 +56,6 @@ const ReadScripture = lazy(() => import("../views/Read/Read.js"));
 const FrontDoor = lazy(() => import("../views/FrontDoor/FrontDoor.js"));
 const EntityPage = lazy(() => import("../views/Entity/EntityPage"));
 const ArtPage = lazy(() => import("../views/Entity/ArtPage"));
-const lang = determineLanguage();
 
 
 const routes = [

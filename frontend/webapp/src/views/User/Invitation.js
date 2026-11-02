@@ -62,7 +62,7 @@ export default function Invitation() {
 
     if (!appController.states.user.user) return setContentState("guestAccept");
     setAccepting(true);
-    const {channel_url, group, results} = await joinGroupFromHash(hash, userToken); //.then((group) => {
+    const { channel_url, group } = await joinGroupFromHash(hash, userToken); //.then((group) => {
       if(!channel_url || !group) return;
       messenger.getStudyGroups().then((list) =>{
         appController.functions.setStudyGroups(list);

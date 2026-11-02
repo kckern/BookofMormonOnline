@@ -22,7 +22,7 @@ export default function SignIn() {
   const [message, setMessage] = useState(null);
   const [loadingButton, setLoadingButton] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [noSignUp, setNoSignUp] = useState(false);
+  const [, setNoSignUp] = useState(false);
   const [recoveryMode, setRecoveryMode] = useState(null);
 
   const loginwithpassword = (setMessage, setBtnLoading) => {

@@ -87,7 +87,6 @@ export default function ProgressBox() {
   let completed = ProgressBoxData.userProgress?.completed;
   let started = ProgressBoxData.userProgress?.started;
   let name = appController.states.user.social?.nickname;
-  let img = appController.states.user.social?.profile_url;
 
   return (
     <Card className="ProgressBox">
@@ -237,13 +236,7 @@ export function ProgressDetailsCircles({ progressPages, callBack }) {
         if (!page.progress?.completed && page.progress?.completed !== 0) {
           return null;
         }
-        let {
-          completed,
-          started,
-          completed_items,
-          started_items,
-          active_items,
-        } = page.progress;
+        let { completed, completed_items, started_items, active_items } = page.progress;
 
         let pageDots =
           !page?.sections || typeof page?.sections?.map !== "function" ? (

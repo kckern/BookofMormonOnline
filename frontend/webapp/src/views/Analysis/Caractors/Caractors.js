@@ -19,14 +19,6 @@ function Caractors() {
   ]);
   // with this function we create an array with the opened collapses
   // it is like a toggle function for all collapses from this page
-  const collapsesToggle = (collapse) => {
-    if (openedCollapses.includes(collapse)) {
-      setOpenedCollapses(openedCollapses.filter((item) => item !== collapse));
-    } else {
-      openedCollapses.push(collapse);
-      setOpenedCollapses([...openedCollapses, collapse]);
-    }
-  };
 
   let similarItems = tileData.filter((m) => similars?.includes(m.match));
   let matchedItems = tileData.filter((m) => m.match === activeTile && m.id !== activeItem.id);

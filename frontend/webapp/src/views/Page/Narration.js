@@ -804,7 +804,6 @@ function FacsimilePanel() {
   }
 
   let appController = narrationController.appController;
-  let ref = narrationController.data.text.heading;
   let slug = narrationController.data.text.slug;
   let faxWithComments = idsWithComments("fax", narrationController);
 

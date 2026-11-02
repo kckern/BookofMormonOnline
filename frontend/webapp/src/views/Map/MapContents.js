@@ -40,7 +40,7 @@ const MapContents = () => {
     const walkerStartRef = useRef(0);
     const forceShowSlugsRef = useRef(new Set());
     let {currentMap,isAdmin} = mapController;
-    const {slug:mapslug,places,stories} = currentMap;
+    const { slug:mapslug, places } = currentMap;
 		const [animateZoom,setAnimateZoom] = useState(0);
 		const [isMoving,setIsMoving] = useState(false);
     const {centerx, centery, minzoom, maxzoom, zoom} = currentMap;
