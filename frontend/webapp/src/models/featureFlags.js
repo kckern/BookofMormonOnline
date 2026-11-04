@@ -90,5 +90,6 @@ export const HIDE_HOME_NAV      = false; // Discover is always in the nav (2026-
 export const HIDE_MATTERS_NAV   = !isEnabled('matters');
 export const HIDE_HISTORY_NAV   = !isEnabled('history');
 export const HIDE_PASSAGE_NOTES = !isEnabled('passageNotes');
+export const HIDE_MAP_STORY_TILE = !isEnabled('mapStoryTile');
 export const HIDE_THEOLOGY      = !isEnabled('theology');
 export const HIDE_HISTORY_1820S = !isEnabled('history1820s');

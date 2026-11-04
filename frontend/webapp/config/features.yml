@@ -27,3 +27,4 @@ flags:
   history1820s: { rollout: 0 }     # NY & PA 1820s collection: no rows in prod bom_xtras_history yet
   theology:     { rollout: 0 }     # scaffold with placeholder data (the page says so)
   passageNotes: { rollout: 0 }     # reader notes panel: WIP, unreviewed
+  mapStoryTile: { rollout: 0 }     # Discover map-story tile: not prod-ready (2026-11-04)

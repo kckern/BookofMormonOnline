@@ -24,7 +24,7 @@ import MattersNarrativeTile from "./MattersNarrativeTile";
 import MattersMaterialTile from "./MattersMaterialTile";
 import MattersConceptTile from "./MattersConceptTile";
 import MatterProfileTile, { hasProfileMatter } from "./MatterProfileTile";
-import { HIDE_PASSAGE_NOTES, isMessengerEnabled } from "src/models/featureFlags";
+import { HIDE_PASSAGE_NOTES, HIDE_MAP_STORY_TILE, isMessengerEnabled } from "src/models/featureFlags";
 
 /**
  * Sampler tile registry. Adding a tile type:
@@ -74,7 +74,7 @@ export const tileRegistry = [
   // the tile deep-links there, so it is gated by the same flag (grid + batches).
   { key: "notes",       component: NotesTile,       span: "tile-notes",       isReady: (p) => !HIDE_PASSAGE_NOTES && (p?.notes?.length || 0) > 0 },
   { key: "faxVerse",   component: FaxVerseTile,    span: "tile-faxVerse",    isReady: (p) => !!p?.faxVerse?.page },
-  { key: "mapstory",    component: MapStoryTile,    span: "tile-mapstory",    isReady: (p) => (p?.mapstory?.moves?.length || 0) >= 2 },
+  { key: "mapstory",    component: MapStoryTile,    span: "tile-mapstory",    isReady: (p) => !HIDE_MAP_STORY_TILE && (p?.mapstory?.moves?.length || 0) >= 2 },
 ];
 
 /**
