@@ -1,4 +1,4 @@
-scripture.woff2 / Scripture.ttf: Goudy Scripture 2.000, from kckern/ScriptureGuide fonts/goudy-scripture (the font of record).
+scripture.woff2 / scripture-italic.woff2 / Scripture.ttf: Goudy Scripture 2.000 and Goudy Scripture Italic, from kckern/ScriptureGuide fonts/goudy-scripture (the font of record).
 
 Copyright (c) 2010, Barry Schwartz (chemoelectric@chemoelectric.org)
 Modifications copyright (c) 2026, Scripture Guide
