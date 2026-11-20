@@ -18,9 +18,9 @@ const robotoCondensedLight = readFileSync(join(fontsDir, 'RobotoCondensed-Light.
 const ibmPlexSansKRBold = readFileSync(join(fontsDir, 'IBMPlexSansKR-Bold.ttf'))
 const ibmPlexSansKRRegular = readFileSync(join(fontsDir, 'IBMPlexSansKR-Regular.ttf'))
 const ibmPlexSansKRLight = readFileSync(join(fontsDir, 'IBMPlexSansKR-Light.ttf'))
-// The reader's scripture face (Goudy Scripture), converted from the CRA's
-// public/font/scripture.woff2 to TTF (satori can't decode woff2). Used for the
-// body text of /read cards so a scripture excerpt looks like the reader.
+// The reader's scripture face (Goudy Scripture 2.000, OFL; see Scripture-OFL.txt), the
+// TrueType copy from kckern/ScriptureGuide fonts/goudy-scripture (satori can't decode
+// woff2). Used for the body text of /read cards so a scripture excerpt looks like the reader.
 const scriptureFont = readFileSync(join(fontsDir, 'Scripture.ttf'))
 
 // The gold stacked-plates mark, embedded as a data URI (satori <img> needs a
